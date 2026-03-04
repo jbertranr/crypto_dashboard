@@ -1,26 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+/*
+  PALETA: "Indigo Fintech"
+  ─────────────────────────────────────────────────
+  Inspirada en dashboards moderns de fintech (Stripe, Linear).
+  Blanc pur + accent índigo + grisos slate.
+  ─────────────────────────────────────────────────
+  --accent:   #4f46e5  Indigo 600  — CTA, actiu
+  --bg-page:  #f8fafc  Slate 50    — fons general
+  --bg-nav:   #ffffff  Blanc       — sidebar
+  --bg-card:  #ffffff  Blanc       — cards
+  --text-1:   #0f172a  Slate 900   — text principal
+  --text-2:   #475569  Slate 600   — text secundari
+  --text-3:   #94a3b8  Slate 400   — text tènue
+  --green:    #059669  Emerald 600 — pujades / profit
+  --red:      #dc2626  Red 600     — baixades / loss
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* backgrounds */
+  --bg-page:    #f8fafc;
+  --bg-nav:     #ffffff;
+  --bg-card:    #ffffff;
+  --bg-card-2:  #f8fafc;
+  --bg-hover:   #f1f5f9;
+  --bg-input:   #f8fafc;
+
+  /* borders */
+  --border:     #e2e8f0;
+  --border-mid: #cbd5e1;
+
+  /* text */
+  --text-1:     #0f172a;
+  --text-2:     #475569;
+  --text-3:     #94a3b8;
+
+  /* accent — indigo */
+  --accent:     #4f46e5;
+  --accent-dim: rgba(79,70,229,0.08);
+
+  /* semantic */
+  --green:      #059669;
+  --green-dim:  rgba(5,150,105,0.08);
+  --red:        #dc2626;
+  --red-dim:    rgba(220,38,38,0.07);
+  --blue:       #2563eb;
+  --blue-dim:   rgba(37,99,235,0.08);
+  --yellow:     #d97706;
+
+  /* shadows */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg:   0 20px 60px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.06);
+
+  /* layout */
+  --nav-w:    220px;
+  --topbar-h: 60px;
+  --radius:   12px;
+  --radius-sm: 8px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html, body { height: 100%; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-1);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
