@@ -11,18 +11,18 @@ const TOP_PAIRS = [
 ];
 
 async function fetchTickers(): Promise<BinanceTicker[]> {
-  const res = await fetch(`${BASE}/ticker/24hr`, {
+  const symbols = encodeURIComponent(JSON.stringify(TOP_PAIRS));
+  const res = await fetch(`${BASE}/ticker/24hr?symbols=${symbols}`, {
     next: { revalidate: 30 },
   });
   if (!res.ok) throw new Error("Failed to fetch Binance tickers");
-  const all: BinanceTicker[] = await res.json();
-  return all.filter((t) => TOP_PAIRS.includes(t.symbol));
+  return res.json();
 }
 
 async function fetchSparkline(pair: string): Promise<number[]> {
   const res = await fetch(
-    `${BASE}/klines?symbol=${pair}&interval=1d&limit=7`,
-    { next: { revalidate: 3600 } }
+    `${BASE}/klines?symbol=${pair}&interval=1h&limit=24`,
+    { next: { revalidate: 14400 } }
   );
   if (!res.ok) return [];
   const klines: unknown[][] = await res.json();

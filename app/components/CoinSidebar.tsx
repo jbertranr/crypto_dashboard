@@ -38,8 +38,13 @@ export default function CoinSidebar({ coins }: { coins: CoinRow[] }) {
         <div className="market-panel__list">
           {coins.map((coin) => {
             const up = coin.change24h >= 0;
+            const sparkUp = coin.sparkline.length >= 2
+              ? coin.sparkline[coin.sparkline.length - 1] >= coin.sparkline[0]
+              : up;
             return (
-              <button key={coin.pair} className="coin-row" onClick={() => setSelected(coin)}>
+              <div key={coin.pair} className="coin-row" role="button" tabIndex={0}
+                onClick={() => setSelected(coin)}
+                onKeyDown={e => e.key === "Enter" && setSelected(coin)}>
                 <div className="coin-row__top">
                   <CoinIcon symbol={coin.symbol} size={20} />
                   <span className="coin-row__name">{coin.symbol}</span>
@@ -51,16 +56,16 @@ export default function CoinSidebar({ coins }: { coins: CoinRow[] }) {
                 <div className="coin-row__bottom">
                   <span className="coin-row__price">{formatCurrency(coin.price)}</span>
                   <div className="coin-row__actions">
-                    <Sparkline prices={coin.sparkline} positive={up} width={80} height={24} />
+                    <Sparkline prices={coin.sparkline} positive={sparkUp} width={80} height={24} />
                     <button
                       className="coin-row__trade"
-                      title={`Trade ${coin.symbol}`}
                       onClick={e => { e.stopPropagation(); setTradeTarget(coin); }}>
                       <i className="fa-solid fa-arrow-right-arrow-left" />
+                      Trade
                     </button>
                   </div>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>

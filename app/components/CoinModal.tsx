@@ -8,10 +8,13 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "rec
 interface ChartPoint { time: number; close: number; }
 
 const TIMEFRAMES = [
-  { label: "1D", interval: "1h",  limit: "24" },
-  { label: "1W", interval: "4h",  limit: "42" },
-  { label: "1M", interval: "1d",  limit: "30" },
-  { label: "3M", interval: "1d",  limit: "90" },
+  { label: "1h",  interval: "1m",  limit: "60"  },
+  { label: "4h",  interval: "5m",  limit: "48"  },
+  { label: "12h", interval: "15m", limit: "48"  },
+  { label: "1D",  interval: "1h",  limit: "24"  },
+  { label: "1W",  interval: "4h",  limit: "42"  },
+  { label: "1M",  interval: "1d",  limit: "30"  },
+  { label: "Tot", interval: "1w",  limit: "200" },
 ] as const;
 
 type TFLabel = (typeof TIMEFRAMES)[number]["label"];
@@ -21,8 +24,21 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
   const [chart, setChart]     = useState<ChartPoint[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const up    = coin.change24h >= 0;
+  // % change for the current timeframe, derived from chart data once loaded
+  const chartChange = chart.length >= 2
+    ? ((chart[chart.length - 1].close - chart[0].close) / chart[0].close) * 100
+    : coin.change24h;
+  const up    = chartChange >= 0;
   const color = up ? "#00c076" : "#f6465d";
+
+  // Y-axis domain derived from chart data + zoom padding
+  const chartMin = chart.length ? Math.min(...chart.map(d => d.close)) : 0;
+  const chartMax = chart.length ? Math.max(...chart.map(d => d.close)) : 0;
+  const chartRange = chartMax - chartMin || chartMin * 0.002;
+  const yDomain: [number, number] = [
+    chartMin - chartRange * 0.05,
+    chartMax + chartRange * 0.05,
+  ];
 
   useEffect(() => {
     const { interval, limit } = TIMEFRAMES.find(t => t.label === tf)!;
@@ -40,7 +56,12 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
 
   const fmt = (ts: number) => {
     const d = new Date(ts);
-    if (tf === "1D") return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+    if (tf === "1h" || tf === "4h" || tf === "12h")
+      return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+    if (tf === "1D")
+      return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+    if (tf === "Tot")
+      return d.toLocaleDateString("en-US", { year: "2-digit", month: "short" });
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
@@ -61,7 +82,7 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
 
         <p className="coin-modal__price">{formatCurrency(coin.price)}</p>
         <p className={`coin-modal__change ${up ? "coin-modal__change--up" : "coin-modal__change--down"}`}>
-          {up ? "▲" : "▼"} {Math.abs(coin.change24h).toFixed(2)}% (24h)
+          {up ? "▲" : "▼"} {Math.abs(chartChange).toFixed(2)}% ({tf})
         </p>
 
         <div className="coin-modal__tfs">
@@ -88,7 +109,9 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
                 <XAxis dataKey="time" tickFormatter={fmt}
                   tick={{ fill: "#4a5568", fontSize: 10 }} tickLine={false} axisLine={false}
                   interval="preserveStartEnd" />
-                <YAxis domain={["auto","auto"]} tickFormatter={v => formatCurrency(v)}
+                <YAxis
+                  domain={yDomain}
+                  tickFormatter={v => formatCurrency(v)}
                   tick={{ fill: "#4a5568", fontSize: 10 }} tickLine={false} axisLine={false} width={72} />
                 <Tooltip
                   contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0",
