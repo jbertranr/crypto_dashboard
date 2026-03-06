@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { CoinRow } from "../lib/types";
-import { formatCurrency } from "../lib/api";
+import { formatCurrency } from "../lib/format";
 import CoinIcon from "./CoinIcon";
 
 /* ── precision helpers ── */
@@ -37,11 +37,12 @@ function directionOk(side: "BUY" | "SELL", tpP: number, slP: number, ref: number
     : tpP < ref && slP > ref;  // TP below, SL above
 }
 
-export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
+export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetPrices }: {
   coin: CoinRow | null;
   coins: CoinRow[];
   onClose: () => void;
   onSuccess: () => void;
+  presetPrices?: { side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string };
 }) {
   const defaultCoin = coin ?? coins[0];
   const [selectedPair, setSelectedPair] = useState(defaultCoin?.pair ?? "");
@@ -52,19 +53,40 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
   const [stepSize, setStepSize] = useState("0.00001");
   const [tickSize, setTickSize] = useState("0.01");
 
+  /* balances */
+  const [balances, setBalances] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetch("/api/balance").then(r => r.json()).then((arr: { asset: string; free: string }[]) => {
+      if (!Array.isArray(arr)) return;
+      const m: Record<string, number> = {};
+      arr.forEach(b => { m[b.asset] = parseFloat(b.free); });
+      setBalances(m);
+    }).catch(() => {});
+  }, []);
+
   /* form state */
-  const [side,         setSide]         = useState<"BUY" | "SELL">("SELL");
+  const [side,         setSide]         = useState<"BUY" | "SELL">(presetPrices?.side ?? "SELL");
   const [qtyMode,      setQtyMode]      = useState<"usd" | "crypto">("usd");
   const [usdAmount,    setUsdAmount]    = useState("");
   const [cryptoQty,    setCryptoQty]    = useState("");
-  const [tpPrice,      setTpPrice]      = useState("");
-  const [tpPct,        setTpPct]        = useState("");
-  const [slStopPrice,  setSlStopPrice]  = useState("");
-  const [slStopPct,    setSlStopPct]    = useState("");
-  const [slLimitPrice, setSlLimitPrice] = useState("");
-  const [slLimitPct,   setSlLimitPct]   = useState("");
+  const [tpPrice,      setTpPrice]      = useState(presetPrices?.tp ?? "");
+  const [tpPct,        setTpPct]        = useState(presetPrices?.tp ? pctOf(parseFloat(presetPrices.tp), ref) : "");
+  const [slStopPrice,  setSlStopPrice]  = useState(presetPrices?.sl ?? "");
+  const [slStopPct,    setSlStopPct]    = useState(presetPrices?.sl ? pctOf(parseFloat(presetPrices.sl), ref) : "");
+  const [slLimitPrice, setSlLimitPrice] = useState(presetPrices?.slLimit ?? "");
+  const [slLimitPct,   setSlLimitPct]   = useState(presetPrices?.slLimit ? pctOf(parseFloat(presetPrices.slLimit), ref) : "");
   const [saving,       setSaving]       = useState(false);
   const [error,        setError]        = useState<string | null>(null);
+
+  /* trailing stop */
+  const [trailingOn,          setTrailingOn]          = useState(false);
+  const [trailingActivateAt,  setTrailingActivateAt]  = useState("");
+  const [trailingDistance,    setTrailingDistance]    = useState("");
+  const [trailingActivateAtr, setTrailingActivateAtr] = useState(1.0);
+  const [trailingDistanceAtr, setTrailingDistanceAtr] = useState(1.5);
+  const [trailingAtr,         setTrailingAtr]         = useState(0);
+  const [trailingLogic,       setTrailingLogic]       = useState("");
+  const [trailingLoading,     setTrailingLoading]     = useState(false);
 
   /* fetch exchange filters when pair changes */
   useEffect(() => {
@@ -92,7 +114,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
   }, []);
 
   useEffect(() => {
-    prefill(ref, side, tickSize);
+    if (!presetPrices) prefill(ref, side, tickSize);
     const ua = parseFloat(usdAmount);
     if (!isNaN(ua) && ref) setCryptoQty(roundDown(ua / ref, stepSize));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,6 +165,45 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
     setSlLimitPrice(fromPct(parseFloat(v), ref, tickSize));
   };
 
+  /* trailing stop suggestion */
+  const suggestTrailing = useCallback(async (currentSide: "BUY" | "SELL", currentRef: number, pair: string) => {
+    if (!currentRef || !pair) return;
+    setTrailingLoading(true);
+    try {
+      const res  = await fetch(`/api/analysis?symbol=${pair}&interval=1h`);
+      const d    = await res.json() as { atr?: number; price?: number };
+      const atr  = d.atr ?? 0;
+      const entry = currentRef || (d.price ?? currentRef);
+      if (atr <= 0) return;
+      const prec = entry >= 100 ? 2 : entry >= 1 ? 4 : 6;
+      const actMult = 1.0, distMult = 1.5;
+      const activateAt = currentSide === "SELL" ? entry + atr * actMult : entry - atr * actMult;
+      const distance   = atr * distMult;
+      const atrFmt = atr >= 100 ? atr.toFixed(2) : atr >= 1 ? atr.toFixed(4) : atr.toFixed(6);
+      const dir = currentSide === "SELL" ? "pugi" : "baixi";
+      const extrm = currentSide === "SELL" ? "màxim" : "mínim";
+      setTrailingAtr(atr);
+      setTrailingActivateAt(activateAt.toFixed(prec));
+      setTrailingDistance(distance.toFixed(prec));
+      setTrailingActivateAtr(actMult);
+      setTrailingDistanceAtr(distMult);
+      setTrailingLogic(`Quan el preu ${dir} +${actMult}×ATR (≈${atrFmt}) des del preu d'entrada, activa el trailing. Segueix el ${extrm} assolit amb una cua de ${distMult}×ATR (≈${atrFmt}) — protegeix beneficis sense tancar massa aviat.`);
+    } catch { /* keep empty */ }
+    finally { setTrailingLoading(false); }
+  }, []);
+
+  const toggleTrailing = () => {
+    const next = !trailingOn;
+    setTrailingOn(next);
+    if (next && trailingAtr === 0) suggestTrailing(side, ref, selectedPair);
+  };
+
+  // Re-suggest if side or pair changes while trailing is on
+  useEffect(() => {
+    if (trailingOn && ref) suggestTrailing(side, ref, selectedPair);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [side, selectedPair]);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", h);
@@ -168,12 +229,19 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
 
     setSaving(true);
     try {
+      const trailing = trailingOn && trailingActivateAt && trailingDistance ? {
+        activateAt:  parseFloat(trailingActivateAt),
+        distance:    parseFloat(trailingDistance),
+        activateAtr: trailingActivateAtr,
+        distanceAtr: trailingDistanceAtr,
+        logic:       trailingLogic,
+      } : null;
       const res = await fetch("/api/orders/new", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           symbol: activeCoin.pair, side, quantity: qty,
-          tpPrice, slStopPrice, slLimitPrice,
+          tpPrice, slStopPrice, slLimitPrice, trailing,
         }),
       });
       const d = await res.json();
@@ -246,6 +314,12 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
           <div className="order-edit__field">
             <div className="new-order__label-row">
               <span className="order-edit__label">Quantity</span>
+              <span className="new-order__balance-hint">
+                {side === "SELL"
+                  ? `Saldo: ${balances[activeCoin?.symbol ?? ""] ?? 0} ${activeCoin?.symbol ?? ""}`
+                  : `Saldo: ${formatCurrency(balances["USDT"] ?? 0)} USDT`
+                }
+              </span>
               <div className="new-order__toggle">
                 <button className={`new-order__toggle-btn${qtyMode === "usd" ? " new-order__toggle-btn--active" : ""}`}
                   onClick={() => setQtyMode("usd")}>USD</button>
@@ -337,6 +411,53 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess }: {
                 <span className="new-order__pct-sign">%</span>
               </div>
             </div>
+          </div>
+
+          {/* Trailing Stop */}
+          <div className="new-order__trailing">
+            <div className="new-order__trailing-toggle" onClick={toggleTrailing} role="button">
+              <div className="new-order__trailing-label">
+                <i className="fa-solid fa-flag-checkered" style={{ color: "#d97706", fontSize: "0.75rem" }} />
+                <span>Trailing Stop</span>
+                {trailingLoading && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.65rem", color: "var(--text-3)" }} />}
+              </div>
+              <div className={`new-order__trailing-switch${trailingOn ? " new-order__trailing-switch--on" : ""}`}>
+                <div className="new-order__trailing-switch-knob" />
+              </div>
+            </div>
+
+            {trailingOn && (
+              <div className="new-order__trailing-body">
+                <div className="new-order__trailing-row">
+                  <div className="order-edit__field" style={{ flex: 1 }}>
+                    <span className="order-edit__label">
+                      Preu d'activació
+                      {trailingAtr > 0 && <span className="new-order__atr-badge">{trailingActivateAtr}×ATR</span>}
+                    </span>
+                    <input className="order-edit__input" type="number" min="0" step="any"
+                      value={trailingActivateAt}
+                      onChange={e => setTrailingActivateAt(e.target.value)} />
+                  </div>
+                  <div className="order-edit__field" style={{ flex: 1 }}>
+                    <span className="order-edit__label">
+                      Distància cua
+                      {trailingAtr > 0 && <span className="new-order__atr-badge">{trailingDistanceAtr}×ATR</span>}
+                    </span>
+                    <input className="order-edit__input" type="number" min="0" step="any"
+                      value={trailingDistance}
+                      onChange={e => setTrailingDistance(e.target.value)} />
+                  </div>
+                </div>
+                {trailingLogic && (
+                  <div className="new-order__trailing-logic">{trailingLogic}</div>
+                )}
+                {!trailingLoading && trailingAtr === 0 && (
+                  <div className="new-order__trailing-logic" style={{ color: "var(--text-3)" }}>
+                    Introdueix els valors manualment o espera que carregui la suggerència.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {error && <div className="order-edit__error">{error}</div>}

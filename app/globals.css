@@ -75,6 +75,7 @@ body {
 
 .mono { font-family: 'JetBrains Mono', monospace; }
 
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }

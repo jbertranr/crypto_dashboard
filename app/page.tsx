@@ -3,6 +3,8 @@ import CoinSidebar from "./components/CoinSidebar";
 import OrdersPanel from "./components/OrdersPanel";
 import Nav from "./components/Nav";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const { coins, summary } = await getMarketData();
 
@@ -46,10 +48,10 @@ export default async function Home() {
         </header>
 
         <div className="content">
-          <CoinSidebar coins={coins} />
           <div className="orders-area">
             <OrdersPanel coins={coins} />
           </div>
+          <CoinSidebar coins={coins} />
         </div>
       </div>
       {/* Bottom navigation — mobile only */}

@@ -1,4 +1,6 @@
 import { BinanceTicker, CoinRow, MarketSummary } from "./types";
+import { cacheGet, cacheSet } from "./cache-store";
+export { formatCurrency } from "./format";
 
 const BASE = "https://api.binance.com/api/v3";
 
@@ -11,22 +13,29 @@ const TOP_PAIRS = [
 ];
 
 async function fetchTickers(): Promise<BinanceTicker[]> {
+  const KEY = "ticker:batch";
+  const cached = cacheGet<BinanceTicker[]>(KEY);
+  if (cached) return cached.data;
+
   const symbols = encodeURIComponent(JSON.stringify(TOP_PAIRS));
-  const res = await fetch(`${BASE}/ticker/24hr?symbols=${symbols}`, {
-    next: { revalidate: 30 },
-  });
+  const res = await fetch(`${BASE}/ticker/24hr?symbols=${symbols}`);
   if (!res.ok) throw new Error("Failed to fetch Binance tickers");
-  return res.json();
+  const data: BinanceTicker[] = await res.json();
+  cacheSet(KEY, data, 30);
+  return data;
 }
 
 async function fetchSparkline(pair: string): Promise<number[]> {
-  const res = await fetch(
-    `${BASE}/klines?symbol=${pair}&interval=1h&limit=24`,
-    { next: { revalidate: 14400 } }
-  );
+  const KEY = `sparkline:${pair}`;
+  const cached = cacheGet<number[]>(KEY);
+  if (cached) return cached.data;
+
+  const res = await fetch(`${BASE}/klines?symbol=${pair}&interval=1h&limit=24`);
   if (!res.ok) return [];
   const klines: unknown[][] = await res.json();
-  return klines.map((k) => parseFloat(k[4] as string)); // close price
+  const data = klines.map((k) => parseFloat(k[4] as string)); // close price
+  cacheSet(KEY, data, 14400);
+  return data;
 }
 
 export async function getMarketData(): Promise<{
@@ -96,14 +105,3 @@ export async function getCoinDetail(pair: string) {
   return { ticker, chart };
 }
 
-export function formatCurrency(n: number, decimals?: number): string {
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: decimals ?? 2,
-    maximumFractionDigits: decimals ?? (n < 1 ? 6 : 2),
-  }).format(n);
-}

@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, Tooltip, ReferenceLine, ReferenceArea,
 } from "recharts";
-import { formatCurrency } from "../lib/api";
+import { formatCurrency } from "../lib/format";
 
 interface Point { time: number; close: number; }
 type TF = "1h" | "4h" | "1d" | "tot";
@@ -86,7 +86,7 @@ export default function OcoProgressChart({
           className={`oco-chart__zone-toggle${showZones ? " oco-chart__zone-toggle--on" : ""}`}
           onClick={() => setShowZones(z => !z)}>
           <i className="fa-solid fa-layer-group" />
-          Zones TP/SL
+          <span className="oco-chart__zone-label">Zones TP/SL</span>
         </button>
         {loading && data.length > 0 && (
           <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.7rem", color: "var(--text-3)", marginLeft: 4 }} />

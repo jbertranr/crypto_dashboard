@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { CoinRow } from "../lib/types";
-import { formatCurrency } from "../lib/api";
+import { formatCurrency } from "../lib/format";
 import CoinIcon from "./CoinIcon";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 

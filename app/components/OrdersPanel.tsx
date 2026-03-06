@@ -1,14 +1,61 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { BinanceOrder, BinanceBalance } from "../lib/binance-auth";
-import { formatCurrency } from "../lib/api";
+import { BinanceOrder, BinanceBalance, BinanceTrade } from "../lib/binance-auth";
+import { formatCurrency } from "../lib/format";
 import { CoinRow } from "../lib/types";
 import NewOrderModal from "./NewOrderModal";
 import PortfolioTab from "./PortfolioTab";
+import AnalysisTab from "./AnalysisTab";
 import OcoProgressChart from "./OcoProgressChart";
 import CoinIcon from "./CoinIcon";
 
-type Tab = "portfolio" | "open" | "history" | "balance";
+type Tab = "portfolio" | "open" | "history" | "balance" | "analysis";
+
+/* ── Strategies ── */
+export const STRATEGIES = [
+  { name: "Swing",    color: "#6366f1" },
+  { name: "Scalp",    color: "#f59e0b" },
+  { name: "DCA",      color: "#10b981" },
+  { name: "Breakout", color: "#ef4444" },
+  { name: "Hedge",    color: "#8b5cf6" },
+] as const;
+
+export type StrategyName = (typeof STRATEGIES)[number]["name"];
+const STRATEGY_MAP = Object.fromEntries(STRATEGIES.map(s => [s.name, s.color])) as Record<string, string>;
+
+function stratKey(kind: "oco" | "ord", id: number): string {
+  return `${kind}:${id}`;
+}
+
+function StrategyPicker({ orderKey, current, onSelect, onClose }: {
+  orderKey: string;
+  current: string | null;
+  onSelect: (key: string, strategy: string | null) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div className="strategy-picker__backdrop" onClick={onClose} />
+      <div className="strategy-picker__popover">
+        {STRATEGIES.map(s => (
+          <button
+            key={s.name}
+            className={`strategy-picker__option${current === s.name ? " strategy-picker__option--active" : ""}`}
+            onClick={() => { onSelect(orderKey, current === s.name ? null : s.name); onClose(); }}
+          >
+            <span className="strategy-picker__dot" style={{ background: s.color }} />
+            {s.name}
+          </button>
+        ))}
+        {current && (
+          <button className="strategy-picker__remove" onClick={() => { onSelect(orderKey, null); onClose(); }}>
+            <i className="fa-solid fa-xmark" /> Treure
+          </button>
+        )}
+      </div>
+    </>
+  );
+}
 
 const TYPE_MAP: Record<string, { label: string; cls: string }> = {
   LIMIT:             { label: "LIMIT",  cls: "pill--limit" },
@@ -168,14 +215,28 @@ function EditModal({ target, onClose, onSuccess }: {
 }
 
 /* ── Open Orders cards ── */
-function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
+function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, onStrategyChange }: {
   orders: BinanceOrder[]; loading: boolean; error: string | null;
   onRefresh: () => void; coins: CoinRow[];
+  strategies: Record<string, string>;
+  onStrategyChange: (key: string, strategy: string | null) => void;
 }) {
   const [canceling,    setCanceling]    = useState<Record<number, boolean>>({});
   const [editTarget,   setEditTarget]   = useState<EditTarget | null>(null);
   const [cancelError,  setCancelError]  = useState<string | null>(null);
   const [entryPrices,  setEntryPrices]  = useState<Record<number, number>>({});
+  const [openPickerKey, setOpenPickerKey] = useState<string | null>(null);
+  const [filterStrategy, setFilterStrategy] = useState<string | null>(null);
+  const [trailings, setTrailings] = useState<Record<number, { activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string }>>({});
+
+  useEffect(() => {
+    fetch("/api/orders/trailing").then(r => r.json()).then((arr: { orderListId: number; activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string }[]) => {
+      if (!Array.isArray(arr)) return;
+      const m: typeof trailings = {};
+      arr.forEach(t => { m[t.orderListId] = t; });
+      setTrailings(m);
+    }).catch(() => {});
+  }, []);
 
   const allSorted = [...orders].sort((a, b) => {
     if (a.orderListId !== b.orderListId) return b.orderListId - a.orderListId;
@@ -260,9 +321,73 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
     return pct;
   };
 
+  // Per-strategy stats
+  const stratStats = STRATEGIES.map(s => {
+    const matched = groups.filter(g => {
+      const k = g.kind === "oco" ? stratKey("oco", g.listId) : stratKey("ord", g.order.orderId);
+      return strategies[k] === s.name;
+    });
+    if (!matched.length) return null;
+    const totalVal = matched.reduce((sum, g) => {
+      if (g.kind === "oco") {
+        const coin = coins.find(c => c.pair === g.symbol);
+        return sum + (coin ? parseFloat(g.tpOrd.origQty) * coin.price : 0);
+      }
+      const coin = coins.find(c => c.pair === g.order.symbol);
+      return sum + (coin ? parseFloat(g.order.origQty) * coin.price : 0);
+    }, 0);
+    return { ...s, count: matched.length, totalVal };
+  }).filter(Boolean) as { name: string; color: string; count: number; totalVal: number }[];
+
+  const assignedKeys = new Set(groups.map(g =>
+    g.kind === "oco" ? stratKey("oco", g.listId) : stratKey("ord", g.order.orderId)
+  ).filter(k => strategies[k]));
+
+  const visibleGroups = filterStrategy
+    ? groups.filter(g => {
+        const k = g.kind === "oco" ? stratKey("oco", g.listId) : stratKey("ord", g.order.orderId);
+        return strategies[k] === filterStrategy;
+      })
+    : groups;
+
   return (
     <>
       {cancelError && <div className="state-error" style={{ margin: "0.5rem 1rem" }}>{cancelError}</div>}
+
+      {/* Strategy stats */}
+      {stratStats.length > 0 && (
+        <div className="strat-stats">
+          {stratStats.map(s => (
+            <div key={s.name} className="strat-stats__item" style={{ borderColor: s.color }}>
+              <span className="strat-stats__dot" style={{ background: s.color }} />
+              <span className="strat-stats__name">{s.name}</span>
+              <span className="strat-stats__count">{s.count}</span>
+              {s.totalVal > 0 && <span className="strat-stats__val mono">{formatCurrency(s.totalVal)}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Filter bar */}
+      {assignedKeys.size > 0 && (
+        <div className="strat-filter">
+          <button
+            className={`strat-filter__btn${!filterStrategy ? " strat-filter__btn--active" : ""}`}
+            onClick={() => setFilterStrategy(null)}>
+            Totes
+          </button>
+          {STRATEGIES.filter(s => stratStats.find(st => st.name === s.name)).map(s => (
+            <button
+              key={s.name}
+              className={`strat-filter__btn${filterStrategy === s.name ? " strat-filter__btn--active" : ""}`}
+              style={filterStrategy === s.name ? { background: s.color, borderColor: s.color, color: "#fff" } : { borderColor: s.color, color: s.color }}
+              onClick={() => setFilterStrategy(p => p === s.name ? null : s.name)}>
+              <span className="strat-filter__dot" style={{ background: filterStrategy === s.name ? "#fff" : s.color }} />
+              {s.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading && !orders.length ? (
         <div className="state-empty">Loading…</div>
@@ -270,9 +395,11 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
         <div className="state-error">{error}</div>
       ) : !groups.length ? (
         <div className="state-empty">No open orders.</div>
+      ) : !visibleGroups.length ? (
+        <div className="state-empty">Cap ordre amb estratègia "{filterStrategy}".</div>
       ) : (
         <div className="order-cards">
-          {groups.map(g => {
+          {visibleGroups.map(g => {
             if (g.kind === "oco") {
               const coin         = coins.find(c => c.pair === g.symbol);
               const currentPrice = coin?.price ?? 0;
@@ -288,6 +415,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
               const isCanceling  = !!canceling[g.listId];
               const tpUp = toTp !== null && toTp > 0;
               const slUp = toSl !== null && toSl > 0;
+              const ocoKey = stratKey("oco", g.listId);
+              const ocoStrat = strategies[ocoKey] ?? null;
 
               return (
                 <div key={g.listId} className="order-card">
@@ -306,42 +435,32 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
                     <div className="order-card__header-right">
                       <span className="order-card__date">{fmtDate(g.startTime)}</span>
                       <span className="pill pill--new">Activa</span>
+                      {/* Strategy badge */}
+                      <div className="strategy-picker">
+                        <button
+                          className="strategy-picker__badge"
+                          style={ocoStrat ? { background: `${STRATEGY_MAP[ocoStrat]}22`, color: STRATEGY_MAP[ocoStrat], borderColor: `${STRATEGY_MAP[ocoStrat]}66` } : {}}
+                          onClick={() => setOpenPickerKey(k => k === ocoKey ? null : ocoKey)}>
+                          {ocoStrat
+                            ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ocoStrat] }} />{ocoStrat}</>
+                            : <><i className="fa-solid fa-tag" /> Estratègia</>}
+                        </button>
+                        {openPickerKey === ocoKey && (
+                          <StrategyPicker orderKey={ocoKey} current={ocoStrat}
+                            onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* B) Order summary — 3-card grid */}
+                  {/* B) Order summary — entry left, TP/SL stacked right */}
                   <div className="order-summary">
-                    {/* TP card */}
-                    <div className="order-summary__card order-summary__card--tp">
-                      <div className="order-summary__label">Take Profit</div>
-                      <div className="order-summary__price mono">{formatCurrency(tpPrice)}</div>
-                      {toTp !== null && (
-                        <span className={`order-summary__delta order-summary__delta--${tpUp ? "up" : "down"}`}>
-                          {toTp > 0 ? "+" : ""}{toTp.toFixed(2)}%
-                        </span>
-                      )}
-                      <div className="order-summary__type">Limit Maker</div>
-                    </div>
 
-                    {/* SL card */}
-                    <div className="order-summary__card order-summary__card--sl">
-                      <div className="order-summary__label">Stop Loss</div>
-                      <div className="order-summary__price mono">{formatCurrency(slPrice)}</div>
-                      {toSl !== null && (
-                        <span className={`order-summary__delta order-summary__delta--${slUp ? "up" : "down"}`}>
-                          {toSl > 0 ? "+" : ""}{toSl.toFixed(2)}%
-                        </span>
-                      )}
-                      <div className="order-summary__type">
-                        {slLimit !== slPrice ? `Limit ${formatCurrency(slLimit)}` : "Stop Limit"}
-                      </div>
-                    </div>
-
-                    {/* Position card */}
+                    {/* Left: position / entry */}
                     <div className="order-summary__card order-summary__card--pos">
-                      <div className="order-summary__label">Preu actual</div>
+                      <div className="order-summary__label">Import entrada</div>
                       <div className="order-summary__price mono">
-                        {currentPrice > 0 ? formatCurrency(currentPrice) : "—"}
+                        {entryP > 0 ? formatCurrency(entryP * qty) : "—"}
                       </div>
                       {fromEntry !== null && (
                         <span className={`order-summary__delta order-summary__delta--${fromEntry >= 0 ? "up" : "down"}`}>
@@ -353,20 +472,48 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
                           <span>Quantitat</span>
                           <span>{qty} {g.symbol.replace("USDT", "")}</span>
                         </div>
-                        {valueUSD > 0 && (
+                        {currentPrice > 0 && (
                           <div className="order-summary__mini-stat">
-                            <span>Exposició</span>
-                            <span>{formatCurrency(valueUSD)}</span>
+                            <span>Preu actual</span>
+                            <span>{formatCurrency(currentPrice)}</span>
                           </div>
                         )}
-                        {entryP > 0 && (
+                        {valueUSD > 0 && (
                           <div className="order-summary__mini-stat">
-                            <span>Entrada aprox.</span>
-                            <span>{formatCurrency(entryP)}</span>
+                            <span>Valor actual</span>
+                            <span>{formatCurrency(valueUSD)}</span>
                           </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Right: TP on top, SL on bottom */}
+                    <div className="order-summary__right">
+                      <div className="order-summary__card order-summary__card--tp">
+                        <div className="order-summary__label">Take Profit</div>
+                        <div className="order-summary__price mono">{formatCurrency(tpPrice)}</div>
+                        {toTp !== null && (
+                          <span className={`order-summary__delta order-summary__delta--${tpUp ? "up" : "down"}`}>
+                            {toTp > 0 ? "+" : ""}{toTp.toFixed(2)}%
+                          </span>
+                        )}
+                        <div className="order-summary__type">Limit Maker</div>
+                      </div>
+
+                      <div className="order-summary__card order-summary__card--sl">
+                        <div className="order-summary__label">Stop Loss</div>
+                        <div className="order-summary__price mono">{formatCurrency(slPrice)}</div>
+                        {toSl !== null && (
+                          <span className={`order-summary__delta order-summary__delta--${slUp ? "up" : "down"}`}>
+                            {toSl > 0 ? "+" : ""}{toSl.toFixed(2)}%
+                          </span>
+                        )}
+                        <div className="order-summary__type">
+                          {slLimit !== slPrice ? `Limit ${formatCurrency(slLimit)}` : "Stop Limit"}
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* C) Chart — always visible */}
@@ -378,6 +525,37 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
                     />
                   </div>
 
+                  {/* Trailing stop reminder */}
+                  {trailings[g.listId] && (() => {
+                    const t = trailings[g.listId];
+                    const reached = currentPrice > 0 && (
+                      (g.side === "SELL" && currentPrice >= t.activateAt) ||
+                      (g.side === "BUY"  && currentPrice <= t.activateAt)
+                    );
+                    return (
+                      <div className={`order-trailing${reached ? " order-trailing--active" : ""}`}>
+                        <div className="order-trailing__header">
+                          <i className="fa-solid fa-flag-checkered" />
+                          <span>Trailing Stop</span>
+                          {reached && <span className="order-trailing__alert">Activa ara!</span>}
+                        </div>
+                        <div className="order-trailing__levels">
+                          <div className="order-trailing__level">
+                            <span>Activació</span>
+                            <span className="mono">{formatCurrency(t.activateAt)}</span>
+                            <span className="order-trailing__atr">{t.activateAtr}×ATR</span>
+                          </div>
+                          <div className="order-trailing__level">
+                            <span>Cua</span>
+                            <span className="mono">{formatCurrency(t.distance)}</span>
+                            <span className="order-trailing__atr">{t.distanceAtr}×ATR</span>
+                          </div>
+                        </div>
+                        <div className="order-trailing__logic">{t.logic}</div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Actions */}
                   <div className="order-card__actions">
                     <button className="order-btn order-btn--edit"
@@ -386,13 +564,13 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
                         side: g.side, quantity: g.tpOrd.origQty,
                         tpOrder: g.tpOrd, slOrder: g.slOrd,
                       })}>
-                      <i className="fa-solid fa-pen-to-square" /> Editar
+                      <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
                     </button>
                     <button className="order-btn order-btn--cancel" disabled={isCanceling}
                       onClick={() => handleCancelOco(g)}>
                       {isCanceling
-                        ? <><i className="fa-solid fa-spinner fa-spin" /> Cancel·lant</>
-                        : <><i className="fa-solid fa-xmark" /> Cancel·lar</>}
+                        ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
+                        : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
                     </button>
                   </div>
                 </div>
@@ -410,6 +588,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
             const toDist    = price > 0 && currentPrice > 0 ? dist(price, currentPrice) : null;
             const info      = TYPE_MAP[o.type] ?? { label: o.type, cls: "pill--limit" };
             const isCanceling = !!canceling[o.orderId];
+            const ordKey  = stratKey("ord", o.orderId);
+            const ordStrat = strategies[ordKey] ?? null;
 
             return (
               <div key={o.orderId} className="order-card">
@@ -421,7 +601,23 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
                     <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>{o.side}</span>
                     <span className={`pill ${info.cls}`}>{info.label}</span>
                   </div>
-                  <span className="order-card__date">{fmtDate(o.time)}</span>
+                  <div className="order-card__header-right">
+                    <span className="order-card__date">{fmtDate(o.time)}</span>
+                    <div className="strategy-picker">
+                      <button
+                        className="strategy-picker__badge"
+                        style={ordStrat ? { background: `${STRATEGY_MAP[ordStrat]}22`, color: STRATEGY_MAP[ordStrat], borderColor: `${STRATEGY_MAP[ordStrat]}66` } : {}}
+                        onClick={() => setOpenPickerKey(k => k === ordKey ? null : ordKey)}>
+                        {ordStrat
+                          ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ordStrat] }} />{ordStrat}</>
+                          : <><i className="fa-solid fa-tag" /> Estratègia</>}
+                      </button>
+                      {openPickerKey === ordKey && (
+                        <StrategyPicker orderKey={ordKey} current={ordStrat}
+                          onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Price level */}
@@ -461,13 +657,13 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
                 <div className="order-card__actions">
                   <button className="order-btn order-btn--edit"
                     onClick={() => setEditTarget({ kind: "single", order: o })}>
-                    <i className="fa-solid fa-pen-to-square" /> Editar
+                    <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
                   </button>
                   <button className="order-btn order-btn--cancel" disabled={isCanceling}
                     onClick={() => handleCancel(o)}>
                     {isCanceling
-                      ? <><i className="fa-solid fa-spinner fa-spin" /> Cancel·lant</>
-                      : <><i className="fa-solid fa-xmark" /> Cancel·lar</>}
+                      ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
+                      : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
                   </button>
                 </div>
               </div>
@@ -488,17 +684,58 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins }: {
 }
 
 /* ── History table ── */
+type ResultKind = "tp" | "sl" | "buy" | "sell" | "canceled" | "other";
+
+function orderResult(o: BinanceOrder): ResultKind {
+  if (o.status === "CANCELED" || o.status === "EXPIRED") return "canceled";
+  if (o.status !== "FILLED") return "other";
+  if (o.type === "LIMIT_MAKER")     return "tp";
+  if (o.type === "STOP_LOSS_LIMIT" || o.type === "STOP_LOSS") return "sl";
+  if (o.side === "BUY")  return "buy";
+  if (o.side === "SELL") return "sell";
+  return "other";
+}
+
+const RESULT_BADGE: Record<ResultKind, { label: string; cls: string }> = {
+  tp:       { label: "TP ✓",    cls: "history-badge--tp"       },
+  sl:       { label: "SL ✗",    cls: "history-badge--sl"       },
+  buy:      { label: "Comprat", cls: "history-badge--buy"      },
+  sell:     { label: "Venut",   cls: "history-badge--sell"     },
+  canceled: { label: "Cancel.", cls: "history-badge--canceled" },
+  other:    { label: "—",       cls: "history-badge--other"    },
+};
+
 function HistoryTable({ orders, loading, error }: {
   orders: BinanceOrder[]; loading: boolean; error: string | null;
 }) {
-  if (loading) return <div className="state-empty">Loading…</div>;
+  const [trades,    setTrades]    = useState<BinanceTrade[]>([]);
+  const [loadingT,  setLoadingT]  = useState(true);
+
+  useEffect(() => {
+    setLoadingT(true);
+    fetch("/api/trades").then(r => r.json())
+      .then(d => { if (!d.error) setTrades(d); })
+      .finally(() => setLoadingT(false));
+  }, []);
+
+  if (loading || loadingT) return <div className="state-empty">Loading…</div>;
   if (error)   return <div className="state-error">{error}</div>;
   if (!orders.length) return <div className="state-empty">No orders found.</div>;
 
-  const sorted = [...orders].sort((a, b) => {
-    if (a.orderListId !== b.orderListId) return b.orderListId - a.orderListId;
-    return a.orderId - b.orderId;
-  });
+  // Commission map: orderId → { total, asset }
+  const commMap: Record<number, { total: number; asset: string }> = {};
+  for (const t of trades) {
+    const c = parseFloat(t.commission);
+    if (!commMap[t.orderId]) commMap[t.orderId] = { total: 0, asset: t.commissionAsset };
+    commMap[t.orderId].total += c;
+  }
+
+  const sorted = [...orders].sort((a, b) => b.updateTime - a.updateTime);
+
+  const fmtDate = (ts: number) =>
+    new Date(ts).toLocaleString("en-GB", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+    });
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -506,24 +743,28 @@ function HistoryTable({ orders, loading, error }: {
         <thead className="data-table__head">
           <tr>
             <th>Pair</th>
-            <th>Side</th>
-            <th>Type</th>
-            <th className="r data-table__col-trigger">Trigger</th>
-            <th className="r">Price</th>
-            <th className="r">Quantity</th>
-            <th>Status</th>
-            <th className="r data-table__col-date">Date</th>
+            <th>Resultat</th>
+            <th className="r">Preu exec.</th>
+            <th className="r">Valor exec.</th>
+            <th className="r history-col-comm">Comissió</th>
+            <th className="r data-table__col-date">Data</th>
           </tr>
         </thead>
         <tbody>
-          {sorted.map((o, i) => {
+          {sorted.map((o) => {
+            const result    = orderResult(o);
+            const badge     = RESULT_BADGE[result];
+            const execQty   = parseFloat(o.executedQty);
             const price     = parseFloat(o.price);
-            const stopPrice = parseFloat(o.stopPrice);
-            const info      = TYPE_MAP[o.type] ?? { label: o.type, cls: "pill--limit" };
-            const prev      = i > 0 ? sorted[i - 1].orderListId : -1;
-            const newGroup  = o.orderListId !== -1 && o.orderListId !== prev;
+            const execVal   = execQty > 0 && price > 0 ? execQty * price : 0;
+            const comm      = commMap[o.orderId];
+            const rowCls    = result === "tp" ? " history-row--tp"
+                            : result === "sl" ? " history-row--sl"
+                            : result === "buy" ? " history-row--buy"
+                            : result === "canceled" ? " history-row--dim"
+                            : "";
             return (
-              <tr key={o.orderId} className={`data-table__row${newGroup && i > 0 ? " data-table__row--sep" : ""}`}>
+              <tr key={o.orderId} className={`data-table__row${rowCls}`}>
                 <td className="data-table__cell">
                   <div className="symbol-col">
                     <span className="symbol-col__name">{o.symbol.replace("USDT", "")}</span>
@@ -531,23 +772,23 @@ function HistoryTable({ orders, loading, error }: {
                   </div>
                 </td>
                 <td className="data-table__cell">
-                  <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>{o.side}</span>
+                  <span className={`history-badge ${badge.cls}`}>{badge.label}</span>
                 </td>
-                <td className="data-table__cell">
-                  <span className={`pill ${info.cls}`}>{info.label}</span>
-                </td>
-                <td className="data-table__cell r mono dim data-table__col-trigger">
-                  {stopPrice > 0 ? formatCurrency(stopPrice) : "—"}
+                <td className="data-table__cell r mono">
+                  {price > 0 ? formatCurrency(price) : <span className="dim">—</span>}
                 </td>
                 <td className="data-table__cell r mono bold">
-                  {price > 0 ? formatCurrency(price) : "MARKET"}
+                  {execVal > 0 ? formatCurrency(execVal) : <span className="dim">—</span>}
                 </td>
-                <td className="data-table__cell r mono">{o.origQty}</td>
-                <td className="data-table__cell"><StatusPill status={o.status} /></td>
+                <td className="data-table__cell r mono history-col-comm">
+                  {comm ? (
+                    <span className="history-comm">
+                      {comm.total.toFixed(6)} <span className="dim">{comm.asset}</span>
+                    </span>
+                  ) : <span className="dim">—</span>}
+                </td>
                 <td className="data-table__cell r dim data-table__col-date" style={{ whiteSpace: "nowrap" }}>
-                  {new Date(o.time).toLocaleString("en-GB", {
-                    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-                  })}
+                  {fmtDate(o.updateTime || o.time)}
                 </td>
               </tr>
             );
@@ -608,12 +849,21 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
   const [errorO, setErrorO] = useState<string | null>(null);
   const [errorH, setErrorH] = useState<string | null>(null);
   const [errorB, setErrorB] = useState<string | null>(null);
-  const [refreshMs, setRefreshMs] = useState(15000);
+  const [refreshMs,      setRefreshMs]      = useState(15000);
+  const [lastRefreshed,  setLastRefreshed]  = useState<Date | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [strategies, setStrategies] = useState<Record<string, string>>({});
+  const [newOrderPrefill, setNewOrderPrefill] = useState<{
+    pair: string; side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string;
+  } | null>(null);
+
+  const fmtRefreshed = (d: Date) =>
+    d.toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   const fetchOpen = useCallback(() => {
     setLoadingO(true); setErrorO(null);
     fetch("/api/orders").then(r => r.json())
-      .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); })
+      .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); setLastRefreshed(new Date()); })
       .catch(e => setErrorO(e.message)).finally(() => setLoadingO(false));
   }, []);
 
@@ -646,11 +896,37 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
     if (tab === "balance" && !balances.length && !loadingB) fetchBalance();
   }, [tab, balances.length, loadingB, fetchBalance]);
 
+  // Load strategies once on mount
+  useEffect(() => {
+    fetch("/api/strategies").then(r => r.json()).then(d => { if (!d.error) setStrategies(d); });
+  }, []);
+
+  const handleStrategyChange = useCallback((key: string, strategy: string | null) => {
+    setStrategies(prev => {
+      const next = { ...prev };
+      if (strategy) next[key] = strategy; else delete next[key];
+      return next;
+    });
+    fetch("/api/strategies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, strategy }),
+    });
+  }, []);
+
+  const handleOpenOrderFromAnalysis = useCallback((
+    pair: string, side: "BUY" | "SELL", tp: string, sl: string, slLimit: string,
+  ) => {
+    setNewOrderPrefill({ pair, side, tp, sl, slLimit });
+    setShowNewOrder(true);
+  }, []);
+
   const TABS: { key: Tab; label: string; icon: string }[] = [
     { key: "portfolio", label: "Portfolio",                                             icon: "fa-wallet"     },
     { key: "open",      label: `Open Orders${openOrders.length ? ` (${openOrders.length})` : ""}`, icon: "fa-list-check" },
     { key: "history",   label: "History",                                               icon: "fa-clock-rotate-left" },
     { key: "balance",   label: "Balance",                                               icon: "fa-coins"      },
+    { key: "analysis",  label: "Anàlisi",                                               icon: "fa-magnifying-glass-chart" },
   ];
 
   return (
@@ -678,6 +954,7 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
             </select>
             <button className="refresh-btn" title="Refresca ara" onClick={() => {
               fetchOpen();
+              setRefreshTrigger(n => n + 1);
               if (tab === "history") fetchHistory();
               if (tab === "balance") fetchBalance();
             }}>
@@ -687,24 +964,37 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
         </div>
       </div>
 
-      {tab === "portfolio" && <PortfolioTab coins={coins} openOrderCount={openOrders.length} />}
-      {tab === "open"      && <OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} />}
+      {tab === "portfolio" && <PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} />}
+      {tab === "open"      && <OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} />}
       {tab === "history"   && <HistoryTable   orders={history}    loading={loadingH} error={errorH} />}
       {tab === "balance"   && <BalanceTable   balances={balances} loading={loadingB} error={errorB} />}
+      {tab === "analysis"  && <AnalysisTab onOpenOrder={handleOpenOrderFromAnalysis} />}
 
-      {tab !== "portfolio" && (
-        <div className="panel-footer">
-          <span className="panel-footer__dot" />
-          Binance Demo · {refreshMs === 0 ? "refresc manual" : `auto-refresh ${refreshMs / 1000}s`}
-        </div>
-      )}
+      <div className="panel-footer">
+        <span className="panel-footer__dot" />
+        Binance Demo · {refreshMs === 0 ? "refresc manual" : `auto-refresh ${refreshMs / 1000}s`}
+        {lastRefreshed && (
+          <span className="panel-footer__right">
+            <span className="panel-footer__refreshed">
+              <i className="fa-solid fa-clock" />
+              {fmtRefreshed(lastRefreshed)}
+            </span>
+          </span>
+        )}
+      </div>
 
       {showNewOrder && (
         <NewOrderModal
-          coin={null}
+          coin={newOrderPrefill ? (coins.find(c => c.pair === newOrderPrefill.pair) ?? null) : null}
           coins={coins}
-          onClose={() => setShowNewOrder(false)}
-          onSuccess={() => { setShowNewOrder(false); fetchOpen(); }}
+          onClose={() => { setShowNewOrder(false); setNewOrderPrefill(null); }}
+          onSuccess={() => { setShowNewOrder(false); setNewOrderPrefill(null); fetchOpen(); }}
+          presetPrices={newOrderPrefill ? {
+            side: newOrderPrefill.side,
+            tp: newOrderPrefill.tp,
+            sl: newOrderPrefill.sl,
+            slLimit: newOrderPrefill.slLimit,
+          } : undefined}
         />
       )}
     </div>

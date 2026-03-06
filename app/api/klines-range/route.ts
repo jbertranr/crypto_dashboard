@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cacheGet, cacheSet } from "../../lib/cache-store";
 
 export async function GET(req: NextRequest) {
   const symbol    = req.nextUrl.searchParams.get("symbol");
@@ -34,11 +35,16 @@ export async function GET(req: NextRequest) {
     fetchStart = startTime;
   }
 
-  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${fetchStart}&limit=200`;
-  const res = await fetch(url, { next: { revalidate: 60 } });
+  const KEY = `klinesrange:${symbol}:${startTime}:${window ?? "auto"}`;
+  const cached = cacheGet<Array<{ time: number; close: number }>>(KEY);
+  if (cached) return NextResponse.json(cached.data);
+
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${fetchStart}&limit=500`;
+  const res = await fetch(url);
   if (!res.ok) return NextResponse.json({ error: "Binance error" }, { status: 500 });
 
   const raw: unknown[][] = await res.json();
   const data = raw.map(k => ({ time: k[0] as number, close: parseFloat(k[4] as string) }));
+  cacheSet(KEY, data, 60);
   return NextResponse.json(data);
 }

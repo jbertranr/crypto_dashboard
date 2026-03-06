@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CoinRow } from "../lib/types";
-import { formatCurrency } from "../lib/api";
+import { formatCurrency } from "../lib/format";
 import CoinIcon from "./CoinIcon";
 import CoinModal from "./CoinModal";
 import NewOrderModal from "./NewOrderModal";

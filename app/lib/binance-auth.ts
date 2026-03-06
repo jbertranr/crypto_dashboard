@@ -2,6 +2,23 @@ import { createHmac } from "crypto";
 
 const TESTNET = "https://demo-api.binance.com/api/v3";
 
+/* ── Server-time sync ──────────────────────────────────────── */
+let _timeOffset = 0;
+let _lastSync   = 0;
+
+async function getSyncedTimestamp(): Promise<number> {
+  const now = Date.now();
+  if (now - _lastSync > 5 * 60 * 1000) {          // re-sync every 5 min
+    try {
+      const r = await fetch(`${TESTNET}/time`, { cache: "no-store" });
+      const d = await r.json() as { serverTime: number };
+      _timeOffset = d.serverTime - Date.now();
+      _lastSync   = Date.now();
+    } catch { /* keep existing offset on failure */ }
+  }
+  return Date.now() + _timeOffset;
+}
+
 function sign(params: Record<string, string | number>): string {
   const query = new URLSearchParams(
     Object.entries(params).map(([k, v]) => [k, String(v)])
@@ -17,7 +34,8 @@ async function signedRequest<T>(
   path: string,
   params: Record<string, string | number> = {}
 ): Promise<T> {
-  const query = sign({ ...params, timestamp: Date.now() });
+  const timestamp = await getSyncedTimestamp();
+  const query = sign({ ...params, timestamp, recvWindow: 5000 });
   const isBody = method === "POST" || method === "PUT";
   const url = isBody ? `${TESTNET}${path}` : `${TESTNET}${path}?${query}`;
   const res = await fetch(url, {
@@ -66,6 +84,25 @@ export interface BinanceAccount {
   balances: BinanceBalance[];
 }
 
+export interface BinanceTrade {
+  id: number;
+  orderId: number;
+  orderListId: number;
+  symbol: string;
+  price: string;
+  qty: string;
+  quoteQty: string;
+  commission: string;
+  commissionAsset: string;
+  time: number;
+  isBuyer: boolean;
+  isMaker: boolean;
+}
+
+export async function getMyTrades(symbol: string, limit = 20): Promise<BinanceTrade[]> {
+  return signedGet<BinanceTrade[]>("/myTrades", { symbol, limit });
+}
+
 export async function getOpenOrders(): Promise<BinanceOrder[]> {
   return signedGet<BinanceOrder[]>("/openOrders");
 }
@@ -84,6 +121,36 @@ export async function cancelOrder(symbol: string, orderId: number): Promise<unkn
 
 export async function cancelOcoOrder(symbol: string, orderListId: number): Promise<unknown> {
   return signedRequest("DELETE", "/orderList", { symbol, orderListId });
+}
+
+export async function getOrder(symbol: string, orderId: number): Promise<{ status: string; price: string; stopPrice: string }> {
+  return signedGet(`/order`, { symbol, orderId });
+}
+
+export async function getTickerPrice(symbol: string): Promise<number> {
+  const res = await fetch(`${TESTNET}/ticker/price?symbol=${symbol}`, { cache: "no-store" });
+  const d = await res.json() as { price: string };
+  return parseFloat(d.price);
+}
+
+export async function placeStopLossLimitOrder(params: {
+  symbol: string; side: "BUY" | "SELL"; quantity: string;
+  stopPrice: string; limitPrice: string;
+}): Promise<{ orderId: number; status: string }> {
+  return signedRequest("POST", "/order", {
+    symbol: params.symbol, side: params.side, type: "STOP_LOSS_LIMIT",
+    quantity: params.quantity, stopPrice: params.stopPrice,
+    price: params.limitPrice, timeInForce: "GTC",
+  });
+}
+
+export async function placeLimitMakerOrder(params: {
+  symbol: string; side: "BUY" | "SELL"; quantity: string; price: string;
+}): Promise<{ orderId: number; status: string }> {
+  return signedRequest("POST", "/order", {
+    symbol: params.symbol, side: params.side, type: "LIMIT_MAKER",
+    quantity: params.quantity, price: params.price,
+  });
 }
 
 export async function modifyOrder(
