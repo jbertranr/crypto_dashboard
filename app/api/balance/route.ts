@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAccount } from "../../lib/binance-auth";
+import { apiError } from "../../lib/api-error";
+import { log } from "../../lib/logger";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -8,8 +12,11 @@ export async function GET() {
     const balances = account.balances.filter(
       (b) => parseFloat(b.free) > 0 || parseFloat(b.locked) > 0
     );
-    return NextResponse.json(balances);
+    log.binance.info({ assets: balances.length }, "balance");
+    const res = NextResponse.json(balances);
+    res.headers.set("Cache-Control", "no-store");
+    return res;
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    return apiError(e, "balance");
   }
 }

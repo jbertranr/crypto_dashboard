@@ -1,0 +1,32 @@
+{
+  "name": "conf_sol_btc_425pct_v2 [EQ 2026-03-17]",
+  "savedAt": "2026-03-17T09:17:08.379Z",
+  "config": {
+    "maxHoldingBars": 289,
+    "pumpVolMin": 3,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT",
+      "BTCUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1.1,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4.7,
+    "breakEvenAtr": 2.4
+  },
+  "pnlPct": 312.1737786893435
+}

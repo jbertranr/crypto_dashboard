@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { CoinRow } from "../lib/types";
 import { formatCurrency } from "../lib/format";
 import CoinIcon from "./CoinIcon";
@@ -48,11 +49,7 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
       .catch(() => setLoading(false));
   }, [coin.pair, tf]);
 
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const fmt = (ts: number) => {
     const d = new Date(ts);

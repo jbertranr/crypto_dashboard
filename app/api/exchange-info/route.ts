@@ -13,12 +13,16 @@ export async function GET(req: NextRequest) {
   const symbol = req.nextUrl.searchParams.get("symbol");
   if (!symbol) return NextResponse.json({ error: "symbol required" }, { status: 400 });
 
-  const KEY = `exchangeinfo:${symbol}`;
+  // C7: validate symbol format
+  if (!/^[A-Z0-9]{3,20}$/.test(symbol)) return NextResponse.json({ error: "Invalid symbol" }, { status: 400 });
+
+  const KEY = `exchange-info:${symbol}`;
   const cached = cacheGet<{ stepSize: string; minQty: string; tickSize: string }>(KEY);
   if (cached) return NextResponse.json(cached.data);
 
   const res = await fetch(
-    `https://api.binance.com/api/v3/exchangeInfo?symbol=${symbol}`
+    `https://api.binance.com/api/v3/exchangeInfo?symbol=${symbol}`,
+    { signal: AbortSignal.timeout(10_000) },  // B7
   );
   if (!res.ok) return NextResponse.json({ error: "Failed" }, { status: 500 });
 

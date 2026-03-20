@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | head -40)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep SimulationTab)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -E \"SimulationTab|simulation/run\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | head -60)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -E \"\\(SimulationTab|simulation/run\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -E \"SimulationTab|simulation\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -E \"SimulationTab|CoinIcon\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -E \"simulation/run\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -E \"simulation|SimulationTab|configs\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep \"SimulationTab\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -i \"nav\\\\|coinsidebar\" | head -20)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | head -50)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -i \"SettingsTab\\\\|settings-store\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -i \"SettingsTab\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && npx tsc --noEmit 2>&1 | grep -i \"auto-trader\\\\|orders/route\")",
+      "Bash(find \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" -name \"route.ts\" -path \"*/simulation*\" 2>/dev/null | head -5)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(cat simulation/1773507497520_conf_sol_btc_454pct.json | python -c \"import sys,json; d=json.load\\(sys.stdin\\); c=d.get\\('config',{}\\); print\\('capitalMode:', c.get\\('capitalMode'\\)\\); print\\('capitalPct:', c.get\\('capitalPct'\\)\\); print\\('capitalFixed:', c.get\\('capitalFixed'\\)\\); print\\('amBasePct:', c.get\\('amBasePct'\\)\\); e=d.get\\('effectiveConfig',{}\\); print\\('effectiveConfig.capitalMode:', e.get\\('capitalMode'\\)\\); print\\('effectiveConfig.capitalPct:', e.get\\('capitalPct'\\)\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && curl -s -X POST http://localhost:3000/api/telegram/test-all | python -m json.tool 2>&1)",
+      "Bash(curl -s -b /tmp/cd_cookies.txt -X POST http://localhost:3000/api/telegram/report | python -m json.tool 2>&1)",
+      "Bash(curl -s -b /tmp/cd_cookies.txt http://localhost:3000/api/balance | python -m json.tool 2>&1 | head -80)",
+      "Bash(curl -s -b /tmp/cd_cookies.txt http://localhost:3000/api/balance | python -m json.tool 2>&1 | tail -60)",
+      "Bash(curl -s -b /tmp/cd_cookies.txt -X POST http://localhost:3000/api/telegram/report | node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\);const j=JSON.parse\\(d\\);console.log\\(j.ok?'Enviat ✓  saldo: $'+j.totalValue.toFixed\\(2\\):JSON.stringify\\(j\\)\\)\")",
+      "Bash(curl -s -b /tmp/cd_cookies.txt -X POST http://localhost:3000/api/telegram/report)",
+      "Bash(curl -s -b /tmp/cd_cookies.txt -X POST http://localhost:3000/api/telegram/test-all)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && curl -s -X POST http://localhost:3000/api/telegram/test-all -H \"Content-Type: application/json\" 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/api/auth/login -H \"Content-Type: application/json\" -d '{\"password\":\"Trosdecopes\"}' 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && curl -s -b /tmp/cookies.txt -X POST http://localhost:3000/api/telegram/test-all -H \"Content-Type: application/json\" 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && curl -s -b /tmp/cookies.txt -X POST http://localhost:3000/api/telegram/test-all 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\jbert\\\\claude\\\\crypto_dashboard\" && curl -s -b /tmp/cookies.txt -X POST http://localhost:3000/api/telegram/report 2>&1)"
+    ]
+  }
+}

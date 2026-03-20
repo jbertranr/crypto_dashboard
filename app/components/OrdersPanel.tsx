@@ -1,15 +1,26 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { BinanceOrder, BinanceBalance, BinanceTrade } from "../lib/binance-auth";
 import { formatCurrency } from "../lib/format";
 import { CoinRow } from "../lib/types";
 import NewOrderModal from "./NewOrderModal";
 import PortfolioTab from "./PortfolioTab";
 import AnalysisTab from "./AnalysisTab";
+import StrategyMatrix from "./StrategyMatrix";
 import OcoProgressChart from "./OcoProgressChart";
 import CoinIcon from "./CoinIcon";
+import ErrorsPanel from "./ErrorsPanel";
+import LogsPanel from "./LogsPanel";
+import ErrorBoundary from "./ErrorBoundary";
+import SettingsTab from "./SettingsTab";
+import JournalTab from "./JournalTab";
+import SimulationTab from "./SimulationTab";
+import BotTab from "./BotTab";
+import EqualizerTab from "./EqualizerTab";
+import AutoLabTab from "./AutoLabTab";
 
-type Tab = "portfolio" | "open" | "history" | "balance" | "analysis";
+export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab";
 
 /* ── Strategies ── */
 export const STRATEGIES = [
@@ -22,6 +33,13 @@ export const STRATEGIES = [
 
 export type StrategyName = (typeof STRATEGIES)[number]["name"];
 const STRATEGY_MAP = Object.fromEntries(STRATEGIES.map(s => [s.name, s.color])) as Record<string, string>;
+
+export interface OrderMeta {
+  interval:   string | null;
+  exitNotes:  string | null;
+  tradeCode:  string | null;
+  botName:    string | null;
+}
 
 function stratKey(kind: "oco" | "ord", id: number): string {
   return `${kind}:${id}`;
@@ -149,11 +167,7 @@ function EditModal({ target, onClose, onSuccess }: {
     }
   };
 
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   return (
     <div className="order-edit__backdrop" onClick={onClose}>
@@ -215,28 +229,61 @@ function EditModal({ target, onClose, onSuccess }: {
 }
 
 /* ── Open Orders cards ── */
-function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, onStrategyChange }: {
+function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, onStrategyChange, orderMeta }: {
   orders: BinanceOrder[]; loading: boolean; error: string | null;
   onRefresh: () => void; coins: CoinRow[];
   strategies: Record<string, string>;
   onStrategyChange: (key: string, strategy: string | null) => void;
+  orderMeta: Record<string, OrderMeta>;
 }) {
   const [canceling,    setCanceling]    = useState<Record<number, boolean>>({});
   const [editTarget,   setEditTarget]   = useState<EditTarget | null>(null);
   const [cancelError,  setCancelError]  = useState<string | null>(null);
+  const [cancelConfirm, setCancelConfirm] = useState<
+    | { kind: "single"; order: BinanceOrder }
+    | { kind: "oco";    group: OcoGroup }
+    | null
+  >(null);
   const [entryPrices,  setEntryPrices]  = useState<Record<number, number>>({});
   const [openPickerKey, setOpenPickerKey] = useState<string | null>(null);
+  const [openExitKey,  setOpenExitKey]  = useState<string | null>(null);
+  const [localExitNotes, setLocalExitNotes] = useState<Record<string, string>>({});
+  const exitTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [filterStrategy, setFilterStrategy] = useState<string | null>(null);
-  const [trailings, setTrailings] = useState<Record<number, { activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string }>>({});
+  type TrailingSuggestion = { orderListId: number; activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string; entryPrice: number };
+  type TrailingActiveRec  = { id: number; symbol: string; side: "BUY" | "SELL"; slOrderId: number; currentSl: number; trailDist: number; peakPrice: number; entryPrice: number; status: string; updatedAt: number; createdAt: number };
+  const [trailingSugg,   setTrailingSugg]   = useState<Record<number, TrailingSuggestion>>({});
+  const [trailingActive, setTrailingActive] = useState<TrailingActiveRec[]>([]);
+  const [activatingTs,   setActivatingTs]   = useState<Record<number, boolean>>({});
+  const [tsError,        setTsError]        = useState<Record<number, string>>({});
 
-  useEffect(() => {
-    fetch("/api/orders/trailing").then(r => r.json()).then((arr: { orderListId: number; activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string }[]) => {
-      if (!Array.isArray(arr)) return;
-      const m: typeof trailings = {};
-      arr.forEach(t => { m[t.orderListId] = t; });
-      setTrailings(m);
-    }).catch(() => {});
+  const fetchTrailing = useCallback(() => {
+    fetch("/api/orders/trailing").then(r => r.json()).then((d: { suggestions: TrailingSuggestion[]; active: TrailingActiveRec[] }) => {
+      if (!d || !Array.isArray(d.suggestions)) return;
+      const m: Record<number, TrailingSuggestion> = {};
+      d.suggestions.forEach(t => { m[t.orderListId] = t; });
+      setTrailingSugg(m);
+      setTrailingActive(d.active ?? []);
+    }).catch(err => console.warn("[OrdersPanel] trailing:", (err as Error).message));
   }, []);
+
+  function handleExitNotesChange(key: string, value: string) {
+    setLocalExitNotes(p => ({ ...p, [key]: value }));
+    if (exitTimers.current[key]) clearTimeout(exitTimers.current[key]);
+    exitTimers.current[key] = setTimeout(() => {
+      fetch("/api/orders/meta", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, exitNotes: value }),
+      }).catch(err => console.warn("[OrdersPanel] exitNotes save:", (err as Error).message));
+    }, 600);
+  }
+
+  // Cleanup debounce timers on unmount to avoid setState on unmounted component
+  useEffect(() => () => { Object.values(exitTimers.current).forEach(clearTimeout); }, []);
+
+  // Refresh trailing data on mount and whenever orders change (engine may have auto-activated)
+  useEffect(() => { fetchTrailing(); }, [fetchTrailing, orders]);
 
   const allSorted = [...orders].sort((a, b) => {
     if (a.orderListId !== b.orderListId) return b.orderListId - a.orderListId;
@@ -268,45 +315,47 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
           startTime: Math.min(...grp.map(x => x.time)),
           tpOrd, slOrd,
         });
+      } else {
+        // Only one leg visible (other leg already filled/cancelled) — render as individual single cards
+        grp.forEach(leg => groups.push({ kind: "single", order: leg }));
       }
     }
   }
 
-  const handleCancel = async (o: BinanceOrder) => {
-    setCanceling(p => ({ ...p, [o.orderId]: true }));
-    setCancelError(null);
-    try {
-      const res = await fetch("/api/orders/cancel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol: o.symbol, orderId: o.orderId, orderListId: o.orderListId }),
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
-      onRefresh();
-    } catch (e: unknown) {
-      setCancelError((e as Error).message);
-    } finally {
-      setCanceling(p => { const n = { ...p }; delete n[o.orderId]; return n; });
-    }
-  };
+  // Open confirmation modal instead of cancelling immediately
+  const handleCancel    = (o: BinanceOrder) => setCancelConfirm({ kind: "single", order: o });
+  const handleCancelOco = (g: OcoGroup)     => setCancelConfirm({ kind: "oco", group: g });
 
-  const handleCancelOco = async (g: OcoGroup) => {
-    setCanceling(p => ({ ...p, [g.listId]: true }));
+  const executeCancel = async (sellAtMarket: boolean) => {
+    if (!cancelConfirm) return;
+    const cc = cancelConfirm;
+    setCancelConfirm(null);
     setCancelError(null);
+
+    const cancelKey = cc.kind === "single" ? cc.order.orderId : cc.group.listId;
+    setCanceling(p => ({ ...p, [cancelKey]: true }));
     try {
+      const body = cc.kind === "single"
+        ? { symbol: cc.order.symbol, orderId: cc.order.orderId, orderListId: cc.order.orderListId,
+            side: cc.order.side, origQty: cc.order.origQty, price: cc.order.price,
+            type: cc.order.type, sellAtMarket }
+        : { symbol: cc.group.symbol, orderId: -1, orderListId: cc.group.listId,
+            side: cc.group.side, origQty: cc.group.tpOrd.origQty, price: cc.group.tpOrd.price,
+            type: "ENTRY_OCO", sellAtMarket };
+
       const res = await fetch("/api/orders/cancel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol: g.symbol, orderId: -1, orderListId: g.listId }),
+        body: JSON.stringify(body),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
+      if (d.sellError) setCancelError(`Ordre cancel·lada però la venda al mercat ha fallat: ${d.sellError}`);
       onRefresh();
     } catch (e: unknown) {
       setCancelError((e as Error).message);
     } finally {
-      setCanceling(p => { const n = { ...p }; delete n[g.listId]; return n; });
+      setCanceling(p => { const n = { ...p }; delete n[cancelKey]; return n; });
     }
   };
 
@@ -410,7 +459,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
               const valueUSD     = currentPrice ? qty * currentPrice : 0;
               const toTp         = dist(tpPrice, currentPrice);
               const toSl         = dist(slPrice, currentPrice);
-              const entryP       = entryPrices[g.listId] ?? 0;
+              const suggEntry    = trailingSugg[g.listId]?.entryPrice ?? 0;
+              const entryP       = suggEntry > 0 ? suggEntry : (entryPrices[g.listId] ?? 0);
               const fromEntry    = entryP && currentPrice ? ((currentPrice - entryP) / entryP) * 100 : null;
               const isCanceling  = !!canceling[g.listId];
               const tpUp = toTp !== null && toTp > 0;
@@ -434,6 +484,17 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                     </div>
                     <div className="order-card__header-right">
                       <span className="order-card__date">{fmtDate(g.startTime)}</span>
+                      {orderMeta[ocoKey]?.tradeCode && (
+                        <span className="order-card__tc-badge">{orderMeta[ocoKey].tradeCode}</span>
+                      )}
+                      {orderMeta[ocoKey]?.interval && (
+                        <span className="order-card__tf-badge">{orderMeta[ocoKey].interval}</span>
+                      )}
+                      {orderMeta[ocoKey]?.botName && (
+                        <span className="order-card__bot-badge" title={`Bot: ${orderMeta[ocoKey].botName}`}>
+                          <i className="fa-solid fa-robot" /> {orderMeta[ocoKey].botName}
+                        </span>
+                      )}
                       <span className="pill pill--new">Activa</span>
                       {/* Strategy badge */}
                       <div className="strategy-picker">
@@ -453,68 +514,117 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                     </div>
                   </div>
 
-                  {/* B) Order summary — entry left, TP/SL stacked right */}
-                  <div className="order-summary">
-
-                    {/* Left: position / entry */}
-                    <div className="order-summary__card order-summary__card--pos">
-                      <div className="order-summary__label">Import entrada</div>
-                      <div className="order-summary__price mono">
-                        {entryP > 0 ? formatCurrency(entryP * qty) : "—"}
-                      </div>
-                      {fromEntry !== null && (
-                        <span className={`order-summary__delta order-summary__delta--${fromEntry >= 0 ? "up" : "down"}`}>
-                          {fromEntry >= 0 ? "+" : ""}{fromEntry.toFixed(2)}%
-                        </span>
-                      )}
-                      <div className="order-summary__mini-stats">
-                        <div className="order-summary__mini-stat">
-                          <span>Quantitat</span>
-                          <span>{qty} {g.symbol.replace("USDT", "")}</span>
-                        </div>
-                        {currentPrice > 0 && (
-                          <div className="order-summary__mini-stat">
-                            <span>Preu actual</span>
-                            <span>{formatCurrency(currentPrice)}</span>
-                          </div>
-                        )}
-                        {valueUSD > 0 && (
-                          <div className="order-summary__mini-stat">
-                            <span>Valor actual</span>
-                            <span>{formatCurrency(valueUSD)}</span>
-                          </div>
-                        )}
-                      </div>
+                  {/* Amount banner */}
+                  {qty > 0 && (
+                    <div className="order-card__amount">
+                      <span className="order-card__amount-value">
+                        {qty} {g.symbol.replace("USDT", "")}
+                      </span>
+                      <span className="order-card__amount-label">
+                        {entryP > 0
+                          ? `(${formatCurrency(entryP * qty)}) · entrada`
+                          : valueUSD > 0
+                            ? `(${formatCurrency(valueUSD)}) · actual`
+                            : ""}
+                      </span>
                     </div>
+                  )}
 
-                    {/* Right: TP on top, SL on bottom */}
-                    <div className="order-summary__right">
-                      <div className="order-summary__card order-summary__card--tp">
-                        <div className="order-summary__label">Take Profit</div>
-                        <div className="order-summary__price mono">{formatCurrency(tpPrice)}</div>
-                        {toTp !== null && (
-                          <span className={`order-summary__delta order-summary__delta--${tpUp ? "up" : "down"}`}>
-                            {toTp > 0 ? "+" : ""}{toTp.toFixed(2)}%
-                          </span>
-                        )}
-                        <div className="order-summary__type">Limit Maker</div>
-                      </div>
-
-                      <div className="order-summary__card order-summary__card--sl">
-                        <div className="order-summary__label">Stop Loss</div>
-                        <div className="order-summary__price mono">{formatCurrency(slPrice)}</div>
-                        {toSl !== null && (
-                          <span className={`order-summary__delta order-summary__delta--${slUp ? "up" : "down"}`}>
-                            {toSl > 0 ? "+" : ""}{toSl.toFixed(2)}%
-                          </span>
-                        )}
-                        <div className="order-summary__type">
-                          {slLimit !== slPrice ? `Limit ${formatCurrency(slLimit)}` : "Stop Limit"}
+                  {/* B) Price track — entrada vs vigent */}
+                  {(entryP > 0 || currentPrice > 0) && (
+                    <div className="price-track">
+                      <div className="price-track__col">
+                        <div className="price-track__label">Entrada</div>
+                        <div className="price-track__total mono">
+                          {entryP > 0 && qty > 0 ? formatCurrency(entryP * qty) : "—"}
+                        </div>
+                        <div className="price-track__unit dim">
+                          {entryP > 0 ? `${qty} × ${formatCurrency(entryP)}` : ""}
+                        </div>
+                        <div className="price-track__time">
+                          <i className="fa-regular fa-clock" />
+                          {" "}{fmtDate(g.startTime)}
                         </div>
                       </div>
-                    </div>
 
-                  </div>
+                      <div className="price-track__arrow">
+                        {fromEntry !== null && (
+                          <span className={`price-track__delta${fromEntry >= 0 ? " price-track__delta--up" : " price-track__delta--down"}`}>
+                            {fromEntry >= 0 ? "+" : ""}{fromEntry.toFixed(2)}%
+                          </span>
+                        )}
+                        <i className="fa-solid fa-arrow-right price-track__icon" />
+                      </div>
+
+                      <div className="price-track__col price-track__col--now">
+                        <div className="price-track__label">
+                          <span className="price-track__live" title="Preu en temps real" />
+                          Vigent
+                        </div>
+                        <div className="price-track__total mono">
+                          {currentPrice > 0 && qty > 0 ? formatCurrency(currentPrice * qty) : "—"}
+                        </div>
+                        <div className="price-track__unit dim">
+                          {currentPrice > 0 ? `${qty} × ${formatCurrency(currentPrice)}` : ""}
+                        </div>
+                        <div className="price-track__time">
+                          <i className="fa-regular fa-clock" />
+                          {" ara · "}{new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}h
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* C) TP / SL cards */}
+                  {(() => {
+                    const tpFromEntry = entryP > 0 && tpPrice > 0 ? ((tpPrice - entryP) / entryP) * 100 : null;
+                    const slFromEntry = entryP > 0 && slPrice > 0 ? ((slPrice - entryP) / entryP) * 100 : null;
+                    const tpPnl = entryP > 0 && qty > 0 && tpPrice > 0 ? (tpPrice - entryP) * qty : null;
+                    const slPnl = entryP > 0 && qty > 0 && slPrice > 0 ? (slPrice - entryP) * qty : null;
+                    return (
+                      <div className="tpsl-grid">
+                        <div className="tpsl-card tpsl-card--tp">
+                          <div className="tpsl-card__label">Take Profit</div>
+                          <div className="tpsl-card__total-big mono">
+                            {qty > 0 && tpPrice > 0 ? formatCurrency(tpPrice * qty) : formatCurrency(tpPrice)}
+                          </div>
+                          <div className="tpsl-card__row">
+                            {tpFromEntry !== null && (
+                              <span className="tpsl-card__pct">
+                                {tpFromEntry > 0 ? "+" : ""}{tpFromEntry.toFixed(2)}%
+                              </span>
+                            )}
+                            {tpPnl !== null && (
+                              <span className="tpsl-card__pnl">
+                                {tpPnl > 0 ? "+" : ""}{formatCurrency(tpPnl)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="tpsl-card__ref dim">preu {formatCurrency(tpPrice)} · dist. {toTp !== null ? `${toTp > 0 ? "+" : ""}${toTp.toFixed(2)}%` : "—"}</div>
+                        </div>
+
+                        <div className="tpsl-card tpsl-card--sl">
+                          <div className="tpsl-card__label">Stop Loss</div>
+                          <div className="tpsl-card__total-big mono">
+                            {qty > 0 && slPrice > 0 ? formatCurrency(slPrice * qty) : formatCurrency(slPrice)}
+                          </div>
+                          <div className="tpsl-card__row">
+                            {slFromEntry !== null && (
+                              <span className="tpsl-card__pct">
+                                {slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%
+                              </span>
+                            )}
+                            {slPnl !== null && (
+                              <span className="tpsl-card__pnl">
+                                {slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="tpsl-card__ref dim">preu {formatCurrency(slPrice)} · dist. {toSl !== null ? `${toSl > 0 ? "+" : ""}${toSl.toFixed(2)}%` : "—"}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* C) Chart — always visible */}
                   <div className="order-card__chart">
@@ -525,43 +635,132 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                     />
                   </div>
 
-                  {/* Trailing stop reminder */}
-                  {trailings[g.listId] && (() => {
-                    const t = trailings[g.listId];
-                    const reached = currentPrice > 0 && (
-                      (g.side === "SELL" && currentPrice >= t.activateAt) ||
-                      (g.side === "BUY"  && currentPrice <= t.activateAt)
+                  {/* Trailing stop */}
+                  {(() => {
+                    const sugg = trailingSugg[g.listId];
+                    const activeTs = trailingActive.find(
+                      t => t.symbol === g.symbol && t.status === "active"
                     );
+                    const reached = sugg && currentPrice > 0 && (
+                      (g.side === "SELL" && currentPrice >= sugg.activateAt) ||
+                      (g.side === "BUY"  && currentPrice <= sugg.activateAt)
+                    );
+
+                    if (activeTs) return null; // already activated, shows as separate order
+
+                    if (!sugg) return null;
+
+                    const isActivating = !!activatingTs[g.listId];
+                    const err = tsError[g.listId];
+
+                    const handleActivate = async () => {
+                      setActivatingTs(p => ({ ...p, [g.listId]: true }));
+                      setTsError(p => { const n = { ...p }; delete n[g.listId]; return n; });
+                      try {
+                        const exInfo = await fetch(`/api/exchange-info?symbol=${g.symbol}`).then(r => r.json());
+                        const tickSize = exInfo.tickSize ?? "0.01";
+                        const res = await fetch("/api/orders/trailing/activate", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            orderListId: g.listId, symbol: g.symbol,
+                            side: g.side, quantity: g.tpOrd.origQty,
+                            tpPrice: g.tpOrd.price,
+                            trailDist: sugg.distance, tickSize,
+                            entryPrice: sugg.entryPrice > 0 ? sugg.entryPrice : (entryPrices[g.listId] ?? 0),
+                          }),
+                        });
+                        const d = await res.json();
+                        if (d.error) throw new Error(d.error);
+                        fetchTrailing(); onRefresh();
+                      } catch (e) {
+                        setTsError(p => ({ ...p, [g.listId]: (e as Error).message }));
+                      } finally {
+                        setActivatingTs(p => { const n = { ...p }; delete n[g.listId]; return n; });
+                      }
+                    };
+
                     return (
                       <div className={`order-trailing${reached ? " order-trailing--active" : ""}`}>
                         <div className="order-trailing__header">
                           <i className="fa-solid fa-flag-checkered" />
                           <span>Trailing Stop</span>
-                          {reached && <span className="order-trailing__alert">Activa ara!</span>}
+                          {reached && <span className="order-trailing__alert">Preu assolit!</span>}
                         </div>
                         <div className="order-trailing__levels">
+                          {sugg.activateAtr > 0 && (
+                            <div className="order-trailing__level">
+                              <span>Activació</span>
+                              <span className="mono">{formatCurrency(sugg.activateAt)}</span>
+                              <span className="order-trailing__atr">{sugg.activateAtr}×ATR</span>
+                            </div>
+                          )}
+                          {sugg.activateAtr === 0 && (
+                            <div className="order-trailing__level">
+                              <span>Activació</span>
+                              <span className="order-trailing__atr">immediata · auto</span>
+                            </div>
+                          )}
                           <div className="order-trailing__level">
-                            <span>Activació</span>
-                            <span className="mono">{formatCurrency(t.activateAt)}</span>
-                            <span className="order-trailing__atr">{t.activateAtr}×ATR</span>
-                          </div>
-                          <div className="order-trailing__level">
-                            <span>Cua</span>
-                            <span className="mono">{formatCurrency(t.distance)}</span>
-                            <span className="order-trailing__atr">{t.distanceAtr}×ATR</span>
+                            <span>Distància</span>
+                            <span className="mono">{formatCurrency(sugg.distance)}</span>
+                            <span className="order-trailing__atr">{sugg.distanceAtr}×ATR</span>
                           </div>
                         </div>
-                        <div className="order-trailing__logic">{t.logic}</div>
+                        <div className="order-trailing__logic">{sugg.logic}</div>
+                        {err && <div className="order-trailing__err">{err}</div>}
+                        <button
+                          className={`order-trailing__btn${reached ? " order-trailing__btn--ready" : ""}`}
+                          onClick={handleActivate} disabled={isActivating}
+                        >
+                          {isActivating
+                            ? <><i className="fa-solid fa-spinner fa-spin" /> Activant…</>
+                            : reached
+                              ? <><i className="fa-solid fa-bolt" /> Activar ara (auto en ~30s)</>
+                              : <><i className="fa-solid fa-flag-checkered" /> Activa Trailing Stop</>}
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Exit plan */}
+                  {(() => {
+                    const isOpen  = openExitKey === ocoKey;
+                    const meta    = orderMeta[ocoKey] ?? {};
+                    const current = localExitNotes[ocoKey] ?? meta.exitNotes ?? "";
+                    const hasPlan = !!current;
+                    return (
+                      <div className="order-card__exit">
+                        <button
+                          className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
+                          onClick={() => setOpenExitKey(k => k === ocoKey ? null : ocoKey)}
+                        >
+                          <i className="fa-solid fa-route" />
+                          <span>Pla de sortida</span>
+                          {hasPlan && <span className="order-card__exit-indicator" />}
+                          <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
+                        </button>
+                        {isOpen && (
+                          <div className="order-card__exit-body">
+                            <textarea
+                              className="journal-notes"
+                              rows={3}
+                              placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
+                              value={current}
+                              onChange={ev => handleExitNotesChange(ocoKey, ev.target.value)}
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
 
                   {/* Actions */}
                   <div className="order-card__actions">
-                    <button className="order-btn order-btn--edit"
+                    <button className="order-btn order-btn--secondary"
                       onClick={() => setEditTarget({
                         kind: "oco", symbol: g.symbol, orderListId: g.listId,
-                        side: g.side, quantity: g.tpOrd.origQty,
+                        side: g.side as "BUY" | "SELL", quantity: g.tpOrd.origQty,
                         tpOrder: g.tpOrd, slOrder: g.slOrd,
                       })}>
                       <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
@@ -590,6 +789,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
             const isCanceling = !!canceling[o.orderId];
             const ordKey  = stratKey("ord", o.orderId);
             const ordStrat = strategies[ordKey] ?? null;
+            // Check if this is an active trailing stop SL order
+            const activeTs = trailingActive.find(t => t.slOrderId === o.orderId && t.status === "active");
 
             return (
               <div key={o.orderId} className="order-card">
@@ -599,10 +800,24 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                     <CoinIcon symbol={o.symbol.replace("USDT", "")} size={22} />
                     <span className="order-card__pair">{o.symbol.replace("USDT", "")} <span className="order-card__quote">/ USDT</span></span>
                     <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>{o.side}</span>
-                    <span className={`pill ${info.cls}`}>{info.label}</span>
+                    {activeTs
+                      ? <span className="pill pill--trailing"><i className="fa-solid fa-chart-line" /> Trailing</span>
+                      : <span className={`pill ${info.cls}`}>{info.label}</span>}
                   </div>
                   <div className="order-card__header-right">
                     <span className="order-card__date">{fmtDate(o.time)}</span>
+                    {orderMeta[ordKey]?.tradeCode && (
+                      <span className="order-card__tc-badge">{orderMeta[ordKey].tradeCode}</span>
+                    )}
+                    {orderMeta[ordKey]?.interval && (
+                      <span className="order-card__tf-badge">{orderMeta[ordKey].interval}</span>
+                    )}
+                    {orderMeta[ordKey]?.botName && (
+                      <span className="order-card__bot-badge" title={`Bot: ${orderMeta[ordKey].botName}`}>
+                        <i className="fa-solid fa-robot" /> {orderMeta[ordKey].botName}
+                      </span>
+                    )}
+                    {activeTs && <span className="order-trailing__pulse" style={{ marginRight: "0.25rem" }} />}
                     <div className="strategy-picker">
                       <button
                         className="strategy-picker__badge"
@@ -620,38 +835,252 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                   </div>
                 </div>
 
-                {/* Price level */}
-                <div className="order-card__level order-card__level--single">
-                  <div className="order-card__level-label">
-                    <i className="fa-solid fa-tag" style={{ fontSize: "0.65rem" }} />
-                    Preu ordre
-                  </div>
-                  <span className="order-card__level-price mono">
-                    {price > 0 ? formatCurrency(price) : "MARKET"}
-                  </span>
-                  {toDist !== null && (
-                    <span className={`order-card__dist order-card__dist--${toDist >= 0 ? "up" : "down"}`}>
-                      {toDist > 0 ? "+" : ""}{toDist.toFixed(2)}%
-                    </span>
-                  )}
-                  {stopPrice > 0 && (
-                    <span className="order-card__sublabel">Trigger: {formatCurrency(stopPrice)}</span>
-                  )}
-                </div>
+                {activeTs ? (() => {
+                  // ── Trailing stop card layout (similar to OCO) ──
+                  const entryP  = activeTs.entryPrice > 0 ? activeTs.entryPrice : 0;
+                  const slP     = activeTs.currentSl;
+                  const peakP   = activeTs.peakPrice;
+                  const fromEntry = entryP > 0 && currentPrice > 0
+                    ? ((currentPrice - entryP) / entryP) * 100 : null;
+                  const slFromEntry = entryP > 0 && slP > 0
+                    ? ((slP - entryP) / entryP) * 100 : null;
+                  const peakFromEntry = entryP > 0 && peakP > 0
+                    ? ((peakP - entryP) / entryP) * 100 : null;
+                  const slPnl   = entryP > 0 && qty > 0 && slP > 0
+                    ? (slP - entryP) * qty * (o.side === "SELL" ? 1 : -1) : null;
+                  const peakPnl = entryP > 0 && qty > 0 && peakP > 0
+                    ? (peakP - entryP) * qty * (o.side === "SELL" ? 1 : -1) : null;
+                  const toSlDist = slP > 0 && currentPrice > 0 ? dist(slP, currentPrice) : null;
+                  const toPeakDist = peakP > 0 && currentPrice > 0 ? dist(peakP, currentPrice) : null;
 
-                {/* Meta */}
-                <div className="order-card__meta">
-                  <span className="order-card__qty">
-                    <i className="fa-solid fa-layer-group" /> {qty} {o.symbol.replace("USDT", "")}
-                  </span>
-                  {valueUSD > 0 && (
-                    <span className="order-card__value mono">≈ {formatCurrency(valueUSD)}</span>
+                  return (<>
+                    {/* Amount banner */}
+                    {qty > 0 && (
+                      <div className="order-card__amount">
+                        <span className="order-card__amount-value">
+                          {qty} {o.symbol.replace("USDT", "")}
+                        </span>
+                        <span className="order-card__amount-label">
+                          {entryP > 0
+                            ? `(${formatCurrency(entryP * qty)}) · entrada`
+                            : currentPrice > 0
+                              ? `(${formatCurrency(currentPrice * qty)}) · actual`
+                              : ""}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Price track: entrada → vigent */}
+                    {(entryP > 0 || currentPrice > 0) && (
+                      <div className="price-track">
+                        <div className="price-track__col">
+                          <div className="price-track__label">Entrada</div>
+                          <div className="price-track__total mono">
+                            {entryP > 0 && qty > 0 ? formatCurrency(entryP * qty) : "—"}
+                          </div>
+                          <div className="price-track__unit dim">
+                            {entryP > 0 ? `${qty} × ${formatCurrency(entryP)}` : ""}
+                          </div>
+                          <div className="price-track__time">
+                            <i className="fa-regular fa-clock" />
+                            {" "}{fmtDate(activeTs.createdAt)}
+                          </div>
+                        </div>
+                        <div className="price-track__arrow">
+                          {fromEntry !== null && (
+                            <span className={`price-track__delta${fromEntry >= 0 ? " price-track__delta--up" : " price-track__delta--down"}`}>
+                              {fromEntry >= 0 ? "+" : ""}{fromEntry.toFixed(2)}%
+                            </span>
+                          )}
+                          <i className="fa-solid fa-arrow-right price-track__icon" />
+                        </div>
+                        <div className="price-track__col price-track__col--now">
+                          <div className="price-track__label">
+                            <span className="price-track__live" title="Preu en temps real" />
+                            Vigent
+                          </div>
+                          <div className="price-track__total mono">
+                            {currentPrice > 0 && qty > 0 ? formatCurrency(currentPrice * qty) : "—"}
+                          </div>
+                          <div className="price-track__unit dim">
+                            {currentPrice > 0 ? `${qty} × ${formatCurrency(currentPrice)}` : ""}
+                          </div>
+                          <div className="price-track__time">
+                            <i className="fa-regular fa-clock" />
+                            {" ara · "}{new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}h
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SL Trail + Màxim vist (com tpsl-grid) */}
+                    <div className="tpsl-grid">
+                      <div className="tpsl-card tpsl-card--sl">
+                        <div className="tpsl-card__label">
+                          <i className="fa-solid fa-shield-halved" style={{ marginRight: "0.25rem" }} />
+                          SL Trailing
+                        </div>
+                        <div className="tpsl-card__total-big mono">
+                          {qty > 0 && slP > 0 ? formatCurrency(slP * qty) : formatCurrency(slP)}
+                        </div>
+                        <div className="tpsl-card__row">
+                          {slFromEntry !== null && (
+                            <span className="tpsl-card__pct">
+                              {slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%
+                            </span>
+                          )}
+                          {slPnl !== null && (
+                            <span className="tpsl-card__pnl">
+                              {slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="tpsl-card__ref dim">
+                          preu {formatCurrency(slP)}
+                          {toSlDist !== null ? ` · dist. ${toSlDist > 0 ? "+" : ""}${toSlDist.toFixed(2)}%` : ""}
+                        </div>
+                      </div>
+
+                      <div className="tpsl-card tpsl-card--tp">
+                        <div className="tpsl-card__label">
+                          <i className="fa-solid fa-arrow-trend-up" style={{ marginRight: "0.25rem" }} />
+                          Màxim vist
+                        </div>
+                        <div className="tpsl-card__total-big mono">
+                          {qty > 0 && peakP > 0 ? formatCurrency(peakP * qty) : formatCurrency(peakP)}
+                        </div>
+                        <div className="tpsl-card__row">
+                          {peakFromEntry !== null && (
+                            <span className="tpsl-card__pct">
+                              {peakFromEntry > 0 ? "+" : ""}{peakFromEntry.toFixed(2)}%
+                            </span>
+                          )}
+                          {peakPnl !== null && (
+                            <span className="tpsl-card__pnl">
+                              {peakPnl > 0 ? "+" : ""}{formatCurrency(peakPnl)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="tpsl-card__ref dim">
+                          preu {formatCurrency(peakP)}
+                          {toPeakDist !== null ? ` · dist. ${toPeakDist > 0 ? "+" : ""}${toPeakDist.toFixed(2)}%` : ""}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Chart with trailing SL history */}
+                    {slP > 0 && peakP > 0 && (
+                      <div className="order-card__chart">
+                        <OcoProgressChart
+                          symbol={o.symbol} startTime={activeTs.createdAt}
+                          tpPrice={peakP} slPrice={slP}
+                          side={activeTs.side}
+                          tpLabel="Pic" slLabel="SL Trail"
+                          trailDist={activeTs.trailDist}
+                          trailEntryPrice={entryP > 0 ? entryP : peakP}
+                        />
+                      </div>
+                    )}
+
+                    {/* Trailing running info */}
+                    <div className="order-trailing order-trailing--running">
+                      <div className="order-trailing__header">
+                        <i className="fa-solid fa-chart-line" />
+                        <span>Trailing Stop Actiu</span>
+                        <span className="order-trailing__pulse" />
+                      </div>
+                      <div className="order-trailing__levels">
+                        <div className="order-trailing__level">
+                          <span>Distància</span>
+                          <span className="mono">{formatCurrency(activeTs.trailDist)}</span>
+                        </div>
+                      </div>
+                      <div className="order-trailing__logic" style={{ color: "#059669" }}>
+                        El SL puja automàticament quan el preu fa nous màxims. Actualitzat {new Date(activeTs.updatedAt).toLocaleTimeString("ca-ES")}.
+                      </div>
+                    </div>
+                  </>);
+                })() : (<>
+                  {/* Amount banner — ordre simple sense trailing */}
+                  {qty > 0 && (
+                    <div className="order-card__amount">
+                      <span className="order-card__amount-value">
+                        {qty} {o.symbol.replace("USDT", "")}
+                      </span>
+                      <span className="order-card__amount-label">
+                        {valueUSD > 0
+                          ? `(${formatCurrency(valueUSD)}) · actual`
+                          : price > 0
+                            ? `(${formatCurrency(price * qty)}) · ordre`
+                            : ""}
+                      </span>
+                    </div>
                   )}
-                  {currentPrice > 0 && (
-                    <span className="order-card__current dim">Mercat: {formatCurrency(currentPrice)}</span>
-                  )}
-                  <StatusPill status={o.status} />
-                </div>
+
+                  {/* Price level */}
+                  <div className="order-card__level order-card__level--single">
+                    <div className="order-card__level-label">
+                      <i className="fa-solid fa-tag" style={{ fontSize: "0.65rem" }} />
+                      Preu ordre
+                    </div>
+                    <span className="order-card__level-price mono">
+                      {price > 0 ? formatCurrency(price) : "MARKET"}
+                    </span>
+                    {toDist !== null && (
+                      <span className={`order-card__dist order-card__dist--${toDist >= 0 ? "up" : "down"}`}>
+                        {toDist > 0 ? "+" : ""}{toDist.toFixed(2)}%
+                      </span>
+                    )}
+                    {stopPrice > 0 && (
+                      <span className="order-card__sublabel">Trigger: {formatCurrency(stopPrice)}</span>
+                    )}
+                  </div>
+
+                  {/* Meta */}
+                  <div className="order-card__meta">
+                    <span className="order-card__qty">
+                      <i className="fa-solid fa-layer-group" />
+                      {" "}{qty} {o.symbol.replace("USDT", "")}
+                      {price > 0 && <span className="dim"> ({formatCurrency(price * qty)})</span>}
+                    </span>
+                    {currentPrice > 0 && (
+                      <span className="order-card__current dim">Mercat: {formatCurrency(currentPrice)}</span>
+                    )}
+                    <StatusPill status={o.status} />
+                  </div>
+                </>)}
+
+                {/* Exit plan */}
+                {(() => {
+                  const isOpen  = openExitKey === ordKey;
+                  const meta    = orderMeta[ordKey] ?? {};
+                  const current = localExitNotes[ordKey] ?? meta.exitNotes ?? "";
+                  const hasPlan = !!current;
+                  return (
+                    <div className="order-card__exit">
+                      <button
+                        className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
+                        onClick={() => setOpenExitKey(k => k === ordKey ? null : ordKey)}
+                      >
+                        <i className="fa-solid fa-route" />
+                        <span>Pla de sortida</span>
+                        {hasPlan && <span className="order-card__exit-indicator" />}
+                        <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
+                      </button>
+                      {isOpen && (
+                        <div className="order-card__exit-body">
+                          <textarea
+                            className="journal-notes"
+                            rows={3}
+                            placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
+                            value={current}
+                            onChange={ev => handleExitNotesChange(ordKey, ev.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Actions */}
                 <div className="order-card__actions">
@@ -679,168 +1108,818 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
           onSuccess={onRefresh}
         />
       )}
+
+      {/* Cancel confirmation modal */}
+      {cancelConfirm && (() => {
+        const isSell = cancelConfirm.kind === "oco"
+          ? true  // OCOs are always sell-side exits
+          : cancelConfirm.order.side === "SELL";
+        const sym = cancelConfirm.kind === "oco"
+          ? cancelConfirm.group.symbol
+          : cancelConfirm.order.symbol;
+        const base = sym.replace(/USDT$/, "");
+        const qty  = parseFloat(
+          cancelConfirm.kind === "oco"
+            ? cancelConfirm.group.tpOrd.origQty
+            : cancelConfirm.order.origQty
+        );
+        return (
+          <div className="cancel-overlay" onClick={() => setCancelConfirm(null)}>
+            <div className="cancel-modal" onClick={e => e.stopPropagation()}>
+              <div className="cancel-modal__header">
+                <i className="fa-solid fa-triangle-exclamation" style={{ color: "var(--yellow)" }} />
+                <span>Confirmar cancel·lació</span>
+              </div>
+              <div className="cancel-modal__body">
+                <p className="cancel-modal__desc">
+                  Cancel·lar l&apos;ordre de <strong>{base}</strong>
+                  {" — "}<span className="mono">{qty.toFixed(qty < 1 ? 6 : 4)} {base}</span>
+                </p>
+                {isSell && (
+                  <p className="cancel-modal__warn">
+                    <i className="fa-solid fa-circle-exclamation" />
+                    {" "}Sense ordre de protecció, la posició quedaria exposada.
+                  </p>
+                )}
+              </div>
+              <div className="cancel-modal__actions">
+                {isSell && (
+                  <button className="btn-danger" onClick={() => executeCancel(true)}>
+                    <i className="fa-solid fa-arrow-down-to-line" /> Cancel·lar i vendre al mercat
+                  </button>
+                )}
+                <button className="btn-secondary" onClick={() => executeCancel(false)}>
+                  <i className="fa-solid fa-xmark" /> {isSell ? "Només cancel·lar" : "Cancel·lar ordre"}
+                </button>
+                <button className="btn-secondary" onClick={() => setCancelConfirm(null)}>
+                  Tornar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
 
-/* ── History table ── */
+/* ── History — types & helpers ── */
 type ResultKind = "tp" | "sl" | "buy" | "sell" | "canceled" | "other";
 
 function orderResult(o: BinanceOrder): ResultKind {
   if (o.status === "CANCELED" || o.status === "EXPIRED") return "canceled";
   if (o.status !== "FILLED") return "other";
-  if (o.type === "LIMIT_MAKER")     return "tp";
+  if (o.type === "LIMIT_MAKER") return "tp";
   if (o.type === "STOP_LOSS_LIMIT" || o.type === "STOP_LOSS") return "sl";
   if (o.side === "BUY")  return "buy";
   if (o.side === "SELL") return "sell";
   return "other";
 }
 
-const RESULT_BADGE: Record<ResultKind, { label: string; cls: string }> = {
-  tp:       { label: "TP ✓",    cls: "history-badge--tp"       },
-  sl:       { label: "SL ✗",    cls: "history-badge--sl"       },
-  buy:      { label: "Comprat", cls: "history-badge--buy"      },
-  sell:     { label: "Venut",   cls: "history-badge--sell"     },
-  canceled: { label: "Cancel.", cls: "history-badge--canceled" },
-  other:    { label: "—",       cls: "history-badge--other"    },
+const RESULT_CFG: Record<ResultKind, { label: string; icon: string; color: string }> = {
+  tp:       { label: "Take Profit", icon: "fa-check",      color: "#16a34a" },
+  sl:       { label: "Stop Loss",   icon: "fa-xmark",      color: "#dc2626" },
+  buy:      { label: "Compra",      icon: "fa-arrow-up",   color: "#3b82f6" },
+  sell:     { label: "Venda",       icon: "fa-arrow-down", color: "#8b5cf6" },
+  canceled: { label: "Cancel·lat",  icon: "fa-ban",        color: "#94a3b8" },
+  other:    { label: "—",           icon: "fa-minus",      color: "#94a3b8" },
 };
 
-function HistoryTable({ orders, loading, error }: {
-  orders: BinanceOrder[]; loading: boolean; error: string | null;
-}) {
-  const [trades,    setTrades]    = useState<BinanceTrade[]>([]);
-  const [loadingT,  setLoadingT]  = useState(true);
+interface TrailingActiveInfo {
+  id: number; symbol: string; slOrderId: number; status: string;
+  originOcoListId: number | null; currentSl: number; trailDist: number; peakPrice: number;
+}
 
-  useEffect(() => {
-    setLoadingT(true);
-    fetch("/api/trades").then(r => r.json())
-      .then(d => { if (!d.error) setTrades(d); })
-      .finally(() => setLoadingT(false));
-  }, []);
+type OcoGroup = {
+  id: number; filled: BinanceOrder; other: BinanceOrder | null;
+  trailingMeta?: TrailingActiveInfo; trailingOrder?: BinanceOrder | null;
+};
+type HistItem =
+  | { kind: "solo";    order: BinanceOrder }
+  | { kind: "oco";     group: OcoGroup }
+  | { kind: "buy+oco"; buyOrder: BinanceOrder; group: OcoGroup };
 
-  if (loading || loadingT) return <div className="state-empty">Loading…</div>;
-  if (error)   return <div className="state-error">{error}</div>;
-  if (!orders.length) return <div className="state-empty">No orders found.</div>;
+function groupOrders(orders: BinanceOrder[], trailingActives: TrailingActiveInfo[] = []): HistItem[] {
+  const sorted = [...orders].sort((a, b) => (b.updateTime || b.time) - (a.updateTime || a.time));
 
-  // Commission map: orderId → { total, asset }
-  const commMap: Record<number, { total: number; asset: string }> = {};
-  for (const t of trades) {
-    const c = parseFloat(t.commission);
-    if (!commMap[t.orderId]) commMap[t.orderId] = { total: 0, asset: t.commissionAsset };
-    commMap[t.orderId].total += c;
+  // Build lookup maps from trailing data
+  const trailingByOco    = new Map<number, TrailingActiveInfo>();
+  const trailingSlOrders = new Set<number>();
+  for (const t of trailingActives) {
+    if (t.originOcoListId != null) trailingByOco.set(t.originOcoListId, t);
+    trailingSlOrders.add(t.slOrderId);
+  }
+  const orderById = new Map<number, BinanceOrder>();
+  for (const o of sorted) orderById.set(o.orderId, o);
+
+  const ocoMap = new Map<number, BinanceOrder[]>();
+  for (const o of sorted) {
+    if (o.orderListId !== -1) {
+      const g = ocoMap.get(o.orderListId) ?? [];
+      g.push(o);
+      ocoMap.set(o.orderListId, g);
+    }
+  }
+  const seen = new Set<number>();
+  const items: HistItem[] = [];
+  for (const o of sorted) {
+    if (seen.has(o.orderId)) continue;
+    seen.add(o.orderId);
+    if (o.orderListId === -1) {
+      // Skip: this is a trailing SL order already shown inside an OCO tree
+      // But only skip if the origin OCO is still present in active orders
+      if (trailingSlOrders.has(o.orderId)) {
+        const ta = trailingActives.find(t => t.slOrderId === o.orderId);
+        if (ta?.originOcoListId != null && ocoMap.has(ta.originOcoListId)) continue;
+        // Origin OCO is gone (cancelled) → show this SL as a solo card with trailing info
+      }
+      items.push({ kind: "solo", order: o });
+    } else {
+      const legs = ocoMap.get(o.orderListId) ?? [o];
+      legs.forEach(l => seen.add(l.orderId));
+      const filled = legs.find(l => l.status === "FILLED") ?? legs[0];
+      const other  = legs.find(l => l !== filled) ?? null;
+      const group: OcoGroup = { id: o.orderListId, filled, other };
+      const tm = trailingByOco.get(o.orderListId);
+      if (tm) {
+        group.trailingMeta  = tm;
+        group.trailingOrder = orderById.get(tm.slOrderId) ?? null;
+        // Mark the SL order as seen so it doesn't also appear as solo
+        if (tm.slOrderId) seen.add(tm.slOrderId);
+      }
+      items.push({ kind: "oco", group });
+    }
   }
 
-  const sorted = [...orders].sort((a, b) => b.updateTime - a.updateTime);
+  // Link market BUY solos to their SELL OCO groups (buy-and-exit flow)
+  const soloBuys = items
+    .filter(i => i.kind === "solo" &&
+      (i as { kind: "solo"; order: BinanceOrder }).order.type === "MARKET" &&
+      (i as { kind: "solo"; order: BinanceOrder }).order.side === "BUY" &&
+      (i as { kind: "solo"; order: BinanceOrder }).order.status === "FILLED")
+    .map(i => (i as { kind: "solo"; order: BinanceOrder }).order);
+
+  const usedBuyIds  = new Set<number>();
+  const ocoToBuy    = new Map<number, BinanceOrder>(); // oco listId → buy order
+
+  for (const item of items) {
+    if (item.kind !== "oco") continue;
+    const g        = item.group;
+    const ocoOrder = g.filled ?? g.other;
+    if (!ocoOrder || ocoOrder.side !== "SELL") continue;
+    const ocoQty  = parseFloat(ocoOrder.origQty);
+    const ocoTime = ocoOrder.time;
+
+    const match = soloBuys
+      .filter(b =>
+        !usedBuyIds.has(b.orderId) &&
+        b.symbol === ocoOrder.symbol &&
+        ocoTime >= b.time &&
+        ocoTime - b.time < 10 * 60_000 &&          // within 10 min
+        Math.abs(parseFloat(b.executedQty) - ocoQty) / ocoQty < 0.01,
+      )
+      .sort((a, b_) => b_.time - a.time)[0];       // closest preceding buy
+
+    if (match) {
+      usedBuyIds.add(match.orderId);
+      ocoToBuy.set(g.id, match);
+    }
+  }
+
+  const final: HistItem[] = [];
+  for (const item of items) {
+    if (item.kind === "solo" && usedBuyIds.has(item.order.orderId)) continue;
+    if (item.kind === "oco") {
+      const buy = ocoToBuy.get(item.group.id);
+      if (buy) { final.push({ kind: "buy+oco", buyOrder: buy, group: item.group }); continue; }
+    }
+    final.push(item);
+  }
+  return final;
+}
+
+function getTypeLabel(order: BinanceOrder): string {
+  const s = order.side === "BUY" ? "compra" : "venda";
+  switch (order.type) {
+    case "LIMIT":             return `Ordre limitada de ${s}`;
+    case "LIMIT_MAKER":       return "Take Profit (maker)";
+    case "MARKET":            return `Ordre de mercat`;
+    case "STOP_LOSS_LIMIT":   return "Stop-loss limitada";
+    case "STOP_LOSS":         return "Stop-loss";
+    case "TAKE_PROFIT_LIMIT": return "Take Profit limitada";
+    case "TAKE_PROFIT":       return "Take Profit";
+    default:                  return order.type.toLowerCase().replace(/_/g, " ");
+  }
+}
+
+function fmtDuration(ms: number): string {
+  const s = Math.round(ms / 1000);
+  if (s < 60)   return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function BuyOcoCard({ buyOrder, group, trades }: {
+  buyOrder: BinanceOrder;
+  group:    OcoGroup;
+  trades:   BinanceTrade[];
+}) {
+  const symbol  = buyOrder.symbol.replace(/USDT$/, "");
+  const buyQty  = parseFloat(buyOrder.executedQty) || 0;
+
+  // Entry: avg fill from trades or cummulativeQuoteQty fallback
+  const buyTrades  = trades.filter(t => t.orderId === buyOrder.orderId);
+  const buyQuote   = buyTrades.reduce((s, t) => s + parseFloat(t.quoteQty), 0);
+  const entryValue = buyQuote > 0 ? buyQuote : parseFloat((buyOrder as unknown as Record<string,string>).cummulativeQuoteQty || "0");
+  const entryPrice = entryValue > 0 && buyQty > 0 ? entryValue / buyQty : 0;
+
+  // OCO result
+  const tpLeg  = [group.filled, group.other].filter(Boolean).find(l => l!.type === "LIMIT_MAKER") as BinanceOrder | undefined;
+  const slLeg  = [group.filled, group.other].filter(Boolean).find(l => l!.type === "STOP_LOSS_LIMIT" || l!.type === "STOP_LOSS") as BinanceOrder | undefined;
+  const exitLeg = group.filled.status === "FILLED" ? group.filled : null;
+  const isTP    = exitLeg?.type === "LIMIT_MAKER";
+  const isSL    = exitLeg?.type === "STOP_LOSS_LIMIT" || exitLeg?.type === "STOP_LOSS";
+
+  const exitTrades = exitLeg ? trades.filter(t => t.orderId === exitLeg.orderId) : [];
+  const exitQuote  = exitTrades.reduce((s, t) => s + parseFloat(t.quoteQty), 0);
+  const exitPrice  = exitTrades.length > 0 && buyQty > 0 ? exitQuote / buyQty
+                   : exitLeg ? parseFloat(exitLeg.price) : 0;
+
+  const pnl     = exitPrice > 0 && entryPrice > 0 ? (exitPrice - entryPrice) * buyQty : null;
+  const pnlPct  = pnl != null && entryValue > 0 ? (pnl / entryValue) * 100 : null;
+  const pnlUp   = pnl != null && pnl >= 0;
+
+  const resultColor = isTP ? "#16a34a" : isSL ? "#dc2626" : "#94a3b8";
+  const resultLabel = isTP ? "Take Profit" : isSL ? "Stop Loss" : exitLeg ? "Venda" : "En curs";
+  const resultIcon  = isTP ? "fa-check" : isSL ? "fa-xmark" : "fa-clock";
+
+  const durationMs = exitLeg
+    ? (exitLeg.updateTime || 0) - buyOrder.time
+    : (group.filled.time || 0) - buyOrder.time;
+  const duration = durationMs > 5_000 ? fmtDuration(durationMs) : null;
+
+  const commByAsset: Record<string, number> = {};
+  [...buyTrades, ...exitTrades].forEach(t => {
+    commByAsset[t.commissionAsset] = (commByAsset[t.commissionAsset] ?? 0) + parseFloat(t.commission);
+  });
+  const commEntries = Object.entries(commByAsset).filter(([, v]) => v > 0);
 
   const fmtDate = (ts: number) =>
-    new Date(ts).toLocaleString("en-GB", {
-      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-    });
+    new Date(ts).toLocaleString("ca-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table className="data-table">
-        <thead className="data-table__head">
-          <tr>
-            <th>Pair</th>
-            <th>Resultat</th>
-            <th className="r">Preu exec.</th>
-            <th className="r">Valor exec.</th>
-            <th className="r history-col-comm">Comissió</th>
-            <th className="r data-table__col-date">Data</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((o) => {
-            const result    = orderResult(o);
-            const badge     = RESULT_BADGE[result];
-            const execQty   = parseFloat(o.executedQty);
-            const price     = parseFloat(o.price);
-            const execVal   = execQty > 0 && price > 0 ? execQty * price : 0;
-            const comm      = commMap[o.orderId];
-            const rowCls    = result === "tp" ? " history-row--tp"
-                            : result === "sl" ? " history-row--sl"
-                            : result === "buy" ? " history-row--buy"
-                            : result === "canceled" ? " history-row--dim"
-                            : "";
-            return (
-              <tr key={o.orderId} className={`data-table__row${rowCls}`}>
-                <td className="data-table__cell">
-                  <div className="symbol-col">
-                    <span className="symbol-col__name">{o.symbol.replace("USDT", "")}</span>
-                    {o.orderListId !== -1 && <span className="symbol-col__tag">OCO</span>}
-                  </div>
-                </td>
-                <td className="data-table__cell">
-                  <span className={`history-badge ${badge.cls}`}>{badge.label}</span>
-                </td>
-                <td className="data-table__cell r mono">
-                  {price > 0 ? formatCurrency(price) : <span className="dim">—</span>}
-                </td>
-                <td className="data-table__cell r mono bold">
-                  {execVal > 0 ? formatCurrency(execVal) : <span className="dim">—</span>}
-                </td>
-                <td className="data-table__cell r mono history-col-comm">
-                  {comm ? (
-                    <span className="history-comm">
-                      {comm.total.toFixed(6)} <span className="dim">{comm.asset}</span>
-                    </span>
-                  ) : <span className="dim">—</span>}
-                </td>
-                <td className="data-table__cell r dim data-table__col-date" style={{ whiteSpace: "nowrap" }}>
-                  {fmtDate(o.updateTime || o.time)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="hist-card hist-buyoco" style={{ "--hist-color": resultColor } as React.CSSProperties}>
+      <div className="hist-card__accent" />
+
+      {/* Header */}
+      <div className="hist-buyoco__header">
+        <div className="hist-card__identity">
+          <div className="hist-card__id-row">
+            <CoinIcon symbol={symbol} size={15} />
+            <span className="hist-card__symbol">{symbol}</span>
+            <span className="hist-card__quote">/USDT</span>
+            <span className="hist-chip hist-chip--side hist-chip--buy">BUY</span>
+            <span className="hist-chip hist-chip--oco">OCO</span>
+          </div>
+          <span className="hist-card__type-label">Compra de mercat + OCO</span>
+        </div>
+        <span className="hist-result" style={{ color: resultColor }}>
+          <i className={`fa-solid ${resultIcon}`} />
+          {resultLabel}
+        </span>
+      </div>
+
+      {/* Entry → Exit flow */}
+      <div className="hist-buyoco__flow">
+        <div className="hist-buyoco__leg hist-buyoco__leg--entry">
+          <span className="hist-buyoco__leg-label">Entrada</span>
+          <span className="hist-buyoco__leg-price mono">
+            {entryPrice > 0 ? formatCurrency(entryPrice) : "—"}
+          </span>
+          <span className="hist-buyoco__leg-qty dim">
+            {buyQty > 0 ? `${buyQty.toFixed(buyQty < 1 ? 6 : 4)} ${symbol}` : ""}
+          </span>
+          {entryValue > 0 && (
+            <span className="hist-buyoco__leg-val mono">{formatCurrency(entryValue)}</span>
+          )}
+        </div>
+
+        <div className="hist-buyoco__arrow">
+          <i className="fa-solid fa-arrow-right-long" />
+        </div>
+
+        <div className="hist-buyoco__leg hist-buyoco__leg--exit">
+          <span className="hist-buyoco__leg-label">Sortida</span>
+          {exitLeg ? (
+            <>
+              <span className="hist-buyoco__leg-price mono" style={{ color: resultColor }}>
+                {exitPrice > 0 ? formatCurrency(exitPrice) : "—"}
+              </span>
+              <span className="hist-buyoco__leg-qty dim">{resultLabel}</span>
+              {exitQuote > 0 && (
+                <span className="hist-buyoco__leg-val mono">{formatCurrency(exitQuote)}</span>
+              )}
+            </>
+          ) : (
+            <>
+              {tpLeg && <span className="hist-buyoco__leg-price mono" style={{ color: "#16a34a" }}>TP {formatCurrency(parseFloat(tpLeg.price))}</span>}
+              {slLeg && <span className="hist-buyoco__leg-qty dim">SL {formatCurrency(parseFloat(slLeg.stopPrice || slLeg.price))}</span>}
+            </>
+          )}
+        </div>
+
+        {pnl != null && (
+          <div className={`hist-buyoco__pnl${pnlUp ? " hist-buyoco__pnl--up" : " hist-buyoco__pnl--down"}`}>
+            <span className="hist-buyoco__pnl-val mono">{pnlUp ? "+" : ""}{formatCurrency(pnl)}</span>
+            {pnlPct != null && (
+              <span className="hist-buyoco__pnl-pct">{pnlUp ? "+" : ""}{pnlPct.toFixed(2)}%</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Details row */}
+      <div className="hist-card__details">
+        {duration && (
+          <span className="hist-detail">
+            <i className="fa-regular fa-clock" />
+            <span className="hist-detail__label">Durada</span>
+            <span>{duration}</span>
+          </span>
+        )}
+        {commEntries.length > 0 && (
+          <span className="hist-detail">
+            <span className="hist-detail__label">Comissió</span>
+            <span className="mono">{commEntries.map(([a, v]) => `${v.toFixed(6)} ${a}`).join(" + ")}</span>
+          </span>
+        )}
+        <span className="hist-detail dim">
+          <i className="fa-regular fa-calendar" />
+          {fmtDate(buyOrder.time)}
+        </span>
+      </div>
     </div>
   );
 }
 
-/* ── Balance table ── */
-function BalanceTable({ balances, loading, error }: {
-  balances: BinanceBalance[]; loading: boolean; error: string | null;
+function HistoryCard({ order, trades, otherLeg }: {
+  order:    BinanceOrder;
+  trades:   BinanceTrade[];
+  otherLeg?: BinanceOrder | null;
+}) {
+  const result   = orderResult(order);
+  const cfg      = RESULT_CFG[result];
+  const symbol   = order.symbol.replace(/USDT$/, "");
+  const isOco    = order.orderListId !== -1;
+  const isFilled = order.status === "FILLED";
+
+  // Quantities
+  const origQty   = parseFloat(order.origQty) || 0;
+  const execQty   = parseFloat(order.executedQty) || 0;
+  const showQty   = isFilled ? execQty : origQty;
+  const isPartial = isFilled && execQty > 0 && execQty < origQty * 0.9999;
+
+  // Prices
+  const limitPrice = parseFloat(order.price) || 0;
+  const stopPrice  = parseFloat(order.stopPrice) || 0;
+
+  // Trades for this order
+  const orderTrades = trades.filter(t => t.orderId === order.orderId);
+  const quoteQty    = orderTrades.reduce((s, t) => s + parseFloat(t.quoteQty), 0);
+  const execVal     = quoteQty > 0 ? quoteQty : (showQty * limitPrice);
+  const avgFill     = orderTrades.length > 0 && execQty > 0 ? quoteQty / execQty : null;
+
+  // Commission
+  const commByAsset: Record<string, number> = {};
+  orderTrades.forEach(t => {
+    commByAsset[t.commissionAsset] = (commByAsset[t.commissionAsset] ?? 0) + parseFloat(t.commission);
+  });
+  const commEntries = Object.entries(commByAsset).filter(([, v]) => v > 0);
+
+  // Duration (only meaningful if > 5s)
+  const durationMs    = (order.updateTime || 0) - order.time;
+  const durationLabel = durationMs > 5_000 ? fmtDuration(durationMs) : null;
+
+  // OCO other leg
+  const otherLimitPrice = otherLeg ? parseFloat(otherLeg.price || "0") : null;
+  const otherStopPrice  = otherLeg ? parseFloat(otherLeg.stopPrice || "0") : null;
+  const otherIsFilled   = otherLeg?.status === "FILLED";
+  const otherLabel      = otherLeg?.type === "LIMIT_MAKER" ? "TP" : otherLeg ? "SL" : null;
+  const otherHasPrice   = otherLimitPrice != null && otherLimitPrice > 0;
+
+  const fmtDate = (ts: number) =>
+    new Date(ts).toLocaleString("ca-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  const hasDetails = (isFilled && (avgFill != null || limitPrice > 0)) ||
+    stopPrice > 0 || durationLabel != null || commEntries.length > 0 || otherHasPrice;
+
+  return (
+    <div className={`hist-card hist-card--${result}`} style={{ "--hist-color": cfg.color } as React.CSSProperties}>
+      <div className="hist-card__accent" />
+
+      <div className="hist-card__icon">
+        <i className={`fa-solid ${cfg.icon}`} />
+      </div>
+
+      {/* Identity: symbol + type subtitle */}
+      <div className="hist-card__identity">
+        <div className="hist-card__id-row">
+          <CoinIcon symbol={symbol} size={15} />
+          <span className="hist-card__symbol">{symbol}</span>
+          <span className="hist-card__quote">/USDT</span>
+          <span className={`hist-chip hist-chip--side hist-chip--${order.side.toLowerCase()}`}>
+            <i className={`fa-solid fa-arrow-${order.side === "BUY" ? "up" : "down"}`} />
+            {order.side}
+          </span>
+          {isOco && <span className="hist-chip hist-chip--oco">OCO</span>}
+        </div>
+        <span className="hist-card__type-label">{getTypeLabel(order)}</span>
+      </div>
+
+      <span className={`hist-result hist-result--${result}`}>
+        <i className={`fa-solid ${cfg.icon}`} />
+        {cfg.label}
+      </span>
+
+      <div className="hist-card__value">
+        {isFilled && execVal > 0
+          ? <span className="hist-card__val-main mono">{formatCurrency(execVal)}</span>
+          : result === "canceled"
+            ? <span className="dim">—</span>
+            : limitPrice > 0
+              ? <span className="hist-card__val-main mono dim">{formatCurrency(origQty * limitPrice)}</span>
+              : <span className="dim">—</span>
+        }
+        {showQty > 0 && (
+          <span className="hist-card__val-qty dim">
+            {isPartial
+              ? `${execQty.toFixed(execQty < 1 ? 6 : 4)} / ${origQty.toFixed(origQty < 1 ? 6 : 4)}`
+              : showQty.toFixed(showQty < 1 ? 6 : 4)
+            } {symbol}
+          </span>
+        )}
+      </div>
+
+      <div className="hist-card__date dim">
+        {fmtDate(order.updateTime || order.time)}
+      </div>
+
+      {hasDetails && (
+        <div className="hist-card__details">
+          {/* Avg fill price */}
+          {isFilled && avgFill != null && (
+            <span className="hist-detail">
+              <span className="hist-detail__label">Preu mig exec.</span>
+              <span className="mono">{formatCurrency(avgFill)}</span>
+            </span>
+          )}
+          {/* Limit price (when no avg fill available) */}
+          {isFilled && avgFill == null && limitPrice > 0 && (
+            <span className="hist-detail">
+              <span className="hist-detail__label">Preu límit</span>
+              <span className="mono">{formatCurrency(limitPrice)}</span>
+            </span>
+          )}
+          {/* Stop trigger */}
+          {stopPrice > 0 && (
+            <span className="hist-detail">
+              <span className="hist-detail__label">Stop activació</span>
+              <span className="mono">{formatCurrency(stopPrice)}</span>
+              {limitPrice > 0 && (
+                <span className="dim">→ límit {formatCurrency(limitPrice)}</span>
+              )}
+            </span>
+          )}
+          {/* Duration */}
+          {durationLabel && (
+            <span className="hist-detail">
+              <i className="fa-regular fa-clock" />
+              <span className="hist-detail__label">Durada</span>
+              <span>{durationLabel}</span>
+            </span>
+          )}
+          {/* Commission */}
+          {commEntries.length > 0 && (
+            <span className="hist-detail">
+              <span className="hist-detail__label">Comissió</span>
+              <span className="mono">
+                {commEntries.map(([a, v]) => `${v.toFixed(6)} ${a}`).join(" + ")}
+              </span>
+            </span>
+          )}
+          {/* OCO other leg */}
+          {otherHasPrice && otherLabel && (
+            <span className={`hist-detail${otherIsFilled ? "" : " hist-detail--canceled"}`}>
+              {!otherIsFilled && <i className="fa-solid fa-ban" />}
+              <span className="hist-detail__label">
+                {otherLabel} {otherIsFilled ? "executat" : "cancel·lat"}
+              </span>
+              {otherStopPrice != null && otherStopPrice > 0 && (
+                <span className="mono">stop {formatCurrency(otherStopPrice)} →</span>
+              )}
+              <span className="mono">{formatCurrency(otherLimitPrice!)}</span>
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── OCO → Trailing tree ── */
+function HistoryTree({ group, trades }: { group: OcoGroup; trades: BinanceTrade[] }) {
+  const [open, setOpen] = useState(true);
+  const tm = group.trailingMeta!;
+  const symbol = group.filled.symbol.replace(/USDT$/, "");
+  const fmtDate = (ts: number) =>
+    new Date(ts).toLocaleString("ca-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  // Find TP and SL legs by type
+  const legs = [group.filled, group.other].filter(Boolean) as BinanceOrder[];
+  const tpLeg = legs.find(l => l.type === "LIMIT_MAKER");
+  const slLeg = legs.find(l => l.type === "STOP_LOSS_LIMIT" || l.type === "STOP_LOSS");
+
+  return (
+    <div className="hist-tree">
+      {/* Parent row: OCO converted to trailing */}
+      <div className="hist-card hist-card--trailing-parent" style={{ "--hist-color": "#8b5cf6" } as React.CSSProperties}>
+        <div className="hist-card__accent" />
+        <div className="hist-card__icon">
+          <i className="fa-solid fa-chart-line" />
+        </div>
+        <div className="hist-card__identity">
+          <CoinIcon symbol={symbol} size={15} />
+          <span className="hist-card__symbol">{symbol}</span>
+          <span className="hist-card__quote">/USDT</span>
+          <span className="hist-chip hist-chip--oco">OCO</span>
+          <span className="hist-chip hist-chip--trailing">→ Trailing</span>
+        </div>
+        <span className="hist-result hist-result--trailing">
+          <i className="fa-solid fa-chart-line" />
+          Trailing activat
+        </span>
+        <div className="hist-card__value" />
+        <div className="hist-card__date dim">
+          {fmtDate(group.filled.updateTime || group.filled.time)}
+        </div>
+        <div className="hist-card__details">
+          {tpLeg && parseFloat(tpLeg.price) > 0 && (
+            <span className="hist-detail hist-detail--canceled">
+              <i className="fa-solid fa-ban" />
+              <span className="hist-detail__label">TP cancel·lat</span>
+              <span className="mono">{formatCurrency(parseFloat(tpLeg.price))}</span>
+            </span>
+          )}
+          {slLeg && parseFloat(slLeg.stopPrice || slLeg.price) > 0 && (
+            <span className="hist-detail hist-detail--canceled">
+              <i className="fa-solid fa-ban" />
+              <span className="hist-detail__label">SL cancel·lat</span>
+              <span className="mono">{formatCurrency(parseFloat(slLeg.stopPrice || slLeg.price))}</span>
+            </span>
+          )}
+          <span className="hist-detail">
+            <span className="hist-detail__label">Dist. trail</span>
+            <span className="mono">{formatCurrency(tm.trailDist)}</span>
+          </span>
+          <span className="hist-detail">
+            <span className="hist-detail__label">Pic activació</span>
+            <span className="mono">{formatCurrency(tm.peakPrice)}</span>
+          </span>
+        </div>
+        <button className="hist-tree__toggle" onClick={() => setOpen(v => !v)} title={open ? "Amaga fill" : "Mostra fill"}>
+          <i className={`fa-solid fa-chevron-${open ? "up" : "down"}`} />
+        </button>
+      </div>
+
+      {/* Child: trailing SL order */}
+      {open && (
+        <div className="hist-tree__child">
+          <div className="hist-tree__connector" />
+          {group.trailingOrder ? (
+            <HistoryCard order={group.trailingOrder} trades={trades} />
+          ) : (
+            <div className="hist-tree__stub">
+              <i className="fa-solid fa-arrow-trend-up" />
+              Trailing SL #{tm.slOrderId} · <span className="hist-chip hist-chip--oco" style={{ fontSize: "0.65rem" }}>{tm.status}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryTable({ orders, loading, error }: {
+  orders: BinanceOrder[]; loading: boolean; error: string | null;
+}) {
+  const [trades,         setTrades]         = useState<BinanceTrade[]>([]);
+  const [trailingActives, setTrailingActives] = useState<TrailingActiveInfo[]>([]);
+  const [loadingT,       setLoadingT]       = useState(true);
+
+  useEffect(() => {
+    setLoadingT(true);
+    Promise.all([
+      fetch("/api/trades").then(r => r.json()),
+      fetch("/api/orders/trailing").then(r => r.json()),
+    ]).then(([tradesData, trailingData]) => {
+      if (!tradesData.error) setTrades(tradesData);
+      if (trailingData.active) setTrailingActives(trailingData.active);
+    }).finally(() => setLoadingT(false));
+  }, []);
+
+  if (loading || loadingT) return <div className="state-empty">Loading…</div>;
+  if (error)               return <div className="state-error">{error}</div>;
+  if (!orders.length)      return <div className="state-empty">No orders found.</div>;
+
+  const items = groupOrders(orders, trailingActives);
+
+  const wins     = orders.filter(o => orderResult(o) === "tp").length;
+  const losses   = orders.filter(o => orderResult(o) === "sl").length;
+  const canceled = orders.filter(o => orderResult(o) === "canceled").length;
+  const winRate  = (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : null;
+
+  const totalVolume = orders
+    .filter(o => o.status === "FILLED")
+    .reduce((s, o) => {
+      const qty   = parseFloat(o.executedQty) || 0;
+      const price = parseFloat(o.price) || 0;
+      return s + qty * price;
+    }, 0);
+
+  return (
+    <div className="hist-wrap">
+
+      {/* Summary bar */}
+      <div className="hist-summary">
+        {winRate !== null && (
+          <div className="hist-summary__pill hist-summary__pill--main">
+            <span className="hist-summary__big" style={{ color: winRate >= 50 ? "#16a34a" : "#dc2626" }}>
+              {winRate}%
+            </span>
+            <span className="hist-summary__sub">Win rate</span>
+          </div>
+        )}
+        <div className="hist-summary__divider" />
+        {wins > 0 && (
+          <div className="hist-summary__pill hist-summary__pill--tp">
+            <i className="fa-solid fa-check" />
+            <span className="hist-summary__big">{wins}</span>
+            <span className="hist-summary__sub">TP</span>
+          </div>
+        )}
+        {losses > 0 && (
+          <div className="hist-summary__pill hist-summary__pill--sl">
+            <i className="fa-solid fa-xmark" />
+            <span className="hist-summary__big">{losses}</span>
+            <span className="hist-summary__sub">SL</span>
+          </div>
+        )}
+        {canceled > 0 && (
+          <div className="hist-summary__pill hist-summary__pill--dim">
+            <i className="fa-solid fa-ban" />
+            <span className="hist-summary__big">{canceled}</span>
+            <span className="hist-summary__sub">Cancel·lats</span>
+          </div>
+        )}
+        {totalVolume > 0 && (
+          <>
+            <div className="hist-summary__divider" />
+            <div className="hist-summary__pill hist-summary__pill--main">
+              <i className="fa-solid fa-chart-bar" style={{ fontSize: "0.7rem" }} />
+              <span className="hist-summary__big">{formatCurrency(totalVolume)}</span>
+              <span className="hist-summary__sub">Volum operat</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Cards list */}
+      <div className="hist-list">
+        {items.map((item) => {
+          if (item.kind === "buy+oco") {
+            return <BuyOcoCard key={`buyoco-${item.group.id}`} buyOrder={item.buyOrder} group={item.group} trades={trades} />;
+          }
+          if (item.kind === "solo") {
+            return <HistoryCard key={item.order.orderId} order={item.order} trades={trades} />;
+          }
+          if (item.group.trailingMeta) {
+            return <HistoryTree key={`oco-trail-${item.group.id}`} group={item.group} trades={trades} />;
+          }
+          return (
+            <HistoryCard
+              key={`oco-${item.group.id}`}
+              order={item.group.filled}
+              trades={trades}
+              otherLeg={item.group.other}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── Balance cards ── */
+function BalanceTable({ balances, loading, error, coins }: {
+  balances: BinanceBalance[]; loading: boolean; error: string | null; coins: CoinRow[];
 }) {
   if (loading) return <div className="state-empty">Loading…</div>;
   if (error)   return <div className="state-error">{error}</div>;
   if (!balances.length) return <div className="state-empty">No assets with balance.</div>;
 
+  const priceMap = new Map<string, number>();
+  for (const c of coins) priceMap.set(c.symbol, c.price);
+  priceMap.set("USDT", 1);
+  priceMap.set("BUSD", 1);
+
+  const enriched = balances.map(b => {
+    const free   = parseFloat(b.free);
+    const locked = parseFloat(b.locked);
+    const total  = free + locked;
+    const price  = priceMap.get(b.asset) ?? 0;
+    const usdVal = total * price;
+    return { ...b, free, locked, total, price, usdVal };
+  }).sort((a, b_) => {
+    // USDT/stablecoins first, then by USD value
+    const aStable = a.asset === "USDT" || a.asset === "BUSD";
+    const bStable = b_.asset === "USDT" || b_.asset === "BUSD";
+    if (aStable && !bStable) return -1;
+    if (!aStable && bStable) return 1;
+    return b_.usdVal - a.usdVal;
+  });
+
+  const totalUsd = enriched.reduce((s, b) => s + b.usdVal, 0);
+
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table className="data-table">
-        <thead className="data-table__head">
-          <tr>
-            <th>Asset</th>
-            <th className="r">Free</th>
-            <th className="r">Locked</th>
-            <th className="r">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {balances.map((b) => {
-            const free = parseFloat(b.free), locked = parseFloat(b.locked);
-            return (
-              <tr key={b.asset} className="data-table__row">
-                <td className="data-table__cell bold">{b.asset}</td>
-                <td className="data-table__cell r"><span className="bal-free">{free.toFixed(6)}</span></td>
-                <td className="data-table__cell r"><span className="bal-locked">{locked.toFixed(6)}</span></td>
-                <td className="data-table__cell r"><span className="bal-total">{(free + locked).toFixed(6)}</span></td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="bal-wrap">
+      {totalUsd > 0 && (
+        <div className="bal-total-bar">
+          <span className="bal-total-bar__label">Valor total</span>
+          <span className="bal-total-bar__val mono">{formatCurrency(totalUsd)}</span>
+        </div>
+      )}
+      <div className="bal-cards">
+        {enriched.map(b => {
+          const dp = b.total < 1 ? 6 : b.total < 100 ? 4 : 2;
+          const pct = totalUsd > 0 ? (b.usdVal / totalUsd) * 100 : 0;
+          return (
+            <div key={b.asset} className="bal-card">
+              <div className="bal-card__header">
+                <CoinIcon symbol={b.asset} size={22} />
+                <div className="bal-card__name">
+                  <span className="bal-card__symbol">{b.asset}</span>
+                  {pct > 0 && <span className="bal-card__pct dim">{pct.toFixed(1)}%</span>}
+                </div>
+                {b.usdVal > 0 && (
+                  <span className="bal-card__usd mono">{formatCurrency(b.usdVal)}</span>
+                )}
+              </div>
+              <div className="bal-card__amount mono">
+                {b.total.toFixed(dp)}
+                <span className="dim"> {b.asset}</span>
+              </div>
+              {b.locked > 0 && (
+                <div className="bal-card__locked">
+                  <span className="dim">Lliure: {b.free.toFixed(dp)}</span>
+                  <span className="bal-card__locked-val">
+                    <i className="fa-solid fa-lock" /> {b.locked.toFixed(dp)}
+                  </span>
+                </div>
+              )}
+              {b.price > 0 && b.asset !== "USDT" && b.asset !== "BUSD" && (
+                <div className="bal-card__price dim mono">{formatCurrency(b.price)} / {b.asset}</div>
+              )}
+              {pct > 0 && (
+                <div className="bal-card__bar">
+                  <div className="bal-card__bar-fill" style={{ width: `${Math.min(pct, 100)}%` }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 /* ── Main panel ── */
-export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
-  const [tab,          setTab]          = useState<Tab>("portfolio");
-  const [showNewOrder, setShowNewOrder] = useState(false);
-  const [openOrders, setOpenOrders] = useState<BinanceOrder[]>([]);
+export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
+  coins: CoinRow[];
+  tab: Tab;
+  onTab: (t: Tab) => void;
+  onOrdersCount?: (n: number) => void;
+}) {
+  const setTab = onTab;
+  const [showNewOrder,    setShowNewOrder]    = useState(false);
+  const [openOrders,      setOpenOrders]      = useState<BinanceOrder[]>([]);
+  const [tgSending,       setTgSending]       = useState(false);
+  const [tgStatus,        setTgStatus]        = useState<"idle" | "ok" | "err">("idle");
+  const [tgOrdSending,    setTgOrdSending]    = useState(false);
+  const [tgOrdStatus,     setTgOrdStatus]     = useState<"idle" | "ok" | "err">("idle");
+  const [panicState,      setPanicState]      = useState<"idle" | "confirm" | "confirm-sell" | "running" | "done" | "err">("idle");
+  const [panicMsg,        setPanicMsg]        = useState<string>("");
   const [history,    setHistory]    = useState<BinanceOrder[]>([]);
   const [balances,   setBalances]   = useState<BinanceBalance[]>([]);
   const [loadingO, setLoadingO] = useState(false);
@@ -853,8 +1932,9 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
   const [lastRefreshed,  setLastRefreshed]  = useState<Date | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [strategies, setStrategies] = useState<Record<string, string>>({});
+  const [orderMeta,   setOrderMeta  ] = useState<Record<string, OrderMeta>>({});
   const [newOrderPrefill, setNewOrderPrefill] = useState<{
-    pair: string; side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string;
+    pair: string; side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string; interval?: "5m" | "1h" | "4h";
   } | null>(null);
 
   const fmtRefreshed = (d: Date) =>
@@ -863,7 +1943,7 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
   const fetchOpen = useCallback(() => {
     setLoadingO(true); setErrorO(null);
     fetch("/api/orders").then(r => r.json())
-      .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); setLastRefreshed(new Date()); })
+      .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); setLastRefreshed(new Date()); onOrdersCount?.(d.length); })
       .catch(e => setErrorO(e.message)).finally(() => setLoadingO(false));
   }, []);
 
@@ -899,6 +1979,7 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
   // Load strategies once on mount
   useEffect(() => {
     fetch("/api/strategies").then(r => r.json()).then(d => { if (!d.error) setStrategies(d); });
+    fetch("/api/orders/meta").then(r => r.json()).then(d => { if (!d.error) setOrderMeta(d); });
   }, []);
 
   const handleStrategyChange = useCallback((key: string, strategy: string | null) => {
@@ -915,36 +1996,91 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
   }, []);
 
   const handleOpenOrderFromAnalysis = useCallback((
-    pair: string, side: "BUY" | "SELL", tp: string, sl: string, slLimit: string,
+    pair: string, side: "BUY" | "SELL", tp: string, sl: string, slLimit: string, interval?: "5m" | "1h" | "4h",
   ) => {
-    setNewOrderPrefill({ pair, side, tp, sl, slLimit });
+    setNewOrderPrefill({ pair, side, tp, sl, slLimit, interval });
     setShowNewOrder(true);
   }, []);
 
-  const TABS: { key: Tab; label: string; icon: string }[] = [
-    { key: "portfolio", label: "Portfolio",                                             icon: "fa-wallet"     },
-    { key: "open",      label: `Open Orders${openOrders.length ? ` (${openOrders.length})` : ""}`, icon: "fa-list-check" },
-    { key: "history",   label: "History",                                               icon: "fa-clock-rotate-left" },
-    { key: "balance",   label: "Balance",                                               icon: "fa-coins"      },
-    { key: "analysis",  label: "Anàlisi",                                               icon: "fa-magnifying-glass-chart" },
-  ];
-
   return (
     <div className="card">
-      <div className="tabs">
-        {TABS.map(({ key, label, icon }) => (
-          <button key={key} onClick={() => setTab(key)}
-            className={`tabs__btn${tab === key ? " tabs__btn--active" : ""}`}>
-            <i className={`fa-solid ${icon}`} />
-            {label}
-          </button>
-        ))}
-        <div className="tabs__end">
-          <button className="tabs__action tabs__action--new" onClick={() => setShowNewOrder(true)}>
+      <div className="panel-controls">
+        <span className="panel-controls__title">
+          {tab === "portfolio" && "Portfolio"}
+          {tab === "open"      && `Open Orders${openOrders.length ? ` (${openOrders.length})` : ""}`}
+          {tab === "history"   && "History"}
+          {tab === "balance"   && "Balance"}
+          {tab === "analysis"  && "Anàlisi"}
+          {tab === "matrix"    && "Escàner"}
+          {tab === "errors"    && "Errors del sistema"}
+          {tab === "logs"     && "Logs del servidor"}
+          {tab === "settings"  && "Configuració"}
+          {tab === "journal"   && "Diari d'operacions"}
+          {tab === "simulation" && "Simulació"}
+          {tab === "bot"        && "Bot"}
+          {tab === "equalizer"  && "Equalitzador"}
+          {tab === "autolab"    && "AutoLab"}
+        </span>
+        <div className="panel-controls__right">
+
+          {/* Nova ordre */}
+          <button className="tb-btn tb-btn--primary" onClick={() => setShowNewOrder(true)}>
             <i className="fa-solid fa-plus" /> Nova ordre
           </button>
-          <div className="refresh-controls">
-            <select className="refresh-select" value={refreshMs}
+
+          <div className="tb-sep" />
+
+          {/* Grup Telegram */}
+          <div className="tb-group">
+            <button
+              className={`tb-btn tb-btn--tg${tgOrdStatus === "ok" ? " tb-btn--ok" : tgOrdStatus === "err" ? " tb-btn--err" : ""}`}
+              disabled={tgOrdSending}
+              onClick={async () => {
+                setTgOrdSending(true); setTgOrdStatus("idle");
+                try { const r = await fetch("/api/telegram/orders", { method: "POST" }); setTgOrdStatus(r.ok ? "ok" : "err"); }
+                catch { setTgOrdStatus("err"); }
+                finally { setTgOrdSending(false); setTimeout(() => setTgOrdStatus("idle"), 3000); }
+              }}>
+              {tgOrdSending ? <i className="fa-solid fa-spinner fa-spin" /> : tgOrdStatus === "ok" ? <i className="fa-solid fa-check" /> : tgOrdStatus === "err" ? <i className="fa-solid fa-xmark" /> : <i className="fa-brands fa-telegram" />}
+              {tgOrdStatus === "ok" ? "Enviat" : tgOrdStatus === "err" ? "Error" : "Ordres"}
+            </button>
+            <button
+              className={`tb-btn tb-btn--tg${tgStatus === "ok" ? " tb-btn--ok" : tgStatus === "err" ? " tb-btn--err" : ""}`}
+              disabled={tgSending}
+              onClick={async () => {
+                setTgSending(true); setTgStatus("idle");
+                try { const r = await fetch("/api/telegram/report", { method: "POST" }); setTgStatus(r.ok ? "ok" : "err"); }
+                catch { setTgStatus("err"); }
+                finally { setTgSending(false); setTimeout(() => setTgStatus("idle"), 3000); }
+              }}>
+              {tgSending ? <i className="fa-solid fa-spinner fa-spin" /> : tgStatus === "ok" ? <i className="fa-solid fa-check" /> : tgStatus === "err" ? <i className="fa-solid fa-xmark" /> : <i className="fa-brands fa-telegram" />}
+              {tgStatus === "ok" ? "Enviat" : tgStatus === "err" ? "Error" : "Informe"}
+            </button>
+          </div>
+
+          <div className="tb-sep" />
+
+          {/* Botó de pànic */}
+          <button
+            className="tb-btn tb-btn--panic"
+            onClick={() => setPanicState("confirm")}
+            title="Cancel·la totes les ordres obertes">
+            <i className="fa-solid fa-triangle-exclamation" /> Pànic
+          </button>
+
+          {tab === "logs" && <>
+            <div className="tb-sep" />
+            <button className="tb-btn" title="Exporta informe d'estratègia (7 dies) per analitzar amb IA"
+              onClick={() => window.open("/api/logs/export?days=7", "_blank")}>
+              <i className="fa-solid fa-file-arrow-down" /> Exporta per IA
+            </button>
+          </>}
+
+          <div className="tb-sep" />
+
+          {/* Grup refresc */}
+          <div className="tb-group">
+            <select className="tb-btn tb-btn--select" value={refreshMs}
               onChange={e => setRefreshMs(Number(e.target.value))}>
               <option value={5000}>5s</option>
               <option value={15000}>15s</option>
@@ -952,23 +2088,32 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
               <option value={60000}>1 min</option>
               <option value={0}>Manual</option>
             </select>
-            <button className="refresh-btn" title="Refresca ara" onClick={() => {
-              fetchOpen();
-              setRefreshTrigger(n => n + 1);
+            <button className="tb-btn" onClick={() => {
+              fetchOpen(); setRefreshTrigger(n => n + 1);
               if (tab === "history") fetchHistory();
               if (tab === "balance") fetchBalance();
             }}>
               <i className="fa-solid fa-rotate-right" /> Refresca
             </button>
           </div>
+
         </div>
       </div>
 
-      {tab === "portfolio" && <PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} />}
-      {tab === "open"      && <OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} />}
-      {tab === "history"   && <HistoryTable   orders={history}    loading={loadingH} error={errorH} />}
-      {tab === "balance"   && <BalanceTable   balances={balances} loading={loadingB} error={errorB} />}
-      {tab === "analysis"  && <AnalysisTab onOpenOrder={handleOpenOrderFromAnalysis} />}
+      {tab === "portfolio" && <ErrorBoundary label="Portfolio"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} /></ErrorBoundary>}
+      {tab === "open"      && <ErrorBoundary label="Open Orders"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
+      {tab === "history"   && <ErrorBoundary label="History"><HistoryTable   orders={history}    loading={loadingH} error={errorH} /></ErrorBoundary>}
+      {tab === "balance"   && <ErrorBoundary label="Balance"><BalanceTable   balances={balances} loading={loadingB} error={errorB} coins={coins} /></ErrorBoundary>}
+      {tab === "analysis"  && <ErrorBoundary label="Anàlisi"><AnalysisTab onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
+      {tab === "matrix"    && <ErrorBoundary label="Escàner"><StrategyMatrix coins={coins} onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
+      {tab === "errors"    && <ErrorsPanel />}
+      {tab === "logs"     && <LogsPanel />}
+      {tab === "settings"  && <SettingsTab />}
+      {tab === "journal"   && <ErrorBoundary label="Diari"><JournalTab onNewOrder={() => setShowNewOrder(true)} /></ErrorBoundary>}
+      {tab === "simulation" && <ErrorBoundary label="Simulació"><SimulationTab /></ErrorBoundary>}
+      {tab === "bot"        && <ErrorBoundary label="Bot"><BotTab /></ErrorBoundary>}
+      {tab === "equalizer"  && <ErrorBoundary label="Equalitzador"><EqualizerTab /></ErrorBoundary>}
+      {tab === "autolab"    && <ErrorBoundary label="AutoLab"><AutoLabTab /></ErrorBoundary>}
 
       <div className="panel-footer">
         <span className="panel-footer__dot" />
@@ -983,6 +2128,69 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
         )}
       </div>
 
+      {/* ── Panic modal ── */}
+      {panicState !== "idle" && (
+        <div className="panic-overlay" onClick={() => { if (panicState === "confirm" || panicState === "confirm-sell" || panicState === "done" || panicState === "err") setPanicState("idle"); }}>
+          <div className="panic-modal" onClick={e => e.stopPropagation()}>
+            <div className="panic-modal__icon">
+              <i className="fa-solid fa-triangle-exclamation" />
+            </div>
+            <div className="panic-modal__title">Botó de Pànic</div>
+
+            {(panicState === "confirm" || panicState === "confirm-sell") && (<>
+              <p className="panic-modal__desc">
+                Selecciona el tipus de cancel·lació:
+              </p>
+              <div className="panic-modal__actions">
+                <button className="panic-modal__btn panic-modal__btn--cancel-only"
+                  onClick={async () => {
+                    setPanicState("running");
+                    try {
+                      const r = await fetch("/api/orders/cancel-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellAll: false }) });
+                      const d = await r.json() as { canceledOrders?: number };
+                      setPanicMsg(`${d.canceledOrders ?? 0} ordres cancel·lades.`);
+                      setPanicState("done");
+                      fetchOpen();
+                    } catch (e) { setPanicMsg((e as Error).message); setPanicState("err"); }
+                  }}>
+                  <i className="fa-solid fa-xmark" /> Cancel·la ordres
+                  <span className="panic-modal__btn-sub">Manté les criptos al compte</span>
+                </button>
+                <button className="panic-modal__btn panic-modal__btn--sell-all"
+                  onClick={async () => {
+                    setPanicState("running");
+                    try {
+                      const r = await fetch("/api/orders/cancel-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellAll: true }) });
+                      const d = await r.json() as { canceledOrders?: number; soldPositions?: number };
+                      setPanicMsg(`${d.canceledOrders ?? 0} ordres cancel·lades · ${d.soldPositions ?? 0} posicions venudes.`);
+                      setPanicState("done");
+                      fetchOpen();
+                    } catch (e) { setPanicMsg((e as Error).message); setPanicState("err"); }
+                  }}>
+                  <i className="fa-solid fa-fire" /> Cancel·la + Ven tot
+                  <span className="panic-modal__btn-sub">Converteix tot a USDT</span>
+                </button>
+              </div>
+              <button className="panic-modal__close" onClick={() => setPanicState("idle")}>Tancar</button>
+            </>)}
+
+            {panicState === "running" && (
+              <p className="panic-modal__desc">
+                <i className="fa-solid fa-spinner fa-spin" /> Executant…
+              </p>
+            )}
+
+            {(panicState === "done" || panicState === "err") && (<>
+              <p className="panic-modal__desc" style={{ color: panicState === "done" ? "#059669" : "#dc2626" }}>
+                {panicState === "done" ? <i className="fa-solid fa-check" /> : <i className="fa-solid fa-xmark" />}
+                {" "}{panicMsg}
+              </p>
+              <button className="panic-modal__close" onClick={() => setPanicState("idle")}>Tancar</button>
+            </>)}
+          </div>
+        </div>
+      )}
+
       {showNewOrder && (
         <NewOrderModal
           coin={newOrderPrefill ? (coins.find(c => c.pair === newOrderPrefill.pair) ?? null) : null}
@@ -994,6 +2202,7 @@ export default function OrdersPanel({ coins }: { coins: CoinRow[] }) {
             tp: newOrderPrefill.tp,
             sl: newOrderPrefill.sl,
             slLimit: newOrderPrefill.slLimit,
+            interval: newOrderPrefill.interval,
           } : undefined}
         />
       )}

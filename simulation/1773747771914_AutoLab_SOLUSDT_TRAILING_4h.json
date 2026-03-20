@@ -1,0 +1,31 @@
+{
+  "name": "AutoLab SOLUSDT TRAILING 4h",
+  "savedAt": "2026-03-17T11:42:51.914Z",
+  "config": {
+    "maxHoldingBars": 100,
+    "pumpVolMin": 3,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "TRAILING",
+    "tpAtr": 3.65,
+    "slAtr": 1.3,
+    "trailActivateAtr": 1.69,
+    "trailDistanceAtr": 3.89,
+    "breakEvenAtr": 2.3
+  },
+  "pnlPct": 47.867349335103796
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./styles/dashboard.css";
+import ServerEventsProvider from "./components/ServerEventsProvider";
 
 export const metadata: Metadata = {
   title: "Crypto Dashboard",
@@ -21,7 +22,9 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body>{children}</body>
+      <body suppressHydrationWarning>
+        <ServerEventsProvider>{children}</ServerEventsProvider>
+      </body>
     </html>
   );
 }

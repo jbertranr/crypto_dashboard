@@ -1,8 +1,17 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { CoinRow } from "../lib/types";
 import { formatCurrency } from "../lib/format";
 import CoinIcon from "./CoinIcon";
+
+type StratProposal = {
+  name: string; type: "bullish" | "bearish" | "neutral";
+  confidence: "alta" | "moderada" | "baixa"; active: boolean;
+  tp: number; sl: number; slLimit: number;
+  trailing: { activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string };
+};
+type AnalysisSnap = { price: number; atr: number; strategies: StratProposal[] };
 
 /* ── precision helpers ── */
 function stepDp(step: string) {
@@ -42,12 +51,26 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   coins: CoinRow[];
   onClose: () => void;
   onSuccess: () => void;
-  presetPrices?: { side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string };
+  presetPrices?: { side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string; interval?: "5m" | "1h" | "4h" };
 }) {
   const defaultCoin = coin ?? coins[0];
   const [selectedPair, setSelectedPair] = useState(defaultCoin?.pair ?? "");
   const activeCoin = coins.find(c => c.pair === selectedPair) ?? defaultCoin;
   const ref = activeCoin?.price ?? 0;
+
+  /* mode toggle */
+  const [mode, setMode] = useState<"oco" | "buy-exit">("buy-exit");
+
+  /* buy-exit form state */
+  const [beUsdAmount,  setBeUsdAmount]  = useState("");
+  const [beTpPct,      setBeTpPct]      = useState("3.00");
+  const [beSlPct,      setBeSlPct]      = useState("3.00");
+
+  /* analysis (OCO mode) */
+  const [analysisInterval,  setAnalysisInterval]  = useState<"5m" | "1h" | "4h">(presetPrices?.interval ?? "1h");
+  const [analysisSnap,      setAnalysisSnap]      = useState<AnalysisSnap | null>(null);
+  const [analysisLoading,   setAnalysisLoading]   = useState(false);
+  const [selectedStratIdx,  setSelectedStratIdx]  = useState(0);
 
   /* exchange filters */
   const [stepSize, setStepSize] = useState("0.00001");
@@ -65,7 +88,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   }, []);
 
   /* form state */
-  const [side,         setSide]         = useState<"BUY" | "SELL">(presetPrices?.side ?? "SELL");
+  const [side,         setSide]         = useState<"BUY" | "SELL">("SELL");
   const [qtyMode,      setQtyMode]      = useState<"usd" | "crypto">("usd");
   const [usdAmount,    setUsdAmount]    = useState("");
   const [cryptoQty,    setCryptoQty]    = useState("");
@@ -79,7 +102,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   const [error,        setError]        = useState<string | null>(null);
 
   /* trailing stop */
-  const [trailingOn,          setTrailingOn]          = useState(false);
+  const [trailingOn,          setTrailingOn]          = useState(true);
   const [trailingActivateAt,  setTrailingActivateAt]  = useState("");
   const [trailingDistance,    setTrailingDistance]    = useState("");
   const [trailingActivateAtr, setTrailingActivateAtr] = useState(1.0);
@@ -96,6 +119,39 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       .then(d => { if (d.stepSize) setStepSize(d.stepSize); if (d.tickSize) setTickSize(d.tickSize); })
       .catch(() => {});
   }, [selectedPair]);
+
+  /* apply a strategy proposal to buy-exit % fields */
+  const applyStrategyToBuyExit = useCallback((s: StratProposal, price: number, atr: number) => {
+    if (s.type === "bearish" || price <= 0) return;
+    const tpPct = (s.tp - price) / price * 100;
+    const slPct = (price - s.sl) / price * 100;
+    setBeTpPct(Math.max(0.01, tpPct).toFixed(2));
+    setBeSlPct(Math.max(0.01, slPct).toFixed(2));
+    const prec = price >= 100 ? 2 : price >= 1 ? 4 : 6;
+    setTrailingAtr(atr);
+    setTrailingActivateAt(s.trailing.activateAt.toFixed(prec));
+    setTrailingDistance(s.trailing.distance.toFixed(prec));
+    setTrailingActivateAtr(s.trailing.activateAtr);
+    setTrailingDistanceAtr(s.trailing.distanceAtr);
+    setTrailingLogic(s.trailing.logic);
+  }, []);
+
+  /* apply a strategy proposal to all OCO fields */
+  const applyStrategy = useCallback((s: StratProposal, price: number, atr: number, tick: string) => {
+    setTpPrice(roundNearest(s.tp, tick));
+    setTpPct(pctOf(s.tp, price));
+    setSlStopPrice(roundNearest(s.sl, tick));
+    setSlStopPct(pctOf(s.sl, price));
+    const sll = roundNearest(s.slLimit, tick);
+    setSlLimitPrice(sll); setSlLimitPct(pctOf(parseFloat(sll), price));
+    const prec = price >= 100 ? 2 : price >= 1 ? 4 : 6;
+    setTrailingAtr(atr);
+    setTrailingActivateAt(s.trailing.activateAt.toFixed(prec));
+    setTrailingDistance(s.trailing.distance.toFixed(prec));
+    setTrailingActivateAtr(s.trailing.activateAtr);
+    setTrailingDistanceAtr(s.trailing.distanceAtr);
+    setTrailingLogic(s.trailing.logic);
+  }, []);
 
   /* pre-fill prices */
   const prefill = useCallback((refPrice: number, newSide: "BUY" | "SELL", tick: string) => {
@@ -114,7 +170,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   }, []);
 
   useEffect(() => {
-    if (!presetPrices) prefill(ref, side, tickSize);
+    if (!presetPrices && !analysisSnap) prefill(ref, side, tickSize);
     const ua = parseFloat(usdAmount);
     if (!isNaN(ua) && ref) setCryptoQty(roundDown(ua / ref, stepSize));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,18 +232,17 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       const entry = currentRef || (d.price ?? currentRef);
       if (atr <= 0) return;
       const prec = entry >= 100 ? 2 : entry >= 1 ? 4 : 6;
-      const actMult = 1.0, distMult = 1.5;
-      const activateAt = currentSide === "SELL" ? entry + atr * actMult : entry - atr * actMult;
+      const actMult = 0, distMult = 1.5;
+      const activateAt = entry; // activació immediata des del preu d'entrada
       const distance   = atr * distMult;
       const atrFmt = atr >= 100 ? atr.toFixed(2) : atr >= 1 ? atr.toFixed(4) : atr.toFixed(6);
-      const dir = currentSide === "SELL" ? "pugi" : "baixi";
       const extrm = currentSide === "SELL" ? "màxim" : "mínim";
       setTrailingAtr(atr);
       setTrailingActivateAt(activateAt.toFixed(prec));
       setTrailingDistance(distance.toFixed(prec));
       setTrailingActivateAtr(actMult);
       setTrailingDistanceAtr(distMult);
-      setTrailingLogic(`Quan el preu ${dir} +${actMult}×ATR (≈${atrFmt}) des del preu d'entrada, activa el trailing. Segueix el ${extrm} assolit amb una cua de ${distMult}×ATR (≈${atrFmt}) — protegeix beneficis sense tancar massa aviat.`);
+      setTrailingLogic(`S'activa automàticament des del preu d'entrada. Segueix el ${extrm} assolit amb una cua de ${distMult}×ATR (≈${atrFmt}) — protegeix beneficis sense tancar massa aviat.`);
     } catch { /* keep empty */ }
     finally { setTrailingLoading(false); }
   }, []);
@@ -195,20 +250,92 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   const toggleTrailing = () => {
     const next = !trailingOn;
     setTrailingOn(next);
-    if (next && trailingAtr === 0) suggestTrailing(side, ref, selectedPair);
+    if (next && trailingAtr === 0 && !analysisSnap) {
+      suggestTrailing(side, ref, selectedPair);
+    }
   };
 
-  // Re-suggest if side or pair changes while trailing is on
+  // Re-suggest if side or pair changes while trailing is on (skip in OCO when analysis drives it)
   useEffect(() => {
-    if (trailingOn && ref) suggestTrailing(side, ref, selectedPair);
+    if (trailingOn && ref && !(mode === "oco" && analysisSnap)) suggestTrailing(side, ref, selectedPair);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [side, selectedPair]);
 
+  useEscapeKey(onClose);
+
+  /* fetch analysis for both modes when pair/interval changes */
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+    if (!selectedPair) return;
+    let cancelled = false;
+    setAnalysisLoading(true);
+    setAnalysisSnap(null);
+    fetch(`/api/analysis?symbol=${selectedPair}&interval=${analysisInterval}`)
+      .then(r => r.json())
+      .then((d: AnalysisSnap) => {
+        if (!cancelled) {
+          const firstBullish = d.strategies.findIndex(s => s.type !== "bearish");
+          setAnalysisSnap(d);
+          setSelectedStratIdx(firstBullish >= 0 ? firstBullish : 0);
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setAnalysisLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedPair, analysisInterval]);
+
+  /* apply selected strategy — OCO: absolute prices; buy-exit: percentages */
+  useEffect(() => {
+    if (!analysisSnap) return;
+    const s = analysisSnap.strategies[selectedStratIdx];
+    if (!s || s.type === "bearish") return;
+    if (mode === "oco" && tickSize) applyStrategy(s, analysisSnap.price, analysisSnap.atr, tickSize);
+    if (mode === "buy-exit")        applyStrategyToBuyExit(s, analysisSnap.price, analysisSnap.atr);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, analysisSnap, selectedStratIdx, tickSize]);
+
+  const submitBuyExit = async () => {
+    setError(null);
+    const usd   = parseFloat(beUsdAmount);
+    const tpPct = parseFloat(beTpPct);
+    const slPct = parseFloat(beSlPct);
+    if (!usd || usd <= 0)        { setError("Enter a valid USDT amount."); return; }
+    if (!tpPct || tpPct <= 0)    { setError("Take Profit % must be > 0."); return; }
+    if (!slPct || slPct <= 0)    { setError("Stop Loss % must be > 0."); return; }
+    if (!ref || ref <= 0)        { setError("Preu de referència no disponible."); return; }
+    if ((balances["USDT"] ?? 0) < usd) { setError(`Insufficient USDT balance (${balances["USDT"] ?? 0})`); return; }
+
+    const tpPrice = ref * (1 + tpPct / 100);
+    const slPrice = ref * (1 - slPct / 100);
+
+    setSaving(true);
+    try {
+      const trailing = trailingOn && trailingActivateAt && trailingDistance ? {
+        activateAt:  parseFloat(trailingActivateAt),
+        distance:    parseFloat(trailingDistance),
+        activateAtr: trailingActivateAtr,
+        distanceAtr: trailingDistanceAtr,
+        logic:       trailingLogic,
+      } : null;
+      const res = await fetch("/api/orders/buy-and-exit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: activeCoin.pair,
+          quoteOrderQty: usd.toFixed(2),
+          tpPrice,
+          slPrice,
+          trailing,
+        }),
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      onSuccess(); onClose();
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const submit = async () => {
     setError(null);
@@ -221,9 +348,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     if (!slStopPrice || parseFloat(slStopPrice) <= 0) { setError("Enter a valid Stop Loss trigger."); return; }
     if (!slLimitPrice || parseFloat(slLimitPrice) <= 0) { setError("Enter a valid Stop Loss limit price."); return; }
     if (!directionOk(side, parseFloat(tpPrice), parseFloat(slStopPrice), ref)) {
-      setError(side === "SELL"
-        ? "For a SELL OCO: Take Profit must be above current price and Stop Loss below."
-        : "For a BUY OCO: Take Profit must be below current price and Stop Loss above.");
+      setError("El Take Profit ha d'estar per sobre del preu actual i el Stop Loss per sota.");
       return;
     }
 
@@ -242,6 +367,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
         body: JSON.stringify({
           symbol: activeCoin.pair, side, quantity: qty,
           tpPrice, slStopPrice, slLimitPrice, trailing,
+          interval: analysisInterval,
         }),
       });
       const d = await res.json();
@@ -266,13 +392,27 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       <div className="new-order__box" onClick={e => e.stopPropagation()}>
 
         <div className="new-order__header">
-          <span className="new-order__title">New OCO Order</span>
+          <span className="new-order__title">New Order</span>
           <button className="order-edit__close" onClick={onClose}>×</button>
         </div>
 
         <div className="new-order__body">
 
-          {/* Symbol */}
+          {/* Mode tabs */}
+          <div className="new-order__mode-tabs">
+            <button
+              className={`new-order__mode-tab${mode === "buy-exit" ? " new-order__mode-tab--active" : ""}`}
+              onClick={() => setMode("buy-exit")}>
+              Compra + Sortida
+            </button>
+            <button
+              className={`new-order__mode-tab${mode === "oco" ? " new-order__mode-tab--active" : ""}`}
+              onClick={() => setMode("oco")}>
+              OCO Sortida
+            </button>
+          </div>
+
+          {/* Symbol (shared) */}
           <div className="order-edit__field">
             <span className="order-edit__label">Symbol</span>
             {coin ? (
@@ -293,22 +433,38 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             )}
           </div>
 
-          {/* Side */}
-          <div className="order-edit__field">
-            <span className="order-edit__label">Side</span>
-            <div className="new-order__side">
-              <button
-                className={`new-order__side-btn new-order__side-btn--sell${side === "SELL" ? " new-order__side-btn--active" : ""}`}
-                onClick={() => setSide("SELL")}>
-                <i className="fa-solid fa-arrow-down" /> SELL
+          {/* ── OCO Mode ──────────────────────────── */}
+          {mode === "oco" && <>
+
+          {/* Analysis interval + strategy picker */}
+          <div className="new-order__analysis-bar">
+            <span className="new-order__analysis-label">Anàlisi</span>
+            {(["5m", "1h", "4h"] as const).map(iv => (
+              <button key={iv}
+                className={`new-order__interval-btn${analysisInterval === iv ? " new-order__interval-btn--active" : ""}`}
+                onClick={() => setAnalysisInterval(iv)}>
+                {iv}
               </button>
-              <button
-                className={`new-order__side-btn new-order__side-btn--buy${side === "BUY" ? " new-order__side-btn--active" : ""}`}
-                onClick={() => setSide("BUY")}>
-                <i className="fa-solid fa-arrow-up" /> BUY
-              </button>
-            </div>
+            ))}
+            {analysisLoading && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.65rem", color: "var(--text-3)", marginLeft: 4 }} />}
           </div>
+
+          {analysisSnap && (
+            <div className="new-order__strategies">
+              {analysisSnap.strategies
+                .map((s, i) => ({ s, i }))
+                .filter(({ s }) => s.type !== "bearish")
+                .map(({ s, i }) => (
+                  <button key={i}
+                    className={`new-order__strategy-btn${i === selectedStratIdx ? " new-order__strategy-btn--sel" : ""}${!s.active ? " new-order__strategy-btn--off" : ""}`}
+                    onClick={() => setSelectedStratIdx(i)}>
+                    <span className="new-order__strategy-name">{s.name}</span>
+                    <span className={`new-order__strategy-conf new-order__strategy-conf--${s.confidence}`}>{s.confidence}</span>
+                  </button>
+                ))}
+            </div>
+          )}
+
 
           {/* Quantity */}
           <div className="order-edit__field">
@@ -353,9 +509,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           {badDirection && (
             <div className="new-order__dir-hint">
               <i className="fa-solid fa-triangle-exclamation" />
-              {side === "SELL"
-                ? "SELL OCO: TP must be above current price · SL must be below"
-                : "BUY OCO: TP must be below current price · SL must be above"}
+              TP ha d'estar per sobre del preu actual · SL per sota
             </div>
           )}
 
@@ -363,9 +517,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           <div className="order-edit__field">
             <span className="order-edit__label">
               <i className="fa-solid fa-circle new-order__tp-dot" /> Take Profit Price
-              <span className="new-order__field-hint">
-                {side === "SELL" ? "above current" : "below current"}
-              </span>
+              <span className="new-order__field-hint">per sobre del preu d'entrada</span>
             </span>
             <div className="new-order__price-row">
               <input className="order-edit__input" type="number" min="0" step="any"
@@ -382,9 +534,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           <div className="order-edit__field">
             <span className="order-edit__label">
               <i className="fa-solid fa-circle new-order__sl-dot" /> Stop Loss Trigger
-              <span className="new-order__field-hint">
-                {side === "SELL" ? "below current" : "above current"}
-              </span>
+              <span className="new-order__field-hint">per sota del preu d'entrada</span>
             </span>
             <div className="new-order__price-row">
               <input className="order-edit__input" type="number" min="0" step="any"
@@ -460,14 +610,153 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             )}
           </div>
 
+          </> /* end mode === "oco" */}
+
+          {/* ── Compra + Sortida Mode ─────────────── */}
+          {mode === "buy-exit" && <>
+
+          {/* Analysis interval + strategy picker */}
+          <div className="new-order__analysis-bar">
+            <span className="new-order__analysis-label">Anàlisi</span>
+            {(["5m", "1h", "4h"] as const).map(iv => (
+              <button key={iv}
+                className={`new-order__interval-btn${analysisInterval === iv ? " new-order__interval-btn--active" : ""}`}
+                onClick={() => setAnalysisInterval(iv)}>
+                {iv}
+              </button>
+            ))}
+            {analysisLoading && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.65rem", color: "var(--text-3)", marginLeft: 4 }} />}
+          </div>
+
+          {analysisSnap && (
+            <div className="new-order__strategies">
+              {analysisSnap.strategies
+                .map((s, i) => ({ s, i }))
+                .filter(({ s }) => s.type !== "bearish")
+                .map(({ s, i }) => (
+                  <button key={i}
+                    className={`new-order__strategy-btn${i === selectedStratIdx ? " new-order__strategy-btn--sel" : ""}${!s.active ? " new-order__strategy-btn--off" : ""}`}
+                    onClick={() => setSelectedStratIdx(i)}>
+                    <span className="new-order__strategy-name">{s.name}</span>
+                    <span className={`new-order__strategy-conf new-order__strategy-conf--${s.confidence}`}>{s.confidence}</span>
+                  </button>
+                ))}
+            </div>
+          )}
+
+          {/* USDT amount */}
+          <div className="order-edit__field">
+            <div className="new-order__label-row">
+              <span className="order-edit__label">Import USDT</span>
+              <span className="new-order__balance-hint">
+                Saldo: {formatCurrency(balances["USDT"] ?? 0)} USDT
+              </span>
+            </div>
+            <div className="new-order__prefix-wrap">
+              <span className="new-order__prefix">$</span>
+              <input className="order-edit__input new-order__prefixed" type="number"
+                min="0" step="any" value={beUsdAmount}
+                onChange={e => setBeUsdAmount(e.target.value)} placeholder="0.00" />
+            </div>
+          </div>
+
+          <div className="new-order__divider"><span>Sortida automàtica</span></div>
+
+          {/* TP % */}
+          <div className="order-edit__field">
+            <span className="order-edit__label">
+              <i className="fa-solid fa-circle new-order__tp-dot" /> Take Profit %
+            </span>
+            <div className="new-order__price-row">
+              <input className="order-edit__input new-order__pct-pos" type="number"
+                min="0.01" step="0.01" value={beTpPct}
+                onChange={e => setBeTpPct(e.target.value)} />
+              <div className="new-order__pct-wrap">
+                <span className="new-order__pct-computed">
+                  {ref && beTpPct ? (ref * (1 + parseFloat(beTpPct) / 100)).toFixed(ref >= 100 ? 2 : ref >= 1 ? 4 : 6) : "—"}
+                </span>
+                <span className="new-order__pct-sign">%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* SL % */}
+          <div className="order-edit__field">
+            <span className="order-edit__label">
+              <i className="fa-solid fa-circle new-order__sl-dot" /> Stop Loss %
+              <span className="new-order__field-hint">SL Limit offset fix 0.1%</span>
+            </span>
+            <div className="new-order__price-row">
+              <input className="order-edit__input new-order__pct-neg" type="number"
+                min="0.01" step="0.01" value={beSlPct}
+                onChange={e => setBeSlPct(e.target.value)} />
+              <div className="new-order__pct-wrap">
+                <span className="new-order__pct-computed">
+                  {ref && beSlPct ? (ref * (1 - parseFloat(beSlPct) / 100)).toFixed(ref >= 100 ? 2 : ref >= 1 ? 4 : 6) : "—"}
+                </span>
+                <span className="new-order__pct-sign">%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trailing Stop (reused) */}
+          <div className="new-order__trailing">
+            <div className="new-order__trailing-toggle" onClick={toggleTrailing} role="button">
+              <div className="new-order__trailing-label">
+                <i className="fa-solid fa-flag-checkered" style={{ color: "#d97706", fontSize: "0.75rem" }} />
+                <span>Trailing Stop</span>
+                {trailingLoading && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.65rem", color: "var(--text-3)" }} />}
+              </div>
+              <div className={`new-order__trailing-switch${trailingOn ? " new-order__trailing-switch--on" : ""}`}>
+                <div className="new-order__trailing-switch-knob" />
+              </div>
+            </div>
+            {trailingOn && (
+              <div className="new-order__trailing-body">
+                <div className="new-order__trailing-row">
+                  <div className="order-edit__field" style={{ flex: 1 }}>
+                    <span className="order-edit__label">
+                      Preu d'activació
+                      {trailingAtr > 0 && <span className="new-order__atr-badge">{trailingActivateAtr}×ATR</span>}
+                    </span>
+                    <input className="order-edit__input" type="number" min="0" step="any"
+                      value={trailingActivateAt} onChange={e => setTrailingActivateAt(e.target.value)} />
+                  </div>
+                  <div className="order-edit__field" style={{ flex: 1 }}>
+                    <span className="order-edit__label">
+                      Distància cua
+                      {trailingAtr > 0 && <span className="new-order__atr-badge">{trailingDistanceAtr}×ATR</span>}
+                    </span>
+                    <input className="order-edit__input" type="number" min="0" step="any"
+                      value={trailingDistance} onChange={e => setTrailingDistance(e.target.value)} />
+                  </div>
+                </div>
+                {trailingLogic && <div className="new-order__trailing-logic">{trailingLogic}</div>}
+                {!trailingLoading && trailingAtr === 0 && (
+                  <div className="new-order__trailing-logic" style={{ color: "var(--text-3)" }}>
+                    Introdueix els valors manualment o espera que carregui la suggerència.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          </> /* end mode === "buy-exit" */}
+
           {error && <div className="order-edit__error">{error}</div>}
         </div>
 
         <div className="order-edit__footer">
           <button className="order-edit__btn-cancel" onClick={onClose} disabled={saving}>Cancel</button>
-          <button className="order-edit__btn-save" onClick={submit} disabled={saving || badDirection}>
-            {saving ? "Placing…" : `Place ${side} OCO`}
-          </button>
+          {mode === "oco" ? (
+            <button className="order-edit__btn-save" onClick={submit} disabled={saving || badDirection}>
+              {saving ? "Placing…" : "Col·locar SELL OCO"}
+            </button>
+          ) : (
+            <button className="order-edit__btn-save" onClick={submitBuyExit} disabled={saving}>
+              {saving ? "Placing…" : "Compra + Sortida"}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cacheGet, cacheSet } from "../../lib/cache-store";
+import { log } from "../../lib/logger";
 
 export async function GET(req: NextRequest) {
   const symbol    = req.nextUrl.searchParams.get("symbol");
@@ -8,6 +9,13 @@ export async function GET(req: NextRequest) {
 
   if (!symbol || !startTime) {
     return NextResponse.json({ error: "symbol and startTime required" }, { status: 400 });
+  }
+  if (!/^[A-Z0-9]{3,12}$/.test(symbol)) {
+    return NextResponse.json({ error: "symbol invàlid" }, { status: 400 });
+  }
+  const startTimeMs = parseInt(startTime, 10);
+  if (!Number.isFinite(startTimeMs)) {
+    return NextResponse.json({ error: "startTime invàlid" }, { status: 400 });
   }
 
   const H = 3_600_000;
@@ -26,7 +34,7 @@ export async function GET(req: NextRequest) {
     fetchStart = String(Date.now() - c.ms);
   } else {
     // Auto-select interval based on time since order was placed
-    const elapsed = Date.now() - parseInt(startTime);
+    const elapsed = Date.now() - startTimeMs;
     interval =
       elapsed < 6      * H ? "5m"  :
       elapsed < 24     * H ? "15m" :
@@ -39,12 +47,18 @@ export async function GET(req: NextRequest) {
   const cached = cacheGet<Array<{ time: number; close: number }>>(KEY);
   if (cached) return NextResponse.json(cached.data);
 
-  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&startTime=${fetchStart}&limit=500`;
+  const u = new URL("https://api.binance.com/api/v3/klines");
+  u.searchParams.set("symbol",    symbol);
+  u.searchParams.set("interval",  interval);
+  u.searchParams.set("startTime", fetchStart);
+  u.searchParams.set("limit",     "500");
+  const url = u.toString();
   const res = await fetch(url);
   if (!res.ok) return NextResponse.json({ error: "Binance error" }, { status: 500 });
 
   const raw: unknown[][] = await res.json();
   const data = raw.map(k => ({ time: k[0] as number, close: parseFloat(k[4] as string) }));
+  log.binance.debug({ symbol, interval, candles: data.length }, "klines-range");
   cacheSet(KEY, data, 60);
   return NextResponse.json(data);
 }

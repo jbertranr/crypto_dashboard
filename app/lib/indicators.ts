@@ -48,11 +48,20 @@ export interface StrategyProposal {
   whyNot: string[];        // Per què no és recomanable (si !active)
 }
 
+export type VolatilityClass  = "LOW" | "NORMAL" | "HIGH";
+export type TradeDecision    = "IGNORE" | "WATCH" | "PREPARE ENTRY" | "ENTRY SIGNAL";
+
+export interface LayerScores {
+  direction: number;   // 0–100  (EMA200 / ADX / DI)
+  context:   number;   // 0–100  (RSI / Volume / Range)
+  trigger:   number;   // 0–100  (MACD / RSI 5m / RelVol)
+}
+
 export interface AnalysisResult {
   symbol: string;
   interval: string;
   price: number;
-  score: number;       // 0–100
+  score: number;       // 0–100  (current single-TF flat score, kept for backward-compat)
   verdict: "BUY" | "WAIT" | "AVOID";
   groups: AnalysisGroup[];
   strategies: StrategyProposal[];
@@ -61,9 +70,113 @@ export interface AnalysisResult {
   suggestedTP: number;
   suggestedSL: number;
   suggestedSLLimit: number;
+  // ── v2 enriched fields ──
+  relativeVolume:       number;          // currentVol / avg20Vol
+  volatilityClass:      VolatilityClass;
+  distanceToResistance: number;          // (resistance – price) / price  (0..N)
+  pivotLow:             number | null;   // most-recent swing low for SL placement
+  layerScores:          LayerScores;     // sub-scores per timeframe role
+  tradeDecision:        TradeDecision;   // 4-state output
+  // Raw numeric values for MTF dashboard
+  raw: {
+    rsi:      number;
+    adx:      number;
+    plusDI:   number;
+    minusDI:  number;
+    sma20:    number;
+    sma50:    number;
+    ema9:     number;
+    ema21:    number;
+    ema200:   number;
+    macdBull: boolean;
+    rangePct: number;
+    volRatio: number;
+    stochK:   number;
+  };
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+/** Detect pivot lows (swing lows). Returns most recent pivot-low price, or null. */
+export function calcPivotLow(candles: OHLCV[]): number | null {
+  for (let i = candles.length - 2; i >= 1; i--) {
+    if (candles[i].low < candles[i - 1].low && candles[i].low < candles[i + 1].low) {
+      return candles[i].low;
+    }
+  }
+  return null;
+}
+
+/** Returns the nearest swing-high resistance above current price. */
+function calcResistance(candles: OHLCV[]): number {
+  const price   = candles[candles.length - 1].close;
+  const recent  = candles.slice(-50);
+  const swingHi: number[] = [];
+  for (let i = 1; i < recent.length - 1; i++) {
+    if (recent[i].high > recent[i - 1].high && recent[i].high > recent[i + 1].high && recent[i].high > price) {
+      swingHi.push(recent[i].high);
+    }
+  }
+  return swingHi.length > 0 ? Math.min(...swingHi) : Math.max(...candles.slice(-20).map(c => c.high));
+}
+
+/** ATR-based volatility classification. */
+function classifyVolatility(atr: number, price: number): VolatilityClass {
+  const pct = price > 0 ? atr / price : 0;
+  if (pct < 0.008) return "LOW";
+  if (pct > 0.025) return "HIGH";
+  return "NORMAL";
+}
+
+/** Direction score 0–100 (EMA200, ADX, DI). */
+export function calcDirectionScore(raw: AnalysisResult["raw"], price: number): number {
+  let s = 50;
+  if (!isNaN(raw.ema200)) { s += price > raw.ema200 ? 20 : -20; }
+  if   (raw.adx > 40)      s += 15;
+  else if (raw.adx > 25)   s +=  8;
+  else if (raw.adx < 15)   s -= 10;
+  const diMargin = raw.plusDI - raw.minusDI;
+  if   (diMargin > 10)  s += 15;
+  else if (diMargin > 0) s +=  8;
+  else if (diMargin < -10) s -= 15;
+  else s -=  8;
+  return Math.max(0, Math.min(100, s));
+}
+
+/** Context score 0–100 (RSI, Volume, Range position). */
+export function calcContextScore(raw: AnalysisResult["raw"]): number {
+  let s = 50;
+  if      (raw.rsi >= 40 && raw.rsi <= 60) s += 15;
+  else if (raw.rsi < 35)                   s +=  5;  // oversold bounce potential
+  else if (raw.rsi > 70)                   s -= 15;
+  else if (raw.rsi > 65)                   s -=  8;
+  if      (raw.volRatio > 1.5)  s += 20;
+  else if (raw.volRatio > 1.1)  s += 10;
+  else if (raw.volRatio < 0.65) s -= 20;
+  if      (raw.rangePct < 0.30) s += 10;  // near support
+  else if (raw.rangePct > 0.80) s -= 15;  // near resistance
+  return Math.max(0, Math.min(100, s));
+}
+
+/** Trigger score 0–100 (MACD, RSI momentum, Range breakout, RelVol). */
+export function calcTriggerScore(raw: AnalysisResult["raw"], relVol: number): number {
+  let s = 50;
+  s += raw.macdBull ? 20 : -15;
+  if      (raw.rsi > 55) s += 15;
+  else if (raw.rsi < 45) s -= 15;
+  if (raw.rangePct > 0.55) s += 10;
+  if      (relVol > 1.5) s += 15;
+  else if (relVol < 0.7) s -= 10;
+  return Math.max(0, Math.min(100, s));
+}
+
+/** Map composite score → 4-state trade decision. */
+export function tradeDecisionFromScore(score: number): TradeDecision {
+  if (score >= 76) return "ENTRY SIGNAL";
+  if (score >= 61) return "PREPARE ENTRY";
+  if (score >= 41) return "WATCH";
+  return "IGNORE";
+}
 
 function smaArr(data: number[], period: number): number[] {
   return data.map((_, i) => {
@@ -348,11 +461,11 @@ function buildStrategies(c: StratCtx): StrategyProposal[] {
       rationale: r, blockers: b, active, whyNot,
       tp: price + atr * m, sl: price - atr * sm, slLimit: price - atr * (sm + 0.05),
       trailing: {
-        activateAt: price + atr * 1.0,
-        activateAtr: 1.0,
+        activateAt: price,
+        activateAtr: 0,
         distance: atr * 1.5,
         distanceAtr: 1.5,
-        logic: "Quan el preu superi +1×ATR des de l'entrada, activa el trailing. Mou el SL a breakeven i segueix el màxim assolit amb una cua de 1.5×ATR per sota. Permet capturar la major part de la tendència sense tancar massa aviat.",
+        logic: "S'activa automàticament des del preu d'entrada. Segueix el màxim assolit amb una cua de 1.5×ATR per sota — protegeix beneficis sense tancar massa aviat.",
       },
       risk,
     });
@@ -432,11 +545,11 @@ function buildStrategies(c: StratCtx): StrategyProposal[] {
       rationale: r, blockers: b, active, whyNot,
       tp: price - atr * m, sl: price + atr * sm, slLimit: price + atr * (sm + 0.05),
       trailing: {
-        activateAt: price - atr * 1.0,
-        activateAtr: 1.0,
+        activateAt: price,
+        activateAtr: 0,
         distance: atr * 1.5,
         distanceAtr: 1.5,
-        logic: "Quan el preu caigui -1×ATR des de l'entrada, activa el trailing. Segueix el mínim assolit amb una cua de 1.5×ATR per sobre. Protegeix beneficis i deixa córrer la tendència baixista.",
+        logic: "S'activa automàticament des del preu d'entrada. Segueix el mínim assolit amb una cua de 1.5×ATR per sobre — protegeix beneficis i deixa córrer la tendència baixista.",
       },
       risk,
     });
@@ -522,11 +635,11 @@ function buildStrategies(c: StratCtx): StrategyProposal[] {
       tp: Math.min(tpBase, price + atr * 2.5),
       sl: price - atr * 1.0, slLimit: price - atr * 1.05,
       trailing: {
-        activateAt: price + atr * 0.5,
-        activateAtr: 0.5,
+        activateAt: price,
+        activateAtr: 0,
         distance: atr * 1.0,
         distanceAtr: 1.0,
-        logic: "Activació ràpida a +0.5×ATR: les reversions poden ser brusques i de curta durada. Trailing ajustat a 1.0×ATR per sota del màxim — protegeix els guanys tan aviat com el preu es mou a favor.",
+        logic: "S'activa automàticament des del preu d'entrada. Trailing ajustat a 1.0×ATR per sota del màxim — protegeix els guanys tan aviat com el preu es mou a favor.",
       },
       risk,
     });
@@ -608,11 +721,11 @@ function buildStrategies(c: StratCtx): StrategyProposal[] {
       tp: Math.max(tpBase, price - atr * 2.5),
       sl: price + atr * 1.0, slLimit: price + atr * 1.05,
       trailing: {
-        activateAt: price - atr * 0.5,
-        activateAtr: 0.5,
+        activateAt: price,
+        activateAtr: 0,
         distance: atr * 1.0,
         distanceAtr: 1.0,
-        logic: "Activació ràpida a -0.5×ATR: les reversions bajistes s'esgoten sovint en poc temps. Trailing a 1.0×ATR per sobre del mínim assolit — tanca la posició curta en qualsevol recuperació significativa.",
+        logic: "S'activa automàticament des del preu d'entrada. Trailing a 1.0×ATR per sobre del mínim assolit — tanca la posició curta en qualsevol recuperació significativa.",
       },
       risk,
     });
@@ -665,11 +778,11 @@ function buildStrategies(c: StratCtx): StrategyProposal[] {
       rationale: r, blockers: b, active, whyNot,
       tp: price + atr * 4.0, sl: price - atr * 1.5, slLimit: price - atr * 1.55,
       trailing: {
-        activateAt: price + atr * 1.5,
-        activateAtr: 1.5,
+        activateAt: price,
+        activateAtr: 0,
         distance: atr * 2.0,
         distanceAtr: 2.0,
-        logic: "Activació a +1.5×ATR: el breakout necessita espai per confirmar-se. Trailing ample de 2.0×ATR per no tallar un moviment explosiu — breakouts forts sovint continuen sorprenent durant diverses veles.",
+        logic: "S'activa automàticament des del preu d'entrada. Trailing ample de 2.0×ATR per no tallar un moviment explosiu — breakouts forts sovint continuen sorprenent durant diverses veles.",
       },
       risk: b.length >= 2 ? "mig" : "baix",
     });
@@ -704,6 +817,7 @@ export function analyzeAll(candles: OHLCV[], symbol: string, interval: string): 
   const sma50  = last(smaArr(closes, 50));
   const ema9   = last(emaArr(closes, 9));
   const ema21  = last(emaArr(closes, 21));
+  const ema200 = last(emaArr(closes, 200));
 
   const priceVsSma20: Signal = !isNaN(sma20) ? (price > sma20 ? "bullish" : "bearish") : "neutral";
   const priceVsSma50: Signal = !isNaN(sma50) ? (price > sma50 ? "bullish" : "bearish") : "neutral";
@@ -783,9 +897,10 @@ export function analyzeAll(candles: OHLCV[], symbol: string, interval: string): 
       name: "Tendència",
       score: 0,
       indicators: [
-        { name: "Preu / SMA20", value: fmt(sma20), signal: priceVsSma20, detail: price > sma20 ? "Per sobre" : "Per sota" },
-        { name: "Preu / SMA50", value: fmt(sma50), signal: priceVsSma50, detail: price > sma50 ? "Per sobre" : "Per sota" },
-        { name: "EMA 9 / 21",   value: `${fmt(ema9)} / ${fmt(ema21)}`, signal: emaCross, detail: ema9 > ema21 ? "EMA9 > EMA21" : "EMA9 < EMA21" },
+        { name: "Preu / SMA20",  value: fmt(sma20),                signal: priceVsSma20, detail: price > sma20 ? "Per sobre" : "Per sota" },
+        { name: "Preu / SMA50",  value: fmt(sma50),                signal: priceVsSma50, detail: price > sma50 ? "Per sobre" : "Per sota" },
+        { name: "Preu / EMA200", value: fmt(ema200),               signal: !isNaN(ema200) ? (price > ema200 ? "bullish" : "bearish") : "neutral", detail: !isNaN(ema200) ? (price > ema200 ? "Per sobre (bull mercat)" : "Per sota (bear mercat)") : "—" },
+        { name: "EMA 9 / 21",    value: `${fmt(ema9)} / ${fmt(ema21)}`, signal: emaCross, detail: ema9 > ema21 ? "EMA9 > EMA21" : "EMA9 < EMA21" },
       ],
     },
     {
@@ -860,5 +975,31 @@ export function analyzeAll(candles: OHLCV[], symbol: string, interval: string): 
     upCandles, dnCandles, rangePct,
   });
 
-  return { symbol, interval, price, score, verdict, groups, strategies, candles: candles.slice(-80), atr: atrVal, suggestedTP, suggestedSL, suggestedSLLimit };
+  // ── v2 enriched fields ────────────────────────────────────────────────────
+  const rawSnapshot = { rsi: rsiVal, adx, plusDI, minusDI, sma20, sma50, ema9, ema21, ema200, macdBull: macdVal > sigVal, rangePct, volRatio, stochK };
+
+  const relativeVolume      = volRatio;
+  const volatilityClass     = classifyVolatility(atrVal, price);
+  const resistance          = calcResistance(candles);
+  const distanceToResistance = price > 0 ? (resistance - price) / price : 0;
+  const pivotLow            = calcPivotLow(candles);
+
+  const dirScore  = calcDirectionScore(rawSnapshot, price);
+  const ctxScore  = calcContextScore(rawSnapshot);
+  const trgScore  = calcTriggerScore(rawSnapshot, relativeVolume);
+
+  // Weighted composite — replaces flat average when used by MTF dashboard
+  // Single-TF `score` is kept as-is for backward compatibility.
+  const weightedScore = Math.round(0.4 * dirScore + 0.3 * ctxScore + 0.3 * trgScore);
+  const tradeDecision = tradeDecisionFromScore(weightedScore);
+
+  return {
+    symbol, interval, price, score, verdict,
+    groups, strategies, candles: candles.slice(-80),
+    atr: atrVal, suggestedTP, suggestedSL, suggestedSLLimit,
+    relativeVolume, volatilityClass, distanceToResistance, pivotLow,
+    layerScores: { direction: dirScore, context: ctxScore, trigger: trgScore },
+    tradeDecision,
+    raw: rawSnapshot,
+  };
 }

@@ -1,0 +1,44 @@
+{
+  "name": "conf_btc_sol_229pct",
+  "savedAt": "2026-03-14T13:13:30.163Z",
+  "config": {
+    "symbols": [
+      "BTCUSDT",
+      "SOLUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 60,
+    "riskPct": 1.5,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1.5,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4,
+    "breakEvenAtr": 2
+  },
+  "pnlPct": 132.41303287873706,
+  "effectiveConfig": {
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 60,
+    "riskPct": 1.5,
+    "maxOpen": 20,
+    "minProbability": 60,
+    "useMarketFilter": false,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1.5,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4,
+    "breakEvenAtr": 2,
+    "commissionPct": 0.1,
+    "maxHoldingBars": 300,
+    "warmupBars": 250
+  }
+}

@@ -1,53 +1,144 @@
-export default function Nav() {
-  const main = [
-    { icon: "fa-gauge-high",     label: "Dashboard",  active: true  },
-    { icon: "fa-chart-line",     label: "Markets",    active: false },
-    { icon: "fa-briefcase",      label: "Portfolio",  active: false },
-    { icon: "fa-arrow-right-arrow-left", label: "Trade", active: false },
-    { icon: "fa-list-check",     label: "Orders",     active: false },
-    { icon: "fa-chart-pie",      label: "Analytics",  active: false },
-  ];
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Tab } from "./OrdersPanel";
+import { useServerEvents } from "../hooks/useServerEvents";
+import type { AppError } from "../lib/error-store";
 
-  const account = [
-    { icon: "fa-gear",           label: "Settings",   active: false },
-    { icon: "fa-circle-user",    label: "Account",    active: false },
-  ];
+const VIEWS: { key: Tab; label: string; icon: string }[] = [
+  { key: "portfolio", label: "Portfolio",    icon: "fa-wallet"                },
+  { key: "open",      label: "Open Orders",  icon: "fa-list-check"            },
+  { key: "history",   label: "History",      icon: "fa-clock-rotate-left"     },
+  { key: "balance",   label: "Balance",      icon: "fa-coins"                 },
+];
+
+const ANALYSIS: { key: Tab; label: string; icon: string }[] = [
+  { key: "analysis",    label: "Anàlisi",      icon: "fa-magnifying-glass-chart" },
+  { key: "matrix",      label: "Escàner",       icon: "fa-table-cells"           },
+  { key: "journal",     label: "Diari",         icon: "fa-book-open"             },
+  { key: "simulation",  label: "Simulació",     icon: "fa-flask-vial"            },
+  { key: "bot",         label: "Bot",           icon: "fa-robot"                 },
+  { key: "equalizer",   label: "Equalitzador",  icon: "fa-sliders"               },
+  { key: "autolab",     label: "AutoLab",       icon: "fa-wand-magic-sparkles"   },
+];
+
+export default function Nav({ tab, onTab, openOrdersCount }: {
+  tab: Tab; onTab: (t: Tab) => void; openOrdersCount?: number;
+}) {
+  const router = useRouter();
+  const [errorCount, setErrorCount] = useState(0);
+  const [collapsed,  setCollapsed]  = useState(false);
+  const [lastSeen]                  = useState(() => {
+    if (typeof localStorage === "undefined") return 0;
+    return parseInt(localStorage.getItem("errLastSeen") ?? "0", 10);
+  });
+
+  // Càrrega inicial del comptador d'errors no vistos
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const r = await fetch(`/api/errors?since=${lastSeen}`);
+        const d = await r.json() as { unseen: number };
+        setErrorCount(d.unseen);
+      } catch { /* silenciat */ }
+    };
+    load();
+  }, [lastSeen]);
+
+  // Subscripció SSE — substitueix el setInterval(load, 30_000)
+  useServerEvents({
+    "error:new": (_err: AppError) => {
+      setErrorCount(prev => prev + 1);
+    },
+    "error:clear": () => {
+      setErrorCount(0);
+    },
+  });
+
+  const handleErrorsTab = () => {
+    onTab("errors");
+    localStorage.setItem("errLastSeen", String(Date.now()));
+    setErrorCount(0);
+  };
+
+  const c = collapsed;
 
   return (
-    <nav className="nav">
-      <div className="nav__brand">
-        <div className="nav__logo">C</div>
-        <div>
-          <div className="nav__appname">CryptDesk</div>
-          <div className="nav__tagline">Trading Dashboard</div>
-        </div>
-      </div>
+    <nav className={`nav${c ? " nav--collapsed" : ""}`}>
 
-      <span className="nav__section-label">Main</span>
-      {main.map(({ icon, label, active }) => (
-        <button key={label} className={`nav__item${active ? " nav__item--active" : ""}`}>
+      <button className="nav__collapse-btn" onClick={() => setCollapsed(v => !v)}
+        title={c ? "Expandir" : "Col·lapsar"}>
+        <i className="fa-solid fa-bars" />
+      </button>
+
+      {!c && <span className="nav__section-label">Vistes</span>}
+      {VIEWS.map(({ key, label, icon }) => (
+        <button key={key} onClick={() => onTab(key)} title={c ? label : undefined}
+          className={`nav__item${tab === key ? " nav__item--active" : ""}`}>
           <i className={`fa-solid ${icon} nav__item-icon`} />
-          {label}
+          {!c && label}
+          {!c && key === "open" && (openOrdersCount ?? 0) > 0 && (
+            <span className="nav__badge">{openOrdersCount}</span>
+          )}
+          {c && key === "open" && (openOrdersCount ?? 0) > 0 && (
+            <span className="nav__badge nav__badge--dot" />
+          )}
+        </button>
+      ))}
+
+      {!c && <span className="nav__section-label">Anàlisi</span>}
+      {c && <div className="nav__section-divider" />}
+      {ANALYSIS.map(({ key, label, icon }) => (
+        <button key={key} onClick={() => onTab(key)} title={c ? label : undefined}
+          className={`nav__item${tab === key ? " nav__item--active" : ""}`}>
+          <i className={`fa-solid ${icon} nav__item-icon`} />
+          {!c && label}
         </button>
       ))}
 
       <div className="nav__spacer" />
 
-      <span className="nav__section-label">Account</span>
-      {account.map(({ icon, label }) => (
-        <button key={label} className="nav__item">
-          <i className={`fa-solid ${icon} nav__item-icon`} />
-          {label}
-        </button>
-      ))}
+      {!c && <span className="nav__section-label">Sistema</span>}
+      {c && <div className="nav__section-divider" />}
+      <button onClick={handleErrorsTab} title={c ? "Errors" : undefined}
+        className={`nav__item${tab === "errors" ? " nav__item--active" : ""}${errorCount > 0 ? " nav__item--alert" : ""}`}>
+        <i className="fa-solid fa-triangle-exclamation nav__item-icon" />
+        {!c && "Errors"}
+        {errorCount > 0 && (
+          <span className={`nav__badge nav__badge--err${c ? " nav__badge--dot" : ""}`}>{c ? "" : errorCount > 99 ? "99+" : errorCount}</span>
+        )}
+      </button>
 
-      <div className="nav__live">
-        <div className="nav__live-dot" />
-        <div>
-          <div className="nav__live-text">Binance Demo</div>
-          <div className="nav__live-sub">Connected · Live data</div>
+      <button onClick={() => onTab("logs")} title={c ? "Logs" : undefined}
+        className={`nav__item${tab === "logs" ? " nav__item--active" : ""}`}>
+        <i className="fa-solid fa-terminal nav__item-icon" />
+        {!c && "Logs"}
+      </button>
+
+      <button onClick={() => onTab("settings")} title={c ? "Configuració" : undefined}
+        className={`nav__item${tab === "settings" ? " nav__item--active" : ""}`}>
+        <i className="fa-solid fa-gear nav__item-icon" />
+        {!c && "Configuració"}
+      </button>
+
+      <button className="nav__logout" title={c ? "Tancar sessió" : undefined}
+        onClick={async () => {
+          await fetch("/api/auth/logout", { method: "POST" });
+          router.push("/login");
+        }}>
+        <i className="fa-solid fa-right-from-bracket nav__item-icon" />
+        {!c && "Tancar sessió"}
+      </button>
+
+      {!c && (
+        <div className="nav__live">
+          <div className="nav__live-dot" />
+          <div>
+            <div className="nav__live-text">Binance Demo</div>
+            <div className="nav__live-sub">Connected · Live data</div>
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }

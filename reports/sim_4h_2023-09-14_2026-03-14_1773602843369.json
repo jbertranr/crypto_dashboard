@@ -1,0 +1,1536 @@
+{
+  "_meta": {
+    "generated": "2026-03-15T19:27:23.368Z",
+    "system": "CryptDesk Backtester",
+    "description": "Backtest d'una estratègia algorítmica de trading de criptomonedes basada en anàlisi tècnica de 3 capes."
+  },
+  "strategy_description": {
+    "overview": "Sistema de trading que combina anàlisi tècnica en 3 capes per generar senyals d'entrada BUY, seguides d'una gestió de sortida en dues fases (OCO → Trailing SL).",
+    "entry_logic": {
+      "step1_direction": "Capa Direcció (pes 40%): EMA200, ADX, +DI/-DI. Confirma que el mercat té tendència alcista definida.",
+      "step2_context": "Capa Context (pes 30%): RSI, Volum relatiu, posició en rang. Confirma que el context és favorable per entrar.",
+      "step3_trigger": "Capa Trigger (pes 30%): MACD, RSI momentum, ruptura de rang, volum relatiu. Senyal d'entrada immediata.",
+      "probability": "Probabilitat = score×0.7 + bonus_interval + bonus_confiança. Només entra si probabilitat ≥ llindar mínim.",
+      "entry_candle": "L'entrada es fa al preu OPEN de la vela SEGUENT al senyal (evita look-ahead bias)."
+    },
+    "exit_logic": {
+      "phase1_oco": "Fase OCO: TP fix (entrada + N×ATR) i SL fix (entrada − N×ATR). Si el preu arriba al TP, sortida amb guany.",
+      "phase2_trailing": "Fase Trailing: s'activa quan preu ≥ entrada + N×ATR. El SL segueix el màxim − distància ATR. Protegeix guanys.",
+      "timeout": "Si l'operació no es tanca en 50 veles, es tanca forçosament al preu de tancament."
+    }
+  },
+  "simulation_parameters": {
+    "symbols": [
+      "DOGEUSDT",
+      "AVAXUSDT",
+      "DOTUSDT"
+    ],
+    "interval": "4h",
+    "period_from": "2023-09-14",
+    "period_to": "2026-03-14",
+    "initial_capital_usdt": 1000,
+    "warmup_bars": 400,
+    "market_filter_ema200_daily": false,
+    "capital_mode": "PCT",
+    "capital_fixed_usdt": 100,
+    "capital_pct": 50,
+    "risk_pct": 60,
+    "max_simultaneous_positions": 20,
+    "min_entry_probability_pct": 60,
+    "exit_mode": "MOON",
+    "tp_atr_multiplier": 3,
+    "sl_atr_multiplier": 1.5,
+    "trailing_activate_atr": 2,
+    "trailing_distance_atr": 4,
+    "break_even_atr": 2,
+    "max_holding_bars": 300,
+    "commission_pct_per_side": 0.1,
+    "commission_total_round_trip_pct": 0.2
+  },
+  "performance_summary": {
+    "total_trades": 49,
+    "winning_trades": 24,
+    "losing_trades": 25,
+    "win_rate_pct": 48.98,
+    "total_pnl_usdt": 125.41,
+    "total_pnl_pct": 12.54,
+    "final_capital_usdt": 1125.41,
+    "profit_factor": 1.2,
+    "max_drawdown_pct": 22.58,
+    "avg_win_usdt": 31.3,
+    "avg_loss_usdt": 25.03,
+    "candles_backtested": 5478,
+    "expectancy_usdt": 2.56,
+    "risk_reward_ratio": 1.25
+  },
+  "results_by_symbol": [
+    {
+      "symbol": "DOGEUSDT",
+      "trades": 18,
+      "wins": 9,
+      "losses": 9,
+      "win_rate": 50,
+      "total_pnl": 101.99
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "trades": 16,
+      "wins": 9,
+      "losses": 7,
+      "win_rate": 56.3,
+      "total_pnl": 141.02
+    },
+    {
+      "symbol": "DOTUSDT",
+      "trades": 15,
+      "wins": 6,
+      "losses": 9,
+      "win_rate": 40,
+      "total_pnl": -117.6
+    }
+  ],
+  "results_by_outcome": {
+    "TP": 0,
+    "SL": 0,
+    "TRAILING_SL": 0,
+    "TIMEOUT": 0
+  },
+  "equity_curve": [
+    {
+      "date": "2023-09-14",
+      "capital": 1000
+    },
+    {
+      "date": "2023-11-16",
+      "capital": 1021.17
+    },
+    {
+      "date": "2023-11-21",
+      "capital": 1099.78
+    },
+    {
+      "date": "2023-12-20",
+      "capital": 1139.27
+    },
+    {
+      "date": "2023-12-28",
+      "capital": 1213.75
+    },
+    {
+      "date": "2024-01-16",
+      "capital": 1214.36
+    },
+    {
+      "date": "2024-01-23",
+      "capital": 1191.42
+    },
+    {
+      "date": "2024-03-05",
+      "capital": 1293.37
+    },
+    {
+      "date": "2024-03-16",
+      "capital": 1267.32
+    },
+    {
+      "date": "2024-03-19",
+      "capital": 1289.39
+    },
+    {
+      "date": "2024-03-30",
+      "capital": 1329.36
+    },
+    {
+      "date": "2024-06-03",
+      "capital": 1337.65
+    },
+    {
+      "date": "2024-07-04",
+      "capital": 1310.71
+    },
+    {
+      "date": "2024-07-04",
+      "capital": 1293.05
+    },
+    {
+      "date": "2024-08-03",
+      "capital": 1267.01
+    },
+    {
+      "date": "2024-08-04",
+      "capital": 1240.96
+    },
+    {
+      "date": "2024-08-05",
+      "capital": 1214.92
+    },
+    {
+      "date": "2024-09-24",
+      "capital": 1272.4
+    },
+    {
+      "date": "2024-09-24",
+      "capital": 1287.16
+    },
+    {
+      "date": "2024-11-12",
+      "capital": 1430.24
+    },
+    {
+      "date": "2024-11-15",
+      "capital": 1441.52
+    },
+    {
+      "date": "2024-12-20",
+      "capital": 1412.49
+    },
+    {
+      "date": "2025-01-11",
+      "capital": 1403.51
+    },
+    {
+      "date": "2025-01-27",
+      "capital": 1375.06
+    },
+    {
+      "date": "2025-02-02",
+      "capital": 1346.61
+    },
+    {
+      "date": "2025-02-03",
+      "capital": 1318.35
+    },
+    {
+      "date": "2025-03-10",
+      "capital": 1238.69
+    },
+    {
+      "date": "2025-04-07",
+      "capital": 1213.75
+    },
+    {
+      "date": "2025-04-30",
+      "capital": 1243.32
+    },
+    {
+      "date": "2025-05-27",
+      "capital": 1268.9
+    },
+    {
+      "date": "2025-06-10",
+      "capital": 1287.3
+    },
+    {
+      "date": "2025-06-19",
+      "capital": 1262.26
+    },
+    {
+      "date": "2025-08-19",
+      "capital": 1285.65
+    },
+    {
+      "date": "2025-08-21",
+      "capital": 1317.16
+    },
+    {
+      "date": "2025-10-10",
+      "capital": 1237.57
+    },
+    {
+      "date": "2025-11-21",
+      "capital": 1212.65
+    },
+    {
+      "date": "2025-12-18",
+      "capital": 1187.72
+    },
+    {
+      "date": "2026-01-31",
+      "capital": 1139.88
+    },
+    {
+      "date": "2026-02-05",
+      "capital": 1115.96
+    },
+    {
+      "date": "2026-03-14",
+      "capital": 1125.41
+    }
+  ],
+  "trades": [
+    {
+      "id": 1,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-09-27",
+      "exit_date": "2023-11-16",
+      "entry_price": 0.06062,
+      "exit_price": 0.0768,
+      "tp_price": 0.06234454910798043,
+      "initial_sl": 0.045465,
+      "peak_price": 0.06062,
+      "trail_distance": 0.0022993988106405766,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 21.17,
+      "pnl_pct": 26.69,
+      "capital_after": 1021.17,
+      "entry_signal": {
+        "global_score": 48,
+        "probability_pct": 48,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 64,
+        "trigger_score": 48
+      }
+    },
+    {
+      "id": 2,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2023-10-04",
+      "exit_date": "2023-11-21",
+      "entry_price": 10.02,
+      "exit_price": 19.752000000000002,
+      "tp_price": 10.674299246550145,
+      "initial_sl": 7.515,
+      "peak_price": 24.69,
+      "trail_distance": 0.8723989954001949,
+      "trailing_activated": false,
+      "sl_moves_count": 6,
+      "result": "MOON_PARTIAL_SL",
+      "pnl_usdt": 78.61,
+      "pnl_pct": 98.26,
+      "capital_after": 1099.78,
+      "entry_signal": {
+        "global_score": 48,
+        "probability_pct": 48,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 64,
+        "trigger_score": 48
+      }
+    },
+    {
+      "id": 3,
+      "symbol": "DOTUSDT",
+      "entry_date": "2023-10-31",
+      "exit_date": "2023-12-20",
+      "entry_price": 4.525,
+      "exit_price": 6.77,
+      "tp_price": 4.790987511732786,
+      "initial_sl": 3.3937500000000003,
+      "peak_price": 4.525,
+      "trail_distance": 0.3546500156437146,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 39.49,
+      "pnl_pct": 49.61,
+      "capital_after": 1139.27,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 68,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 4,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2023-12-05",
+      "exit_date": "2023-12-28",
+      "entry_price": 23.53,
+      "exit_price": 39.968,
+      "tp_price": 25.81183154512148,
+      "initial_sl": 17.6475,
+      "peak_price": 49.96,
+      "trail_distance": 3.042442060161972,
+      "trailing_activated": false,
+      "sl_moves_count": 3,
+      "result": "MOON_PARTIAL_SL",
+      "pnl_usdt": 74.47,
+      "pnl_pct": 84.64,
+      "capital_after": 1213.75,
+      "entry_signal": {
+        "global_score": 48,
+        "probability_pct": 48,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 64,
+        "trigger_score": 48
+      }
+    },
+    {
+      "id": 5,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-11-27",
+      "exit_date": "2024-01-16",
+      "entry_price": 0.08088,
+      "exit_price": 0.08161,
+      "tp_price": 0.08560848116853814,
+      "initial_sl": 0.06065999999999999,
+      "peak_price": 0.08088,
+      "trail_distance": 0.006304641558050864,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 0.62,
+      "pnl_pct": 0.9,
+      "capital_after": 1214.36,
+      "entry_signal": {
+        "global_score": 55,
+        "probability_pct": 55,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 73,
+        "trigger_score": 55
+      }
+    },
+    {
+      "id": 6,
+      "symbol": "DOTUSDT",
+      "entry_date": "2023-12-21",
+      "exit_date": "2024-01-23",
+      "entry_price": 8.242,
+      "exit_price": 6.181500000000001,
+      "tp_price": 9.02302644012536,
+      "initial_sl": 6.181500000000001,
+      "peak_price": 8.242,
+      "trail_distance": 1.0413685868338123,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -22.94,
+      "pnl_pct": -25,
+      "capital_after": 1191.42,
+      "entry_signal": {
+        "global_score": 57,
+        "probability_pct": 57,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 76,
+        "trigger_score": 57
+      }
+    },
+    {
+      "id": 7,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-01-19",
+      "exit_date": "2024-03-05",
+      "entry_price": 0.07843,
+      "exit_price": 0.16509600000000002,
+      "tp_price": 0.08289530761530892,
+      "initial_sl": 0.0588225,
+      "peak_price": 0.20637,
+      "trail_distance": 0.005953743487078564,
+      "trailing_activated": false,
+      "sl_moves_count": 6,
+      "result": "MOON_PARTIAL_SL",
+      "pnl_usdt": 101.95,
+      "pnl_pct": 104.95,
+      "capital_after": 1293.37,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 8,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-03-14",
+      "exit_date": "2024-03-16",
+      "entry_price": 0.18624,
+      "exit_price": 0.13968,
+      "tp_price": 0.21105369061342577,
+      "initial_sl": 0.13968,
+      "peak_price": 0.18624,
+      "trail_distance": 0.03308492081790102,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.05,
+      "pnl_pct": -25,
+      "capital_after": 1267.32,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 75,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 75
+      }
+    },
+    {
+      "id": 9,
+      "symbol": "DOTUSDT",
+      "entry_date": "2024-01-29",
+      "exit_date": "2024-03-19",
+      "entry_price": 7.105,
+      "exit_price": 8.766,
+      "tp_price": 7.58764237598482,
+      "initial_sl": 5.32875,
+      "peak_price": 7.105,
+      "trail_distance": 0.6435231679797594,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 22.07,
+      "pnl_pct": 23.38,
+      "capital_after": 1289.39,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 10,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2024-02-09",
+      "exit_date": "2024-03-30",
+      "entry_price": 37.58,
+      "exit_price": 53.43,
+      "tp_price": 39.675239433007505,
+      "initial_sl": 28.185,
+      "peak_price": 37.58,
+      "trail_distance": 2.793652577343346,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 39.97,
+      "pnl_pct": 42.18,
+      "capital_after": 1329.36,
+      "entry_signal": {
+        "global_score": 52,
+        "probability_pct": 52,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 69,
+        "trigger_score": 52
+      }
+    },
+    {
+      "id": 11,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-04-14",
+      "exit_date": "2024-06-03",
+      "entry_price": 0.15254,
+      "exit_price": 0.15974,
+      "tp_price": 0.18321368186066306,
+      "initial_sl": 0.114405,
+      "peak_price": 0.15254,
+      "trail_distance": 0.04089824248088406,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 4.8,
+      "pnl_pct": 4.72,
+      "capital_after": 1334.16,
+      "entry_signal": {
+        "global_score": 59,
+        "probability_pct": 59,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 78,
+        "trigger_score": 59
+      }
+    },
+    {
+      "id": 12,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2024-04-14",
+      "exit_date": "2024-06-03",
+      "entry_price": 33.9,
+      "exit_price": 35.08,
+      "tp_price": 40.30814708773327,
+      "initial_sl": 25.424999999999997,
+      "peak_price": 33.9,
+      "trail_distance": 8.544196116977691,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 3.49,
+      "pnl_pct": 3.48,
+      "capital_after": 1337.65,
+      "entry_signal": {
+        "global_score": 84,
+        "probability_pct": 84,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 84
+      }
+    },
+    {
+      "id": 13,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-06-12",
+      "exit_date": "2024-07-04",
+      "entry_price": 0.14947,
+      "exit_price": 0.1121025,
+      "tp_price": 0.15990845874681928,
+      "initial_sl": 0.1121025,
+      "peak_price": 0.14947,
+      "trail_distance": 0.013917944995759058,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.94,
+      "pnl_pct": -25,
+      "capital_after": 1310.71,
+      "entry_signal": {
+        "global_score": 55,
+        "probability_pct": 55,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 73,
+        "trigger_score": 55
+      }
+    },
+    {
+      "id": 14,
+      "symbol": "DOTUSDT",
+      "entry_date": "2024-05-15",
+      "exit_date": "2024-07-04",
+      "entry_price": 6.868,
+      "exit_price": 5.74,
+      "tp_price": 7.309441282011201,
+      "initial_sl": 5.151,
+      "peak_price": 6.868,
+      "trail_distance": 0.5885883760149341,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -17.66,
+      "pnl_pct": -16.42,
+      "capital_after": 1293.05,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 15,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2024-07-21",
+      "exit_date": "2024-08-03",
+      "entry_price": 30.99,
+      "exit_price": 23.2425,
+      "tp_price": 33.16463062984882,
+      "initial_sl": 23.2425,
+      "peak_price": 30.99,
+      "trail_distance": 2.8995075064651,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.04,
+      "pnl_pct": -25,
+      "capital_after": 1267.01,
+      "entry_signal": {
+        "global_score": 50,
+        "probability_pct": 50,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 66,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 16,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-07-20",
+      "exit_date": "2024-08-04",
+      "entry_price": 0.13486,
+      "exit_price": 0.10114500000000001,
+      "tp_price": 0.14490723094300803,
+      "initial_sl": 0.10114500000000001,
+      "peak_price": 0.13486,
+      "trail_distance": 0.0133963079240107,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.04,
+      "pnl_pct": -25,
+      "capital_after": 1240.96,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 17,
+      "symbol": "DOTUSDT",
+      "entry_date": "2024-07-05",
+      "exit_date": "2024-08-05",
+      "entry_price": 5.388,
+      "exit_price": 4.041,
+      "tp_price": 6.050437537577954,
+      "initial_sl": 4.041,
+      "peak_price": 5.388,
+      "trail_distance": 0.8832500501039396,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.04,
+      "pnl_pct": -25,
+      "capital_after": 1214.92,
+      "entry_signal": {
+        "global_score": 70,
+        "probability_pct": 70,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 94,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 18,
+      "symbol": "DOTUSDT",
+      "entry_date": "2024-08-05",
+      "exit_date": "2024-09-24",
+      "entry_price": 4.017,
+      "exit_price": 4.588,
+      "tp_price": 4.64245394956485,
+      "initial_sl": 3.0127500000000005,
+      "peak_price": 4.017,
+      "trail_distance": 0.8339385994197996,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 13.61,
+      "pnl_pct": 14.21,
+      "capital_after": 1228.53,
+      "entry_signal": {
+        "global_score": 82,
+        "probability_pct": 82,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 82
+      }
+    },
+    {
+      "id": 19,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2024-08-05",
+      "exit_date": "2024-09-24",
+      "entry_price": 19.04,
+      "exit_price": 27.68,
+      "tp_price": 22.09398232515803,
+      "initial_sl": 14.28,
+      "peak_price": 19.04,
+      "trail_distance": 4.071976433544044,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 43.87,
+      "pnl_pct": 45.38,
+      "capital_after": 1272.4,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 69,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 92,
+        "trigger_score": 69
+      }
+    },
+    {
+      "id": 20,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-08-05",
+      "exit_date": "2024-09-24",
+      "entry_price": 0.09522,
+      "exit_price": 0.10989,
+      "tp_price": 0.11283690926819431,
+      "initial_sl": 0.071415,
+      "peak_price": 0.09522,
+      "trail_distance": 0.02348921235759241,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 14.76,
+      "pnl_pct": 15.41,
+      "capital_after": 1287.16,
+      "entry_signal": {
+        "global_score": 57,
+        "probability_pct": 57,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 76,
+        "trigger_score": 57
+      }
+    },
+    {
+      "id": 21,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-10-16",
+      "exit_date": "2024-11-12",
+      "entry_price": 0.12595,
+      "exit_price": 0.35086400000000006,
+      "tp_price": 0.13648343227578413,
+      "initial_sl": 0.0944625,
+      "peak_price": 0.43858,
+      "trail_distance": 0.01404457636771217,
+      "trailing_activated": false,
+      "sl_moves_count": 8,
+      "result": "MOON_PARTIAL_SL",
+      "pnl_usdt": 143.08,
+      "pnl_pct": 138.95,
+      "capital_after": 1430.24,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 88,
+        "trigger_score": 66
+      }
+    },
+    {
+      "id": 22,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2024-09-26",
+      "exit_date": "2024-11-15",
+      "entry_price": 29.19,
+      "exit_price": 32.45,
+      "tp_price": 31.12053046811781,
+      "initial_sl": 21.892500000000002,
+      "peak_price": 29.19,
+      "trail_distance": 2.574040624157078,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 11.28,
+      "pnl_pct": 11.17,
+      "capital_after": 1441.52,
+      "entry_signal": {
+        "global_score": 53,
+        "probability_pct": 53,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 70,
+        "trigger_score": 53
+      }
+    },
+    {
+      "id": 23,
+      "symbol": "DOTUSDT",
+      "entry_date": "2024-11-23",
+      "exit_date": "2024-12-20",
+      "entry_price": 8.843,
+      "exit_price": 6.63225,
+      "tp_price": 9.952636148518572,
+      "initial_sl": 6.63225,
+      "peak_price": 8.843,
+      "trail_distance": 1.47951486469143,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -29.03,
+      "pnl_pct": -25,
+      "capital_after": 1412.49,
+      "entry_signal": {
+        "global_score": 54,
+        "probability_pct": 54,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 71,
+        "trigger_score": 54
+      }
+    },
+    {
+      "id": 24,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2024-11-22",
+      "exit_date": "2025-01-11",
+      "entry_price": 39.5,
+      "exit_price": 36.5,
+      "tp_price": 43.93757418791673,
+      "initial_sl": 29.625,
+      "peak_price": 39.5,
+      "trail_distance": 5.916765583888977,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -8.98,
+      "pnl_pct": -7.59,
+      "capital_after": 1403.51,
+      "entry_signal": {
+        "global_score": 50,
+        "probability_pct": 50,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 67,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 25,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-01-03",
+      "exit_date": "2025-01-27",
+      "entry_price": 7.689,
+      "exit_price": 5.76675,
+      "tp_price": 8.303926777731041,
+      "initial_sl": 5.76675,
+      "peak_price": 7.689,
+      "trail_distance": 0.8199023703080537,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -28.45,
+      "pnl_pct": -25,
+      "capital_after": 1375.06,
+      "entry_signal": {
+        "global_score": 47,
+        "probability_pct": 47,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 63,
+        "trigger_score": 47
+      }
+    },
+    {
+      "id": 26,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-01-03",
+      "exit_date": "2025-02-02",
+      "entry_price": 0.36617,
+      "exit_price": 0.2746275,
+      "tp_price": 0.3928115165778762,
+      "initial_sl": 0.2746275,
+      "peak_price": 0.36617,
+      "trail_distance": 0.03552202210383499,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -28.45,
+      "pnl_pct": -25,
+      "capital_after": 1346.61,
+      "entry_signal": {
+        "global_score": 56,
+        "probability_pct": 56,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 75,
+        "trigger_score": 56
+      }
+    },
+    {
+      "id": 27,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-01-13",
+      "exit_date": "2025-02-03",
+      "entry_price": 34.42,
+      "exit_price": 25.815,
+      "tp_price": 37.87430852951635,
+      "initial_sl": 25.815,
+      "peak_price": 34.42,
+      "trail_distance": 4.605744706021793,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -28.27,
+      "pnl_pct": -25,
+      "capital_after": 1318.35,
+      "entry_signal": {
+        "global_score": 52,
+        "probability_pct": 52,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 69,
+        "trigger_score": 52
+      }
+    },
+    {
+      "id": 28,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-02-12",
+      "exit_date": "2025-03-10",
+      "entry_price": 5.096,
+      "exit_price": 3.822,
+      "tp_price": 5.631936649508432,
+      "initial_sl": 3.822,
+      "peak_price": 5.096,
+      "trail_distance": 0.7145821993445759,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.55,
+      "pnl_pct": -25,
+      "capital_after": 1291.8,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 88,
+        "trigger_score": 66
+      }
+    },
+    {
+      "id": 29,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-02-25",
+      "exit_date": "2025-03-10",
+      "entry_price": 0.20661,
+      "exit_price": 0.1549575,
+      "tp_price": 0.2315038961766236,
+      "initial_sl": 0.1549575,
+      "peak_price": 0.20661,
+      "trail_distance": 0.033191861568831485,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.55,
+      "pnl_pct": -25,
+      "capital_after": 1265.24,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 30,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-03-02",
+      "exit_date": "2025-03-10",
+      "entry_price": 22.52,
+      "exit_price": 16.89,
+      "tp_price": 24.795576876781748,
+      "initial_sl": 16.89,
+      "peak_price": 22.52,
+      "trail_distance": 3.034102502375666,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.55,
+      "pnl_pct": -25,
+      "capital_after": 1238.69,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 68,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 31,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-03-24",
+      "exit_date": "2025-04-07",
+      "entry_price": 0.18348,
+      "exit_price": 0.13761,
+      "tp_price": 0.19354714995876454,
+      "initial_sl": 0.13761,
+      "peak_price": 0.18348,
+      "trail_distance": 0.013422866611686039,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -24.95,
+      "pnl_pct": -25,
+      "capital_after": 1213.75,
+      "entry_signal": {
+        "global_score": 68,
+        "probability_pct": 68,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 91,
+        "trigger_score": 68
+      }
+    },
+    {
+      "id": 32,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-03-11",
+      "exit_date": "2025-04-30",
+      "entry_price": 16.59,
+      "exit_price": 21.58,
+      "tp_price": 19.506978303524868,
+      "initial_sl": 12.442499999999999,
+      "peak_price": 16.59,
+      "trail_distance": 3.889304404699822,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 29.58,
+      "pnl_pct": 30.08,
+      "capital_after": 1243.32,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 67,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 33,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-04-07",
+      "exit_date": "2025-05-27",
+      "entry_price": 3.598,
+      "exit_price": 4.554,
+      "tp_price": 4.024307876148247,
+      "initial_sl": 2.6985,
+      "peak_price": 3.598,
+      "trail_distance": 0.5684105015309963,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 25.58,
+      "pnl_pct": 26.57,
+      "capital_after": 1268.9,
+      "entry_signal": {
+        "global_score": 55,
+        "probability_pct": 55,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 73,
+        "trigger_score": 55
+      }
+    },
+    {
+      "id": 34,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-04-21",
+      "exit_date": "2025-06-10",
+      "entry_price": 0.1603,
+      "exit_price": 0.19102,
+      "tp_price": 0.16972799494085272,
+      "initial_sl": 0.120225,
+      "peak_price": 0.1603,
+      "trail_distance": 0.012570659921136956,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 18.4,
+      "pnl_pct": 19.16,
+      "capital_after": 1287.3,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 68,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 35,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-05-09",
+      "exit_date": "2025-06-19",
+      "entry_price": 23.53,
+      "exit_price": 17.6475,
+      "tp_price": 25.333464704653114,
+      "initial_sl": 17.6475,
+      "peak_price": 23.53,
+      "trail_distance": 2.4046196062041503,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -25.04,
+      "pnl_pct": -25,
+      "capital_after": 1262.26,
+      "entry_signal": {
+        "global_score": 54,
+        "probability_pct": 54,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 72,
+        "trigger_score": 54
+      }
+    },
+    {
+      "id": 36,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-06-30",
+      "exit_date": "2025-08-19",
+      "entry_price": 18.73,
+      "exit_price": 23.11,
+      "tp_price": 19.792335490943227,
+      "initial_sl": 14.0475,
+      "peak_price": 18.73,
+      "trail_distance": 1.416447321257636,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 23.39,
+      "pnl_pct": 23.38,
+      "capital_after": 1285.65,
+      "entry_signal": {
+        "global_score": 56,
+        "probability_pct": 56,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 74,
+        "trigger_score": 56
+      }
+    },
+    {
+      "id": 37,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-07-02",
+      "exit_date": "2025-08-21",
+      "entry_price": 0.17096,
+      "exit_price": 0.21473,
+      "tp_price": 0.180706454415554,
+      "initial_sl": 0.12822,
+      "peak_price": 0.17096,
+      "trail_distance": 0.012995272554072013,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 25.63,
+      "pnl_pct": 25.6,
+      "capital_after": 1311.27,
+      "entry_signal": {
+        "global_score": 54,
+        "probability_pct": 54,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 71,
+        "trigger_score": 54
+      }
+    },
+    {
+      "id": 38,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-07-02",
+      "exit_date": "2025-08-21",
+      "entry_price": 3.581,
+      "exit_price": 3.797,
+      "tp_price": 3.7956421481086378,
+      "initial_sl": 2.68575,
+      "peak_price": 3.581,
+      "trail_distance": 0.2861895308115171,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 5.88,
+      "pnl_pct": 6.03,
+      "capital_after": 1317.16,
+      "entry_signal": {
+        "global_score": 67,
+        "probability_pct": 67,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 89,
+        "trigger_score": 67
+      }
+    },
+    {
+      "id": 39,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-08-22",
+      "exit_date": "2025-10-10",
+      "entry_price": 0.23013,
+      "exit_price": 0.17259750000000001,
+      "tp_price": 0.25079031165032506,
+      "initial_sl": 0.17259750000000001,
+      "peak_price": 0.23013,
+      "trail_distance": 0.02754708220043341,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.53,
+      "pnl_pct": -25,
+      "capital_after": 1290.63,
+      "entry_signal": {
+        "global_score": 62,
+        "probability_pct": 62,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 82,
+        "trigger_score": 62
+      }
+    },
+    {
+      "id": 40,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-08-22",
+      "exit_date": "2025-10-10",
+      "entry_price": 3.96,
+      "exit_price": 2.9699999999999998,
+      "tp_price": 4.257118152479566,
+      "initial_sl": 2.9699999999999998,
+      "peak_price": 3.96,
+      "trail_distance": 0.39615753663942194,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.53,
+      "pnl_pct": -25,
+      "capital_after": 1264.1,
+      "entry_signal": {
+        "global_score": 77,
+        "probability_pct": 77,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 77
+      }
+    },
+    {
+      "id": 41,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-08-22",
+      "exit_date": "2025-10-10",
+      "entry_price": 24.26,
+      "exit_price": 18.195,
+      "tp_price": 26.22608702273444,
+      "initial_sl": 18.195,
+      "peak_price": 24.26,
+      "trail_distance": 2.621449363645916,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -26.53,
+      "pnl_pct": -25,
+      "capital_after": 1237.57,
+      "entry_signal": {
+        "global_score": 92,
+        "probability_pct": 92,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 92
+      }
+    },
+    {
+      "id": 42,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-10-11",
+      "exit_date": "2025-11-21",
+      "entry_price": 3.123,
+      "exit_price": 2.34225,
+      "tp_price": 4.15159964439966,
+      "initial_sl": 2.34225,
+      "peak_price": 3.123,
+      "trail_distance": 1.3714661925328795,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -24.92,
+      "pnl_pct": -25,
+      "capital_after": 1212.65,
+      "entry_signal": {
+        "global_score": 57,
+        "probability_pct": 57,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 76,
+        "trigger_score": 57
+      }
+    },
+    {
+      "id": 43,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-05",
+      "exit_date": "2025-12-18",
+      "entry_price": 0.16224,
+      "exit_price": 0.12168,
+      "tp_price": 0.18163489823278667,
+      "initial_sl": 0.12168,
+      "peak_price": 0.16224,
+      "trail_distance": 0.02585986431038222,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -24.92,
+      "pnl_pct": -25,
+      "capital_after": 1187.72,
+      "entry_signal": {
+        "global_score": 47,
+        "probability_pct": 47,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 62,
+        "trigger_score": 47
+      }
+    },
+    {
+      "id": 44,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2025-12-23",
+      "exit_date": "2026-01-31",
+      "entry_price": 12.42,
+      "exit_price": 9.315,
+      "tp_price": 13.188380522575223,
+      "initial_sl": 9.315,
+      "peak_price": 12.42,
+      "trail_distance": 1.0245073634336315,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -23.92,
+      "pnl_pct": -25,
+      "capital_after": 1163.8,
+      "entry_signal": {
+        "global_score": 52,
+        "probability_pct": 52,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 70,
+        "trigger_score": 52
+      }
+    },
+    {
+      "id": 45,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-02",
+      "exit_date": "2026-01-31",
+      "entry_price": 0.13528,
+      "exit_price": 0.10146000000000001,
+      "tp_price": 0.143973961792507,
+      "initial_sl": 0.10146000000000001,
+      "peak_price": 0.13528,
+      "trail_distance": 0.011591949056675963,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -23.92,
+      "pnl_pct": -25,
+      "capital_after": 1139.88,
+      "entry_signal": {
+        "global_score": 52,
+        "probability_pct": 52,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 69,
+        "trigger_score": 52
+      }
+    },
+    {
+      "id": 46,
+      "symbol": "DOTUSDT",
+      "entry_date": "2025-12-26",
+      "exit_date": "2026-02-05",
+      "entry_price": 1.739,
+      "exit_price": 1.3042500000000001,
+      "tp_price": 1.856184808364471,
+      "initial_sl": 1.3042500000000001,
+      "peak_price": 1.739,
+      "trail_distance": 0.15624641115262788,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -23.92,
+      "pnl_pct": -25,
+      "capital_after": 1115.96,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 47,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-06",
+      "exit_date": "2026-03-14",
+      "entry_price": 0.08988,
+      "exit_price": 0.09604,
+      "tp_price": 0.10430657583521696,
+      "initial_sl": 0.06741,
+      "peak_price": 0.08988,
+      "trail_distance": 0.01923543444695595,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 5.93,
+      "pnl_pct": 6.85,
+      "capital_after": 1121.9,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 69,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 48,
+      "symbol": "DOTUSDT",
+      "entry_date": "2026-02-25",
+      "exit_date": "2026-03-14",
+      "entry_price": 1.383,
+      "exit_price": 1.414,
+      "tp_price": 1.4901390191798847,
+      "initial_sl": 1.03725,
+      "peak_price": 1.383,
+      "trail_distance": 0.14285202557317966,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 1.82,
+      "pnl_pct": 2.24,
+      "capital_after": 1123.72,
+      "entry_signal": {
+        "global_score": 55,
+        "probability_pct": 55,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 74,
+        "trigger_score": 55
+      }
+    },
+    {
+      "id": 49,
+      "symbol": "AVAXUSDT",
+      "entry_date": "2026-02-25",
+      "exit_date": "2026-03-14",
+      "entry_price": 9.53,
+      "exit_price": 9.73,
+      "tp_price": 10.269382044942288,
+      "initial_sl": 7.147499999999999,
+      "peak_price": 9.53,
+      "trail_distance": 0.9858427265897188,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 1.69,
+      "pnl_pct": 2.1,
+      "capital_after": 1125.41,
+      "entry_signal": {
+        "global_score": 80,
+        "probability_pct": 80,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 80
+      }
+    }
+  ]
+}

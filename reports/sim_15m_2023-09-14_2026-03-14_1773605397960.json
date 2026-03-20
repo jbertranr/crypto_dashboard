@@ -1,0 +1,3348 @@
+{
+  "_meta": {
+    "generated": "2026-03-15T20:09:57.957Z",
+    "system": "CryptDesk Backtester",
+    "description": "Backtest d'una estratègia algorítmica de trading de criptomonedes basada en anàlisi tècnica de 3 capes."
+  },
+  "strategy_description": {
+    "overview": "Sistema de trading que combina anàlisi tècnica en 3 capes per generar senyals d'entrada BUY, seguides d'una gestió de sortida en dues fases (OCO → Trailing SL).",
+    "entry_logic": {
+      "step1_direction": "Capa Direcció (pes 40%): EMA200, ADX, +DI/-DI. Confirma que el mercat té tendència alcista definida.",
+      "step2_context": "Capa Context (pes 30%): RSI, Volum relatiu, posició en rang. Confirma que el context és favorable per entrar.",
+      "step3_trigger": "Capa Trigger (pes 30%): MACD, RSI momentum, ruptura de rang, volum relatiu. Senyal d'entrada immediata.",
+      "probability": "Probabilitat = score×0.7 + bonus_interval + bonus_confiança. Només entra si probabilitat ≥ llindar mínim.",
+      "entry_candle": "L'entrada es fa al preu OPEN de la vela SEGUENT al senyal (evita look-ahead bias)."
+    },
+    "exit_logic": {
+      "phase1_oco": "Fase OCO: TP fix (entrada + N×ATR) i SL fix (entrada − N×ATR). Si el preu arriba al TP, sortida amb guany.",
+      "phase2_trailing": "Fase Trailing: s'activa quan preu ≥ entrada + N×ATR. El SL segueix el màxim − distància ATR. Protegeix guanys.",
+      "timeout": "Si l'operació no es tanca en 50 veles, es tanca forçosament al preu de tancament."
+    }
+  },
+  "simulation_parameters": {
+    "symbols": [
+      "DOGEUSDT",
+      "SHIBUSDT",
+      "PEPEUSDT"
+    ],
+    "interval": "15m",
+    "period_from": "2023-09-14",
+    "period_to": "2026-03-14",
+    "initial_capital_usdt": 1000,
+    "warmup_bars": 400,
+    "market_filter_ema200_daily": false,
+    "capital_mode": "PCT",
+    "capital_fixed_usdt": 100,
+    "capital_pct": 50,
+    "risk_pct": 60,
+    "max_simultaneous_positions": 20,
+    "min_entry_probability_pct": 60,
+    "exit_mode": "MOON",
+    "tp_atr_multiplier": 1.5,
+    "sl_atr_multiplier": 1.5,
+    "trailing_activate_atr": 1,
+    "trailing_distance_atr": 2.5,
+    "break_even_atr": 1,
+    "max_holding_bars": 300,
+    "commission_pct_per_side": 0.1,
+    "commission_total_round_trip_pct": 0.2
+  },
+  "performance_summary": {
+    "total_trades": 109,
+    "winning_trades": 48,
+    "losing_trades": 61,
+    "win_rate_pct": 44.04,
+    "total_pnl_usdt": 1476.75,
+    "total_pnl_pct": 147.67,
+    "final_capital_usdt": 2476.75,
+    "profit_factor": 1.338,
+    "max_drawdown_pct": 44.75,
+    "avg_win_usdt": 121.66,
+    "avg_loss_usdt": 71.52,
+    "candles_backtested": 29600,
+    "expectancy_usdt": 13.55,
+    "risk_reward_ratio": 1.7
+  },
+  "results_by_symbol": [
+    {
+      "symbol": "DOGEUSDT",
+      "trades": 34,
+      "wins": 14,
+      "losses": 20,
+      "win_rate": 41.2,
+      "total_pnl": -564.31
+    },
+    {
+      "symbol": "SHIBUSDT",
+      "trades": 31,
+      "wins": 15,
+      "losses": 16,
+      "win_rate": 48.4,
+      "total_pnl": 572.54
+    },
+    {
+      "symbol": "PEPEUSDT",
+      "trades": 44,
+      "wins": 19,
+      "losses": 25,
+      "win_rate": 43.2,
+      "total_pnl": 1468.51
+    }
+  ],
+  "results_by_outcome": {
+    "TP": 0,
+    "SL": 0,
+    "TRAILING_SL": 0,
+    "TIMEOUT": 0
+  },
+  "equity_curve": [
+    {
+      "date": "2023-09-14",
+      "capital": 1000
+    },
+    {
+      "date": "2023-09-17",
+      "capital": 984.52
+    },
+    {
+      "date": "2023-09-17",
+      "capital": 979.46
+    },
+    {
+      "date": "2023-09-17",
+      "capital": 986.77
+    },
+    {
+      "date": "2023-09-22",
+      "capital": 981.73
+    },
+    {
+      "date": "2023-09-22",
+      "capital": 972.92
+    },
+    {
+      "date": "2023-09-22",
+      "capital": 968.57
+    },
+    {
+      "date": "2023-09-25",
+      "capital": 1013.68
+    },
+    {
+      "date": "2023-09-26",
+      "capital": 999.05
+    },
+    {
+      "date": "2023-09-27",
+      "capital": 987.81
+    },
+    {
+      "date": "2023-09-30",
+      "capital": 1021.46
+    },
+    {
+      "date": "2023-10-02",
+      "capital": 1032.96
+    },
+    {
+      "date": "2023-10-04",
+      "capital": 1015.54
+    },
+    {
+      "date": "2023-10-04",
+      "capital": 950.74
+    },
+    {
+      "date": "2023-10-09",
+      "capital": 916.35
+    },
+    {
+      "date": "2023-10-10",
+      "capital": 892.62
+    },
+    {
+      "date": "2023-10-16",
+      "capital": 919.59
+    },
+    {
+      "date": "2023-10-17",
+      "capital": 931.6
+    },
+    {
+      "date": "2023-10-17",
+      "capital": 933.44
+    },
+    {
+      "date": "2023-10-19",
+      "capital": 880.76
+    },
+    {
+      "date": "2023-10-22",
+      "capital": 899.97
+    },
+    {
+      "date": "2023-10-23",
+      "capital": 989.87
+    },
+    {
+      "date": "2023-10-27",
+      "capital": 1016.17
+    },
+    {
+      "date": "2023-10-27",
+      "capital": 1185.49
+    },
+    {
+      "date": "2023-10-28",
+      "capital": 1178.2
+    },
+    {
+      "date": "2023-10-31",
+      "capital": 1171.03
+    },
+    {
+      "date": "2023-11-09",
+      "capital": 1246.83
+    },
+    {
+      "date": "2023-11-16",
+      "capital": 1181.83
+    },
+    {
+      "date": "2023-11-19",
+      "capital": 1172.12
+    },
+    {
+      "date": "2023-11-22",
+      "capital": 1155.54
+    },
+    {
+      "date": "2023-11-27",
+      "capital": 1149.13
+    },
+    {
+      "date": "2023-11-28",
+      "capital": 1137.74
+    },
+    {
+      "date": "2023-12-01",
+      "capital": 1141.86
+    },
+    {
+      "date": "2023-12-01",
+      "capital": 1169.73
+    },
+    {
+      "date": "2023-12-05",
+      "capital": 1387.03
+    },
+    {
+      "date": "2023-12-06",
+      "capital": 1452.03
+    },
+    {
+      "date": "2023-12-07",
+      "capital": 1515.1
+    },
+    {
+      "date": "2023-12-12",
+      "capital": 1362.23
+    },
+    {
+      "date": "2023-12-17",
+      "capital": 1401.45
+    },
+    {
+      "date": "2023-12-17",
+      "capital": 1366.78
+    },
+    {
+      "date": "2023-12-24",
+      "capital": 1333.91
+    },
+    {
+      "date": "2023-12-25",
+      "capital": 1363.58
+    },
+    {
+      "date": "2024-01-04",
+      "capital": 1303.41
+    },
+    {
+      "date": "2024-01-05",
+      "capital": 1221.26
+    },
+    {
+      "date": "2024-01-13",
+      "capital": 1205.4
+    },
+    {
+      "date": "2024-01-19",
+      "capital": 1173.7
+    },
+    {
+      "date": "2024-01-20",
+      "capital": 1110.37
+    },
+    {
+      "date": "2024-01-22",
+      "capital": 1096.57
+    },
+    {
+      "date": "2024-01-23",
+      "capital": 1072.89
+    },
+    {
+      "date": "2024-01-24",
+      "capital": 1005.98
+    },
+    {
+      "date": "2024-01-29",
+      "capital": 1000.23
+    },
+    {
+      "date": "2024-02-02",
+      "capital": 982.74
+    },
+    {
+      "date": "2024-02-06",
+      "capital": 971.2
+    },
+    {
+      "date": "2024-02-07",
+      "capital": 969.17
+    },
+    {
+      "date": "2024-02-09",
+      "capital": 999.37
+    },
+    {
+      "date": "2024-02-09",
+      "capital": 1045.86
+    },
+    {
+      "date": "2024-02-12",
+      "capital": 1032.01
+    },
+    {
+      "date": "2024-02-15",
+      "capital": 1175.79
+    },
+    {
+      "date": "2024-02-17",
+      "capital": 1158.09
+    },
+    {
+      "date": "2024-02-25",
+      "capital": 1220.66
+    },
+    {
+      "date": "2024-02-27",
+      "capital": 1269.85
+    },
+    {
+      "date": "2024-02-28",
+      "capital": 1421.51
+    },
+    {
+      "date": "2024-03-01",
+      "capital": 1585.3
+    },
+    {
+      "date": "2024-03-02",
+      "capital": 2084.11
+    },
+    {
+      "date": "2024-03-04",
+      "capital": 3035.74
+    },
+    {
+      "date": "2024-03-14",
+      "capital": 3008.82
+    },
+    {
+      "date": "2024-03-16",
+      "capital": 2927.89
+    },
+    {
+      "date": "2024-03-16",
+      "capital": 2545.77
+    },
+    {
+      "date": "2024-03-22",
+      "capital": 2544.96
+    },
+    {
+      "date": "2024-03-28",
+      "capital": 2919.71
+    },
+    {
+      "date": "2024-03-31",
+      "capital": 3036.15
+    },
+    {
+      "date": "2024-04-03",
+      "capital": 2759.09
+    },
+    {
+      "date": "2024-04-06",
+      "capital": 2824.94
+    },
+    {
+      "date": "2024-04-10",
+      "capital": 2801.29
+    },
+    {
+      "date": "2024-04-10",
+      "capital": 2707.24
+    },
+    {
+      "date": "2024-04-12",
+      "capital": 2366.46
+    },
+    {
+      "date": "2024-04-23",
+      "capital": 2386.46
+    },
+    {
+      "date": "2024-04-23",
+      "capital": 2492.12
+    },
+    {
+      "date": "2024-05-05",
+      "capital": 2585.26
+    },
+    {
+      "date": "2024-05-06",
+      "capital": 2853.86
+    },
+    {
+      "date": "2024-05-09",
+      "capital": 2744.65
+    },
+    {
+      "date": "2024-05-14",
+      "capital": 2942.61
+    },
+    {
+      "date": "2024-05-16",
+      "capital": 3064.99
+    },
+    {
+      "date": "2024-05-18",
+      "capital": 3143.73
+    },
+    {
+      "date": "2024-05-23",
+      "capital": 3941.31
+    },
+    {
+      "date": "2024-05-25",
+      "capital": 3811.91
+    },
+    {
+      "date": "2024-05-27",
+      "capital": 3791.91
+    },
+    {
+      "date": "2024-05-30",
+      "capital": 3860.69
+    },
+    {
+      "date": "2024-06-02",
+      "capital": 3756.54
+    },
+    {
+      "date": "2024-06-07",
+      "capital": 3283.69
+    },
+    {
+      "date": "2024-06-09",
+      "capital": 3073.4
+    },
+    {
+      "date": "2024-06-10",
+      "capital": 3060.04
+    },
+    {
+      "date": "2024-06-15",
+      "capital": 2707.25
+    },
+    {
+      "date": "2024-06-20",
+      "capital": 2569.05
+    },
+    {
+      "date": "2024-06-27",
+      "capital": 2528.26
+    },
+    {
+      "date": "2024-06-28",
+      "capital": 2494.43
+    },
+    {
+      "date": "2024-06-29",
+      "capital": 2337.37
+    },
+    {
+      "date": "2024-07-06",
+      "capital": 2263.64
+    },
+    {
+      "date": "2024-07-11",
+      "capital": 2289.87
+    },
+    {
+      "date": "2024-07-14",
+      "capital": 2177.47
+    },
+    {
+      "date": "2024-07-18",
+      "capital": 2526.54
+    },
+    {
+      "date": "2024-07-18",
+      "capital": 2602.2
+    },
+    {
+      "date": "2024-07-18",
+      "capital": 2476.75
+    }
+  ],
+  "trades": [
+    {
+      "id": 1,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-09-14",
+      "exit_date": "2023-09-17",
+      "entry_price": 6.9e-7,
+      "exit_price": 6.7e-7,
+      "tp_price": 7.080114026956413e-7,
+      "initial_sl": 5.174999999999999e-7,
+      "peak_price": 6.9e-7,
+      "trail_distance": 3.0019004492735556e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -15.48,
+      "pnl_pct": -2.9,
+      "capital_after": 984.52,
+      "entry_signal": {
+        "global_score": 99,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 99
+      }
+    },
+    {
+      "id": 2,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-09-14",
+      "exit_date": "2023-09-17",
+      "entry_price": 0.00000737,
+      "exit_price": 0.00000731,
+      "tp_price": 0.0000074153684836819135,
+      "initial_sl": 0.0000055275,
+      "peak_price": 0.00000737,
+      "trail_distance": 7.561413946985695e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -5.07,
+      "pnl_pct": -0.81,
+      "capital_after": 979.46,
+      "entry_signal": {
+        "global_score": 85,
+        "probability_pct": 85,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 3,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-09-14",
+      "exit_date": "2023-09-17",
+      "entry_price": 0.06131,
+      "exit_price": 0.06233,
+      "tp_price": 0.06150382225678954,
+      "initial_sl": 0.0459825,
+      "peak_price": 0.06131,
+      "trail_distance": 0.0003230370946492276,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 7.31,
+      "pnl_pct": 1.66,
+      "capital_after": 986.77,
+      "entry_signal": {
+        "global_score": 88,
+        "probability_pct": 88,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 88
+      }
+    },
+    {
+      "id": 4,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-09-19",
+      "exit_date": "2023-09-22",
+      "entry_price": 0.06214,
+      "exit_price": 0.06163,
+      "tp_price": 0.06237066556291858,
+      "initial_sl": 0.046605,
+      "peak_price": 0.06214,
+      "trail_distance": 0.00038444260486429074,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -5.03,
+      "pnl_pct": -0.82,
+      "capital_after": 981.73,
+      "entry_signal": {
+        "global_score": 99,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 99
+      }
+    },
+    {
+      "id": 5,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-09-19",
+      "exit_date": "2023-09-22",
+      "entry_price": 6.3e-7,
+      "exit_price": 6.2e-7,
+      "tp_price": 6.484688975097178e-7,
+      "initial_sl": 4.7250000000000003e-7,
+      "peak_price": 6.3e-7,
+      "trail_distance": 3.078149584952961e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -8.81,
+      "pnl_pct": -1.59,
+      "capital_after": 972.92,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 6,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-09-19",
+      "exit_date": "2023-09-22",
+      "entry_price": 0.00000732,
+      "exit_price": 0.00000727,
+      "tp_price": 0.000007354689040223053,
+      "initial_sl": 0.00000549,
+      "peak_price": 0.00000732,
+      "trail_distance": 5.781506703842013e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -4.35,
+      "pnl_pct": -0.68,
+      "capital_after": 968.57,
+      "entry_signal": {
+        "global_score": 79,
+        "probability_pct": 79,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 79
+      }
+    },
+    {
+      "id": 7,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-09-22",
+      "exit_date": "2023-09-25",
+      "entry_price": 6.3e-7,
+      "exit_price": 6.9e-7,
+      "tp_price": 6.462601583378012e-7,
+      "initial_sl": 4.7250000000000003e-7,
+      "peak_price": 6.3e-7,
+      "trail_distance": 2.710026389633545e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 45.11,
+      "pnl_pct": 9.52,
+      "capital_after": 1013.68,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 8,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-09-23",
+      "exit_date": "2023-09-26",
+      "entry_price": 0.00000744,
+      "exit_price": 0.00000723,
+      "tp_price": 0.000007489130814664697,
+      "initial_sl": 0.00000558,
+      "peak_price": 0.00000744,
+      "trail_distance": 8.188469110782754e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -14.62,
+      "pnl_pct": -2.82,
+      "capital_after": 999.05,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 9,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-09-24",
+      "exit_date": "2023-09-27",
+      "entry_price": 0.06167,
+      "exit_price": 0.06036,
+      "tp_price": 0.06176554698291489,
+      "initial_sl": 0.0462525,
+      "peak_price": 0.06167,
+      "trail_distance": 0.0001592449715248195,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -11.25,
+      "pnl_pct": -2.12,
+      "capital_after": 987.81,
+      "entry_signal": {
+        "global_score": 84,
+        "probability_pct": 84,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 84
+      }
+    },
+    {
+      "id": 10,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-09-27",
+      "exit_date": "2023-09-30",
+      "entry_price": 7.2e-7,
+      "exit_price": 7.7e-7,
+      "tp_price": 7.362268039109932e-7,
+      "initial_sl": 5.4e-7,
+      "peak_price": 7.2e-7,
+      "trail_distance": 2.70446731849887e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 33.66,
+      "pnl_pct": 6.94,
+      "capital_after": 1021.46,
+      "entry_signal": {
+        "global_score": 80,
+        "probability_pct": 80,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 11,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-09-29",
+      "exit_date": "2023-10-02",
+      "entry_price": 0.06207,
+      "exit_price": 0.06364,
+      "tp_price": 0.06227123362946837,
+      "initial_sl": 0.0465525,
+      "peak_price": 0.06207,
+      "trail_distance": 0.00033538938244728105,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 11.49,
+      "pnl_pct": 2.53,
+      "capital_after": 1032.96,
+      "entry_signal": {
+        "global_score": 94,
+        "probability_pct": 94,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 94
+      }
+    },
+    {
+      "id": 12,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-10-01",
+      "exit_date": "2023-10-04",
+      "entry_price": 0.00000747,
+      "exit_price": 0.00000723,
+      "tp_price": 0.000007508012745635942,
+      "initial_sl": 0.000005602499999999999,
+      "peak_price": 0.00000747,
+      "trail_distance": 6.335457605990352e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -17.41,
+      "pnl_pct": -3.21,
+      "capital_after": 1015.54,
+      "entry_signal": {
+        "global_score": 94,
+        "probability_pct": 94,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 94
+      }
+    },
+    {
+      "id": 13,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-10-01",
+      "exit_date": "2023-10-04",
+      "entry_price": 8e-7,
+      "exit_price": 7e-7,
+      "tp_price": 8.19146826545718e-7,
+      "initial_sl": 6e-7,
+      "peak_price": 8e-7,
+      "trail_distance": 3.1911377576196596e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -64.8,
+      "pnl_pct": -12.5,
+      "capital_after": 950.74,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 14,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-10-06",
+      "exit_date": "2023-10-09",
+      "entry_price": 7.1e-7,
+      "exit_price": 6.6e-7,
+      "tp_price": 7.265835618119513e-7,
+      "initial_sl": 5.325e-7,
+      "peak_price": 7.1e-7,
+      "trail_distance": 2.7639269686585515e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -34.39,
+      "pnl_pct": -7.04,
+      "capital_after": 916.35,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 15,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-10-06",
+      "exit_date": "2023-10-10",
+      "entry_price": 0.0615,
+      "exit_price": 0.05855,
+      "tp_price": 0.061650196397301,
+      "initial_sl": 0.046125,
+      "peak_price": 0.0615,
+      "trail_distance": 0.0002503273288350042,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -23.73,
+      "pnl_pct": -4.8,
+      "capital_after": 892.62,
+      "entry_signal": {
+        "global_score": 77,
+        "probability_pct": 77,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 77
+      }
+    },
+    {
+      "id": 16,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-10-13",
+      "exit_date": "2023-10-16",
+      "entry_price": 6.4e-7,
+      "exit_price": 6.8e-7,
+      "tp_price": 6.582224854030874e-7,
+      "initial_sl": 4.800000000000001e-7,
+      "peak_price": 6.4e-7,
+      "trail_distance": 3.037080900514549e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 26.97,
+      "pnl_pct": 6.25,
+      "capital_after": 919.59,
+      "entry_signal": {
+        "global_score": 93,
+        "probability_pct": 93,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 93
+      }
+    },
+    {
+      "id": 17,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-10-13",
+      "exit_date": "2023-10-17",
+      "entry_price": 0.00000691,
+      "exit_price": 0.00000711,
+      "tp_price": 0.0000069425824232957895,
+      "initial_sl": 0.0000051825,
+      "peak_price": 0.00000691,
+      "trail_distance": 5.430403882631553e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 12.01,
+      "pnl_pct": 2.89,
+      "capital_after": 931.6,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 18,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-10-14",
+      "exit_date": "2023-10-17",
+      "entry_price": 0.05885,
+      "exit_price": 0.05921,
+      "tp_price": 0.058959070052382975,
+      "initial_sl": 0.044137499999999996,
+      "peak_price": 0.05885,
+      "trail_distance": 0.0001817834206382959,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 1.83,
+      "pnl_pct": 0.61,
+      "capital_after": 933.44,
+      "entry_signal": {
+        "global_score": 82,
+        "probability_pct": 82,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 82
+      }
+    },
+    {
+      "id": 19,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-10-16",
+      "exit_date": "2023-10-19",
+      "entry_price": 7.1e-7,
+      "exit_price": 6.3e-7,
+      "tp_price": 7.329861670743176e-7,
+      "initial_sl": 5.325e-7,
+      "peak_price": 7.1e-7,
+      "trail_distance": 3.831027845719603e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -52.68,
+      "pnl_pct": -11.27,
+      "capital_after": 880.76,
+      "entry_signal": {
+        "global_score": 88,
+        "probability_pct": 88,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 88
+      }
+    },
+    {
+      "id": 20,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-10-18",
+      "exit_date": "2023-10-22",
+      "entry_price": 0.05881,
+      "exit_price": 0.06135,
+      "tp_price": 0.05899685112667147,
+      "initial_sl": 0.0441075,
+      "peak_price": 0.05881,
+      "trail_distance": 0.000311418544452444,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 19.2,
+      "pnl_pct": 4.32,
+      "capital_after": 899.97,
+      "entry_signal": {
+        "global_score": 90,
+        "probability_pct": 90,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 90
+      }
+    },
+    {
+      "id": 21,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-10-20",
+      "exit_date": "2023-10-23",
+      "entry_price": 6.3e-7,
+      "exit_price": 7.6e-7,
+      "tp_price": 6.455000568104139e-7,
+      "initial_sl": 4.7250000000000003e-7,
+      "peak_price": 6.3e-7,
+      "trail_distance": 2.5833428017356504e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 89.9,
+      "pnl_pct": 20.63,
+      "capital_after": 989.87,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 22,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-10-23",
+      "exit_date": "2023-10-27",
+      "entry_price": 0.06684,
+      "exit_price": 0.07053,
+      "tp_price": 0.06763626667281925,
+      "initial_sl": 0.050129999999999994,
+      "peak_price": 0.06684,
+      "trail_distance": 0.0013271111213654162,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 26.31,
+      "pnl_pct": 5.52,
+      "capital_after": 1016.17,
+      "entry_signal": {
+        "global_score": 83,
+        "probability_pct": 83,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 83
+      }
+    },
+    {
+      "id": 23,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-10-23",
+      "exit_date": "2023-10-27",
+      "entry_price": 9e-7,
+      "exit_price": 0.00000121,
+      "tp_price": 9.393621695548231e-7,
+      "initial_sl": 6.75e-7,
+      "peak_price": 9e-7,
+      "trail_distance": 6.560361592470538e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 169.32,
+      "pnl_pct": 34.44,
+      "capital_after": 1185.49,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 24,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-10-25",
+      "exit_date": "2023-10-28",
+      "entry_price": 0.00000785,
+      "exit_price": 0.00000775,
+      "tp_price": 0.000007961968977374947,
+      "initial_sl": 0.000005887499999999999,
+      "peak_price": 0.00000785,
+      "trail_distance": 1.8661496229157918e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -7.29,
+      "pnl_pct": -1.27,
+      "capital_after": 1178.2,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 25,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-10-28",
+      "exit_date": "2023-10-31",
+      "entry_price": 0.00000786,
+      "exit_price": 0.00000778,
+      "tp_price": 0.000007911504122467503,
+      "initial_sl": 0.0000058949999999999995,
+      "peak_price": 0.00000786,
+      "trail_distance": 8.58402041125072e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -7.17,
+      "pnl_pct": -1.02,
+      "capital_after": 1171.03,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 26,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-11-06",
+      "exit_date": "2023-11-09",
+      "entry_price": 0.00000114,
+      "exit_price": 0.00000129,
+      "tp_price": 0.0000011652470088422855,
+      "initial_sl": 8.550000000000001e-7,
+      "peak_price": 0.00000114,
+      "trail_distance": 4.207834807047554e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 75.79,
+      "pnl_pct": 13.16,
+      "capital_after": 1246.83,
+      "entry_signal": {
+        "global_score": 80,
+        "probability_pct": 80,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 27,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-11-13",
+      "exit_date": "2023-11-16",
+      "entry_price": 0.00000127,
+      "exit_price": 0.00000114,
+      "tp_price": 0.0000013069906982021542,
+      "initial_sl": 9.525e-7,
+      "peak_price": 0.00000127,
+      "trail_distance": 6.165116367025725e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -65,
+      "pnl_pct": -10.24,
+      "capital_after": 1181.83,
+      "entry_signal": {
+        "global_score": 90,
+        "probability_pct": 90,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 90
+      }
+    },
+    {
+      "id": 28,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-11-16",
+      "exit_date": "2023-11-19",
+      "entry_price": 0.07942,
+      "exit_price": 0.07834,
+      "tp_price": 0.08024888336654683,
+      "initial_sl": 0.05956500000000001,
+      "peak_price": 0.07942,
+      "trail_distance": 0.0013814722775780464,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -9.72,
+      "pnl_pct": -1.36,
+      "capital_after": 1172.12,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 29,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-11-19",
+      "exit_date": "2023-11-22",
+      "entry_price": 0.00000114,
+      "exit_price": 0.00000111,
+      "tp_price": 0.0000011632236956574469,
+      "initial_sl": 8.550000000000001e-7,
+      "peak_price": 0.00000114,
+      "trail_distance": 3.870615942907805e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -16.58,
+      "pnl_pct": -2.63,
+      "capital_after": 1155.54,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 30,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-11-24",
+      "exit_date": "2023-11-27",
+      "entry_price": 0.0000011,
+      "exit_price": 0.00000109,
+      "tp_price": 0.0000011207180649173924,
+      "initial_sl": 8.25e-7,
+      "peak_price": 0.0000011,
+      "trail_distance": 3.453010819565388e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -6.4,
+      "pnl_pct": -0.91,
+      "capital_after": 1149.13,
+      "entry_signal": {
+        "global_score": 97,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 97
+      }
+    },
+    {
+      "id": 31,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-11-25",
+      "exit_date": "2023-11-28",
+      "entry_price": 0.00000846,
+      "exit_price": 0.00000831,
+      "tp_price": 0.00000851191883645491,
+      "initial_sl": 0.000006345,
+      "peak_price": 0.00000846,
+      "trail_distance": 8.653139409151531e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -11.39,
+      "pnl_pct": -1.77,
+      "capital_after": 1137.74,
+      "entry_signal": {
+        "global_score": 83,
+        "probability_pct": 83,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 83
+      }
+    },
+    {
+      "id": 32,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-11-28",
+      "exit_date": "2023-12-01",
+      "entry_price": 0.00000109,
+      "exit_price": 0.0000011,
+      "tp_price": 0.000001111730939774766,
+      "initial_sl": 8.175e-7,
+      "peak_price": 0.00000109,
+      "trail_distance": 3.621823295794344e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 4.12,
+      "pnl_pct": 0.92,
+      "capital_after": 1141.86,
+      "entry_signal": {
+        "global_score": 90,
+        "probability_pct": 90,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 90
+      }
+    },
+    {
+      "id": 33,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-11-28",
+      "exit_date": "2023-12-01",
+      "entry_price": 0.07912,
+      "exit_price": 0.08312,
+      "tp_price": 0.07961288939636106,
+      "initial_sl": 0.05934,
+      "peak_price": 0.07912,
+      "trail_distance": 0.0008214823272684533,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 27.87,
+      "pnl_pct": 5.06,
+      "capital_after": 1169.73,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 34,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-12-02",
+      "exit_date": "2023-12-05",
+      "entry_price": 0.00000115,
+      "exit_price": 0.00000158,
+      "tp_price": 0.0000011716120244544551,
+      "initial_sl": 8.625e-7,
+      "peak_price": 0.00000115,
+      "trail_distance": 3.60200407574252e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 217.3,
+      "pnl_pct": 37.39,
+      "capital_after": 1387.03,
+      "entry_signal": {
+        "global_score": 83,
+        "probability_pct": 83,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 83
+      }
+    },
+    {
+      "id": 35,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-12-03",
+      "exit_date": "2023-12-06",
+      "entry_price": 0.00000883,
+      "exit_price": 0.00000983,
+      "tp_price": 0.000008913710881561867,
+      "initial_sl": 0.0000066225,
+      "peak_price": 0.00000883,
+      "trail_distance": 1.3951813593644477e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 65,
+      "pnl_pct": 11.33,
+      "capital_after": 1452.03,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 36,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-12-04",
+      "exit_date": "2023-12-07",
+      "entry_price": 0.08768,
+      "exit_price": 0.09732,
+      "tp_price": 0.08839545508719737,
+      "initial_sl": 0.06576,
+      "peak_price": 0.08768,
+      "trail_distance": 0.001192425145328961,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 63.07,
+      "pnl_pct": 10.99,
+      "capital_after": 1515.1,
+      "entry_signal": {
+        "global_score": 84,
+        "probability_pct": 84,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 84
+      }
+    },
+    {
+      "id": 37,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-12-09",
+      "exit_date": "2023-12-12",
+      "entry_price": 0.00000175,
+      "exit_price": 0.0000014,
+      "tp_price": 0.0000018084788307327873,
+      "initial_sl": 0.0000013125,
+      "peak_price": 0.00000175,
+      "trail_distance": 9.746471788797884e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -152.87,
+      "pnl_pct": -20,
+      "capital_after": 1362.23,
+      "entry_signal": {
+        "global_score": 94,
+        "probability_pct": 94,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 94
+      }
+    },
+    {
+      "id": 38,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-12-14",
+      "exit_date": "2023-12-17",
+      "entry_price": 0.00001006,
+      "exit_price": 0.00001066,
+      "tp_price": 0.000010146631940882795,
+      "initial_sl": 0.000007545,
+      "peak_price": 0.00001006,
+      "trail_distance": 1.443865681379931e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 39.22,
+      "pnl_pct": 5.96,
+      "capital_after": 1401.45,
+      "entry_signal": {
+        "global_score": 88,
+        "probability_pct": 88,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 88
+      }
+    },
+    {
+      "id": 39,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-12-14",
+      "exit_date": "2023-12-17",
+      "entry_price": 0.00000143,
+      "exit_price": 0.00000136,
+      "tp_price": 0.0000014758204410418297,
+      "initial_sl": 0.0000010725000000000001,
+      "peak_price": 0.00000143,
+      "trail_distance": 7.636740173638261e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -34.67,
+      "pnl_pct": -4.9,
+      "capital_after": 1366.78,
+      "entry_signal": {
+        "global_score": 93,
+        "probability_pct": 93,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 93
+      }
+    },
+    {
+      "id": 40,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2023-12-21",
+      "exit_date": "2023-12-24",
+      "entry_price": 0.09712,
+      "exit_price": 0.09182,
+      "tp_price": 0.0983780679228875,
+      "initial_sl": 0.07284,
+      "peak_price": 0.09712,
+      "trail_distance": 0.0020967798714791835,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -38.62,
+      "pnl_pct": -5.46,
+      "capital_after": 1328.15,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 41,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2023-12-21",
+      "exit_date": "2023-12-24",
+      "entry_price": 0.00001054,
+      "exit_price": 0.00001065,
+      "tp_price": 0.000010637882335247703,
+      "initial_sl": 0.000007905,
+      "peak_price": 0.00001054,
+      "trail_distance": 1.6313722541283664e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 5.76,
+      "pnl_pct": 1.04,
+      "capital_after": 1333.91,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 42,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2023-12-21",
+      "exit_date": "2023-12-25",
+      "entry_price": 0.00000132,
+      "exit_price": 0.00000138,
+      "tp_price": 0.0000013521497078463879,
+      "initial_sl": 9.9e-7,
+      "peak_price": 0.00000132,
+      "trail_distance": 5.35828464106462e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 29.67,
+      "pnl_pct": 4.55,
+      "capital_after": 1363.58,
+      "entry_signal": {
+        "global_score": 85,
+        "probability_pct": 85,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 43,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-01-01",
+      "exit_date": "2024-01-04",
+      "entry_price": 0.00000139,
+      "exit_price": 0.00000127,
+      "tp_price": 0.0000014139314840459922,
+      "initial_sl": 0.0000010425,
+      "peak_price": 0.00000139,
+      "trail_distance": 3.9885806743320276e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -60.16,
+      "pnl_pct": -8.63,
+      "capital_after": 1303.41,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 44,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-01-02",
+      "exit_date": "2024-01-05",
+      "entry_price": 0.09392,
+      "exit_price": 0.08278,
+      "tp_price": 0.09444011577920663,
+      "initial_sl": 0.07044,
+      "peak_price": 0.09392,
+      "trail_distance": 0.0008668596320110543,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -82.15,
+      "pnl_pct": -11.86,
+      "capital_after": 1221.26,
+      "entry_signal": {
+        "global_score": 79,
+        "probability_pct": 79,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 79
+      }
+    },
+    {
+      "id": 45,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-01-10",
+      "exit_date": "2024-01-13",
+      "entry_price": 0.00000125,
+      "exit_price": 0.00000122,
+      "tp_price": 0.0000012878696471120162,
+      "initial_sl": 9.375000000000001e-7,
+      "peak_price": 0.00000125,
+      "trail_distance": 6.311607852002672e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -15.86,
+      "pnl_pct": -2.4,
+      "capital_after": 1205.4,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 46,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-01-16",
+      "exit_date": "2024-01-19",
+      "entry_price": 0.08214,
+      "exit_price": 0.07798,
+      "tp_price": 0.08264948532517608,
+      "initial_sl": 0.06160500000000001,
+      "peak_price": 0.08214,
+      "trail_distance": 0.0008491422086267947,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -31.7,
+      "pnl_pct": -5.06,
+      "capital_after": 1173.7,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 47,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-01-17",
+      "exit_date": "2024-01-20",
+      "entry_price": 0.00000126,
+      "exit_price": 0.00000113,
+      "tp_price": 0.0000012852206625684804,
+      "initial_sl": 9.450000000000001e-7,
+      "peak_price": 0.00000126,
+      "trail_distance": 4.203443761413399e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -63.33,
+      "pnl_pct": -10.32,
+      "capital_after": 1110.37,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 48,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-01-19",
+      "exit_date": "2024-01-22",
+      "entry_price": 0.00000928,
+      "exit_price": 0.00000908,
+      "tp_price": 0.000009347208890801065,
+      "initial_sl": 0.0000069599999999999994,
+      "peak_price": 0.00000928,
+      "trail_distance": 1.1201481800177751e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -13.81,
+      "pnl_pct": -2.16,
+      "capital_after": 1096.57,
+      "entry_signal": {
+        "global_score": 90,
+        "probability_pct": 90,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 90
+      }
+    },
+    {
+      "id": 49,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-01-20",
+      "exit_date": "2024-01-23",
+      "entry_price": 0.08112,
+      "exit_price": 0.07782,
+      "tp_price": 0.08173007887499237,
+      "initial_sl": 0.06084,
+      "peak_price": 0.08112,
+      "trail_distance": 0.0010167981249872948,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -23.67,
+      "pnl_pct": -4.07,
+      "capital_after": 1072.89,
+      "entry_signal": {
+        "global_score": 84,
+        "probability_pct": 84,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 84
+      }
+    },
+    {
+      "id": 50,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-01-20",
+      "exit_date": "2024-01-24",
+      "entry_price": 0.00000118,
+      "exit_price": 0.00000104,
+      "tp_price": 0.0000012034158109046502,
+      "initial_sl": 8.85e-7,
+      "peak_price": 0.00000118,
+      "trail_distance": 3.902635150775053e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -66.91,
+      "pnl_pct": -11.86,
+      "capital_after": 1005.98,
+      "entry_signal": {
+        "global_score": 96,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 96
+      }
+    },
+    {
+      "id": 51,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-01-26",
+      "exit_date": "2024-01-29",
+      "entry_price": 0.00000106,
+      "exit_price": 0.00000105,
+      "tp_price": 0.0000010804975578199774,
+      "initial_sl": 7.95e-7,
+      "peak_price": 0.00000106,
+      "trail_distance": 3.416259636662904e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -5.75,
+      "pnl_pct": -0.94,
+      "capital_after": 1000.23,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 52,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-01-30",
+      "exit_date": "2024-02-02",
+      "entry_price": 0.00000939,
+      "exit_price": 0.00000908,
+      "tp_price": 0.00000945750430866356,
+      "initial_sl": 0.0000070425,
+      "peak_price": 0.00000939,
+      "trail_distance": 1.1250718110593183e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -17.49,
+      "pnl_pct": -3.3,
+      "capital_after": 982.74,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 53,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-02-03",
+      "exit_date": "2024-02-06",
+      "entry_price": 9.3e-7,
+      "exit_price": 9.1e-7,
+      "tp_price": 9.464967943989563e-7,
+      "initial_sl": 6.975e-7,
+      "peak_price": 9.3e-7,
+      "trail_distance": 2.7494657331593893e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -11.54,
+      "pnl_pct": -2.15,
+      "capital_after": 971.2,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 54,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-02-04",
+      "exit_date": "2024-02-07",
+      "entry_price": 0.07985,
+      "exit_price": 0.07968,
+      "tp_price": 0.08015970949775467,
+      "initial_sl": 0.0598875,
+      "peak_price": 0.07985,
+      "trail_distance": 0.0005161824962577668,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -2.03,
+      "pnl_pct": -0.21,
+      "capital_after": 969.17,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 55,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-02-06",
+      "exit_date": "2024-02-09",
+      "entry_price": 0.00000887,
+      "exit_price": 0.00000944,
+      "tp_price": 0.000008910751053775112,
+      "initial_sl": 0.000006652499999999999,
+      "peak_price": 0.00000887,
+      "trail_distance": 6.791842295852125e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 30.2,
+      "pnl_pct": 6.43,
+      "capital_after": 999.37,
+      "entry_signal": {
+        "global_score": 81,
+        "probability_pct": 81,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 81
+      }
+    },
+    {
+      "id": 56,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-02-06",
+      "exit_date": "2024-02-09",
+      "entry_price": 9.2e-7,
+      "exit_price": 0.00000101,
+      "tp_price": 9.38714454547411e-7,
+      "initial_sl": 6.9e-7,
+      "peak_price": 9.2e-7,
+      "trail_distance": 3.119075757901827e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 46.49,
+      "pnl_pct": 9.78,
+      "capital_after": 1045.86,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 57,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-02-09",
+      "exit_date": "2024-02-12",
+      "entry_price": 0.08191,
+      "exit_price": 0.07973,
+      "tp_price": 0.08227567417668771,
+      "initial_sl": 0.0614325,
+      "peak_price": 0.08191,
+      "trail_distance": 0.0006094569611462054,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -13.85,
+      "pnl_pct": -2.66,
+      "capital_after": 1032.01,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 58,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-02-11",
+      "exit_date": "2024-02-15",
+      "entry_price": 0.00000101,
+      "exit_price": 0.00000129,
+      "tp_price": 0.0000010303131753637106,
+      "initial_sl": 7.575000000000001e-7,
+      "peak_price": 0.00000101,
+      "trail_distance": 3.3855292272851046e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 143.78,
+      "pnl_pct": 27.72,
+      "capital_after": 1175.79,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 75,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 75
+      }
+    },
+    {
+      "id": 59,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-02-14",
+      "exit_date": "2024-02-17",
+      "entry_price": 0.08629,
+      "exit_price": 0.0835,
+      "tp_price": 0.08716345174602064,
+      "initial_sl": 0.06471750000000001,
+      "peak_price": 0.08629,
+      "trail_distance": 0.0014557529100343827,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -17.7,
+      "pnl_pct": -3.23,
+      "capital_after": 1158.09,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 60,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-02-22",
+      "exit_date": "2024-02-25",
+      "entry_price": 0.00000118,
+      "exit_price": 0.00000131,
+      "tp_price": 0.0000012081922020093072,
+      "initial_sl": 8.85e-7,
+      "peak_price": 0.00000118,
+      "trail_distance": 4.698700334884543e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 62.57,
+      "pnl_pct": 11.02,
+      "capital_after": 1220.66,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 61,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-02-24",
+      "exit_date": "2024-02-27",
+      "entry_price": 0.00000965,
+      "exit_price": 0.00001049,
+      "tp_price": 0.000009703328821867938,
+      "initial_sl": 0.000007237500000000001,
+      "peak_price": 0.00000965,
+      "trail_distance": 8.88813697798953e-8,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 49.2,
+      "pnl_pct": 8.7,
+      "capital_after": 1269.85,
+      "entry_signal": {
+        "global_score": 79,
+        "probability_pct": 79,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 79
+      }
+    },
+    {
+      "id": 62,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-02-25",
+      "exit_date": "2024-02-28",
+      "entry_price": 0.08661,
+      "exit_price": 0.10949,
+      "tp_price": 0.08702310536599116,
+      "initial_sl": 0.0649575,
+      "peak_price": 0.08661,
+      "trail_distance": 0.0006885089433185963,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 151.66,
+      "pnl_pct": 26.42,
+      "capital_after": 1421.51,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 75,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 75
+      }
+    },
+    {
+      "id": 63,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-02-27",
+      "exit_date": "2024-03-01",
+      "entry_price": 0.00000218,
+      "exit_price": 0.00000277,
+      "tp_price": 0.0000023101076366479072,
+      "initial_sl": 0.000001635,
+      "peak_price": 0.00000218,
+      "trail_distance": 2.168460610798457e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 163.79,
+      "pnl_pct": 27.06,
+      "capital_after": 1585.3,
+      "entry_signal": {
+        "global_score": 82,
+        "probability_pct": 82,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 82
+      }
+    },
+    {
+      "id": 64,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-02-28",
+      "exit_date": "2024-03-02",
+      "entry_price": 0.00001224,
+      "exit_price": 0.00002189,
+      "tp_price": 0.000012559719125607339,
+      "initial_sl": 0.00000918,
+      "peak_price": 0.00001224,
+      "trail_distance": 5.328652093455647e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 498.8,
+      "pnl_pct": 78.84,
+      "capital_after": 2084.11,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 65,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-03-01",
+      "exit_date": "2024-03-04",
+      "entry_price": 0.00000292,
+      "exit_price": 0.00000703,
+      "tp_price": 0.0000030046222438265736,
+      "initial_sl": 0.00000219,
+      "peak_price": 0.0000076,
+      "trail_distance": 1.4103707304428928e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 13,
+      "result": "MOON_PARTIAL_TIMEOUT",
+      "pnl_usdt": 951.63,
+      "pnl_pct": 120.06,
+      "capital_after": 3035.74,
+      "entry_signal": {
+        "global_score": 79,
+        "probability_pct": 79,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 79
+      }
+    },
+    {
+      "id": 66,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-03-11",
+      "exit_date": "2024-03-14",
+      "entry_price": 0.00003429,
+      "exit_price": 0.00003375,
+      "tp_price": 0.00003504830947146884,
+      "initial_sl": 0.0000257175,
+      "peak_price": 0.00003429,
+      "trail_distance": 0.0000012638491191147362,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -26.92,
+      "pnl_pct": -1.57,
+      "capital_after": 3008.82,
+      "entry_signal": {
+        "global_score": 81,
+        "probability_pct": 81,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 81
+      }
+    },
+    {
+      "id": 67,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-03-13",
+      "exit_date": "2024-03-16",
+      "entry_price": 0.00000876,
+      "exit_price": 0.00000831,
+      "tp_price": 0.000008972158713859873,
+      "initial_sl": 0.000006570000000000001,
+      "peak_price": 0.00000876,
+      "trail_distance": 3.535978564331202e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -80.93,
+      "pnl_pct": -5.14,
+      "capital_after": 2927.89,
+      "entry_signal": {
+        "global_score": 85,
+        "probability_pct": 85,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 68,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-03-14",
+      "exit_date": "2024-03-16",
+      "entry_price": 0.19074,
+      "exit_price": 0.143055,
+      "tp_price": 0.19515663711997952,
+      "initial_sl": 0.143055,
+      "peak_price": 0.19074,
+      "trail_distance": 0.007361061866632551,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -382.12,
+      "pnl_pct": -25,
+      "capital_after": 2545.77,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 69,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-03-19",
+      "exit_date": "2024-03-22",
+      "entry_price": 0.00000733,
+      "exit_price": 0.00000734,
+      "tp_price": 0.000007636229904465975,
+      "initial_sl": 0.0000054975,
+      "peak_price": 0.00000733,
+      "trail_distance": 5.10383174109959e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -0.81,
+      "pnl_pct": 0.14,
+      "capital_after": 2544.96,
+      "entry_signal": {
+        "global_score": 79,
+        "probability_pct": 79,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 79
+      }
+    },
+    {
+      "id": 70,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-03-25",
+      "exit_date": "2024-03-28",
+      "entry_price": 0.17982,
+      "exit_price": 0.21952,
+      "tp_price": 0.18226714978550093,
+      "initial_sl": 0.134865,
+      "peak_price": 0.17982,
+      "trail_distance": 0.004078582975834868,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 278.11,
+      "pnl_pct": 22.08,
+      "capital_after": 2823.07,
+      "entry_signal": {
+        "global_score": 85,
+        "probability_pct": 85,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 71,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-03-25",
+      "exit_date": "2024-03-28",
+      "entry_price": 0.00002922,
+      "exit_price": 0.0000315,
+      "tp_price": 0.000029669648702088933,
+      "initial_sl": 0.000021915000000000003,
+      "peak_price": 0.00002922,
+      "trail_distance": 7.494145034815507e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 96.65,
+      "pnl_pct": 7.8,
+      "capital_after": 2919.71,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 72,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-03-28",
+      "exit_date": "2024-03-31",
+      "entry_price": 0.00000812,
+      "exit_price": 0.00000888,
+      "tp_price": 0.000008252620293630098,
+      "initial_sl": 0.00000609,
+      "peak_price": 0.00000812,
+      "trail_distance": 2.2103382271682859e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 116.43,
+      "pnl_pct": 9.36,
+      "capital_after": 3036.15,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 73,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-03-31",
+      "exit_date": "2024-04-03",
+      "entry_price": 0.21341,
+      "exit_price": 0.17485,
+      "tp_price": 0.2156409128122884,
+      "initial_sl": 0.1600575,
+      "peak_price": 0.21341,
+      "trail_distance": 0.0037181880204806552,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -277.05,
+      "pnl_pct": -18.07,
+      "capital_after": 2759.09,
+      "entry_signal": {
+        "global_score": 89,
+        "probability_pct": 89,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 89
+      }
+    },
+    {
+      "id": 74,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-04-03",
+      "exit_date": "2024-04-06",
+      "entry_price": 0.00002598,
+      "exit_price": 0.00002716,
+      "tp_price": 0.000026351964179453555,
+      "initial_sl": 0.000019485,
+      "peak_price": 0.00002598,
+      "trail_distance": 6.19940299089262e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 65.85,
+      "pnl_pct": 4.54,
+      "capital_after": 2824.94,
+      "entry_signal": {
+        "global_score": 88,
+        "probability_pct": 88,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 88
+      }
+    },
+    {
+      "id": 75,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-04-07",
+      "exit_date": "2024-04-10",
+      "entry_price": 0.19107,
+      "exit_price": 0.18825,
+      "tp_price": 0.19313849028655242,
+      "initial_sl": 0.1433025,
+      "peak_price": 0.19107,
+      "trail_distance": 0.003447483810920721,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -23.65,
+      "pnl_pct": -1.48,
+      "capital_after": 2801.29,
+      "entry_signal": {
+        "global_score": 91,
+        "probability_pct": 91,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 91
+      }
+    },
+    {
+      "id": 76,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-04-07",
+      "exit_date": "2024-04-10",
+      "entry_price": 0.00000727,
+      "exit_price": 0.0000068,
+      "tp_price": 0.000007372499934592609,
+      "initial_sl": 0.0000054525,
+      "peak_price": 0.00000727,
+      "trail_distance": 1.7083322432101447e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -94.05,
+      "pnl_pct": -6.46,
+      "capital_after": 2707.24,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 77,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-04-11",
+      "exit_date": "2024-04-12",
+      "entry_price": 0.0000074,
+      "exit_price": 0.00000555,
+      "tp_price": 0.000007585874329057802,
+      "initial_sl": 0.00000555,
+      "peak_price": 0.0000074,
+      "trail_distance": 3.0979054842967006e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -340.77,
+      "pnl_pct": -25,
+      "capital_after": 2366.46,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 78,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-04-20",
+      "exit_date": "2024-04-23",
+      "entry_price": 0.15802,
+      "exit_price": 0.16101,
+      "tp_price": 0.15965409065251454,
+      "initial_sl": 0.118515,
+      "peak_price": 0.15802,
+      "trail_distance": 0.0027234844208575562,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 20,
+      "pnl_pct": 1.89,
+      "capital_after": 2386.46,
+      "entry_signal": {
+        "global_score": 92,
+        "probability_pct": 92,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 92
+      }
+    },
+    {
+      "id": 79,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-04-20",
+      "exit_date": "2024-04-23",
+      "entry_price": 0.00002473,
+      "exit_price": 0.00002699,
+      "tp_price": 0.000025055373887488125,
+      "initial_sl": 0.000018547499999999998,
+      "peak_price": 0.00002473,
+      "trail_distance": 5.422898124802083e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 105.66,
+      "pnl_pct": 9.14,
+      "capital_after": 2492.12,
+      "entry_signal": {
+        "global_score": 76,
+        "probability_pct": 76,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 76
+      }
+    },
+    {
+      "id": 80,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-05-02",
+      "exit_date": "2024-05-05",
+      "entry_price": 0.00002304,
+      "exit_price": 0.00002481,
+      "tp_price": 0.000023349054170727538,
+      "initial_sl": 0.00001728,
+      "peak_price": 0.00002304,
+      "trail_distance": 5.150902845458992e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 93.14,
+      "pnl_pct": 7.68,
+      "capital_after": 2585.26,
+      "entry_signal": {
+        "global_score": 92,
+        "probability_pct": 92,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 92
+      }
+    },
+    {
+      "id": 81,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-05-03",
+      "exit_date": "2024-05-06",
+      "entry_price": 0.13637,
+      "exit_price": 0.15821,
+      "tp_price": 0.13783479591502876,
+      "initial_sl": 0.1022775,
+      "peak_price": 0.13637,
+      "trail_distance": 0.0024413265250479584,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 196.87,
+      "pnl_pct": 16.02,
+      "capital_after": 2782.13,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 82,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-05-03",
+      "exit_date": "2024-05-06",
+      "entry_price": 0.00000805,
+      "exit_price": 0.00000853,
+      "tp_price": 0.000008230571004152148,
+      "initial_sl": 0.000006037499999999999,
+      "peak_price": 0.00000805,
+      "trail_distance": 3.0095167358691425e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 71.73,
+      "pnl_pct": 5.96,
+      "capital_after": 2853.86,
+      "entry_signal": {
+        "global_score": 86,
+        "probability_pct": 86,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 86
+      }
+    },
+    {
+      "id": 83,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-05-06",
+      "exit_date": "2024-05-09",
+      "entry_price": 0.00002495,
+      "exit_price": 0.00002289,
+      "tp_price": 0.0000251636421718129,
+      "initial_sl": 0.0000187125,
+      "peak_price": 0.00002495,
+      "trail_distance": 3.5607028635483414e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -109.2,
+      "pnl_pct": -8.26,
+      "capital_after": 2744.65,
+      "entry_signal": {
+        "global_score": 95,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 84,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-05-11",
+      "exit_date": "2024-05-14",
+      "entry_price": 0.00000888,
+      "exit_price": 0.00001018,
+      "tp_price": 0.000009043793803363742,
+      "initial_sl": 0.00000666,
+      "peak_price": 0.00000888,
+      "trail_distance": 2.729896722729052e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 197.96,
+      "pnl_pct": 14.64,
+      "capital_after": 2942.61,
+      "entry_signal": {
+        "global_score": 82,
+        "probability_pct": 82,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 82
+      }
+    },
+    {
+      "id": 85,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-05-13",
+      "exit_date": "2024-05-16",
+      "entry_price": 0.00002312,
+      "exit_price": 0.00002523,
+      "tp_price": 0.000023438634349821767,
+      "initial_sl": 0.00001734,
+      "peak_price": 0.00002312,
+      "trail_distance": 5.310572497029465e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 122.37,
+      "pnl_pct": 9.13,
+      "capital_after": 3064.99,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 86,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-05-15",
+      "exit_date": "2024-05-18",
+      "entry_price": 0.14701,
+      "exit_price": 0.15518,
+      "tp_price": 0.14809703580127417,
+      "initial_sl": 0.11025750000000001,
+      "peak_price": 0.14701,
+      "trail_distance": 0.0018117263354569331,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 78.74,
+      "pnl_pct": 5.56,
+      "capital_after": 3143.73,
+      "entry_signal": {
+        "global_score": 77,
+        "probability_pct": 77,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 77
+      }
+    },
+    {
+      "id": 87,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-05-20",
+      "exit_date": "2024-05-23",
+      "entry_price": 0.00001008,
+      "exit_price": 0.00001522,
+      "tp_price": 0.000010271711067206656,
+      "initial_sl": 0.0000075600000000000005,
+      "peak_price": 0.00001008,
+      "trail_distance": 3.1951844534442563e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 797.58,
+      "pnl_pct": 50.99,
+      "capital_after": 3941.31,
+      "entry_signal": {
+        "global_score": 85,
+        "probability_pct": 85,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 88,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-05-22",
+      "exit_date": "2024-05-25",
+      "entry_price": 0.00002674,
+      "exit_price": 0.00002459,
+      "tp_price": 0.000027139525337647792,
+      "initial_sl": 0.000020055,
+      "peak_price": 0.00002674,
+      "trail_distance": 6.658755627463191e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -129.4,
+      "pnl_pct": -8.04,
+      "capital_after": 3811.91,
+      "entry_signal": {
+        "global_score": 76,
+        "probability_pct": 76,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 76
+      }
+    },
+    {
+      "id": 89,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-05-24",
+      "exit_date": "2024-05-27",
+      "entry_price": 0.16676,
+      "exit_price": 0.1654,
+      "tp_price": 0.16979437158895172,
+      "initial_sl": 0.12507,
+      "peak_price": 0.16676,
+      "trail_distance": 0.005057285981586237,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -20,
+      "pnl_pct": -0.82,
+      "capital_after": 3791.91,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 90,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-05-27",
+      "exit_date": "2024-05-30",
+      "entry_price": 0.00002584,
+      "exit_price": 0.00002683,
+      "tp_price": 0.000026148913847270887,
+      "initial_sl": 0.00001938,
+      "peak_price": 0.00002584,
+      "trail_distance": 5.148564121181478e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 68.77,
+      "pnl_pct": 3.83,
+      "capital_after": 3860.69,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 91,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-05-30",
+      "exit_date": "2024-06-02",
+      "entry_price": 0.16403,
+      "exit_price": 0.1555,
+      "tp_price": 0.16602437742374887,
+      "initial_sl": 0.1230225,
+      "peak_price": 0.16403,
+      "trail_distance": 0.0033239623729147873,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -104.14,
+      "pnl_pct": -5.2,
+      "capital_after": 3756.54,
+      "entry_signal": {
+        "global_score": 81,
+        "probability_pct": 81,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 81
+      }
+    },
+    {
+      "id": 92,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-06-06",
+      "exit_date": "2024-06-07",
+      "entry_price": 0.00001498,
+      "exit_price": 0.000011235,
+      "tp_price": 0.00001517075423586937,
+      "initial_sl": 0.000011235,
+      "peak_price": 0.00001498,
+      "trail_distance": 3.1792372644894953e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -472.85,
+      "pnl_pct": -25,
+      "capital_after": 3283.69,
+      "entry_signal": {
+        "global_score": 81,
+        "probability_pct": 81,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 81
+      }
+    },
+    {
+      "id": 93,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-06-06",
+      "exit_date": "2024-06-09",
+      "entry_price": 0.1649,
+      "exit_price": 0.14675,
+      "tp_price": 0.1658128877385542,
+      "initial_sl": 0.123675,
+      "peak_price": 0.1649,
+      "trail_distance": 0.0015214795642570344,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -210.28,
+      "pnl_pct": -11.01,
+      "capital_after": 3073.4,
+      "entry_signal": {
+        "global_score": 84,
+        "probability_pct": 84,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 84
+      }
+    },
+    {
+      "id": 94,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-06-07",
+      "exit_date": "2024-06-10",
+      "entry_price": 0.00002269,
+      "exit_price": 0.00002287,
+      "tp_price": 0.000023329977499786043,
+      "initial_sl": 0.0000170175,
+      "peak_price": 0.00002269,
+      "trail_distance": 0.0000010666291663100672,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 9.73,
+      "pnl_pct": 0.79,
+      "capital_after": 3083.13,
+      "entry_signal": {
+        "global_score": 81,
+        "probability_pct": 81,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 81
+      }
+    },
+    {
+      "id": 95,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-06-07",
+      "exit_date": "2024-06-10",
+      "entry_price": 0.00001242,
+      "exit_price": 0.00001227,
+      "tp_price": 0.000013037085334297822,
+      "initial_sl": 0.000009315,
+      "peak_price": 0.00001242,
+      "trail_distance": 0.000001028475557163039,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -23.09,
+      "pnl_pct": -1.21,
+      "capital_after": 3060.04,
+      "entry_signal": {
+        "global_score": 77,
+        "probability_pct": 77,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 77
+      }
+    },
+    {
+      "id": 96,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-06-12",
+      "exit_date": "2024-06-15",
+      "entry_price": 0.14378,
+      "exit_price": 0.13688,
+      "tp_price": 0.1449887563036229,
+      "initial_sl": 0.10783499999999999,
+      "peak_price": 0.14378,
+      "trail_distance": 0.0020145938393715335,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -76.41,
+      "pnl_pct": -4.8,
+      "capital_after": 2983.63,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 97,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-06-12",
+      "exit_date": "2024-06-15",
+      "entry_price": 0.00002246,
+      "exit_price": 0.0000209,
+      "tp_price": 0.000022712111845981202,
+      "initial_sl": 0.000016845,
+      "peak_price": 0.00002246,
+      "trail_distance": 4.2018640996867096e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -109.22,
+      "pnl_pct": -6.95,
+      "capital_after": 2874.4,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 98,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-06-12",
+      "exit_date": "2024-06-15",
+      "entry_price": 0.0000136,
+      "exit_price": 0.00001214,
+      "tp_price": 0.000013894998172773389,
+      "initial_sl": 0.0000102,
+      "peak_price": 0.0000136,
+      "trail_distance": 4.91663621288982e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -167.15,
+      "pnl_pct": -10.74,
+      "capital_after": 2707.25,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 99,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-06-16",
+      "exit_date": "2024-06-20",
+      "entry_price": 0.13723,
+      "exit_price": 0.12348,
+      "tp_price": 0.13782671322423934,
+      "initial_sl": 0.1029225,
+      "peak_price": 0.13723,
+      "trail_distance": 0.000994522040398933,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -138.2,
+      "pnl_pct": -10.02,
+      "capital_after": 2569.05,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 100,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-06-23",
+      "exit_date": "2024-06-27",
+      "entry_price": 0.1259,
+      "exit_price": 0.12215,
+      "tp_price": 0.1270133187149425,
+      "initial_sl": 0.09442500000000001,
+      "peak_price": 0.1259,
+      "trail_distance": 0.001855531191570824,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -40.79,
+      "pnl_pct": -2.98,
+      "capital_after": 2528.26,
+      "entry_signal": {
+        "global_score": 82,
+        "probability_pct": 82,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 82
+      }
+    },
+    {
+      "id": 101,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-06-25",
+      "exit_date": "2024-06-28",
+      "entry_price": 0.00001765,
+      "exit_price": 0.00001722,
+      "tp_price": 0.00001783675933982608,
+      "initial_sl": 0.0000132375,
+      "peak_price": 0.00001765,
+      "trail_distance": 3.1126556637680273e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -33.83,
+      "pnl_pct": -2.44,
+      "capital_after": 2494.43,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 102,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-06-26",
+      "exit_date": "2024-06-29",
+      "entry_price": 0.00001329,
+      "exit_price": 0.00001169,
+      "tp_price": 0.000013519979563325459,
+      "initial_sl": 0.000009967499999999999,
+      "peak_price": 0.00001329,
+      "trail_distance": 3.8329927220909835e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -157.06,
+      "pnl_pct": -12.04,
+      "capital_after": 2337.37,
+      "entry_signal": {
+        "global_score": 90,
+        "probability_pct": 90,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 90
+      }
+    },
+    {
+      "id": 103,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-07-03",
+      "exit_date": "2024-07-06",
+      "entry_price": 0.00001668,
+      "exit_price": 0.00001566,
+      "tp_price": 0.000016823534588100727,
+      "initial_sl": 0.00001251,
+      "peak_price": 0.00001668,
+      "trail_distance": 2.3922431350121276e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -73.73,
+      "pnl_pct": -6.12,
+      "capital_after": 2263.64,
+      "entry_signal": {
+        "global_score": 92,
+        "probability_pct": 92,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 92
+      }
+    },
+    {
+      "id": 104,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-07-08",
+      "exit_date": "2024-07-11",
+      "entry_price": 0.10698,
+      "exit_price": 0.10811,
+      "tp_price": 0.10906064623841465,
+      "initial_sl": 0.080235,
+      "peak_price": 0.10698,
+      "trail_distance": 0.003467743730691062,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 9.68,
+      "pnl_pct": 1.06,
+      "capital_after": 2273.32,
+      "entry_signal": {
+        "global_score": 96,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 96
+      }
+    },
+    {
+      "id": 105,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-07-08",
+      "exit_date": "2024-07-11",
+      "entry_price": 0.00001622,
+      "exit_price": 0.00001649,
+      "tp_price": 0.000016616673372072574,
+      "initial_sl": 0.000012165,
+      "peak_price": 0.00001622,
+      "trail_distance": 6.611222867876216e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 16.56,
+      "pnl_pct": 1.66,
+      "capital_after": 2289.87,
+      "entry_signal": {
+        "global_score": 85,
+        "probability_pct": 85,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 106,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-07-11",
+      "exit_date": "2024-07-14",
+      "entry_price": 0.00000965,
+      "exit_price": 0.00000871,
+      "tp_price": 0.000009794748199967519,
+      "initial_sl": 0.000007237500000000001,
+      "peak_price": 0.00000965,
+      "trail_distance": 2.4124699994586405e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -112.4,
+      "pnl_pct": -9.74,
+      "capital_after": 2177.47,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 107,
+      "symbol": "PEPEUSDT",
+      "entry_date": "2024-07-14",
+      "exit_date": "2024-07-18",
+      "entry_price": 0.00000898,
+      "exit_price": 0.00001188,
+      "tp_price": 0.000009086551195081903,
+      "initial_sl": 0.000006735000000000001,
+      "peak_price": 0.00000898,
+      "trail_distance": 1.7758532513650441e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 349.07,
+      "pnl_pct": 32.29,
+      "capital_after": 2526.54,
+      "entry_signal": {
+        "global_score": 86,
+        "probability_pct": 86,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 86
+      }
+    },
+    {
+      "id": 108,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2024-07-14",
+      "exit_date": "2024-07-18",
+      "entry_price": 0.11486,
+      "exit_price": 0.12308,
+      "tp_price": 0.11558637825992693,
+      "initial_sl": 0.086145,
+      "peak_price": 0.11486,
+      "trail_distance": 0.0012106304332115399,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 75.66,
+      "pnl_pct": 7.16,
+      "capital_after": 2602.2,
+      "entry_signal": {
+        "global_score": 90,
+        "probability_pct": 90,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 90
+      }
+    },
+    {
+      "id": 109,
+      "symbol": "SHIBUSDT",
+      "entry_date": "2024-07-16",
+      "exit_date": "2024-07-18",
+      "entry_price": 0.00001994,
+      "exit_price": 0.00001768,
+      "tp_price": 0.000020277055885828686,
+      "initial_sl": 0.000014954999999999998,
+      "peak_price": 0.00001994,
+      "trail_distance": 5.617598097144761e-7,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -125.45,
+      "pnl_pct": -11.33,
+      "capital_after": 2476.75,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Pump Entry",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    }
+  ]
+}

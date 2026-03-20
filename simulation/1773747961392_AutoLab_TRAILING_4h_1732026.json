@@ -1,0 +1,32 @@
+{
+  "name": "AutoLab TRAILING 4h 17/3/2026",
+  "savedAt": "2026-03-17T11:46:01.391Z",
+  "config": {
+    "maxHoldingBars": 100,
+    "pumpVolMin": 3,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT",
+      "BTCUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "TRAILING",
+    "tpAtr": 4.65,
+    "slAtr": 1,
+    "trailActivateAtr": 1.99,
+    "trailDistanceAtr": 3.79,
+    "breakEvenAtr": 2.3
+  },
+  "pnlPct": 74.11578267770362
+}

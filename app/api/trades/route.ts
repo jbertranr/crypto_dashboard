@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMyTrades } from "../../lib/binance-auth";
+import { apiError } from "../../lib/api-error";
+import { log } from "../../lib/logger";
 
 const PAIRS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT"];
 
@@ -13,8 +15,9 @@ export async function GET() {
       .flatMap((r) => (r.status === "fulfilled" ? r.value : []))
       .sort((a, b) => b.time - a.time);
 
+    log.binance.info({ count: trades.length }, "trades");
     return NextResponse.json(trades);
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    return apiError(e, "trades");
   }
 }

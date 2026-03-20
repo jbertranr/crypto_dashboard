@@ -1,0 +1,26 @@
+{
+  "name": "let_run_171pct",
+  "savedAt": "2026-03-14T10:29:31.318Z",
+  "config": {
+    "symbols": [
+      "SOLUSDT",
+      "BTCUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1.5,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4,
+    "breakEvenAtr": 2
+  },
+  "pnlPct": 171.52628197127038
+}

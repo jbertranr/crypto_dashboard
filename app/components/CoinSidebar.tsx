@@ -10,6 +10,7 @@ import Sparkline from "./Sparkline";
 export default function CoinSidebar({ coins }: { coins: CoinRow[] }) {
   const [selected,    setSelected]    = useState<CoinRow | null>(null);
   const [tradeTarget, setTradeTarget] = useState<CoinRow | null>(null);
+  const [collapsed,   setCollapsed]   = useState(false);
 
   return (
     <>
@@ -29,13 +30,23 @@ export default function CoinSidebar({ coins }: { coins: CoinRow[] }) {
         })}
       </div>
 
-      <div className="market-panel">
+      <div className={`market-panel${collapsed ? " market-panel--collapsed" : ""}`}
+        onClick={collapsed ? () => setCollapsed(false) : undefined}
+        style={collapsed ? { cursor: "pointer" } : undefined}>
         <div className="market-panel__head">
-          <span className="market-panel__title">Markets</span>
-          <span className="market-panel__badge">{coins.length} pairs</span>
+          {!collapsed && <span className="market-panel__title">Markets</span>}
+          {!collapsed && <span className="market-panel__badge">{coins.length} pairs</span>}
+          <button className="market-panel__toggle" onClick={e => { e.stopPropagation(); setCollapsed(v => !v); }} title={collapsed ? "Mostrar markets" : "Amagar markets"}>
+            <i className="fa-solid fa-bars" />
+          </button>
         </div>
+        {collapsed && (
+          <div className="market-panel__collapsed-label">
+            <span>Markets</span>
+          </div>
+        )}
 
-        <div className="market-panel__list">
+        {!collapsed && <div className="market-panel__list">
           {coins.map((coin) => {
             const up = coin.change24h >= 0;
             const sparkUp = coin.sparkline.length >= 2
@@ -68,7 +79,7 @@ export default function CoinSidebar({ coins }: { coins: CoinRow[] }) {
               </div>
             );
           })}
-        </div>
+        </div>}
       </div>
 
       {selected && <CoinModal coin={selected} onClose={() => setSelected(null)} />}

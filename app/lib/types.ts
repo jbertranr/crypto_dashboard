@@ -12,7 +12,13 @@ export interface CoinRow {
   symbol: string;       // e.g. "BTC"
   pair: string;         // e.g. "BTCUSDT"
   price: number;
+  change1h:  number;
+  change4h:  number;
   change24h: number;
+  change72h: number;
+  change7d:  number;
+  change4w:  number;
+  change6m:  number;
   high24h: number;
   low24h: number;
   volumeUSDT: number;

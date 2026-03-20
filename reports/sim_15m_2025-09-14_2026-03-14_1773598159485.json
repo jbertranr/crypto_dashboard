@@ -1,0 +1,1588 @@
+{
+  "_meta": {
+    "generated": "2026-03-15T18:09:19.483Z",
+    "system": "CryptDesk Backtester",
+    "description": "Backtest d'una estratègia algorítmica de trading de criptomonedes basada en anàlisi tècnica de 3 capes."
+  },
+  "strategy_description": {
+    "overview": "Sistema de trading que combina anàlisi tècnica en 3 capes per generar senyals d'entrada BUY, seguides d'una gestió de sortida en dues fases (OCO → Trailing SL).",
+    "entry_logic": {
+      "step1_direction": "Capa Direcció (pes 40%): EMA200, ADX, +DI/-DI. Confirma que el mercat té tendència alcista definida.",
+      "step2_context": "Capa Context (pes 30%): RSI, Volum relatiu, posició en rang. Confirma que el context és favorable per entrar.",
+      "step3_trigger": "Capa Trigger (pes 30%): MACD, RSI momentum, ruptura de rang, volum relatiu. Senyal d'entrada immediata.",
+      "probability": "Probabilitat = score×0.7 + bonus_interval + bonus_confiança. Només entra si probabilitat ≥ llindar mínim.",
+      "entry_candle": "L'entrada es fa al preu OPEN de la vela SEGUENT al senyal (evita look-ahead bias)."
+    },
+    "exit_logic": {
+      "phase1_oco": "Fase OCO: TP fix (entrada + N×ATR) i SL fix (entrada − N×ATR). Si el preu arriba al TP, sortida amb guany.",
+      "phase2_trailing": "Fase Trailing: s'activa quan preu ≥ entrada + N×ATR. El SL segueix el màxim − distància ATR. Protegeix guanys.",
+      "timeout": "Si l'operació no es tanca en 50 veles, es tanca forçosament al preu de tancament."
+    }
+  },
+  "simulation_parameters": {
+    "symbols": [
+      "DOGEUSDT"
+    ],
+    "interval": "15m",
+    "period_from": "2025-09-14",
+    "period_to": "2026-03-14",
+    "initial_capital_usdt": 1000,
+    "warmup_bars": 400,
+    "market_filter_ema200_daily": false,
+    "capital_mode": "PCT",
+    "capital_fixed_usdt": 100,
+    "capital_pct": 80,
+    "risk_pct": 60,
+    "max_simultaneous_positions": 20,
+    "min_entry_probability_pct": 60,
+    "exit_mode": "MOON",
+    "tp_atr_multiplier": 1.5,
+    "sl_atr_multiplier": 0.75,
+    "trailing_activate_atr": 1,
+    "trailing_distance_atr": 0.6,
+    "break_even_atr": 1,
+    "max_holding_bars": 300,
+    "commission_pct_per_side": 0.1,
+    "commission_total_round_trip_pct": 0.2
+  },
+  "performance_summary": {
+    "total_trades": 50,
+    "winning_trades": 19,
+    "losing_trades": 31,
+    "win_rate_pct": 38,
+    "total_pnl_usdt": -481.26,
+    "total_pnl_pct": -48.13,
+    "final_capital_usdt": 518.74,
+    "profit_factor": 0.494,
+    "max_drawdown_pct": 56.85,
+    "avg_win_usdt": 24.71,
+    "avg_loss_usdt": 30.67,
+    "candles_backtested": 17472,
+    "expectancy_usdt": -9.63,
+    "risk_reward_ratio": 0.81
+  },
+  "results_by_symbol": [
+    {
+      "symbol": "DOGEUSDT",
+      "trades": 50,
+      "wins": 19,
+      "losses": 31,
+      "win_rate": 38,
+      "total_pnl": -481.26
+    }
+  ],
+  "results_by_outcome": {
+    "TP": 0,
+    "SL": 0,
+    "TRAILING_SL": 0,
+    "TIMEOUT": 0
+  },
+  "equity_curve": [
+    {
+      "date": "2025-09-14",
+      "capital": 1000
+    },
+    {
+      "date": "2025-09-20",
+      "capital": 983.65
+    },
+    {
+      "date": "2025-09-22",
+      "capital": 903.46
+    },
+    {
+      "date": "2025-09-27",
+      "capital": 882.65
+    },
+    {
+      "date": "2025-10-01",
+      "capital": 883.82
+    },
+    {
+      "date": "2025-10-04",
+      "capital": 910.76
+    },
+    {
+      "date": "2025-10-08",
+      "capital": 889.19
+    },
+    {
+      "date": "2025-10-10",
+      "capital": 816.7
+    },
+    {
+      "date": "2025-10-15",
+      "capital": 822.42
+    },
+    {
+      "date": "2025-10-17",
+      "capital": 755.38
+    },
+    {
+      "date": "2025-10-21",
+      "capital": 767.39
+    },
+    {
+      "date": "2025-10-24",
+      "capital": 744.26
+    },
+    {
+      "date": "2025-10-28",
+      "capital": 747.12
+    },
+    {
+      "date": "2025-10-30",
+      "capital": 686.21
+    },
+    {
+      "date": "2025-11-03",
+      "capital": 630.27
+    },
+    {
+      "date": "2025-11-04",
+      "capital": 578.89
+    },
+    {
+      "date": "2025-11-07",
+      "capital": 643.23
+    },
+    {
+      "date": "2025-11-11",
+      "capital": 652.06
+    },
+    {
+      "date": "2025-11-13",
+      "capital": 598.91
+    },
+    {
+      "date": "2025-11-17",
+      "capital": 577.36
+    },
+    {
+      "date": "2025-11-24",
+      "capital": 602.11
+    },
+    {
+      "date": "2025-11-28",
+      "capital": 614.71
+    },
+    {
+      "date": "2025-12-01",
+      "capital": 564.6
+    },
+    {
+      "date": "2025-12-05",
+      "capital": 595.32
+    },
+    {
+      "date": "2025-12-08",
+      "capital": 589.53
+    },
+    {
+      "date": "2025-12-12",
+      "capital": 559.52
+    },
+    {
+      "date": "2025-12-16",
+      "capital": 535.56
+    },
+    {
+      "date": "2025-12-20",
+      "capital": 541.14
+    },
+    {
+      "date": "2025-12-24",
+      "capital": 524.89
+    },
+    {
+      "date": "2025-12-27",
+      "capital": 506.05
+    },
+    {
+      "date": "2025-12-31",
+      "capital": 503.06
+    },
+    {
+      "date": "2026-01-04",
+      "capital": 609.72
+    },
+    {
+      "date": "2026-01-07",
+      "capital": 584.81
+    },
+    {
+      "date": "2026-01-11",
+      "capital": 574.08
+    },
+    {
+      "date": "2026-01-14",
+      "capital": 603.69
+    },
+    {
+      "date": "2026-01-18",
+      "capital": 582.15
+    },
+    {
+      "date": "2026-01-23",
+      "capital": 570.32
+    },
+    {
+      "date": "2026-01-27",
+      "capital": 563.94
+    },
+    {
+      "date": "2026-01-30",
+      "capital": 517.97
+    },
+    {
+      "date": "2026-01-31",
+      "capital": 475.74
+    },
+    {
+      "date": "2026-02-05",
+      "capital": 469.78
+    },
+    {
+      "date": "2026-02-06",
+      "capital": 431.48
+    },
+    {
+      "date": "2026-02-09",
+      "capital": 486.9
+    },
+    {
+      "date": "2026-02-14",
+      "capital": 543.03
+    },
+    {
+      "date": "2026-02-20",
+      "capital": 533.82
+    },
+    {
+      "date": "2026-02-24",
+      "capital": 494.35
+    },
+    {
+      "date": "2026-02-27",
+      "capital": 504.03
+    },
+    {
+      "date": "2026-03-03",
+      "capital": 502.31
+    },
+    {
+      "date": "2026-03-07",
+      "capital": 504.36
+    },
+    {
+      "date": "2026-03-12",
+      "capital": 505.93
+    },
+    {
+      "date": "2026-03-14",
+      "capital": 518.74
+    }
+  ],
+  "trades": [
+    {
+      "id": 1,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-09-16",
+      "exit_date": "2025-09-20",
+      "entry_price": 0.27147,
+      "exit_price": 0.26646,
+      "tp_price": 0.27377604229244007,
+      "initial_sl": 0.24432299999999998,
+      "peak_price": 0.27147,
+      "trail_distance": 0.0009224169169760265,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -16.35,
+      "pnl_pct": -1.85,
+      "capital_after": 983.65,
+      "entry_signal": {
+        "global_score": 58,
+        "probability_pct": 58,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 78,
+        "trigger_score": 58
+      }
+    },
+    {
+      "id": 2,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-09-20",
+      "exit_date": "2025-09-22",
+      "entry_price": 0.26601,
+      "exit_price": 0.23940900000000004,
+      "tp_price": 0.2673675604430195,
+      "initial_sl": 0.23940900000000004,
+      "peak_price": 0.26601,
+      "trail_distance": 0.000543024177207798,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -80.19,
+      "pnl_pct": -10,
+      "capital_after": 903.46,
+      "entry_signal": {
+        "global_score": 64,
+        "probability_pct": 64,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 85,
+        "trigger_score": 64
+      }
+    },
+    {
+      "id": 3,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-09-24",
+      "exit_date": "2025-09-27",
+      "entry_price": 0.23862,
+      "exit_price": 0.23222,
+      "tp_price": 0.240722507155265,
+      "initial_sl": 0.214758,
+      "peak_price": 0.23862,
+      "trail_distance": 0.0008410028621060026,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -20.81,
+      "pnl_pct": -2.68,
+      "capital_after": 882.65,
+      "entry_signal": {
+        "global_score": 76,
+        "probability_pct": 76,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 76
+      }
+    },
+    {
+      "id": 4,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-09-27",
+      "exit_date": "2025-10-01",
+      "entry_price": 0.23232,
+      "exit_price": 0.23317,
+      "tp_price": 0.23330545088027557,
+      "initial_sl": 0.209088,
+      "peak_price": 0.23232,
+      "trail_distance": 0.0003941803521102247,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 1.17,
+      "pnl_pct": 0.37,
+      "capital_after": 883.82,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 88,
+        "trigger_score": 66
+      }
+    },
+    {
+      "id": 5,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-01",
+      "exit_date": "2025-10-04",
+      "entry_price": 0.23989,
+      "exit_price": 0.24952,
+      "tp_price": 0.2417053506144821,
+      "initial_sl": 0.215901,
+      "peak_price": 0.23989,
+      "trail_distance": 0.0007261402457928368,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 26.94,
+      "pnl_pct": 4.01,
+      "capital_after": 910.76,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 6,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-05",
+      "exit_date": "2025-10-08",
+      "entry_price": 0.25223,
+      "exit_price": 0.24526,
+      "tp_price": 0.2535305831388911,
+      "initial_sl": 0.22700700000000001,
+      "peak_price": 0.25223,
+      "trail_distance": 0.0005202332555564419,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -21.57,
+      "pnl_pct": -2.76,
+      "capital_after": 889.19,
+      "entry_signal": {
+        "global_score": 65,
+        "probability_pct": 65,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 87,
+        "trigger_score": 65
+      }
+    },
+    {
+      "id": 7,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-10",
+      "exit_date": "2025-10-10",
+      "entry_price": 0.25261,
+      "exit_price": 0.227349,
+      "tp_price": 0.25460553741978204,
+      "initial_sl": 0.227349,
+      "peak_price": 0.25261,
+      "trail_distance": 0.0007982149679128076,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -72.49,
+      "pnl_pct": -10,
+      "capital_after": 816.7,
+      "entry_signal": {
+        "global_score": 54,
+        "probability_pct": 54,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 71,
+        "trigger_score": 54
+      }
+    },
+    {
+      "id": 8,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-12",
+      "exit_date": "2025-10-15",
+      "entry_price": 0.19614,
+      "exit_price": 0.19825,
+      "tp_price": 0.19934730841199202,
+      "initial_sl": 0.17652600000000002,
+      "peak_price": 0.19614,
+      "trail_distance": 0.0012829233647968067,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 5.71,
+      "pnl_pct": 1.08,
+      "capital_after": 822.42,
+      "entry_signal": {
+        "global_score": 100,
+        "probability_pct": 95,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 9,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-15",
+      "exit_date": "2025-10-17",
+      "entry_price": 0.19752,
+      "exit_price": 0.177768,
+      "tp_price": 0.2001490476529831,
+      "initial_sl": 0.177768,
+      "peak_price": 0.19752,
+      "trail_distance": 0.0010516190611932453,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -67.04,
+      "pnl_pct": -10,
+      "capital_after": 755.38,
+      "entry_signal": {
+        "global_score": 48,
+        "probability_pct": 48,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 64,
+        "trigger_score": 48
+      }
+    },
+    {
+      "id": 10,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-18",
+      "exit_date": "2025-10-21",
+      "entry_price": 0.18905,
+      "exit_price": 0.19319,
+      "tp_price": 0.19056305265812976,
+      "initial_sl": 0.170145,
+      "peak_price": 0.18905,
+      "trail_distance": 0.000605221063251902,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 12.01,
+      "pnl_pct": 2.19,
+      "capital_after": 767.39,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 72,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 96,
+        "trigger_score": 72
+      }
+    },
+    {
+      "id": 11,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-21",
+      "exit_date": "2025-10-24",
+      "entry_price": 0.20305,
+      "exit_price": 0.1958,
+      "tp_price": 0.20558103326951635,
+      "initial_sl": 0.18274500000000002,
+      "peak_price": 0.20305,
+      "trail_distance": 0.001012413307806532,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -23.13,
+      "pnl_pct": -3.57,
+      "capital_after": 744.26,
+      "entry_signal": {
+        "global_score": 62,
+        "probability_pct": 62,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 82,
+        "trigger_score": 62
+      }
+    },
+    {
+      "id": 12,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-25",
+      "exit_date": "2025-10-28",
+      "entry_price": 0.19836,
+      "exit_price": 0.19971,
+      "tp_price": 0.19926750800610413,
+      "initial_sl": 0.17852400000000002,
+      "peak_price": 0.19836,
+      "trail_distance": 0.0003630032024416466,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 2.86,
+      "pnl_pct": 0.68,
+      "capital_after": 747.12,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 72,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 95,
+        "trigger_score": 72
+      }
+    },
+    {
+      "id": 13,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-10-28",
+      "exit_date": "2025-10-30",
+      "entry_price": 0.20105,
+      "exit_price": 0.18094500000000002,
+      "tp_price": 0.20221773723529118,
+      "initial_sl": 0.18094500000000002,
+      "peak_price": 0.20105,
+      "trail_distance": 0.0004670948941164745,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -60.91,
+      "pnl_pct": -10,
+      "capital_after": 686.21,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 14,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-01",
+      "exit_date": "2025-11-03",
+      "entry_price": 0.1866,
+      "exit_price": 0.16794,
+      "tp_price": 0.18738224407386622,
+      "initial_sl": 0.16794,
+      "peak_price": 0.1866,
+      "trail_distance": 0.0003128976295464934,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -55.94,
+      "pnl_pct": -10,
+      "capital_after": 630.27,
+      "entry_signal": {
+        "global_score": 59,
+        "probability_pct": 59,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 78,
+        "trigger_score": 59
+      }
+    },
+    {
+      "id": 15,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-04",
+      "exit_date": "2025-11-04",
+      "entry_price": 0.17001,
+      "exit_price": 0.153009,
+      "tp_price": 0.1719857987797751,
+      "initial_sl": 0.153009,
+      "peak_price": 0.17001,
+      "trail_distance": 0.000790319511910037,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -51.38,
+      "pnl_pct": -10,
+      "capital_after": 578.89,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 69,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 92,
+        "trigger_score": 69
+      }
+    },
+    {
+      "id": 16,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-04",
+      "exit_date": "2025-11-07",
+      "entry_price": 0.15687,
+      "exit_price": 0.179,
+      "tp_price": 0.16056405001067187,
+      "initial_sl": 0.141183,
+      "peak_price": 0.15687,
+      "trail_distance": 0.0014776200042687418,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 64.34,
+      "pnl_pct": 14.11,
+      "capital_after": 643.23,
+      "entry_signal": {
+        "global_score": 67,
+        "probability_pct": 67,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 89,
+        "trigger_score": 67
+      }
+    },
+    {
+      "id": 17,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-08",
+      "exit_date": "2025-11-11",
+      "entry_price": 0.17937,
+      "exit_price": 0.18281,
+      "tp_price": 0.1814510693701806,
+      "initial_sl": 0.161433,
+      "peak_price": 0.17937,
+      "trail_distance": 0.0008324277480722365,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 8.83,
+      "pnl_pct": 1.92,
+      "capital_after": 652.06,
+      "entry_signal": {
+        "global_score": 50,
+        "probability_pct": 50,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 67,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 18,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-11",
+      "exit_date": "2025-11-13",
+      "entry_price": 0.1787,
+      "exit_price": 0.16083,
+      "tp_price": 0.18036935269612678,
+      "initial_sl": 0.16083,
+      "peak_price": 0.1787,
+      "trail_distance": 0.0006677410784507144,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -53.16,
+      "pnl_pct": -10,
+      "capital_after": 598.91,
+      "entry_signal": {
+        "global_score": 48,
+        "probability_pct": 48,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 64,
+        "trigger_score": 48
+      }
+    },
+    {
+      "id": 19,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-14",
+      "exit_date": "2025-11-17",
+      "entry_price": 0.16316,
+      "exit_price": 0.15614,
+      "tp_price": 0.16595950088572378,
+      "initial_sl": 0.146844,
+      "peak_price": 0.16316,
+      "trail_distance": 0.0011198003542895137,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -21.55,
+      "pnl_pct": -4.3,
+      "capital_after": 577.36,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 68,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 20,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-21",
+      "exit_date": "2025-11-24",
+      "entry_price": 0.13907,
+      "exit_price": 0.14681,
+      "tp_price": 0.141931437706742,
+      "initial_sl": 0.125163,
+      "peak_price": 0.13907,
+      "trail_distance": 0.0011445750826967998,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 24.76,
+      "pnl_pct": 5.57,
+      "capital_after": 602.11,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 21,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-25",
+      "exit_date": "2025-11-28",
+      "entry_price": 0.14971,
+      "exit_price": 0.15393,
+      "tp_price": 0.15077996702972965,
+      "initial_sl": 0.13473900000000003,
+      "peak_price": 0.14971,
+      "trail_distance": 0.0004279868118918615,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 12.6,
+      "pnl_pct": 2.82,
+      "capital_after": 614.71,
+      "entry_signal": {
+        "global_score": 84,
+        "probability_pct": 84,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 84
+      }
+    },
+    {
+      "id": 22,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-11-29",
+      "exit_date": "2025-12-01",
+      "entry_price": 0.14837,
+      "exit_price": 0.133533,
+      "tp_price": 0.14910167740841107,
+      "initial_sl": 0.133533,
+      "peak_price": 0.14837,
+      "trail_distance": 0.00029267096336443307,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -50.11,
+      "pnl_pct": -10,
+      "capital_after": 564.6,
+      "entry_signal": {
+        "global_score": 54,
+        "probability_pct": 54,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 72,
+        "trigger_score": 54
+      }
+    },
+    {
+      "id": 23,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-02",
+      "exit_date": "2025-12-05",
+      "entry_price": 0.13487,
+      "exit_price": 0.14432,
+      "tp_price": 0.13559250680573048,
+      "initial_sl": 0.12138299999999999,
+      "peak_price": 0.13487,
+      "trail_distance": 0.0002890027222921958,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 30.71,
+      "pnl_pct": 7.01,
+      "capital_after": 595.32,
+      "entry_signal": {
+        "global_score": 63,
+        "probability_pct": 63,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 85,
+        "trigger_score": 63
+      }
+    },
+    {
+      "id": 24,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-05",
+      "exit_date": "2025-12-08",
+      "entry_price": 0.14374,
+      "exit_price": 0.14228,
+      "tp_price": 0.14490064783003953,
+      "initial_sl": 0.129366,
+      "peak_price": 0.14374,
+      "trail_distance": 0.000464259132015806,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -5.79,
+      "pnl_pct": -1.02,
+      "capital_after": 589.53,
+      "entry_signal": {
+        "global_score": 55,
+        "probability_pct": 55,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 73,
+        "trigger_score": 55
+      }
+    },
+    {
+      "id": 25,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-09",
+      "exit_date": "2025-12-12",
+      "entry_price": 0.14555,
+      "exit_price": 0.13657,
+      "tp_price": 0.1471243987684791,
+      "initial_sl": 0.13099500000000003,
+      "peak_price": 0.14555,
+      "trail_distance": 0.0006297595073916322,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -30.01,
+      "pnl_pct": -6.17,
+      "capital_after": 559.52,
+      "entry_signal": {
+        "global_score": 53,
+        "probability_pct": 53,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 70,
+        "trigger_score": 53
+      }
+    },
+    {
+      "id": 26,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-13",
+      "exit_date": "2025-12-16",
+      "entry_price": 0.13866,
+      "exit_price": 0.13151,
+      "tp_price": 0.13914010276126024,
+      "initial_sl": 0.124794,
+      "peak_price": 0.13866,
+      "trail_distance": 0.00019204110450408724,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -23.95,
+      "pnl_pct": -5.16,
+      "capital_after": 535.56,
+      "entry_signal": {
+        "global_score": 76,
+        "probability_pct": 76,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 76
+      }
+    },
+    {
+      "id": 27,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-17",
+      "exit_date": "2025-12-20",
+      "entry_price": 0.12986,
+      "exit_price": 0.13181,
+      "tp_price": 0.1304650974547299,
+      "initial_sl": 0.116874,
+      "peak_price": 0.12986,
+      "trail_distance": 0.0002420389818919552,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 5.57,
+      "pnl_pct": 1.5,
+      "capital_after": 541.14,
+      "entry_signal": {
+        "global_score": 52,
+        "probability_pct": 52,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 69,
+        "trigger_score": 52
+      }
+    },
+    {
+      "id": 28,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-21",
+      "exit_date": "2025-12-24",
+      "entry_price": 0.13272,
+      "exit_price": 0.128,
+      "tp_price": 0.13323092692139832,
+      "initial_sl": 0.11944800000000001,
+      "peak_price": 0.13272,
+      "trail_distance": 0.00020437076855932162,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -16.25,
+      "pnl_pct": -3.56,
+      "capital_after": 524.89,
+      "entry_signal": {
+        "global_score": 57,
+        "probability_pct": 57,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 76,
+        "trigger_score": 57
+      }
+    },
+    {
+      "id": 29,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-24",
+      "exit_date": "2025-12-27",
+      "entry_price": 0.12844,
+      "exit_price": 0.12293,
+      "tp_price": 0.12904908459058242,
+      "initial_sl": 0.115596,
+      "peak_price": 0.12844,
+      "trail_distance": 0.00024363383623297587,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -18.84,
+      "pnl_pct": -4.29,
+      "capital_after": 506.05,
+      "entry_signal": {
+        "global_score": 67,
+        "probability_pct": 67,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 90,
+        "trigger_score": 67
+      }
+    },
+    {
+      "id": 30,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2025-12-27",
+      "exit_date": "2025-12-31",
+      "entry_price": 0.1242,
+      "exit_price": 0.12353,
+      "tp_price": 0.12465090186430136,
+      "initial_sl": 0.11178,
+      "peak_price": 0.1242,
+      "trail_distance": 0.00018036074572054097,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -2.99,
+      "pnl_pct": -0.54,
+      "capital_after": 503.06,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 31,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-01",
+      "exit_date": "2026-01-04",
+      "entry_price": 0.12039,
+      "exit_price": 0.15257,
+      "tp_price": 0.1209230053815183,
+      "initial_sl": 0.108351,
+      "peak_price": 0.12039,
+      "trail_distance": 0.00021320215260732444,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 106.66,
+      "pnl_pct": 26.73,
+      "capital_after": 609.72,
+      "entry_signal": {
+        "global_score": 67,
+        "probability_pct": 67,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 90,
+        "trigger_score": 67
+      }
+    },
+    {
+      "id": 32,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-04",
+      "exit_date": "2026-01-07",
+      "entry_price": 0.1535,
+      "exit_price": 0.14596,
+      "tp_price": 0.1548815954288496,
+      "initial_sl": 0.13815,
+      "peak_price": 0.1535,
+      "trail_distance": 0.0005526381715398451,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -24.91,
+      "pnl_pct": -4.91,
+      "capital_after": 584.81,
+      "entry_signal": {
+        "global_score": 48,
+        "probability_pct": 48,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 64,
+        "trigger_score": 48
+      }
+    },
+    {
+      "id": 33,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-08",
+      "exit_date": "2026-01-11",
+      "entry_price": 0.14309,
+      "exit_price": 0.14009,
+      "tp_price": 0.14457856402335964,
+      "initial_sl": 0.128781,
+      "peak_price": 0.14309,
+      "trail_distance": 0.0005954256093438634,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -10.73,
+      "pnl_pct": -2.1,
+      "capital_after": 574.08,
+      "entry_signal": {
+        "global_score": 61,
+        "probability_pct": 61,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 81,
+        "trigger_score": 61
+      }
+    },
+    {
+      "id": 34,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-11",
+      "exit_date": "2026-01-14",
+      "entry_price": 0.14094,
+      "exit_price": 0.15032,
+      "tp_price": 0.14145328515030428,
+      "initial_sl": 0.12684600000000001,
+      "peak_price": 0.14094,
+      "trail_distance": 0.00020531406012171005,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 29.62,
+      "pnl_pct": 6.66,
+      "capital_after": 603.69,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 72,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 96,
+        "trigger_score": 72
+      }
+    },
+    {
+      "id": 35,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-15",
+      "exit_date": "2026-01-18",
+      "entry_price": 0.14281,
+      "exit_price": 0.13672,
+      "tp_price": 0.14387513945218638,
+      "initial_sl": 0.128529,
+      "peak_price": 0.14281,
+      "trail_distance": 0.0004260557808745519,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -21.54,
+      "pnl_pct": -4.26,
+      "capital_after": 582.15,
+      "entry_signal": {
+        "global_score": 55,
+        "probability_pct": 55,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 73,
+        "trigger_score": 55
+      }
+    },
+    {
+      "id": 36,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-20",
+      "exit_date": "2026-01-23",
+      "entry_price": 0.12763,
+      "exit_price": 0.12464,
+      "tp_price": 0.12836691635193231,
+      "initial_sl": 0.114867,
+      "peak_price": 0.12763,
+      "trail_distance": 0.0002947665407729246,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -11.83,
+      "pnl_pct": -2.34,
+      "capital_after": 570.32,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 61,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 37,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-24",
+      "exit_date": "2026-01-27",
+      "entry_price": 0.12419,
+      "exit_price": 0.1227,
+      "tp_price": 0.12451604194781439,
+      "initial_sl": 0.111771,
+      "peak_price": 0.12419,
+      "trail_distance": 0.00013041677912575657,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -6.38,
+      "pnl_pct": -1.2,
+      "capital_after": 563.94,
+      "entry_signal": {
+        "global_score": 56,
+        "probability_pct": 56,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 75,
+        "trigger_score": 56
+      }
+    },
+    {
+      "id": 38,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-28",
+      "exit_date": "2026-01-30",
+      "entry_price": 0.12508,
+      "exit_price": 0.112572,
+      "tp_price": 0.12578753588453379,
+      "initial_sl": 0.112572,
+      "peak_price": 0.12508,
+      "trail_distance": 0.00028301435381351364,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -45.97,
+      "pnl_pct": -10,
+      "capital_after": 517.97,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 75,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 99,
+        "trigger_score": 75
+      }
+    },
+    {
+      "id": 39,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-01-30",
+      "exit_date": "2026-01-31",
+      "entry_price": 0.11543,
+      "exit_price": 0.10388700000000001,
+      "tp_price": 0.11681371798259002,
+      "initial_sl": 0.10388700000000001,
+      "peak_price": 0.11543,
+      "trail_distance": 0.0005534871930360064,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -42.22,
+      "pnl_pct": -10,
+      "capital_after": 475.74,
+      "entry_signal": {
+        "global_score": 51,
+        "probability_pct": 51,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 68,
+        "trigger_score": 51
+      }
+    },
+    {
+      "id": 40,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-02",
+      "exit_date": "2026-02-05",
+      "entry_price": 0.10308,
+      "exit_price": 0.10167,
+      "tp_price": 0.10572196531720847,
+      "initial_sl": 0.09277200000000001,
+      "peak_price": 0.10308,
+      "trail_distance": 0.0010567861268833837,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -5.96,
+      "pnl_pct": -1.37,
+      "capital_after": 469.78,
+      "entry_signal": {
+        "global_score": 52,
+        "probability_pct": 52,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 70,
+        "trigger_score": 52
+      }
+    },
+    {
+      "id": 41,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-05",
+      "exit_date": "2026-02-06",
+      "entry_price": 0.0949,
+      "exit_price": 0.08541,
+      "tp_price": 0.09719179529271134,
+      "initial_sl": 0.08541,
+      "peak_price": 0.0949,
+      "trail_distance": 0.0009167181170845372,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_SL",
+      "pnl_usdt": -38.3,
+      "pnl_pct": -10,
+      "capital_after": 431.48,
+      "entry_signal": {
+        "global_score": 46,
+        "probability_pct": 46,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 62,
+        "trigger_score": 46
+      }
+    },
+    {
+      "id": 42,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-06",
+      "exit_date": "2026-02-09",
+      "entry_price": 0.08353,
+      "exit_price": 0.09712,
+      "tp_price": 0.08719944254447169,
+      "initial_sl": 0.075177,
+      "peak_price": 0.08353,
+      "trail_distance": 0.0014677770177886817,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 55.41,
+      "pnl_pct": 16.27,
+      "capital_after": 486.9,
+      "entry_signal": {
+        "global_score": 80,
+        "probability_pct": 80,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 43,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-11",
+      "exit_date": "2026-02-14",
+      "entry_price": 0.09203,
+      "exit_price": 0.10549,
+      "tp_price": 0.09299755845181883,
+      "initial_sl": 0.082827,
+      "peak_price": 0.09203,
+      "trail_distance": 0.0003870233807275314,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 56.13,
+      "pnl_pct": 14.63,
+      "capital_after": 543.03,
+      "entry_signal": {
+        "global_score": 74,
+        "probability_pct": 74,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 99,
+        "trigger_score": 74
+      }
+    },
+    {
+      "id": 44,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-17",
+      "exit_date": "2026-02-20",
+      "entry_price": 0.1025,
+      "exit_price": 0.10053,
+      "tp_price": 0.10376750186951847,
+      "initial_sl": 0.09225,
+      "peak_price": 0.1025,
+      "trail_distance": 0.0005070007478073925,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -9.21,
+      "pnl_pct": -1.92,
+      "capital_after": 533.82,
+      "entry_signal": {
+        "global_score": 59,
+        "probability_pct": 59,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 79,
+        "trigger_score": 59
+      }
+    },
+    {
+      "id": 45,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-21",
+      "exit_date": "2026-02-24",
+      "entry_price": 0.10041,
+      "exit_price": 0.09132,
+      "tp_price": 0.10081858515014944,
+      "initial_sl": 0.090369,
+      "peak_price": 0.10041,
+      "trail_distance": 0.00016343406005977294,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -39.48,
+      "pnl_pct": -9.05,
+      "capital_after": 494.35,
+      "entry_signal": {
+        "global_score": 50,
+        "probability_pct": 50,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 67,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 46,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-24",
+      "exit_date": "2026-02-27",
+      "entry_price": 0.09131,
+      "exit_price": 0.09373,
+      "tp_price": 0.09202223970995459,
+      "initial_sl": 0.082179,
+      "peak_price": 0.09131,
+      "trail_distance": 0.00028489588398183393,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 9.68,
+      "pnl_pct": 2.65,
+      "capital_after": 504.03,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 89,
+        "trigger_score": 66
+      }
+    },
+    {
+      "id": 47,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-02-27",
+      "exit_date": "2026-03-03",
+      "entry_price": 0.09311,
+      "exit_price": 0.0929,
+      "tp_price": 0.09380476080624386,
+      "initial_sl": 0.083799,
+      "peak_price": 0.09311,
+      "trail_distance": 0.0002779043224975449,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": -1.71,
+      "pnl_pct": -0.23,
+      "capital_after": 502.31,
+      "entry_signal": {
+        "global_score": 65,
+        "probability_pct": 65,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 87,
+        "trigger_score": 65
+      }
+    },
+    {
+      "id": 48,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-03-04",
+      "exit_date": "2026-03-07",
+      "entry_price": 0.09015,
+      "exit_price": 0.09079,
+      "tp_price": 0.09099821845830285,
+      "initial_sl": 0.081135,
+      "peak_price": 0.09015,
+      "trail_distance": 0.0003392873833211422,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 2.05,
+      "pnl_pct": 0.71,
+      "capital_after": 504.36,
+      "entry_signal": {
+        "global_score": 50,
+        "probability_pct": 50,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 67,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 49,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-03-09",
+      "exit_date": "2026-03-12",
+      "entry_price": 0.0915,
+      "exit_price": 0.09204,
+      "tp_price": 0.09257777702370872,
+      "initial_sl": 0.08235,
+      "peak_price": 0.0915,
+      "trail_distance": 0.00043111080948348676,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 1.57,
+      "pnl_pct": 0.59,
+      "capital_after": 505.93,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 69,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 92,
+        "trigger_score": 69
+      }
+    },
+    {
+      "id": 50,
+      "symbol": "DOGEUSDT",
+      "entry_date": "2026-03-12",
+      "exit_date": "2026-03-14",
+      "entry_price": 0.09291,
+      "exit_price": 0.09604,
+      "tp_price": 0.0933777181222423,
+      "initial_sl": 0.08361900000000001,
+      "peak_price": 0.09291,
+      "trail_distance": 0.0001870872488969179,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "MOON_TIMEOUT",
+      "pnl_usdt": 12.81,
+      "pnl_pct": 3.37,
+      "capital_after": 518.74,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 75,
+        "strategy_name": "Moon Pump",
+        "direction_score": 0,
+        "context_score": 100,
+        "trigger_score": 75
+      }
+    }
+  ]
+}

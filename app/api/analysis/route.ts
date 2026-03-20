@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeAll, OHLCV } from "../../lib/indicators";
 import { cacheGet, cacheSet } from "../../lib/cache-store";
+import { log } from "../../lib/logger";
 
 export async function GET(req: NextRequest) {
   const symbol   = req.nextUrl.searchParams.get("symbol");
@@ -9,8 +10,8 @@ export async function GET(req: NextRequest) {
   if (!symbol) return NextResponse.json({ error: "Missing symbol" }, { status: 400 });
 
   const TTL =
-    interval === "5m"  ? 60  :
-    interval === "1h"  ? 300 : 600; // 4h
+    interval === "5m"  ? 30  :
+    interval === "1h"  ? 120 : 300; // 4h
   const KEY = `analysis:${symbol}:${interval}`;
 
   const cached = cacheGet<ReturnType<typeof analyzeAll>>(KEY);
@@ -33,6 +34,7 @@ export async function GET(req: NextRequest) {
   }));
 
   const result = analyzeAll(candles, symbol, interval);
+  log.binance.info({ symbol, interval, verdict: result.verdict, score: result.score, price: result.price }, "scanner");
   cacheSet(KEY, result, TTL);
   return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
 }

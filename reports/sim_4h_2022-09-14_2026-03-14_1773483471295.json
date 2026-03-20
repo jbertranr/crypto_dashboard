@@ -1,0 +1,5178 @@
+{
+  "_meta": {
+    "generated": "2026-03-14T10:17:51.292Z",
+    "system": "CryptDesk Backtester",
+    "description": "Backtest d'una estratègia algorítmica de trading de criptomonedes basada en anàlisi tècnica de 3 capes."
+  },
+  "strategy_description": {
+    "overview": "Sistema de trading que combina anàlisi tècnica en 3 capes per generar senyals d'entrada BUY, seguides d'una gestió de sortida en dues fases (OCO → Trailing SL).",
+    "entry_logic": {
+      "step1_direction": "Capa Direcció (pes 40%): EMA200, ADX, +DI/-DI. Confirma que el mercat té tendència alcista definida.",
+      "step2_context": "Capa Context (pes 30%): RSI, Volum relatiu, posició en rang. Confirma que el context és favorable per entrar.",
+      "step3_trigger": "Capa Trigger (pes 30%): MACD, RSI momentum, ruptura de rang, volum relatiu. Senyal d'entrada immediata.",
+      "probability": "Probabilitat = score×0.7 + bonus_interval + bonus_confiança. Només entra si probabilitat ≥ llindar mínim.",
+      "entry_candle": "L'entrada es fa al preu OPEN de la vela SEGUENT al senyal (evita look-ahead bias)."
+    },
+    "exit_logic": {
+      "phase1_oco": "Fase OCO: TP fix (entrada + N×ATR) i SL fix (entrada − N×ATR). Si el preu arriba al TP, sortida amb guany.",
+      "phase2_trailing": "Fase Trailing: s'activa quan preu ≥ entrada + N×ATR. El SL segueix el màxim − distància ATR. Protegeix guanys.",
+      "timeout": "Si l'operació no es tanca en 50 veles, es tanca forçosament al preu de tancament."
+    }
+  },
+  "simulation_parameters": {
+    "symbols": [
+      "BTCUSDT"
+    ],
+    "interval": "4h",
+    "period_from": "2022-09-14",
+    "period_to": "2026-03-14",
+    "initial_capital_usdt": 1000,
+    "capital_per_trade": "60% de risc per trade (position sizing dinàmic)",
+    "max_simultaneous_positions": 20,
+    "min_entry_probability_pct": 60,
+    "tp_atr_multiplier": 3,
+    "sl_atr_multiplier": 1.5,
+    "trailing_activate_atr": 2,
+    "trailing_distance_atr": 4
+  },
+  "performance_summary": {
+    "total_trades": 170,
+    "winning_trades": 95,
+    "losing_trades": 75,
+    "win_rate_pct": 55.88,
+    "total_pnl_usdt": 283.82,
+    "total_pnl_pct": 28.38,
+    "final_capital_usdt": 1283.82,
+    "profit_factor": 1.285,
+    "max_drawdown_pct": 12.87,
+    "avg_win_usdt": 13.47,
+    "avg_loss_usdt": 13.28,
+    "candles_backtested": 7665,
+    "expectancy_usdt": 1.67,
+    "risk_reward_ratio": 1.01
+  },
+  "results_by_symbol": [
+    {
+      "symbol": "BTCUSDT",
+      "trades": 170,
+      "wins": 95,
+      "losses": 75,
+      "win_rate": 55.9,
+      "total_pnl": 283.82
+    }
+  ],
+  "results_by_outcome": {
+    "TP": 0,
+    "SL": 75,
+    "TRAILING_SL": 0,
+    "TIMEOUT": 0
+  },
+  "equity_curve": [
+    {
+      "date": "2022-09-14",
+      "capital": 1000
+    },
+    {
+      "date": "2022-09-27",
+      "capital": 984.65
+    },
+    {
+      "date": "2022-09-29",
+      "capital": 967.01
+    },
+    {
+      "date": "2022-10-02",
+      "capital": 950.75
+    },
+    {
+      "date": "2022-10-07",
+      "capital": 939.46
+    },
+    {
+      "date": "2022-10-18",
+      "capital": 931.04
+    },
+    {
+      "date": "2022-10-24",
+      "capital": 924.52
+    },
+    {
+      "date": "2022-10-25",
+      "capital": 925.91
+    },
+    {
+      "date": "2022-10-26",
+      "capital": 927.29
+    },
+    {
+      "date": "2022-10-27",
+      "capital": 917.84
+    },
+    {
+      "date": "2022-10-30",
+      "capital": 919.21
+    },
+    {
+      "date": "2022-11-06",
+      "capital": 920.59
+    },
+    {
+      "date": "2022-12-01",
+      "capital": 921.97
+    },
+    {
+      "date": "2022-12-05",
+      "capital": 914.62
+    },
+    {
+      "date": "2022-12-13",
+      "capital": 915.99
+    },
+    {
+      "date": "2022-12-13",
+      "capital": 917.36
+    },
+    {
+      "date": "2022-12-14",
+      "capital": 918.74
+    },
+    {
+      "date": "2022-12-14",
+      "capital": 920.11
+    },
+    {
+      "date": "2022-12-16",
+      "capital": 911.73
+    },
+    {
+      "date": "2022-12-27",
+      "capital": 905.22
+    },
+    {
+      "date": "2023-01-04",
+      "capital": 906.57
+    },
+    {
+      "date": "2023-01-06",
+      "capital": 901.78
+    },
+    {
+      "date": "2023-01-08",
+      "capital": 903.13
+    },
+    {
+      "date": "2023-01-09",
+      "capital": 904.48
+    },
+    {
+      "date": "2023-01-11",
+      "capital": 905.84
+    },
+    {
+      "date": "2023-01-11",
+      "capital": 907.19
+    },
+    {
+      "date": "2023-01-12",
+      "capital": 908.55
+    },
+    {
+      "date": "2023-01-12",
+      "capital": 901.41
+    },
+    {
+      "date": "2023-01-14",
+      "capital": 933.5
+    },
+    {
+      "date": "2023-01-18",
+      "capital": 920.22
+    },
+    {
+      "date": "2023-01-30",
+      "capital": 960.66
+    },
+    {
+      "date": "2023-02-02",
+      "capital": 962.1
+    },
+    {
+      "date": "2023-02-16",
+      "capital": 1008.2
+    },
+    {
+      "date": "2023-02-22",
+      "capital": 992.51
+    },
+    {
+      "date": "2023-03-02",
+      "capital": 981.1
+    },
+    {
+      "date": "2023-04-20",
+      "capital": 1047.27
+    },
+    {
+      "date": "2023-04-26",
+      "capital": 1048.84
+    },
+    {
+      "date": "2023-04-26",
+      "capital": 1050.41
+    },
+    {
+      "date": "2023-04-26",
+      "capital": 1037.35
+    },
+    {
+      "date": "2023-05-01",
+      "capital": 1038.9
+    },
+    {
+      "date": "2023-05-06",
+      "capital": 1026.9
+    },
+    {
+      "date": "2023-05-21",
+      "capital": 1019.23
+    },
+    {
+      "date": "2023-05-31",
+      "capital": 1010.13
+    },
+    {
+      "date": "2023-06-20",
+      "capital": 1012.68
+    },
+    {
+      "date": "2023-06-21",
+      "capital": 1014.2
+    },
+    {
+      "date": "2023-06-30",
+      "capital": 1033.02
+    },
+    {
+      "date": "2023-07-05",
+      "capital": 1024.1
+    },
+    {
+      "date": "2023-07-10",
+      "capital": 1016.6
+    },
+    {
+      "date": "2023-07-13",
+      "capital": 1018.13
+    },
+    {
+      "date": "2023-07-13",
+      "capital": 1019.65
+    },
+    {
+      "date": "2023-07-13",
+      "capital": 1009.96
+    },
+    {
+      "date": "2023-07-14",
+      "capital": 999.74
+    },
+    {
+      "date": "2023-07-24",
+      "capital": 993.74
+    },
+    {
+      "date": "2023-07-31",
+      "capital": 988.6
+    },
+    {
+      "date": "2023-08-29",
+      "capital": 1005.3
+    },
+    {
+      "date": "2023-09-24",
+      "capital": 1006.81
+    },
+    {
+      "date": "2023-09-28",
+      "capital": 1008.31
+    },
+    {
+      "date": "2023-10-01",
+      "capital": 1009.82
+    },
+    {
+      "date": "2023-10-02",
+      "capital": 1011.34
+    },
+    {
+      "date": "2023-10-09",
+      "capital": 1001.77
+    },
+    {
+      "date": "2023-10-16",
+      "capital": 1043.3
+    },
+    {
+      "date": "2023-10-20",
+      "capital": 1044.86
+    },
+    {
+      "date": "2023-10-20",
+      "capital": 1046.43
+    },
+    {
+      "date": "2023-10-23",
+      "capital": 1047.99
+    },
+    {
+      "date": "2023-10-23",
+      "capital": 1089.61
+    },
+    {
+      "date": "2023-10-24",
+      "capital": 1091.25
+    },
+    {
+      "date": "2023-11-03",
+      "capital": 1092.88
+    },
+    {
+      "date": "2023-11-05",
+      "capital": 1082.27
+    },
+    {
+      "date": "2023-11-09",
+      "capital": 1100.65
+    },
+    {
+      "date": "2023-11-14",
+      "capital": 1086.37
+    },
+    {
+      "date": "2023-11-16",
+      "capital": 1073.03
+    },
+    {
+      "date": "2023-11-20",
+      "capital": 1074.63
+    },
+    {
+      "date": "2023-12-11",
+      "capital": 1145.11
+    },
+    {
+      "date": "2023-12-14",
+      "capital": 1128.83
+    },
+    {
+      "date": "2023-12-20",
+      "capital": 1130.52
+    },
+    {
+      "date": "2023-12-24",
+      "capital": 1116.86
+    },
+    {
+      "date": "2024-01-02",
+      "capital": 1118.53
+    },
+    {
+      "date": "2024-01-10",
+      "capital": 1125.75
+    },
+    {
+      "date": "2024-01-30",
+      "capital": 1127.44
+    },
+    {
+      "date": "2024-01-31",
+      "capital": 1115.38
+    },
+    {
+      "date": "2024-02-13",
+      "capital": 1182.65
+    },
+    {
+      "date": "2024-02-14",
+      "capital": 1184.42
+    },
+    {
+      "date": "2024-02-28",
+      "capital": 1288.55
+    },
+    {
+      "date": "2024-03-05",
+      "capital": 1296.5
+    },
+    {
+      "date": "2024-03-15",
+      "capital": 1298.44
+    },
+    {
+      "date": "2024-03-22",
+      "capital": 1267.79
+    },
+    {
+      "date": "2024-04-02",
+      "capital": 1270.76
+    },
+    {
+      "date": "2024-04-09",
+      "capital": 1272.66
+    },
+    {
+      "date": "2024-04-12",
+      "capital": 1255.71
+    },
+    {
+      "date": "2024-04-24",
+      "capital": 1241.32
+    },
+    {
+      "date": "2024-05-15",
+      "capital": 1243.18
+    },
+    {
+      "date": "2024-05-16",
+      "capital": 1245.05
+    },
+    {
+      "date": "2024-05-23",
+      "capital": 1261.32
+    },
+    {
+      "date": "2024-05-28",
+      "capital": 1247.31
+    },
+    {
+      "date": "2024-06-03",
+      "capital": 1249.18
+    },
+    {
+      "date": "2024-06-07",
+      "capital": 1251.05
+    },
+    {
+      "date": "2024-06-12",
+      "capital": 1238.76
+    },
+    {
+      "date": "2024-07-25",
+      "capital": 1307.95
+    },
+    {
+      "date": "2024-07-29",
+      "capital": 1309.9
+    },
+    {
+      "date": "2024-08-11",
+      "capital": 1280.13
+    },
+    {
+      "date": "2024-08-21",
+      "capital": 1282.05
+    },
+    {
+      "date": "2024-08-22",
+      "capital": 1264.41
+    },
+    {
+      "date": "2024-08-23",
+      "capital": 1266.3
+    },
+    {
+      "date": "2024-08-27",
+      "capital": 1249.31
+    },
+    {
+      "date": "2024-09-13",
+      "capital": 1251.18
+    },
+    {
+      "date": "2024-09-17",
+      "capital": 1236.73
+    },
+    {
+      "date": "2024-10-01",
+      "capital": 1265.01
+    },
+    {
+      "date": "2024-10-07",
+      "capital": 1252.74
+    },
+    {
+      "date": "2024-10-09",
+      "capital": 1239.56
+    },
+    {
+      "date": "2024-10-14",
+      "capital": 1241.41
+    },
+    {
+      "date": "2024-10-23",
+      "capital": 1261.52
+    },
+    {
+      "date": "2024-10-31",
+      "capital": 1289.74
+    },
+    {
+      "date": "2024-11-03",
+      "capital": 1274.07
+    },
+    {
+      "date": "2024-11-14",
+      "capital": 1395.14
+    },
+    {
+      "date": "2024-12-05",
+      "capital": 1436.65
+    },
+    {
+      "date": "2024-12-18",
+      "capital": 1438.8
+    },
+    {
+      "date": "2024-12-27",
+      "capital": 1416.44
+    },
+    {
+      "date": "2025-01-07",
+      "capital": 1418.56
+    },
+    {
+      "date": "2025-01-16",
+      "capital": 1420.69
+    },
+    {
+      "date": "2025-01-18",
+      "capital": 1403.83
+    },
+    {
+      "date": "2025-01-20",
+      "capital": 1379.17
+    },
+    {
+      "date": "2025-01-27",
+      "capital": 1355.99
+    },
+    {
+      "date": "2025-02-01",
+      "capital": 1338.62
+    },
+    {
+      "date": "2025-02-11",
+      "capital": 1325.85
+    },
+    {
+      "date": "2025-03-07",
+      "capital": 1295.75
+    },
+    {
+      "date": "2025-03-18",
+      "capital": 1279.71
+    },
+    {
+      "date": "2025-03-26",
+      "capital": 1267.81
+    },
+    {
+      "date": "2025-04-02",
+      "capital": 1253.56
+    },
+    {
+      "date": "2025-05-30",
+      "capital": 1432.43
+    },
+    {
+      "date": "2025-06-04",
+      "capital": 1420.37
+    },
+    {
+      "date": "2025-06-09",
+      "capital": 1422.49
+    },
+    {
+      "date": "2025-06-11",
+      "capital": 1424.62
+    },
+    {
+      "date": "2025-06-17",
+      "capital": 1413.31
+    },
+    {
+      "date": "2025-07-04",
+      "capital": 1403.07
+    },
+    {
+      "date": "2025-07-07",
+      "capital": 1395.06
+    },
+    {
+      "date": "2025-07-09",
+      "capital": 1397.15
+    },
+    {
+      "date": "2025-07-10",
+      "capital": 1399.24
+    },
+    {
+      "date": "2025-07-10",
+      "capital": 1401.34
+    },
+    {
+      "date": "2025-07-11",
+      "capital": 1403.44
+    },
+    {
+      "date": "2025-07-15",
+      "capital": 1405.68
+    },
+    {
+      "date": "2025-07-18",
+      "capital": 1407.78
+    },
+    {
+      "date": "2025-07-21",
+      "capital": 1395.91
+    },
+    {
+      "date": "2025-07-25",
+      "capital": 1382.14
+    },
+    {
+      "date": "2025-07-30",
+      "capital": 1371.61
+    },
+    {
+      "date": "2025-07-31",
+      "capital": 1361.47
+    },
+    {
+      "date": "2025-08-11",
+      "capital": 1369.79
+    },
+    {
+      "date": "2025-08-14",
+      "capital": 1371.84
+    },
+    {
+      "date": "2025-08-23",
+      "capital": 1358.57
+    },
+    {
+      "date": "2025-09-09",
+      "capital": 1360.6
+    },
+    {
+      "date": "2025-09-15",
+      "capital": 1362.64
+    },
+    {
+      "date": "2025-09-18",
+      "capital": 1364.68
+    },
+    {
+      "date": "2025-09-19",
+      "capital": 1354.54
+    },
+    {
+      "date": "2025-10-05",
+      "capital": 1403.68
+    },
+    {
+      "date": "2025-10-07",
+      "capital": 1392.46
+    },
+    {
+      "date": "2025-10-09",
+      "capital": 1379.28
+    },
+    {
+      "date": "2025-10-29",
+      "capital": 1381.35
+    },
+    {
+      "date": "2025-12-23",
+      "capital": 1367.89
+    },
+    {
+      "date": "2025-12-29",
+      "capital": 1358.05
+    },
+    {
+      "date": "2025-12-31",
+      "capital": 1347.07
+    },
+    {
+      "date": "2026-01-02",
+      "capital": 1349.08
+    },
+    {
+      "date": "2026-01-05",
+      "capital": 1351.1
+    },
+    {
+      "date": "2026-01-05",
+      "capital": 1353.13
+    },
+    {
+      "date": "2026-01-06",
+      "capital": 1342.39
+    },
+    {
+      "date": "2026-01-07",
+      "capital": 1329.87
+    },
+    {
+      "date": "2026-01-12",
+      "capital": 1320.19
+    },
+    {
+      "date": "2026-01-16",
+      "capital": 1336.59
+    },
+    {
+      "date": "2026-01-29",
+      "capital": 1324.68
+    },
+    {
+      "date": "2026-03-01",
+      "capital": 1303.57
+    },
+    {
+      "date": "2026-03-02",
+      "capital": 1305.52
+    },
+    {
+      "date": "2026-03-05",
+      "capital": 1281.9
+    },
+    {
+      "date": "2026-03-13",
+      "capital": 1283.82
+    }
+  ],
+  "trades": [
+    {
+      "id": 1,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-09-27",
+      "exit_date": "2022-09-27",
+      "entry_price": 20099.04,
+      "exit_price": 19521.479075872558,
+      "tp_price": 21254.16184825489,
+      "initial_sl": 19521.479075872558,
+      "peak_price": 20099.04,
+      "trail_distance": 1540.162464339852,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -15.35,
+      "pnl_pct": -2.87,
+      "capital_after": 984.65,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 2,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-09-29",
+      "exit_date": "2022-09-29",
+      "entry_price": 19507.5,
+      "exit_price": 18847.200260730177,
+      "tp_price": 20828.09947853965,
+      "initial_sl": 18847.200260730177,
+      "peak_price": 19507.5,
+      "trail_distance": 1760.799304719532,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -17.63,
+      "pnl_pct": -3.38,
+      "capital_after": 967.01,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 28,
+        "context_score": 65,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 3,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-09-30",
+      "exit_date": "2022-10-02",
+      "entry_price": 19570.74,
+      "exit_price": 18950.88418613688,
+      "tp_price": 20810.451627726252,
+      "initial_sl": 18950.88418613688,
+      "peak_price": 19570.74,
+      "trail_distance": 1652.9488369683334,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -16.27,
+      "pnl_pct": -3.17,
+      "capital_after": 950.75,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 12,
+        "context_score": 45,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 4,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-06",
+      "exit_date": "2022-10-07",
+      "entry_price": 20244.46,
+      "exit_price": 19803.57603784423,
+      "tp_price": 21126.22792431154,
+      "initial_sl": 19803.57603784423,
+      "peak_price": 20244.46,
+      "trail_distance": 1175.6905657487198,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.29,
+      "pnl_pct": -2.18,
+      "capital_after": 939.46,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 35,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 5,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-17",
+      "exit_date": "2022-10-18",
+      "entry_price": 19457.58,
+      "exit_price": 19147.51729856532,
+      "tp_price": 20077.705402869367,
+      "initial_sl": 19147.51729856532,
+      "peak_price": 19457.58,
+      "trail_distance": 826.8338704924894,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -8.42,
+      "pnl_pct": -1.59,
+      "capital_after": 931.04,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 75,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 6,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-23",
+      "exit_date": "2022-10-24",
+      "entry_price": 19500.38,
+      "exit_price": 19266.159806180982,
+      "tp_price": 19968.82038763804,
+      "initial_sl": 19266.159806180982,
+      "peak_price": 19500.38,
+      "trail_distance": 624.5871835173849,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -6.52,
+      "pnl_pct": -1.2,
+      "capital_after": 924.52,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 7,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-25",
+      "exit_date": "2022-10-25",
+      "entry_price": 19748.48,
+      "exit_price": 19847.2224,
+      "tp_price": 20310.255172483936,
+      "initial_sl": 19467.592413758033,
+      "peak_price": 20415.87,
+      "trail_distance": 749.0335633119148,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.38,
+      "pnl_pct": 0.5,
+      "capital_after": 925.91,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 8,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-26",
+      "exit_date": "2022-10-26",
+      "entry_price": 20250.55,
+      "exit_price": 20351.80275,
+      "tp_price": 20947.317444021042,
+      "initial_sl": 19902.166277989476,
+      "peak_price": 20783.27,
+      "trail_distance": 929.0232586947242,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.39,
+      "pnl_pct": 0.5,
+      "capital_after": 927.29,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 30,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 9,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-26",
+      "exit_date": "2022-10-27",
+      "entry_price": 20606.86,
+      "exit_price": 20227.535159375486,
+      "tp_price": 21365.50968124903,
+      "initial_sl": 20227.535159375486,
+      "peak_price": 20606.86,
+      "trail_distance": 1011.5329083320418,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -9.45,
+      "pnl_pct": -1.84,
+      "capital_after": 917.84,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 10,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-10-28",
+      "exit_date": "2022-10-30",
+      "entry_price": 20483.96,
+      "exit_price": 20586.379799999995,
+      "tp_price": 21371.530793370122,
+      "initial_sl": 20040.17460331494,
+      "peak_price": 21085,
+      "trail_distance": 1183.427724493497,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.37,
+      "pnl_pct": 0.5,
+      "capital_after": 919.21,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Reversió Alcista",
+        "direction_score": 86,
+        "context_score": 75,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 11,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-11-04",
+      "exit_date": "2022-11-06",
+      "entry_price": 20837.54,
+      "exit_price": 20941.7277,
+      "tp_price": 21671.057604834026,
+      "initial_sl": 20420.781197582986,
+      "peak_price": 21480.65,
+      "trail_distance": 1111.3568064453682,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.38,
+      "pnl_pct": 0.5,
+      "capital_after": 920.59,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 12,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-11-30",
+      "exit_date": "2022-12-01",
+      "entry_price": 16845.25,
+      "exit_price": 16929.47625,
+      "tp_price": 17480.71199377756,
+      "initial_sl": 16527.519003111218,
+      "peak_price": 17324,
+      "trail_distance": 847.2826583700823,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.38,
+      "pnl_pct": 0.5,
+      "capital_after": 921.97,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 53,
+        "context_score": 62,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 13,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-05",
+      "exit_date": "2022-12-05",
+      "entry_price": 17197.22,
+      "exit_price": 16957.31356231487,
+      "tp_price": 17677.032875370267,
+      "initial_sl": 16957.31356231487,
+      "peak_price": 17197.22,
+      "trail_distance": 639.750500493686,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -7.35,
+      "pnl_pct": -1.4,
+      "capital_after": 914.62,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 53,
+        "context_score": 62,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 14,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-13",
+      "exit_date": "2022-12-13",
+      "entry_price": 17164.82,
+      "exit_price": 17250.644099999998,
+      "tp_price": 17503.537963610685,
+      "initial_sl": 16995.46101819466,
+      "peak_price": 17500,
+      "trail_distance": 451.6239514809113,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.37,
+      "pnl_pct": 0.5,
+      "capital_after": 915.99,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 28,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 15,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-13",
+      "exit_date": "2022-12-13",
+      "entry_price": 17444.32,
+      "exit_price": 17531.541599999997,
+      "tp_price": 17832.772395615688,
+      "initial_sl": 17250.093802192157,
+      "peak_price": 18000,
+      "trail_distance": 517.9365274875829,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.37,
+      "pnl_pct": 0.5,
+      "capital_after": 917.36,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 16,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-13",
+      "exit_date": "2022-12-14",
+      "entry_price": 17753.54,
+      "exit_price": 17842.307699999998,
+      "tp_price": 18243.88865358642,
+      "initial_sl": 17508.365673206794,
+      "peak_price": 18116,
+      "trail_distance": 653.798204781889,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.37,
+      "pnl_pct": 0.5,
+      "capital_after": 918.74,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 17,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-14",
+      "exit_date": "2022-12-14",
+      "entry_price": 18061.83,
+      "exit_price": 18152.13915,
+      "tp_price": 18541.74037656522,
+      "initial_sl": 17821.874811717393,
+      "peak_price": 18387.95,
+      "trail_distance": 639.8805020869551,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.38,
+      "pnl_pct": 0.5,
+      "capital_after": 920.11,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 18,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-16",
+      "exit_date": "2022-12-16",
+      "entry_price": 17503.36,
+      "exit_price": 17219.12237701725,
+      "tp_price": 18071.835245965503,
+      "initial_sl": 17219.12237701725,
+      "peak_price": 17503.36,
+      "trail_distance": 757.9669946206683,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -8.38,
+      "pnl_pct": -1.62,
+      "capital_after": 911.73,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Reversió Alcista",
+        "direction_score": 86,
+        "context_score": 45,
+        "trigger_score": 25
+      }
+    },
+    {
+      "id": 19,
+      "symbol": "BTCUSDT",
+      "entry_date": "2022-12-23",
+      "exit_date": "2022-12-27",
+      "entry_price": 16844.02,
+      "exit_price": 16636.904559106733,
+      "tp_price": 17258.25088178654,
+      "initial_sl": 16636.904559106733,
+      "peak_price": 16844.02,
+      "trail_distance": 552.3078423820504,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -6.51,
+      "pnl_pct": -1.23,
+      "capital_after": 905.22,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 65,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 20,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-02",
+      "exit_date": "2023-01-04",
+      "entry_price": 16721.27,
+      "exit_price": 16804.87635,
+      "tp_price": 16991.395211041134,
+      "initial_sl": 16586.207394479436,
+      "peak_price": 16919,
+      "trail_distance": 360.16694805484366,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.36,
+      "pnl_pct": 0.5,
+      "capital_after": 906.57,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 21,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-05",
+      "exit_date": "2023-01-06",
+      "entry_price": 16842.94,
+      "exit_price": 16698.353062441594,
+      "tp_price": 17132.113875116807,
+      "initial_sl": 16698.353062441594,
+      "peak_price": 16842.94,
+      "trail_distance": 385.5651668224122,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -4.79,
+      "pnl_pct": -0.86,
+      "capital_after": 901.78,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 60,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 22,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-07",
+      "exit_date": "2023-01-08",
+      "entry_price": 16950.31,
+      "exit_price": 17035.06155,
+      "tp_price": 17260.929449145555,
+      "initial_sl": 16795.000275427225,
+      "peak_price": 17176.99,
+      "trail_distance": 414.1592655274067,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.35,
+      "pnl_pct": 0.5,
+      "capital_after": 903.13,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 42,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 23,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-09",
+      "exit_date": "2023-01-09",
+      "entry_price": 17127.83,
+      "exit_price": 17213.46915,
+      "tp_price": 17391.647646526955,
+      "initial_sl": 16995.921176736523,
+      "peak_price": 17335.35,
+      "trail_distance": 351.75686203593824,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.35,
+      "pnl_pct": 0.5,
+      "capital_after": 904.48,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 30,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 24,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-09",
+      "exit_date": "2023-01-11",
+      "entry_price": 17268.49,
+      "exit_price": 17354.832449999998,
+      "tp_price": 17555.85911871275,
+      "initial_sl": 17124.805440643628,
+      "peak_price": 17510,
+      "trail_distance": 383.1588249503282,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.35,
+      "pnl_pct": 0.5,
+      "capital_after": 905.84,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 25,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-11",
+      "exit_date": "2023-01-11",
+      "entry_price": 17549.62,
+      "exit_price": 17637.368099999996,
+      "tp_price": 17898.35847293533,
+      "initial_sl": 17375.250763532335,
+      "peak_price": 18000,
+      "trail_distance": 464.9846305804411,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.36,
+      "pnl_pct": 0.5,
+      "capital_after": 907.19,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 30,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 26,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-12",
+      "exit_date": "2023-01-12",
+      "entry_price": 17943.26,
+      "exit_price": 18032.976299999995,
+      "tp_price": 18372.33286807314,
+      "initial_sl": 17728.723565963428,
+      "peak_price": 18385.71,
+      "trail_distance": 572.0971574308533,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.36,
+      "pnl_pct": 0.5,
+      "capital_after": 908.55,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 27,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-12",
+      "exit_date": "2023-01-12",
+      "entry_price": 18224.68,
+      "exit_price": 17974.20402635086,
+      "tp_price": 18725.631947298276,
+      "initial_sl": 17974.20402635086,
+      "peak_price": 18224.68,
+      "trail_distance": 667.9359297310353,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -7.15,
+      "pnl_pct": -1.37,
+      "capital_after": 901.41,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 28,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-12",
+      "exit_date": "2023-01-14",
+      "entry_price": 18885.35,
+      "exit_price": 20269.21791940063,
+      "tp_price": 19626.936560449525,
+      "initial_sl": 18514.556719775235,
+      "peak_price": 21258,
+      "trail_distance": 988.7820805993696,
+      "trailing_activated": true,
+      "sl_moves_count": 4,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 32.09,
+      "pnl_pct": 7.33,
+      "capital_after": 933.5,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 29,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-17",
+      "exit_date": "2023-01-18",
+      "entry_price": 21336.46,
+      "exit_price": 20771.807017032086,
+      "tp_price": 22465.76596593583,
+      "initial_sl": 20771.807017032086,
+      "peak_price": 21336.46,
+      "trail_distance": 1505.7412879144392,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.27,
+      "pnl_pct": -2.65,
+      "capital_after": 920.22,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 45,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 30,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-01-19",
+      "exit_date": "2023-01-30",
+      "entry_price": 20744.17,
+      "exit_price": 22610.495883870284,
+      "tp_price": 21756.703087097285,
+      "initial_sl": 20237.903456451353,
+      "peak_price": 23960.54,
+      "trail_distance": 1350.0441161297163,
+      "trailing_activated": true,
+      "sl_moves_count": 8,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 40.43,
+      "pnl_pct": 9,
+      "capital_after": 960.66,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Reversió Alcista",
+        "direction_score": 86,
+        "context_score": 75,
+        "trigger_score": 35
+      }
+    },
+    {
+      "id": 31,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-02-01",
+      "exit_date": "2023-02-02",
+      "entry_price": 23385.99,
+      "exit_price": 23502.91995,
+      "tp_price": 24338.75041489158,
+      "initial_sl": 22909.609792554213,
+      "peak_price": 24255,
+      "trail_distance": 1270.3472198554368,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.44,
+      "pnl_pct": 0.5,
+      "capital_after": 962.1,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 32,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-02-14",
+      "exit_date": "2023-02-16",
+      "entry_price": 22040.52,
+      "exit_price": 24199.104087437598,
+      "tp_price": 22828.691934421804,
+      "initial_sl": 21646.4340327891,
+      "peak_price": 25250,
+      "trail_distance": 1050.8959125624028,
+      "trailing_activated": true,
+      "sl_moves_count": 7,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 46.1,
+      "pnl_pct": 9.79,
+      "capital_after": 1008.2,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 85,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 33,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-02-17",
+      "exit_date": "2023-02-22",
+      "entry_price": 24524.49,
+      "exit_price": 23809.631204650974,
+      "tp_price": 25954.20759069806,
+      "initial_sl": 23809.631204650974,
+      "peak_price": 24524.49,
+      "trail_distance": 1906.2901209307443,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -15.69,
+      "pnl_pct": -2.91,
+      "capital_after": 992.51,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 55,
+        "trigger_score": 75
+      }
+    },
+    {
+      "id": 34,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-03-01",
+      "exit_date": "2023-03-02",
+      "entry_price": 23739.87,
+      "exit_price": 23240.691172967945,
+      "tp_price": 24738.227654064107,
+      "initial_sl": 23240.691172967945,
+      "peak_price": 23739.87,
+      "trail_distance": 1331.143538752142,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.42,
+      "pnl_pct": -2.1,
+      "capital_after": 981.1,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 65,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 35,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-03-16",
+      "exit_date": "2023-04-20",
+      "entry_price": 24826.33,
+      "exit_price": 28228.528556177254,
+      "tp_price": 26904.93358286706,
+      "initial_sl": 23787.028208566473,
+      "peak_price": 31000,
+      "trail_distance": 2771.4714438227443,
+      "trailing_activated": true,
+      "sl_moves_count": 16,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 66.18,
+      "pnl_pct": 13.7,
+      "capital_after": 1047.27,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 50,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 36,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-04-26",
+      "exit_date": "2023-04-26",
+      "entry_price": 28309.09,
+      "exit_price": 28450.635449999998,
+      "tp_price": 29465.23371280458,
+      "initial_sl": 27731.01814359771,
+      "peak_price": 29138.83,
+      "trail_distance": 1541.5249504061048,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.57,
+      "pnl_pct": 0.5,
+      "capital_after": 1048.84,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 37,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-04-26",
+      "exit_date": "2023-04-26",
+      "entry_price": 28952.31,
+      "exit_price": 29097.071549999997,
+      "tp_price": 30172.7978458845,
+      "initial_sl": 28342.066077057752,
+      "peak_price": 30036,
+      "trail_distance": 1627.317127845997,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.57,
+      "pnl_pct": 0.5,
+      "capital_after": 1050.41,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 38,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-04-26",
+      "exit_date": "2023-04-26",
+      "entry_price": 29820.02,
+      "exit_price": 29137.255284824394,
+      "tp_price": 31185.549430351217,
+      "initial_sl": 29137.255284824394,
+      "peak_price": 29820.02,
+      "trail_distance": 1820.7059071349545,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.06,
+      "pnl_pct": -2.29,
+      "capital_after": 1037.35,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 39,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-04-27",
+      "exit_date": "2023-05-01",
+      "entry_price": 28415.29,
+      "exit_price": 28557.366449999998,
+      "tp_price": 30354.145683133036,
+      "initial_sl": 27445.862158433483,
+      "peak_price": 29969.39,
+      "trail_distance": 2585.140910844045,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.55,
+      "pnl_pct": 0.5,
+      "capital_after": 1038.9,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 85,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 40,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-05-05",
+      "exit_date": "2023-05-06",
+      "entry_price": 29356.44,
+      "exit_price": 28736.19766098578,
+      "tp_price": 30596.92467802843,
+      "initial_sl": 28736.19766098578,
+      "peak_price": 29356.44,
+      "trail_distance": 1653.9795707045776,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12,
+      "pnl_pct": -2.11,
+      "capital_after": 1026.9,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 41,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-05-21",
+      "exit_date": "2023-05-21",
+      "entry_price": 27176.22,
+      "exit_price": 26824.44796037032,
+      "tp_price": 27879.764079259367,
+      "initial_sl": 26824.44796037032,
+      "peak_price": 27176.22,
+      "trail_distance": 938.0587723458183,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -7.67,
+      "pnl_pct": -1.29,
+      "capital_after": 1019.23,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 45,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 42,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-05-30",
+      "exit_date": "2023-05-31",
+      "entry_price": 27829.23,
+      "exit_price": 27387.499264947324,
+      "tp_price": 28712.69147010535,
+      "initial_sl": 27387.499264947324,
+      "peak_price": 27829.23,
+      "trail_distance": 1177.948626807134,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -9.1,
+      "pnl_pct": -1.59,
+      "capital_after": 1010.13,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 42,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 43,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-06-20",
+      "exit_date": "2023-06-20",
+      "entry_price": 26844.35,
+      "exit_price": 27033.671413174005,
+      "tp_price": 27674.096440119494,
+      "initial_sl": 26429.47677994025,
+      "peak_price": 28140,
+      "trail_distance": 1106.328586825994,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.55,
+      "pnl_pct": 0.71,
+      "capital_after": 1012.68,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 27,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 44,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-06-21",
+      "exit_date": "2023-06-21",
+      "entry_price": 28308,
+      "exit_price": 28449.539999999997,
+      "tp_price": 29405.867310149555,
+      "initial_sl": 27759.06634492522,
+      "peak_price": 29088.09,
+      "trail_distance": 1463.8230801994073,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.52,
+      "pnl_pct": 0.5,
+      "capital_after": 1014.2,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 45,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-06-21",
+      "exit_date": "2023-06-30",
+      "entry_price": 28711.15,
+      "exit_price": 29835.50428394242,
+      "tp_price": 29908.476787043186,
+      "initial_sl": 28112.48660647841,
+      "peak_price": 31431.94,
+      "trail_distance": 1596.4357160575778,
+      "trailing_activated": true,
+      "sl_moves_count": 5,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 18.82,
+      "pnl_pct": 3.92,
+      "capital_after": 1033.02,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 46,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-03",
+      "exit_date": "2023-07-05",
+      "entry_price": 30756.65,
+      "exit_price": 30286.46180736961,
+      "tp_price": 31697.026385260782,
+      "initial_sl": 30286.46180736961,
+      "peak_price": 30756.65,
+      "trail_distance": 1253.8351803477055,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -8.92,
+      "pnl_pct": -1.53,
+      "capital_after": 1024.1,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 62,
+        "context_score": 45,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 47,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-10",
+      "exit_date": "2023-07-10",
+      "entry_price": 30837.4,
+      "exit_price": 30447.246150148974,
+      "tp_price": 31617.707699702056,
+      "initial_sl": 30447.246150148974,
+      "peak_price": 30837.4,
+      "trail_distance": 1040.410266269407,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -7.5,
+      "pnl_pct": -1.27,
+      "capital_after": 1016.6,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 48,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-11",
+      "exit_date": "2023-07-13",
+      "entry_price": 30535.38,
+      "exit_price": 30688.0569,
+      "tp_price": 31414.026754980987,
+      "initial_sl": 30096.05662250951,
+      "peak_price": 31170,
+      "trail_distance": 1171.5290066413133,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.52,
+      "pnl_pct": 0.5,
+      "capital_after": 1018.13,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 75,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 49,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-13",
+      "exit_date": "2023-07-13",
+      "entry_price": 30917.48,
+      "exit_price": 31072.067399999996,
+      "tp_price": 31826.308804578366,
+      "initial_sl": 30463.065597710814,
+      "peak_price": 31804.2,
+      "trail_distance": 1211.771739437823,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.52,
+      "pnl_pct": 0.5,
+      "capital_after": 1019.65,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 50,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-13",
+      "exit_date": "2023-07-13",
+      "entry_price": 31606,
+      "exit_price": 31067.694126660794,
+      "tp_price": 32682.611746678413,
+      "initial_sl": 31067.694126660794,
+      "peak_price": 31606,
+      "trail_distance": 1435.4823289045478,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -9.69,
+      "pnl_pct": -1.7,
+      "capital_after": 1009.96,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 51,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-14",
+      "exit_date": "2023-07-14",
+      "entry_price": 31454.23,
+      "exit_price": 30880.28954604598,
+      "tp_price": 32602.110907908038,
+      "initial_sl": 30880.28954604598,
+      "peak_price": 31454.23,
+      "trail_distance": 1530.5078772107156,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.22,
+      "pnl_pct": -1.82,
+      "capital_after": 999.74,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 52,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 52,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-23",
+      "exit_date": "2023-07-24",
+      "entry_price": 30093.12,
+      "exit_price": 29791.485629329374,
+      "tp_price": 30696.38874134125,
+      "initial_sl": 29791.485629329374,
+      "peak_price": 30093.12,
+      "trail_distance": 804.3583217883336,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -6.01,
+      "pnl_pct": -1,
+      "capital_after": 993.74,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 53,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-07-31",
+      "exit_date": "2023-07-31",
+      "entry_price": 29422,
+      "exit_price": 29176.30751505841,
+      "tp_price": 29913.384969883173,
+      "initial_sl": 29176.30751505841,
+      "peak_price": 29422,
+      "trail_distance": 655.1799598442321,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -5.14,
+      "pnl_pct": -0.84,
+      "capital_after": 988.6,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 54,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-08-28",
+      "exit_date": "2023-08-29",
+      "entry_price": 26104.16,
+      "exit_price": 27039.355041712148,
+      "tp_price": 26593.643718715888,
+      "initial_sl": 25859.418140642054,
+      "peak_price": 27692,
+      "trail_distance": 652.6449582878535,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 16.7,
+      "pnl_pct": 3.58,
+      "capital_after": 1005.3,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 46,
+        "context_score": 85,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 55,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-09-13",
+      "exit_date": "2023-09-24",
+      "entry_price": 26241.31,
+      "exit_price": 26372.51655,
+      "tp_price": 27238.140353579685,
+      "initial_sl": 25742.89482321016,
+      "peak_price": 27483.57,
+      "trail_distance": 1329.1071381062434,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.51,
+      "pnl_pct": 0.5,
+      "capital_after": 1006.81,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 45,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 56,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-09-28",
+      "exit_date": "2023-09-28",
+      "entry_price": 26476.93,
+      "exit_price": 26609.314649999997,
+      "tp_price": 27148.675994462472,
+      "initial_sl": 26141.057002768765,
+      "peak_price": 27064,
+      "trail_distance": 895.661325949961,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.51,
+      "pnl_pct": 0.5,
+      "capital_after": 1008.31,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 75,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 57,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-09-28",
+      "exit_date": "2023-10-01",
+      "entry_price": 27019.99,
+      "exit_price": 27155.089949999998,
+      "tp_price": 27773.182707926877,
+      "initial_sl": 26643.393646036566,
+      "peak_price": 28065.51,
+      "trail_distance": 1004.2569439024986,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.51,
+      "pnl_pct": 0.5,
+      "capital_after": 1009.82,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 58,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-02",
+      "exit_date": "2023-10-02",
+      "entry_price": 27992.58,
+      "exit_price": 28132.5429,
+      "tp_price": 28733.45910261689,
+      "initial_sl": 27622.140448691556,
+      "peak_price": 28580,
+      "trail_distance": 987.8388034891833,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.51,
+      "pnl_pct": 0.5,
+      "capital_after": 1011.34,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 59,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-06",
+      "exit_date": "2023-10-09",
+      "entry_price": 27941.12,
+      "exit_price": 27467.760353808477,
+      "tp_price": 28887.839292383043,
+      "initial_sl": 27467.760353808477,
+      "peak_price": 27941.12,
+      "trail_distance": 1262.2923898440606,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -9.57,
+      "pnl_pct": -1.69,
+      "capital_after": 1001.77,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 60,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-14",
+      "exit_date": "2023-10-16",
+      "entry_price": 26868.8,
+      "exit_price": 29152.86002006541,
+      "tp_price": 27504.154984950943,
+      "initial_sl": 26551.122507524527,
+      "peak_price": 30000,
+      "trail_distance": 847.1399799345907,
+      "trailing_activated": true,
+      "sl_moves_count": 4,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 41.53,
+      "pnl_pct": 8.5,
+      "capital_after": 1043.3,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 45,
+        "trigger_score": 45
+      }
+    },
+    {
+      "id": 61,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-16",
+      "exit_date": "2023-10-20",
+      "entry_price": 28468.86,
+      "exit_price": 28611.204299999998,
+      "tp_price": 29641.7181003219,
+      "initial_sl": 27882.43094983905,
+      "peak_price": 29400,
+      "trail_distance": 1563.810800429202,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.56,
+      "pnl_pct": 0.5,
+      "capital_after": 1044.86,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 62,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-20",
+      "exit_date": "2023-10-20",
+      "entry_price": 29235.37,
+      "exit_price": 29381.546849999995,
+      "tp_price": 30318.367257587597,
+      "initial_sl": 28693.871371206198,
+      "peak_price": 30207.55,
+      "trail_distance": 1443.9963434501315,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.56,
+      "pnl_pct": 0.5,
+      "capital_after": 1046.43,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 63,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-20",
+      "exit_date": "2023-10-23",
+      "entry_price": 29839.99,
+      "exit_price": 29989.18995,
+      "tp_price": 31041.205390397445,
+      "initial_sl": 29239.382304801282,
+      "peak_price": 30799,
+      "trail_distance": 1601.6205205299234,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.57,
+      "pnl_pct": 0.5,
+      "capital_after": 1047.99,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 64,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-23",
+      "exit_date": "2023-10-23",
+      "entry_price": 30736.68,
+      "exit_price": 33241.93184335338,
+      "tp_price": 31861.66361748497,
+      "initial_sl": 30174.188191257515,
+      "peak_price": 34741.91,
+      "trail_distance": 1499.9781566466268,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 41.62,
+      "pnl_pct": 8.15,
+      "capital_after": 1089.61,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 65,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-24",
+      "exit_date": "2023-10-24",
+      "entry_price": 33069.99,
+      "exit_price": 33235.339949999994,
+      "tp_price": 34980.946918985515,
+      "initial_sl": 32114.51154050724,
+      "peak_price": 35280,
+      "trail_distance": 2547.942558647358,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.63,
+      "pnl_pct": 0.5,
+      "capital_after": 1091.25,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 66,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-10-24",
+      "exit_date": "2023-11-03",
+      "entry_price": 34061.59,
+      "exit_price": 34231.89794999999,
+      "tp_price": 36360.54856753602,
+      "initial_sl": 32912.11071623198,
+      "peak_price": 35984.99,
+      "trail_distance": 3065.278090048029,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.63,
+      "pnl_pct": 0.5,
+      "capital_after": 1092.88,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 67,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-11-05",
+      "exit_date": "2023-11-05",
+      "entry_price": 35277.02,
+      "exit_price": 34662.17774527325,
+      "tp_price": 36506.704509453484,
+      "initial_sl": 34662.17774527325,
+      "peak_price": 35277.02,
+      "trail_distance": 1639.5793459379838,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.61,
+      "pnl_pct": -1.74,
+      "capital_after": 1082.27,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 30,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 68,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-11-06",
+      "exit_date": "2023-11-09",
+      "entry_price": 35080.95,
+      "exit_price": 36343.87464966654,
+      "tp_price": 36302.22401275009,
+      "initial_sl": 34470.31299362495,
+      "peak_price": 37972.24,
+      "trail_distance": 1628.3653503334592,
+      "trailing_activated": true,
+      "sl_moves_count": 4,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 18.38,
+      "pnl_pct": 3.6,
+      "capital_after": 1100.65,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 75,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 69,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-11-10",
+      "exit_date": "2023-11-14",
+      "entry_price": 37071.1,
+      "exit_price": 36182.06901542054,
+      "tp_price": 38849.16196915892,
+      "initial_sl": 36182.06901542054,
+      "peak_price": 37071.1,
+      "trail_distance": 2370.7492922119004,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -14.29,
+      "pnl_pct": -2.4,
+      "capital_after": 1086.37,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 42,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 70,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-11-15",
+      "exit_date": "2023-11-16",
+      "entry_price": 37499.99,
+      "exit_price": 36653.28102231311,
+      "tp_price": 39193.40795537378,
+      "initial_sl": 36653.28102231311,
+      "peak_price": 37499.99,
+      "trail_distance": 2257.8906071650445,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.34,
+      "pnl_pct": -2.26,
+      "capital_after": 1073.03,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 71,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-11-18",
+      "exit_date": "2023-11-20",
+      "entry_price": 36679.09,
+      "exit_price": 36862.48544999999,
+      "tp_price": 38157.89036278344,
+      "initial_sl": 35939.689818608276,
+      "peak_price": 37750,
+      "trail_distance": 1971.7338170445887,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.61,
+      "pnl_pct": 0.5,
+      "capital_after": 1074.63,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 65,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 62,
+        "context_score": 45,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 72,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-11-23",
+      "exit_date": "2023-12-11",
+      "entry_price": 37408.35,
+      "exit_price": 42394.90389953835,
+      "tp_price": 39137.172075346236,
+      "initial_sl": 36543.93896232688,
+      "peak_price": 44700,
+      "trail_distance": 2305.096100461647,
+      "trailing_activated": true,
+      "sl_moves_count": 11,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 70.48,
+      "pnl_pct": 13.33,
+      "capital_after": 1145.11,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 73,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 73,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-12-14",
+      "exit_date": "2023-12-14",
+      "entry_price": 42869.03,
+      "exit_price": 41734.74125204899,
+      "tp_price": 45137.60749590202,
+      "initial_sl": 41734.74125204899,
+      "peak_price": 42869.03,
+      "trail_distance": 3024.769994536023,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -16.28,
+      "pnl_pct": -2.65,
+      "capital_after": 1128.83,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 74,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-12-19",
+      "exit_date": "2023-12-20",
+      "entry_price": 42657.8,
+      "exit_price": 42871.089,
+      "tp_price": 44567.37075024506,
+      "initial_sl": 41703.014624877476,
+      "peak_price": 44283,
+      "trail_distance": 2546.094333660078,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.69,
+      "pnl_pct": 0.5,
+      "capital_after": 1130.52,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 75,
+      "symbol": "BTCUSDT",
+      "entry_date": "2023-12-20",
+      "exit_date": "2023-12-24",
+      "entry_price": 44027.2,
+      "exit_price": 43049.988641241165,
+      "tp_price": 45981.62271751766,
+      "initial_sl": 43049.988641241165,
+      "peak_price": 44027.2,
+      "trail_distance": 2605.8969566902233,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.66,
+      "pnl_pct": -2.22,
+      "capital_after": 1116.86,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 76,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-01-02",
+      "exit_date": "2024-01-02",
+      "entry_price": 44179.55,
+      "exit_price": 44400.44775,
+      "tp_price": 45732.33222694833,
+      "initial_sl": 43403.15888652584,
+      "peak_price": 45500,
+      "trail_distance": 2070.3763025977723,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.67,
+      "pnl_pct": 0.5,
+      "capital_after": 1118.53,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 77,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-01-06",
+      "exit_date": "2024-01-10",
+      "entry_price": 43931.1,
+      "exit_price": 44586.74577903285,
+      "tp_price": 46470.04066572536,
+      "initial_sl": 42661.62966713731,
+      "peak_price": 47972,
+      "trail_distance": 3385.254220967154,
+      "trailing_activated": true,
+      "sl_moves_count": 3,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 7.22,
+      "pnl_pct": 1.49,
+      "capital_after": 1125.75,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 62,
+        "context_score": 45,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 78,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-01-29",
+      "exit_date": "2024-01-30",
+      "entry_price": 42641.75,
+      "exit_price": 42854.95875,
+      "tp_price": 44151.37306227462,
+      "initial_sl": 41886.93846886269,
+      "peak_price": 43882.36,
+      "trail_distance": 2012.830749699492,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.69,
+      "pnl_pct": 0.5,
+      "capital_after": 1127.44,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 65,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 37,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 79,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-01-31",
+      "exit_date": "2024-01-31",
+      "entry_price": 43361.11,
+      "exit_price": 42519.265841093875,
+      "tp_price": 45044.79831781225,
+      "initial_sl": 42519.265841093875,
+      "peak_price": 43361.11,
+      "trail_distance": 2244.9177570830025,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12.06,
+      "pnl_pct": -1.94,
+      "capital_after": 1115.38,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 70,
+        "trigger_score": 75
+      }
+    },
+    {
+      "id": 80,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-02-06",
+      "exit_date": "2024-02-13",
+      "entry_price": 43244.89,
+      "exit_price": 48553.4714570018,
+      "tp_price": 44606.24390724865,
+      "initial_sl": 42564.21304637568,
+      "peak_price": 50368.61,
+      "trail_distance": 1815.1385429982013,
+      "trailing_activated": true,
+      "sl_moves_count": 16,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 67.28,
+      "pnl_pct": 12.28,
+      "capital_after": 1182.65,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 81,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-02-14",
+      "exit_date": "2024-02-14",
+      "entry_price": 49699.6,
+      "exit_price": 49948.09799999999,
+      "tp_price": 51980.76310498882,
+      "initial_sl": 48559.01844750559,
+      "peak_price": 51723.08,
+      "trail_distance": 3041.550806651764,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.77,
+      "pnl_pct": 0.5,
+      "capital_after": 1184.42,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 50,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 82,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-02-14",
+      "exit_date": "2024-02-28",
+      "entry_price": 51555.12,
+      "exit_price": 60731.87421250057,
+      "tp_price": 54006.21434062458,
+      "initial_sl": 50329.57282968771,
+      "peak_price": 64000,
+      "trail_distance": 3268.1257874994344,
+      "trailing_activated": true,
+      "sl_moves_count": 9,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 104.12,
+      "pnl_pct": 17.8,
+      "capital_after": 1288.55,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 83,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-02-29",
+      "exit_date": "2024-03-05",
+      "entry_price": 62432.11,
+      "exit_price": 63328.298445232,
+      "tp_price": 66685.886166076,
+      "initial_sl": 60305.221916962,
+      "peak_price": 69000,
+      "trail_distance": 5671.701554767997,
+      "trailing_activated": true,
+      "sl_moves_count": 5,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 7.95,
+      "pnl_pct": 1.44,
+      "capital_after": 1296.5,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 30,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 84,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-03-06",
+      "exit_date": "2024-03-15",
+      "entry_price": 66676.46,
+      "exit_price": 67009.8423,
+      "tp_price": 72893.09965581959,
+      "initial_sl": 63568.140172090214,
+      "peak_price": 73777,
+      "trail_distance": 8288.852874426117,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.94,
+      "pnl_pct": 0.5,
+      "capital_after": 1298.44,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 75,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 85,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-03-21",
+      "exit_date": "2024-03-22",
+      "entry_price": 66654.46,
+      "exit_price": 63638.123628023204,
+      "tp_price": 72687.13274395361,
+      "initial_sl": 63638.123628023204,
+      "peak_price": 66654.46,
+      "trail_distance": 8043.563658604812,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -30.65,
+      "pnl_pct": -4.53,
+      "capital_after": 1267.79,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 65,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 86,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-03-24",
+      "exit_date": "2024-04-02",
+      "entry_price": 65843.02,
+      "exit_price": 66283.5609594084,
+      "tp_price": 69957.5042804437,
+      "initial_sl": 63785.77785977816,
+      "peak_price": 71769.54,
+      "trail_distance": 5485.979040591598,
+      "trailing_activated": true,
+      "sl_moves_count": 3,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.97,
+      "pnl_pct": 0.67,
+      "capital_after": 1270.76,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 62,
+        "context_score": 65,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 87,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-04-06",
+      "exit_date": "2024-04-09",
+      "entry_price": 68259.99,
+      "exit_price": 68601.28994999999,
+      "tp_price": 71443.81362330038,
+      "initial_sl": 66668.07818834981,
+      "peak_price": 72797.99,
+      "trail_distance": 4245.098164400499,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.9,
+      "pnl_pct": 0.5,
+      "capital_after": 1272.66,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 45,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 88,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-04-11",
+      "exit_date": "2024-04-12",
+      "entry_price": 70631.08,
+      "exit_price": 68889.02110461594,
+      "tp_price": 74115.19779076813,
+      "initial_sl": 68889.02110461594,
+      "peak_price": 70631.08,
+      "trail_distance": 4645.4903876908365,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -16.95,
+      "pnl_pct": -2.47,
+      "capital_after": 1255.71,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 65,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 89,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-04-24",
+      "exit_date": "2024-04-24",
+      "entry_price": 66608.14,
+      "exit_price": 65213.76071973552,
+      "tp_price": 69396.89856052896,
+      "initial_sl": 65213.76071973552,
+      "peak_price": 66608.14,
+      "trail_distance": 3718.3447473719566,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -14.39,
+      "pnl_pct": -2.09,
+      "capital_after": 1241.32,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 50,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 90,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-05-15",
+      "exit_date": "2024-05-15",
+      "entry_price": 62467.18,
+      "exit_price": 62779.51589999999,
+      "tp_price": 64826.98917400978,
+      "initial_sl": 61287.27541299511,
+      "peak_price": 65057.26,
+      "trail_distance": 3146.4122320130373,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.86,
+      "pnl_pct": 0.5,
+      "capital_after": 1243.18,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 28,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 91,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-05-15",
+      "exit_date": "2024-05-16",
+      "entry_price": 64725.12,
+      "exit_price": 65048.745599999995,
+      "tp_price": 67485.34923485358,
+      "initial_sl": 63345.00538257321,
+      "peak_price": 66752.01,
+      "trail_distance": 3680.3056464714437,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.86,
+      "pnl_pct": 0.5,
+      "capital_after": 1245.05,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 92,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-05-17",
+      "exit_date": "2024-05-23",
+      "entry_price": 66386.93,
+      "exit_price": 68256.95824841048,
+      "tp_price": 69178.46131369214,
+      "initial_sl": 64991.16434315392,
+      "peak_price": 71979,
+      "trail_distance": 3722.0417515895306,
+      "trailing_activated": true,
+      "sl_moves_count": 4,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 16.27,
+      "pnl_pct": 2.82,
+      "capital_after": 1261.32,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 27,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 93,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-05-25",
+      "exit_date": "2024-05-28",
+      "entry_price": 68930.39,
+      "exit_price": 67535.73523468242,
+      "tp_price": 71719.69953063516,
+      "initial_sl": 67535.73523468242,
+      "peak_price": 68930.39,
+      "trail_distance": 3719.07937418022,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -14.01,
+      "pnl_pct": -2.02,
+      "capital_after": 1247.31,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 65,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 94,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-06-03",
+      "exit_date": "2024-06-03",
+      "entry_price": 68382.8,
+      "exit_price": 68724.71399999999,
+      "tp_price": 70395.2048668018,
+      "initial_sl": 67376.5975665991,
+      "peak_price": 70288,
+      "trail_distance": 2683.2064890690626,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.87,
+      "pnl_pct": 0.5,
+      "capital_after": 1249.18,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 95,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-06-03",
+      "exit_date": "2024-06-07",
+      "entry_price": 69615.27,
+      "exit_price": 69963.34634999999,
+      "tp_price": 71883.82556216877,
+      "initial_sl": 68480.99221891562,
+      "peak_price": 71997.02,
+      "trail_distance": 3024.7407495583584,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.87,
+      "pnl_pct": 0.5,
+      "capital_after": 1251.05,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 96,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-06-12",
+      "exit_date": "2024-06-12",
+      "entry_price": 69734,
+      "exit_price": 68501.86033830672,
+      "tp_price": 72198.27932338655,
+      "initial_sl": 68501.86033830672,
+      "peak_price": 69734,
+      "trail_distance": 3285.705764515412,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12.29,
+      "pnl_pct": -1.77,
+      "capital_after": 1238.76,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 97,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-07-13",
+      "exit_date": "2024-07-25",
+      "entry_price": 57889.09,
+      "exit_price": 64478.20847784023,
+      "tp_price": 60886.346141619826,
+      "initial_sl": 56390.46192919008,
+      "peak_price": 68474.55,
+      "trail_distance": 3996.3415221597775,
+      "trailing_activated": true,
+      "sl_moves_count": 18,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 69.19,
+      "pnl_pct": 11.38,
+      "capital_after": 1307.95,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 28,
+        "context_score": 45,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 98,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-07-26",
+      "exit_date": "2024-07-29",
+      "entry_price": 67560,
+      "exit_price": 67897.79999999999,
+      "tp_price": 70538.84902872433,
+      "initial_sl": 66070.57548563783,
+      "peak_price": 69888,
+      "trail_distance": 3971.798704965781,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.96,
+      "pnl_pct": 0.5,
+      "capital_after": 1309.9,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 99,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-08-09",
+      "exit_date": "2024-08-11",
+      "entry_price": 61686,
+      "exit_price": 59002.21526820648,
+      "tp_price": 67053.56946358705,
+      "initial_sl": 59002.21526820648,
+      "peak_price": 61686,
+      "trail_distance": 7156.75928478272,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -29.78,
+      "pnl_pct": -4.35,
+      "capital_after": 1280.13,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 37,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 100,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-08-21",
+      "exit_date": "2024-08-21",
+      "entry_price": 59711.99,
+      "exit_price": 60010.54994999999,
+      "tp_price": 62507.65236086147,
+      "initial_sl": 58314.15881956926,
+      "peak_price": 61625.2,
+      "trail_distance": 3727.54981448197,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.92,
+      "pnl_pct": 0.5,
+      "capital_after": 1282.05,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 12,
+        "context_score": 45,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 101,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-08-21",
+      "exit_date": "2024-08-22",
+      "entry_price": 61570,
+      "exit_price": 59997.776670136824,
+      "tp_price": 64714.44665972635,
+      "initial_sl": 59997.776670136824,
+      "peak_price": 61570,
+      "trail_distance": 4192.595546301808,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -17.63,
+      "pnl_pct": -2.55,
+      "capital_after": 1264.41,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 102,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-08-23",
+      "exit_date": "2024-08-23",
+      "entry_price": 61533.04,
+      "exit_price": 61840.7052,
+      "tp_price": 64371.64862673471,
+      "initial_sl": 60113.735686632645,
+      "peak_price": 63819.16,
+      "trail_distance": 3784.81150231295,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.89,
+      "pnl_pct": 0.5,
+      "capital_after": 1266.3,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 35,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 103,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-08-23",
+      "exit_date": "2024-08-27",
+      "entry_price": 63628.84,
+      "exit_price": 62046.360636371166,
+      "tp_price": 66793.79872725766,
+      "initial_sl": 62046.360636371166,
+      "peak_price": 63628.84,
+      "trail_distance": 4219.944969676874,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -17,
+      "pnl_pct": -2.49,
+      "capital_after": 1249.31,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 104,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-09-11",
+      "exit_date": "2024-09-13",
+      "entry_price": 57585.5,
+      "exit_price": 57873.42749999999,
+      "tp_price": 60434.42234533963,
+      "initial_sl": 56161.03882733018,
+      "peak_price": 59723.97,
+      "trail_distance": 3798.5631271195134,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.87,
+      "pnl_pct": 0.5,
+      "capital_after": 1251.18,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 60,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 105,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-09-17",
+      "exit_date": "2024-09-17",
+      "entry_price": 61135.49,
+      "exit_price": 59844.84782362128,
+      "tp_price": 63716.77435275743,
+      "initial_sl": 59844.84782362128,
+      "peak_price": 61135.49,
+      "trail_distance": 3441.712470343241,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -14.44,
+      "pnl_pct": -2.11,
+      "capital_after": 1236.73,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 106,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-09-17",
+      "exit_date": "2024-10-01",
+      "entry_price": 59967.98,
+      "exit_price": 62832.76984324262,
+      "tp_price": 62716.90261756804,
+      "initial_sl": 58593.518691215984,
+      "peak_price": 66498,
+      "trail_distance": 3665.2301567573822,
+      "trailing_activated": true,
+      "sl_moves_count": 9,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 28.27,
+      "pnl_pct": 4.78,
+      "capital_after": 1265.01,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 107,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-10-07",
+      "exit_date": "2024-10-07",
+      "entry_price": 63651.59,
+      "exit_price": 62543.33135788519,
+      "tp_price": 65868.10728422961,
+      "initial_sl": 62543.33135788519,
+      "peak_price": 63651.59,
+      "trail_distance": 2955.356378972819,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12.27,
+      "pnl_pct": -1.74,
+      "capital_after": 1252.74,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 108,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-10-08",
+      "exit_date": "2024-10-09",
+      "entry_price": 62629.8,
+      "exit_price": 61435.629003673246,
+      "tp_price": 65018.141992653516,
+      "initial_sl": 61435.629003673246,
+      "peak_price": 62629.8,
+      "trail_distance": 3184.4559902046885,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.18,
+      "pnl_pct": -1.91,
+      "capital_after": 1239.56,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 75,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 109,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-10-11",
+      "exit_date": "2024-10-14",
+      "entry_price": 62259.04,
+      "exit_price": 62570.335199999994,
+      "tp_price": 64684.056300308934,
+      "initial_sl": 61046.53184984553,
+      "peak_price": 64392.49,
+      "trail_distance": 3233.3550670785785,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.86,
+      "pnl_pct": 0.5,
+      "capital_after": 1241.41,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 110,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-10-14",
+      "exit_date": "2024-10-23",
+      "entry_price": 64300,
+      "exit_price": 66514.09420866505,
+      "tp_price": 66554.0693435012,
+      "initial_sl": 63172.9653282494,
+      "peak_price": 69519.52,
+      "trail_distance": 3005.4257913349506,
+      "trailing_activated": true,
+      "sl_moves_count": 8,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 20.11,
+      "pnl_pct": 3.44,
+      "capital_after": 1261.52,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 111,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-10-27",
+      "exit_date": "2024-10-31",
+      "entry_price": 67850,
+      "exit_price": 71023.82613396797,
+      "tp_price": 69797.22039952403,
+      "initial_sl": 66876.38980023799,
+      "peak_price": 73620.12,
+      "trail_distance": 2596.2938660320265,
+      "trailing_activated": true,
+      "sl_moves_count": 5,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 28.21,
+      "pnl_pct": 4.68,
+      "capital_after": 1289.74,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 45,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 112,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-11-01",
+      "exit_date": "2024-11-03",
+      "entry_price": 69387.78,
+      "exit_price": 67838.79771091307,
+      "tp_price": 72485.74457817385,
+      "initial_sl": 67838.79771091307,
+      "peak_price": 69387.78,
+      "trail_distance": 4130.619437565128,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -15.67,
+      "pnl_pct": -2.23,
+      "capital_after": 1274.07,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Reversió Alcista",
+        "direction_score": 86,
+        "context_score": 95,
+        "trigger_score": 35
+      }
+    },
+    {
+      "id": 113,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-11-06",
+      "exit_date": "2024-11-14",
+      "entry_price": 73370.89,
+      "exit_price": 87476.45203694896,
+      "tp_price": 77712.78097228828,
+      "initial_sl": 71199.94451385585,
+      "peak_price": 93265.64,
+      "trail_distance": 5789.187963051042,
+      "trailing_activated": true,
+      "sl_moves_count": 15,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 121.07,
+      "pnl_pct": 19.23,
+      "capital_after": 1395.14,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 62,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 114,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-11-15",
+      "exit_date": "2024-12-05",
+      "entry_price": 89741.24,
+      "exit_price": 95266.24205154272,
+      "tp_price": 96357.55846134297,
+      "initial_sl": 86433.08076932853,
+      "peak_price": 104088,
+      "trail_distance": 8821.757948457276,
+      "trailing_activated": true,
+      "sl_moves_count": 6,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 41.51,
+      "pnl_pct": 6.16,
+      "capital_after": 1436.65,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 45,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 115,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-12-11",
+      "exit_date": "2024-12-18",
+      "entry_price": 101122.71,
+      "exit_price": 101628.32355,
+      "tp_price": 106451.20421764917,
+      "initial_sl": 98458.46289117543,
+      "peak_price": 108353,
+      "trail_distance": 7104.65895686554,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.15,
+      "pnl_pct": 0.5,
+      "capital_after": 1438.8,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 116,
+      "symbol": "BTCUSDT",
+      "entry_date": "2024-12-25",
+      "exit_date": "2024-12-27",
+      "entry_price": 98029.49,
+      "exit_price": 95176.39394791322,
+      "tp_price": 103735.68210417358,
+      "initial_sl": 95176.39394791322,
+      "peak_price": 98029.49,
+      "trail_distance": 7608.2561388981,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -22.36,
+      "pnl_pct": -2.91,
+      "capital_after": 1416.44,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 45,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 117,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-01-02",
+      "exit_date": "2025-01-07",
+      "entry_price": 97317.74,
+      "exit_price": 97804.3287,
+      "tp_price": 101125.76273437579,
+      "initial_sl": 95413.72863281211,
+      "peak_price": 102724.38,
+      "trail_distance": 5077.363645834381,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.12,
+      "pnl_pct": 0.5,
+      "capital_after": 1418.56,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 118,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-01-15",
+      "exit_date": "2025-01-16",
+      "entry_price": 97317.12,
+      "exit_price": 97803.70559999999,
+      "tp_price": 101744.80564826127,
+      "initial_sl": 95103.27717586936,
+      "peak_price": 100866.66,
+      "trail_distance": 5903.580864348378,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.12,
+      "pnl_pct": 0.5,
+      "capital_after": 1420.69,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 35,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 119,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-01-17",
+      "exit_date": "2025-01-18",
+      "entry_price": 105834.93,
+      "exit_price": 103532.68939254365,
+      "tp_price": 110439.41121491269,
+      "initial_sl": 103532.68939254365,
+      "peak_price": 105834.93,
+      "trail_distance": 6139.308286550261,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -16.86,
+      "pnl_pct": -2.18,
+      "capital_after": 1403.83,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 120,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-01-20",
+      "exit_date": "2025-01-20",
+      "entry_price": 108239.19,
+      "exit_price": 104649.44349490202,
+      "tp_price": 115418.68301019598,
+      "initial_sl": 104649.44349490202,
+      "peak_price": 108239.19,
+      "trail_distance": 9572.657346927968,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -24.66,
+      "pnl_pct": -3.32,
+      "capital_after": 1379.17,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 37,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 121,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-01-24",
+      "exit_date": "2025-01-27",
+      "entry_price": 105420.11,
+      "exit_price": 102084.36115680305,
+      "tp_price": 112091.6076863939,
+      "initial_sl": 102084.36115680305,
+      "peak_price": 105420.11,
+      "trail_distance": 8895.330248525199,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -23.18,
+      "pnl_pct": -3.16,
+      "capital_after": 1355.99,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 45,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 122,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-01-30",
+      "exit_date": "2025-02-01",
+      "entry_price": 103733.25,
+      "exit_price": 101279.59713872611,
+      "tp_price": 108640.55572254778,
+      "initial_sl": 101279.59713872611,
+      "peak_price": 103733.25,
+      "trail_distance": 6543.074296730387,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -17.38,
+      "pnl_pct": -2.37,
+      "capital_after": 1338.62,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 65,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 75,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 123,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-02-11",
+      "exit_date": "2025-02-11",
+      "entry_price": 97607.31,
+      "exit_price": 95938.4614099665,
+      "tp_price": 100945.00718006698,
+      "initial_sl": 95938.4614099665,
+      "peak_price": 97607.31,
+      "trail_distance": 4450.262906755989,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12.77,
+      "pnl_pct": -1.71,
+      "capital_after": 1325.85,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 12,
+        "context_score": 65,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 124,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-03-05",
+      "exit_date": "2025-03-07",
+      "entry_price": 89814.26,
+      "exit_price": 85912.13593227624,
+      "tp_price": 97618.5081354475,
+      "initial_sl": 85912.13593227624,
+      "peak_price": 89814.26,
+      "trail_distance": 10405.664180596674,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -30.1,
+      "pnl_pct": -4.34,
+      "capital_after": 1295.75,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 65,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 125,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-03-17",
+      "exit_date": "2025-03-18",
+      "entry_price": 84482.55,
+      "exit_price": 82558.19508867356,
+      "tp_price": 88331.25982265291,
+      "initial_sl": 82558.19508867356,
+      "peak_price": 84482.55,
+      "trail_distance": 5131.61309687053,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -16.04,
+      "pnl_pct": -2.28,
+      "capital_after": 1279.71,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 28,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 126,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-03-25",
+      "exit_date": "2025-03-26",
+      "entry_price": 87774.37,
+      "exit_price": 86315.71015112872,
+      "tp_price": 90691.68969774255,
+      "initial_sl": 86315.71015112872,
+      "peak_price": 87774.37,
+      "trail_distance": 3889.7595969900817,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.9,
+      "pnl_pct": -1.66,
+      "capital_after": 1267.81,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 53,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 127,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-04-02",
+      "exit_date": "2025-04-02",
+      "entry_price": 86757.67,
+      "exit_price": 84979.44667562154,
+      "tp_price": 90314.11664875691,
+      "initial_sl": 84979.44667562154,
+      "peak_price": 86757.67,
+      "trail_distance": 4741.928865009223,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -14.25,
+      "pnl_pct": -2.05,
+      "capital_after": 1253.56,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 128,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-04-11",
+      "exit_date": "2025-05-30",
+      "entry_price": 80843,
+      "exit_price": 104099.51327794588,
+      "tp_price": 86753.36504154059,
+      "initial_sl": 77887.8174792297,
+      "peak_price": 111980,
+      "trail_distance": 7880.486722054125,
+      "trailing_activated": true,
+      "sl_moves_count": 34,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 178.88,
+      "pnl_pct": 28.77,
+      "capital_after": 1432.43,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 22,
+        "context_score": 45,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 129,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-06-03",
+      "exit_date": "2025-06-04",
+      "entry_price": 106610.66,
+      "exit_price": 105025.8184369812,
+      "tp_price": 109780.34312603762,
+      "initial_sl": 105025.8184369812,
+      "peak_price": 106610.66,
+      "trail_distance": 4226.24416805016,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12.07,
+      "pnl_pct": -1.49,
+      "capital_after": 1420.37,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 78,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 130,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-06-07",
+      "exit_date": "2025-06-09",
+      "entry_price": 105150.01,
+      "exit_price": 105675.76004999998,
+      "tp_price": 108363.02297644613,
+      "initial_sl": 103543.50351177693,
+      "peak_price": 107806,
+      "trail_distance": 4284.017301928179,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.13,
+      "pnl_pct": 0.5,
+      "capital_after": 1422.49,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 30,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 131,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-06-09",
+      "exit_date": "2025-06-11",
+      "entry_price": 107759.21,
+      "exit_price": 108298.00605,
+      "tp_price": 110446.28655195683,
+      "initial_sl": 106415.6717240216,
+      "peak_price": 110530.17,
+      "trail_distance": 3582.7687359424367,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.13,
+      "pnl_pct": 0.5,
+      "capital_after": 1424.62,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 132,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-06-16",
+      "exit_date": "2025-06-17",
+      "entry_price": 107424.96,
+      "exit_price": 105932.66114028229,
+      "tp_price": 110409.55771943546,
+      "initial_sl": 105932.66114028229,
+      "peak_price": 107424.96,
+      "trail_distance": 3979.46362591393,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.31,
+      "pnl_pct": -1.39,
+      "capital_after": 1413.31,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 133,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-02",
+      "exit_date": "2025-07-04",
+      "entry_price": 108737.75,
+      "exit_price": 107377.4999149346,
+      "tp_price": 111458.25017013079,
+      "initial_sl": 107377.4999149346,
+      "peak_price": 108737.75,
+      "trail_distance": 3627.3335601743956,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.24,
+      "pnl_pct": -1.25,
+      "capital_after": 1403.07,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 134,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-07",
+      "exit_date": "2025-07-07",
+      "entry_price": 109203.85,
+      "exit_price": 108174.6409867279,
+      "tp_price": 111262.26802654423,
+      "initial_sl": 108174.6409867279,
+      "peak_price": 109203.85,
+      "trail_distance": 2744.557368725632,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -8.01,
+      "pnl_pct": -0.94,
+      "capital_after": 1395.06,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 60,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 135,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-09",
+      "exit_date": "2025-07-09",
+      "entry_price": 108922.99,
+      "exit_price": 109467.60495,
+      "tp_price": 111162.01938540579,
+      "initial_sl": 107803.47530729712,
+      "peak_price": 111999.79,
+      "trail_distance": 2985.3725138743716,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.09,
+      "pnl_pct": 0.5,
+      "capital_after": 1397.15,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 65,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 45,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 136,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-09",
+      "exit_date": "2025-07-10",
+      "entry_price": 111749.99,
+      "exit_price": 112308.73994999999,
+      "tp_price": 114516.03913180051,
+      "initial_sl": 110366.96543409975,
+      "peak_price": 113788.23,
+      "trail_distance": 3688.065509067353,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.09,
+      "pnl_pct": 0.5,
+      "capital_after": 1399.24,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 137,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-10",
+      "exit_date": "2025-07-10",
+      "entry_price": 113301.8,
+      "exit_price": 113868.309,
+      "tp_price": 116291.25201113097,
+      "initial_sl": 111807.07399443451,
+      "peak_price": 116868,
+      "trail_distance": 3985.9360148412984,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.1,
+      "pnl_pct": 0.5,
+      "capital_after": 1401.34,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 138,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-11",
+      "exit_date": "2025-07-11",
+      "entry_price": 116010.01,
+      "exit_price": 116590.06004999999,
+      "tp_price": 119556.71972196666,
+      "initial_sl": 114236.65513901667,
+      "peak_price": 118404.22,
+      "trail_distance": 4728.946295955547,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.1,
+      "pnl_pct": 0.5,
+      "capital_after": 1403.44,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 139,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-11",
+      "exit_date": "2025-07-15",
+      "entry_price": 117526.88,
+      "exit_price": 118138.03672211024,
+      "tp_price": 121336.85245841733,
+      "initial_sl": 115621.89377079134,
+      "peak_price": 123218,
+      "trail_distance": 5079.9632778897585,
+      "trailing_activated": true,
+      "sl_moves_count": 3,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.24,
+      "pnl_pct": 0.52,
+      "capital_after": 1405.68,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 140,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-15",
+      "exit_date": "2025-07-18",
+      "entry_price": 116416.07,
+      "exit_price": 116998.15035,
+      "tp_price": 120948.42923320338,
+      "initial_sl": 114149.89038339832,
+      "peak_price": 120998.71,
+      "trail_distance": 6043.145644271163,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.11,
+      "pnl_pct": 0.5,
+      "capital_after": 1407.78,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 95,
+        "trigger_score": 35
+      }
+    },
+    {
+      "id": 141,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-21",
+      "exit_date": "2025-07-21",
+      "entry_price": 119364.18,
+      "exit_price": 117587.21119254838,
+      "tp_price": 122918.11761490324,
+      "initial_sl": 117587.21119254838,
+      "peak_price": 119364.18,
+      "trail_distance": 4738.58348653766,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.88,
+      "pnl_pct": -1.49,
+      "capital_after": 1395.91,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 75,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 142,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-22",
+      "exit_date": "2025-07-25",
+      "entry_price": 118912.04,
+      "exit_price": 116801.77539859212,
+      "tp_price": 123132.56920281575,
+      "initial_sl": 116801.77539859212,
+      "peak_price": 118912.04,
+      "trail_distance": 5627.372270421015,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.77,
+      "pnl_pct": -1.77,
+      "capital_after": 1382.14,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 85,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 143,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-27",
+      "exit_date": "2025-07-30",
+      "entry_price": 118182.83,
+      "exit_price": 116617.28454459207,
+      "tp_price": 121313.92091081588,
+      "initial_sl": 116617.28454459207,
+      "peak_price": 118182.83,
+      "trail_distance": 4174.787881087835,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.53,
+      "pnl_pct": -1.32,
+      "capital_after": 1371.61,
+      "entry_signal": {
+        "global_score": 75,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 52,
+        "context_score": 45,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 144,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-07-31",
+      "exit_date": "2025-07-31",
+      "entry_price": 118371.25,
+      "exit_price": 116856.14147801603,
+      "tp_price": 121401.46704396796,
+      "initial_sl": 116856.14147801603,
+      "peak_price": 118371.25,
+      "trail_distance": 4040.289391957273,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.14,
+      "pnl_pct": -1.28,
+      "capital_after": 1361.47,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 65,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 52,
+        "context_score": 45,
+        "trigger_score": 70
+      }
+    },
+    {
+      "id": 145,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-08-07",
+      "exit_date": "2025-08-11",
+      "entry_price": 116519.54,
+      "exit_price": 118178.10804431688,
+      "tp_price": 119637.32896676235,
+      "initial_sl": 114960.64551661882,
+      "peak_price": 122335.16,
+      "trail_distance": 4157.051955683128,
+      "trailing_activated": true,
+      "sl_moves_count": 4,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 8.32,
+      "pnl_pct": 1.42,
+      "capital_after": 1369.79,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 85,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 146,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-08-13",
+      "exit_date": "2025-08-14",
+      "entry_price": 120134.09,
+      "exit_price": 120734.76044999999,
+      "tp_price": 123502.62504944779,
+      "initial_sl": 118449.8224752761,
+      "peak_price": 124474,
+      "trail_distance": 4491.380065930383,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.05,
+      "pnl_pct": 0.5,
+      "capital_after": 1371.84,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 50,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 147,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-08-22",
+      "exit_date": "2025-08-23",
+      "entry_price": 116655.79,
+      "exit_price": 114629.86344176042,
+      "tp_price": 120707.64311647916,
+      "initial_sl": 114629.86344176042,
+      "peak_price": 116655.79,
+      "trail_distance": 5402.4708219722115,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.27,
+      "pnl_pct": -1.74,
+      "capital_after": 1358.57,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 46,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 148,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-09-07",
+      "exit_date": "2025-09-09",
+      "entry_price": 111259.99,
+      "exit_price": 111816.28994999999,
+      "tp_price": 113831.12030949589,
+      "initial_sl": 109974.42484525207,
+      "peak_price": 113293.29,
+      "trail_distance": 3428.1737459945143,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.03,
+      "pnl_pct": 0.5,
+      "capital_after": 1360.6,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 28,
+        "context_score": 45,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 149,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-09-10",
+      "exit_date": "2025-09-15",
+      "entry_price": 113853.99,
+      "exit_price": 114423.25994999999,
+      "tp_price": 116850.24459703165,
+      "initial_sl": 112355.86270148418,
+      "peak_price": 116757.99,
+      "trail_distance": 3995.006129375527,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.04,
+      "pnl_pct": 0.5,
+      "capital_after": 1362.64,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 55,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 150,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-09-16",
+      "exit_date": "2025-09-18",
+      "entry_price": 115839.99,
+      "exit_price": 116419.18995,
+      "tp_price": 118153.67310726123,
+      "initial_sl": 114683.14844636939,
+      "peak_price": 117896,
+      "trail_distance": 3084.9108096816335,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.04,
+      "pnl_pct": 0.5,
+      "capital_after": 1364.68,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 75,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 151,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-09-18",
+      "exit_date": "2025-09-19",
+      "entry_price": 117086.01,
+      "exit_price": 115578.59934387375,
+      "tp_price": 120100.83131225249,
+      "initial_sl": 115578.59934387375,
+      "peak_price": 117086.01,
+      "trail_distance": 4019.76174966999,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.14,
+      "pnl_pct": -1.29,
+      "capital_after": 1354.54,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 65,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 152,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-09-29",
+      "exit_date": "2025-10-05",
+      "entry_price": 113815.57,
+      "exit_price": 122309.96427886913,
+      "tp_price": 116364.41179084816,
+      "initial_sl": 112541.14910457593,
+      "peak_price": 125708.42,
+      "trail_distance": 3398.4557211308734,
+      "trailing_activated": true,
+      "sl_moves_count": 11,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 49.14,
+      "pnl_pct": 7.46,
+      "capital_after": 1403.68,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 153,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-10-06",
+      "exit_date": "2025-10-07",
+      "entry_price": 124215,
+      "exit_price": 122475.13997504175,
+      "tp_price": 127694.7200499165,
+      "initial_sl": 122475.13997504175,
+      "peak_price": 124215,
+      "trail_distance": 4639.626733221997,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.22,
+      "pnl_pct": -1.4,
+      "capital_after": 1392.46,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 42,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 154,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-10-08",
+      "exit_date": "2025-10-09",
+      "entry_price": 123450.01,
+      "exit_price": 121358.59217038388,
+      "tp_price": 127632.8456592322,
+      "initial_sl": 121358.59217038388,
+      "peak_price": 123450.01,
+      "trail_distance": 5577.114212309617,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.18,
+      "pnl_pct": -1.69,
+      "capital_after": 1379.28,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 86,
+        "context_score": 75,
+        "trigger_score": 50
+      }
+    },
+    {
+      "id": 155,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-10-23",
+      "exit_date": "2025-10-29",
+      "entry_price": 110200.01,
+      "exit_price": 110751.01004999998,
+      "tp_price": 115062.9948201844,
+      "initial_sl": 107768.51758990779,
+      "peak_price": 116400,
+      "trail_distance": 6483.979760245872,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.07,
+      "pnl_pct": 0.5,
+      "capital_after": 1381.35,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 65,
+        "trigger_score": 85
+      }
+    },
+    {
+      "id": 156,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-12-22",
+      "exit_date": "2025-12-23",
+      "entry_price": 88774.13,
+      "exit_price": 87220.66893890264,
+      "tp_price": 91881.05212219471,
+      "initial_sl": 87220.66893890264,
+      "peak_price": 88774.13,
+      "trail_distance": 4142.562829592947,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -13.46,
+      "pnl_pct": -1.75,
+      "capital_after": 1367.89,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 45,
+        "context_score": 60,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 157,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-12-29",
+      "exit_date": "2025-12-29",
+      "entry_price": 90123.55,
+      "exit_price": 89005.69010591059,
+      "tp_price": 92359.26978817883,
+      "initial_sl": 89005.69010591059,
+      "peak_price": 90123.55,
+      "trail_distance": 2980.9597175717695,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -9.84,
+      "pnl_pct": -1.24,
+      "capital_after": 1358.05,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Breakout Alcista",
+        "direction_score": 75,
+        "context_score": 47,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 158,
+      "symbol": "BTCUSDT",
+      "entry_date": "2025-12-30",
+      "exit_date": "2025-12-31",
+      "entry_price": 89016.36,
+      "exit_price": 87753.48309658478,
+      "tp_price": 91542.11380683044,
+      "initial_sl": 87753.48309658478,
+      "peak_price": 89016.36,
+      "trail_distance": 3367.6717424405874,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.98,
+      "pnl_pct": -1.42,
+      "capital_after": 1347.07,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 159,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-02",
+      "exit_date": "2026-01-02",
+      "entry_price": 88839.05,
+      "exit_price": 89283.24524999999,
+      "tp_price": 90925.38365702156,
+      "initial_sl": 87795.88317148921,
+      "peak_price": 90961.81,
+      "trail_distance": 2781.778209362088,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.02,
+      "pnl_pct": 0.5,
+      "capital_after": 1349.08,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 75,
+        "context_score": 65,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 160,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-04",
+      "exit_date": "2026-01-05",
+      "entry_price": 91236.78,
+      "exit_price": 91692.96389999999,
+      "tp_price": 93590.80401280728,
+      "initial_sl": 90059.76799359637,
+      "peak_price": 93388,
+      "trail_distance": 3138.6986837430272,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.02,
+      "pnl_pct": 0.5,
+      "capital_after": 1351.1,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 161,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-05",
+      "exit_date": "2026-01-05",
+      "entry_price": 92878.22,
+      "exit_price": 93342.6111,
+      "tp_price": 95222.55836596733,
+      "initial_sl": 91706.05081701634,
+      "peak_price": 94500,
+      "trail_distance": 3125.7844879564327,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 2.02,
+      "pnl_pct": 0.5,
+      "capital_after": 1353.13,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 162,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-05",
+      "exit_date": "2026-01-06",
+      "entry_price": 94303.4,
+      "exit_price": 92994.75797603469,
+      "tp_price": 96920.68404793063,
+      "initial_sl": 92994.75797603469,
+      "peak_price": 94303.4,
+      "trail_distance": 3489.712063907504,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -10.73,
+      "pnl_pct": -1.39,
+      "capital_after": 1342.39,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 100,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 163,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-07",
+      "exit_date": "2026-01-07",
+      "entry_price": 93747.97,
+      "exit_price": 92185.10586383891,
+      "tp_price": 96873.69827232217,
+      "initial_sl": 92185.10586383891,
+      "peak_price": 93747.97,
+      "trail_distance": 4167.637696429566,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -12.52,
+      "pnl_pct": -1.67,
+      "capital_after": 1329.87,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 66,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 93,
+        "context_score": 60,
+        "trigger_score": 60
+      }
+    },
+    {
+      "id": 164,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-12",
+      "exit_date": "2026-01-12",
+      "entry_price": 91808.12,
+      "exit_price": 90654.01137384042,
+      "tp_price": 94116.33725231916,
+      "initial_sl": 90654.01137384042,
+      "peak_price": 91808.12,
+      "trail_distance": 3077.6230030922243,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -9.68,
+      "pnl_pct": -1.26,
+      "capital_after": 1320.19,
+      "entry_signal": {
+        "global_score": 72,
+        "probability_pct": 70,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 70,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 165,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-12",
+      "exit_date": "2026-01-16",
+      "entry_price": 91861.27,
+      "exit_price": 94329.81741145228,
+      "tp_price": 94557.27444141079,
+      "initial_sl": 90513.2677792946,
+      "peak_price": 97924.49,
+      "trail_distance": 3594.67258854772,
+      "trailing_activated": true,
+      "sl_moves_count": 6,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 16.4,
+      "pnl_pct": 2.69,
+      "capital_after": 1336.59,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 68,
+        "context_score": 85,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 166,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-01-28",
+      "exit_date": "2026-01-29",
+      "entry_price": 90079.99,
+      "exit_price": 88653.30470513972,
+      "tp_price": 92933.3605897206,
+      "initial_sl": 88653.30470513972,
+      "peak_price": 90079.99,
+      "trail_distance": 3804.4941196274563,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -11.91,
+      "pnl_pct": -1.58,
+      "capital_after": 1324.68,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    },
+    {
+      "id": 167,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-03-01",
+      "exit_date": "2026-03-01",
+      "entry_price": 67141.4,
+      "exit_price": 65133.56153773499,
+      "tp_price": 71157.07692453,
+      "initial_sl": 65133.56153773499,
+      "peak_price": 67141.4,
+      "trail_distance": 5354.235899373353,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -21.11,
+      "pnl_pct": -2.99,
+      "capital_after": 1303.57,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 68,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 38,
+        "context_score": 65,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 168,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-03-02",
+      "exit_date": "2026-03-02",
+      "entry_price": 66359.67,
+      "exit_price": 66691.46835,
+      "tp_price": 70312.06428140501,
+      "initial_sl": 64383.47285929749,
+      "peak_price": 69617.74,
+      "trail_distance": 5269.859041873354,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.95,
+      "pnl_pct": 0.5,
+      "capital_after": 1305.52,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 12,
+        "context_score": 75,
+        "trigger_score": 80
+      }
+    },
+    {
+      "id": 169,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-03-04",
+      "exit_date": "2026-03-05",
+      "entry_price": 73611.67,
+      "exit_price": 71092.82540332293,
+      "tp_price": 78649.35919335415,
+      "initial_sl": 71092.82540332293,
+      "peak_price": 73611.67,
+      "trail_distance": 6716.918924472187,
+      "trailing_activated": false,
+      "sl_moves_count": 1,
+      "result": "SL",
+      "pnl_usdt": -23.62,
+      "pnl_pct": -3.42,
+      "capital_after": 1281.9,
+      "entry_signal": {
+        "global_score": 66,
+        "probability_pct": 61,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 85,
+        "context_score": 40,
+        "trigger_score": 100
+      }
+    },
+    {
+      "id": 170,
+      "symbol": "BTCUSDT",
+      "entry_date": "2026-03-10",
+      "exit_date": "2026-03-13",
+      "entry_price": 70406.01,
+      "exit_price": 70758.04004999998,
+      "tp_price": 74109.40390759867,
+      "initial_sl": 68554.31304620067,
+      "peak_price": 73913.74,
+      "trail_distance": 4937.858543464886,
+      "trailing_activated": true,
+      "sl_moves_count": 2,
+      "result": "LET_RUN_SL",
+      "pnl_usdt": 1.92,
+      "pnl_pct": 0.5,
+      "capital_after": 1283.82,
+      "entry_signal": {
+        "global_score": 69,
+        "probability_pct": 63,
+        "strategy_name": "Trend Following Alcista",
+        "direction_score": 78,
+        "context_score": 45,
+        "trigger_score": 95
+      }
+    }
+  ]
+}

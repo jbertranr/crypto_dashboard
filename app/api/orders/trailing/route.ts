@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
-import { trailingGetAll } from "../../../lib/cache-store";
+import { trailingGetAll, trailingActiveGetAllIncludingDone } from "../../../lib/cache-store";
+import { ensureTrailingEngine } from "../../../lib/trailing-engine";
 
 export async function GET() {
-  return NextResponse.json(trailingGetAll());
+  ensureTrailingEngine();
+  return NextResponse.json({
+    suggestions: trailingGetAll(),
+    active: trailingActiveGetAllIncludingDone(),
+  });
 }

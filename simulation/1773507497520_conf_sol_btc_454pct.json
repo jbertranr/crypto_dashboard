@@ -1,0 +1,44 @@
+{
+  "name": "conf_sol_btc_454pct",
+  "savedAt": "2026-03-14T16:58:17.520Z",
+  "config": {
+    "symbols": [
+      "SOLUSDT",
+      "BTCUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 5,
+    "breakEvenAtr": 2
+  },
+  "pnlPct": 454.3644653313179,
+  "effectiveConfig": {
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "maxOpen": 20,
+    "minProbability": 60,
+    "useMarketFilter": false,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 5,
+    "breakEvenAtr": 2,
+    "commissionPct": 0.1,
+    "maxHoldingBars": 300,
+    "warmupBars": 250
+  }
+}
