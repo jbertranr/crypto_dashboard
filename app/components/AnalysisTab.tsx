@@ -260,10 +260,66 @@ function MultiTimeframeDashboard({ cache, pair }: {
         )}
       </div>
 
-      {/* ── Two-panel body ── */}
-      <div className="mtf-body">
+      {/* ── Market context cards (above layers) ── */}
+      {r4hResult && r1hResult && (() => {
+        const distOk   = r4hResult.distanceToResistance >= (r4hResult.suggestedTP - r4hResult.price) / r4hResult.price;
+        const volCls   = r1hResult.relativeVolume > 1.5 ? "bull" : r1hResult.relativeVolume < 0.7 ? "bear" : "neut";
+        const volLbl   = r1hResult.relativeVolume > 1.5 ? "Confirma" : r1hResult.relativeVolume < 0.7 ? "Baix" : "Normal";
+        const volClass = r4hResult.volatilityClass;
+        const volCatCls = volClass === "NORMAL" ? "bull" : volClass === "HIGH" ? "bear" : "neut";
+        const volCatLbl = volClass === "NORMAL" ? "Òptima" : volClass === "HIGH" ? "Risc alt" : "Comprimit";
+        const prec = r1hResult.price >= 100 ? 2 : 4;
+        return (
+          <div className="mtf-market-row">
+            <div className="section-title">
+              <i className="fa-solid fa-gauge-high" /> Mercat
+            </div>
+            <div className="analysis-group__cards">
+              <div className={`analysis-ind-card analysis-ind-card--${distOk ? "bull" : "bear"}`}>
+                <span className="analysis-ind-card__name">Dist. Resistència · 4h</span>
+                <span className="analysis-ind-card__value mono">{(r4hResult.distanceToResistance * 100).toFixed(2)}%</span>
+                <div className="analysis-ind-card__foot">
+                  <span className="analysis-ind-card__detail">{distOk ? "Marge OK" : "Poc marge"}</span>
+                  <span className={`sig-badge ${distOk ? "sig-badge--bull" : "sig-badge--bear"}`}>{distOk ? "Alcista" : "Bajista"}</span>
+                </div>
+              </div>
+              <div className={`analysis-ind-card analysis-ind-card--${volCls}`}>
+                <span className="analysis-ind-card__name">Vol. Relatiu · 1h</span>
+                <span className="analysis-ind-card__value mono">{r1hResult.relativeVolume.toFixed(2)}×</span>
+                <div className="analysis-ind-card__foot">
+                  <span className="analysis-ind-card__detail">{volLbl}</span>
+                  <span className={`sig-badge ${volCls === "bull" ? "sig-badge--bull" : volCls === "bear" ? "sig-badge--bear" : "sig-badge--neut"}`}>
+                    {volCls === "bull" ? "Alcista" : volCls === "bear" ? "Bajista" : "Neutre"}
+                  </span>
+                </div>
+              </div>
+              <div className={`analysis-ind-card analysis-ind-card--${volCatCls}`}>
+                <span className="analysis-ind-card__name">Volatilitat · 4h</span>
+                <span className="analysis-ind-card__value mono">{volClass}</span>
+                <div className="analysis-ind-card__foot">
+                  <span className="analysis-ind-card__detail">{volCatLbl}</span>
+                  <span className={`sig-badge ${volCatCls === "bull" ? "sig-badge--bull" : volCatCls === "bear" ? "sig-badge--bear" : "sig-badge--neut"}`}>
+                    {volCatCls === "bull" ? "Alcista" : volCatCls === "bear" ? "Bajista" : "Neutre"}
+                  </span>
+                </div>
+              </div>
+              {r1hResult.pivotLow && (
+                <div className="analysis-ind-card analysis-ind-card--bull">
+                  <span className="analysis-ind-card__name">Pivot Low · 1h</span>
+                  <span className="analysis-ind-card__value mono">{r1hResult.pivotLow.toFixed(prec)}</span>
+                  <div className="analysis-ind-card__foot">
+                    <span className="analysis-ind-card__detail">Suport identificat</span>
+                    <span className="sig-badge sig-badge--bull">Alcista</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
-        {/* COL 1: 3 layer cards stacked */}
+      {/* ── Three layers row ── */}
+      <div className="mtf-body">
         <div className="mtf-body__layers">
           {LAYERS.map(({ key, tf, role, icon, weight, layer }) => (
             <div key={key} className={`mtf-cell mtf-cell--${layer.status}`}>
@@ -296,98 +352,6 @@ function MultiTimeframeDashboard({ cache, pair }: {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* COL 2: market context */}
-        <div className="mtf-body__market">
-          {r4hResult && r1hResult && (
-            <div className="mtf-context">
-              <div className="mtf-context__heading">
-                <i className="fa-solid fa-gauge-high" /> Mercat
-              </div>
-              <div className="mtf-context__item"
-                  style={{ "--item-color": r4hResult.distanceToResistance >= (r4hResult.suggestedTP - r4hResult.price) / r4hResult.price ? "var(--green)" : "var(--red)" } as React.CSSProperties}>
-                  <div className="mtf-context__item-accent" />
-                  <div className="mtf-context__item-id">
-                    <span className="mtf-context__tf-tag">4h</span>
-                    <span className="mtf-context__label"><i className="fa-solid fa-arrows-up-to-line" /> Dist. resist.</span>
-                  </div>
-                  <div className="mtf-context__item-val">
-                    <span className={`mono mtf-context__value ${
-                      r4hResult.distanceToResistance < (r4hResult.suggestedTP - r4hResult.price) / r4hResult.price
-                        ? "mtf-context__value--warn" : "mtf-context__value--ok"
-                    }`}>
-                      {(r4hResult.distanceToResistance * 100).toFixed(2)}%
-                    </span>
-                    {r4hResult.distanceToResistance < (r4hResult.suggestedTP - r4hResult.price) / r4hResult.price
-                      ? <span className="mtf-context__signal mtf-context__signal--bad"><i className="fa-solid fa-xmark" /> Poc marge</span>
-                      : <span className="mtf-context__signal mtf-context__signal--good"><i className="fa-solid fa-check" /> Marge OK</span>
-                    }
-                  </div>
-                  <span className="mtf-context__desc">Espai lliure fins la propera resistència. Com més alt, més marge de pujada.</span>
-                </div>
-                <div className="mtf-context__item"
-                  style={{ "--item-color": r1hResult.relativeVolume > 1.5 ? "var(--green)" : r1hResult.relativeVolume < 0.7 ? "var(--red)" : "var(--text-3)" } as React.CSSProperties}>
-                  <div className="mtf-context__item-accent" />
-                  <div className="mtf-context__item-id">
-                    <span className="mtf-context__tf-tag">1h</span>
-                    <span className="mtf-context__label"><i className="fa-solid fa-chart-column" /> Vol. rel.</span>
-                  </div>
-                  <div className="mtf-context__item-val">
-                    <span className={`mono mtf-context__value ${
-                      r1hResult.relativeVolume > 1.5 ? "mtf-context__value--ok" :
-                      r1hResult.relativeVolume < 0.7 ? "mtf-context__value--warn" : ""
-                    }`}>
-                      {r1hResult.relativeVolume.toFixed(2)}×
-                    </span>
-                    {r1hResult.relativeVolume > 1.5
-                      ? <span className="mtf-context__signal mtf-context__signal--good"><i className="fa-solid fa-check" /> Confirma</span>
-                      : r1hResult.relativeVolume < 0.7
-                        ? <span className="mtf-context__signal mtf-context__signal--bad"><i className="fa-solid fa-xmark" /> Baix</span>
-                        : <span className="mtf-context__signal mtf-context__signal--neutral"><i className="fa-solid fa-minus" /> Normal</span>
-                    }
-                  </div>
-                  <span className="mtf-context__desc">Volum actual vs. mitjana de les últimes 20 espelmes. &gt;1.5× confirma moviment.</span>
-                </div>
-                <div className="mtf-context__item"
-                  style={{ "--item-color": r4hResult.volatilityClass === "NORMAL" ? "var(--green)" : r4hResult.volatilityClass === "HIGH" ? "var(--red)" : "var(--text-3)" } as React.CSSProperties}>
-                  <div className="mtf-context__item-accent" />
-                  <div className="mtf-context__item-id">
-                    <span className="mtf-context__tf-tag">4h</span>
-                    <span className="mtf-context__label"><i className="fa-solid fa-wind" /> Volatilitat</span>
-                  </div>
-                  <div className="mtf-context__item-val">
-                    <span className={`mono mtf-context__volatility mtf-context__volatility--${r4hResult.volatilityClass.toLowerCase()}`}>
-                      {r4hResult.volatilityClass}
-                    </span>
-                    {r4hResult.volatilityClass === "NORMAL"
-                      ? <span className="mtf-context__signal mtf-context__signal--good"><i className="fa-solid fa-check" /> Òptima</span>
-                      : r4hResult.volatilityClass === "HIGH"
-                        ? <span className="mtf-context__signal mtf-context__signal--bad"><i className="fa-solid fa-xmark" /> Risc alt</span>
-                        : <span className="mtf-context__signal mtf-context__signal--neutral"><i className="fa-solid fa-minus" /> Comprimit</span>
-                    }
-                  </div>
-                  <span className="mtf-context__desc">Amplitud de les espelmes (ATR). LOW = mercat comprimit, HIGH = risc elevat.</span>
-                </div>
-                {r1hResult.pivotLow && (
-                  <div className="mtf-context__item"
-                    style={{ "--item-color": "var(--green)" } as React.CSSProperties}>
-                    <div className="mtf-context__item-accent" />
-                    <div className="mtf-context__item-id">
-                      <span className="mtf-context__tf-tag">1h</span>
-                      <span className="mtf-context__label"><i className="fa-solid fa-circle-dot" /> Pivot Low</span>
-                    </div>
-                    <div className="mtf-context__item-val">
-                      <span className="mono mtf-context__value mtf-context__value--ok">
-                        {r1hResult.pivotLow.toFixed(r1hResult.price >= 100 ? 2 : 4)}
-                      </span>
-                      <span className="mtf-context__signal mtf-context__signal--good"><i className="fa-solid fa-check" /> Suport identificat</span>
-                    </div>
-                    <span className="mtf-context__desc">Mínim local recent. Nivell de suport immediat on es pot col·locar el SL.</span>
-                  </div>
-                )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -453,104 +417,70 @@ export default function AnalysisTab({ onOpenOrder }: {
 
   return (
     <div className="analysis-tab">
+
+      {/* ── Top: coin selector bar ── */}
+      <div className="analysis-topbar">
+        {PAIRS.map(p => {
+          const st = cache[`${p.pair}:${interval}`];
+          const isRes = st && st !== "loading" && st !== "error";
+          const r  = isRes ? (st as AnalysisResult) : null;
+          const sc = r?.score ?? null;
+          const v  = r?.verdict ?? null;
+          const scColor = v === "BUY" ? "var(--green)" : v === "AVOID" ? "var(--red)" : v === "WAIT" ? "#d97706" : "var(--text-3)";
+          return (
+            <button key={p.pair}
+              className={`analysis-coin-btn${pair === p.pair ? " analysis-coin-btn--active" : ""}`}
+              style={{ "--coin-color": p.color } as React.CSSProperties}
+              onClick={() => setPair(p.pair)}>
+              <CoinIcon symbol={p.symbol} size={14} />
+              <span className="analysis-coin-btn__sym">{p.symbol}</span>
+              {st === "loading"
+                ? <i className="fa-solid fa-spinner fa-spin analysis-coin-btn__spin" />
+                : sc != null
+                  ? <span className="analysis-coin-btn__score" style={{ color: scColor }}>{sc}</span>
+                  : null}
+            </button>
+          );
+        })}
+        <div className="analysis-topbar__right">
+          <div className="analysis-intervals">
+            {INTERVALS.map(i => (
+              <button key={i}
+                className={`analysis-interval-btn${interval === i ? " analysis-interval-btn--active" : ""}`}
+                onClick={() => setInterval(i)}>
+                {i}
+              </button>
+            ))}
+          </div>
+          <button className="analysis-refresh-btn"
+            onClick={async () => {
+              await fetch("/api/cache/invalidate?prefix=analysis%3A", { method: "DELETE" });
+              PAIRS.forEach(p => load(p.pair, interval));
+            }}
+            title="Refresca tots">
+            <i className="fa-solid fa-rotate-right" />
+          </button>
+        </div>
+      </div>
+
       <div className="analysis-body">
 
-        {/* ── Left: scanner column ── */}
-        <div className="analysis-scanner-col">
-          <div className="scanner-header">
-            <div className="analysis-intervals">
-              {INTERVALS.map(i => (
-                <button key={i}
-                  className={`analysis-interval-btn${interval === i ? " analysis-interval-btn--active" : ""}`}
-                  onClick={() => setInterval(i)}>
-                  {i}
-                </button>
-              ))}
-            </div>
-            <button className="analysis-refresh-btn"
-              onClick={async () => {
-                await fetch("/api/cache/invalidate?prefix=analysis%3A", { method: "DELETE" });
-                PAIRS.forEach(p => load(p.pair, interval));
-              }}
-              title="Refresca tots">
-              <i className="fa-solid fa-rotate-right" />
-            </button>
-          </div>
-
-          <div className="scanner-table">
-            <div className="scanner-table__header">
-              <div />
-              <span>Par</span>
-              <span style={{ textAlign: "right" }}>Preu</span>
-              <span style={{ textAlign: "right" }}>Score</span>
-            </div>
-
-            {PAIRS.map(p => {
-              const st = cache[`${p.pair}:${interval}`];
-              const isRes = st && st !== "loading" && st !== "error";
-              const r  = isRes ? (st as AnalysisResult) : null;
-              const sc = r?.score ?? null;
-              const v  = r?.verdict ?? null;
-              const dec = r?.tradeDecision ?? null;
-              const scColor = v === "BUY" ? "var(--green)" : v === "AVOID" ? "var(--red)" : v === "WAIT" ? "#d97706" : "var(--text-3)";
-              const decLabel = dec === "ENTRY SIGNAL" ? "ENTRY" : dec === "PREPARE ENTRY" ? "PREP" : dec === "WATCH" ? "WATCH" : dec === "IGNORE" ? "IGN" : null;
-              const decColor = dec === "ENTRY SIGNAL" ? "var(--green)" : dec === "PREPARE ENTRY" ? "#d97706" : dec === "WATCH" ? "#d97706" : "var(--text-3)";
-              const dir  = r?.layerScores?.direction ?? null;
-              const ctx  = r?.layerScores?.context   ?? null;
-              const trig = r?.layerScores?.trigger    ?? null;
-
-              return (
-                <button key={p.pair}
-                  className={`scanner-row${pair === p.pair ? " scanner-row--active" : ""}`}
-                  onClick={() => setPair(p.pair)}>
-                  <div className="scanner-row__accent" style={{ background: p.color }} />
-                  <div className="scanner-row__symbol">
-                    <div className="scanner-row__name">
-                      <CoinIcon symbol={p.symbol} size={13} />
-                      {p.symbol}
-                      {st === "loading" && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.55rem", color: "var(--text-3)" }} />}
-                    </div>
-                    <div className="scanner-row__sub">
-                      {decLabel && <span style={{ color: decColor, fontWeight: 700 }}>{decLabel}</span>}
-                      {dir != null && <span title="Dir">{dir}d</span>}
-                      {ctx != null && <span title="Ctx">{ctx}c</span>}
-                      {trig != null && <span title="Trig">{trig}t</span>}
-                    </div>
-                  </div>
-                  <span className="scanner-row__price">
-                    {r ? formatCurrency(r.price) : "—"}
-                  </span>
-                  <div className="scanner-row__score">
-                    {sc != null ? (
-                      <>
-                        <span className="scanner-row__score-val" style={{ color: scColor }}>{sc}</span>
-                        <div className="scanner-row__score-bar">
-                          <div className="scanner-row__score-fill"
-                            style={{ width: `${sc}%`, background: scColor }} />
-                        </div>
-                      </>
-                    ) : <span style={{ opacity: 0.3, fontSize: "0.65rem" }}>—</span>}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── Right: detail column ── */}
+        {/* ── Detail column (full width) ── */}
         <div className="analysis-detail-col">
-          <div className="analysis-detail-header">
-            <span className="analysis-detail-header__label">Vista</span>
-            <button
-              className={`analysis-view-btn${cardView === "full" ? " analysis-view-btn--active" : ""}`}
-              onClick={() => setCardView("full")}>
-              <i className="fa-solid fa-chart-area" /> Completa
-            </button>
-            <button
-              className={`analysis-view-btn${cardView === "simple" ? " analysis-view-btn--active" : ""}`}
-              onClick={() => setCardView("simple")}>
-              <i className="fa-solid fa-table-list" /> Simple
-            </button>
+          <div className="section-title">
+            <i className="fa-solid fa-chart-area" /> Detall
+            <span className="section-title__right">
+              <button
+                className={`analysis-view-btn${cardView === "full" ? " analysis-view-btn--active" : ""}`}
+                onClick={() => setCardView("full")}>
+                <i className="fa-solid fa-chart-area" /> Completa
+              </button>
+              <button
+                className={`analysis-view-btn${cardView === "simple" ? " analysis-view-btn--active" : ""}`}
+                onClick={() => setCardView("simple")}>
+                <i className="fa-solid fa-table-list" /> Simple
+              </button>
+            </span>
           </div>
 
           <div className="analysis-panel">
@@ -569,6 +499,7 @@ export default function AnalysisTab({ onOpenOrder }: {
             )}
           </div>
         </div>
+
 
       </div>
     </div>
@@ -1035,12 +966,13 @@ function StrategyCard({ s, price, atr, coinColor, candles, onOpenOrder }: {
   );
 }
 
-function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false }: {
+function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false, hideStrategies = false }: {
   result: AnalysisResult;
   onOpenOrder: (r: AnalysisResult) => void;
   cache: Record<string, TfState>;
   pair:  string;
   simplified?: boolean;
+  hideStrategies?: boolean;
 }) {
   const p = PAIRS.find(x => x.pair === result.symbol);
   const symbol    = p?.symbol ?? result.symbol.replace("USDT", "");
@@ -1073,6 +1005,9 @@ function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false }: 
     <div className="analysis-view">
 
       {/* ── 3 stat cards ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-gauge-high" /> {symbol} · {result.interval}
+      </div>
       <div className="portfolio__cards">
 
         <div className="portfolio__card portfolio__card--blue">
@@ -1183,7 +1118,7 @@ function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false }: 
 
         return (
           <div className="analysis-section analysis-section--flush">
-            <div className="portfolio__section-title">
+            <div className="section-title">
               <i className="fa-solid fa-chart-line" /> Gràfic {symbol} · {result.interval}
               <span className="analysis-section__tf">{result.candles.length} espelmes</span>
             </div>
@@ -1286,18 +1221,64 @@ function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false }: 
 
       {/* ── MTF Dashboard ── */}
       <div className="analysis-section analysis-section--flush">
-        <div className="portfolio__section-title">
+        <div className="section-title">
           <i className="fa-solid fa-chart-bar" /> Dashboard Multi-Timeframe
           <span className="analysis-section__tf">5m · 1h · 4h</span>
         </div>
         <MultiTimeframeDashboard cache={cache} pair={pair} />
       </div>
 
-      {/* ── Strategies ── */}
-      <div className="analysis-section">
-        <div className="portfolio__section-title">
+      {/* ── Indicators (collapsible) ── */}
+      <div className="analysis-section analysis-section--flush analysis-section--indicators">
+        <div
+          className="section-title"
+          onClick={() => setShowIndicators(v => !v)}
+        >
+          <i className="fa-solid fa-sliders" /> Indicadors tècnics
+          <span className="section-title__right">
+            <span className="analysis-section__toggle-btn">
+              <i className={`fa-solid fa-chevron-${showIndicators ? "up" : "down"}`} />
+              {showIndicators ? "Amaga" : "Mostra"}
+            </span>
+          </span>
+        </div>
+        {showIndicators && (
+          <div className="analysis-groups">
+            {result.groups.map(g => (
+              <div key={g.name} className="analysis-group">
+                <div className="section-title analysis-group__title">
+                  <i className="fa-solid fa-layer-group" /> {g.name}
+                </div>
+                <div className="analysis-group__cards">
+                  {g.indicators.map(ind => {
+                    const sigCls = ind.signal === "bullish" ? "analysis-ind-card--bull"
+                                 : ind.signal === "bearish" ? "analysis-ind-card--bear"
+                                 : "analysis-ind-card--neut";
+                    return (
+                      <div key={ind.name} className={`analysis-ind-card ${sigCls}`}>
+                        <span className="analysis-ind-card__name">{ind.name}</span>
+                        <span className="analysis-ind-card__value mono">{ind.value}</span>
+                        <div className="analysis-ind-card__foot">
+                          {ind.detail && <span className="analysis-ind-card__detail">{ind.detail}</span>}
+                          <SignalBadge signal={ind.signal} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Strategies (after indicators) ── */}
+      <div className="analysis-section analysis-section--flush analysis-section--strategies">
+        <div className="section-title">
           <i className="fa-solid fa-brain" /> Estratègies proposades
-          <span className="analysis-section__count">{result.strategies.length}</span>
+          <span className="section-title__right">
+            <span className="analysis-section__count">{result.strategies.length} total</span>
+          </span>
         </div>
         {result.strategies.length === 0 ? (
           <div className="state-empty">No hi ha estratègies clares en aquest moment.</div>
@@ -1312,42 +1293,6 @@ function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false }: 
                 }}
               />
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Indicators (collapsible) ── */}
-      <div className="analysis-section analysis-section--indicators">
-        <button
-          className="analysis-section__toggle-row"
-          onClick={() => setShowIndicators(v => !v)}
-        >
-          <span className="portfolio__section-title" style={{ marginBottom: 0, flex: 1 }}>
-            <i className="fa-solid fa-sliders" /> Indicadors tècnics
-          </span>
-          <span className="analysis-section__toggle-btn">
-            <i className={`fa-solid fa-chevron-${showIndicators ? "up" : "down"}`} />
-            {showIndicators ? "Amaga" : "Mostra"}
-          </span>
-        </button>
-        {showIndicators && (
-          <div className="analysis-groups">
-            {result.groups.map(g => {
-              const gCls = g.score > 0.3 ? "analysis-group--bull" : g.score < -0.3 ? "analysis-group--bear" : "";
-              return (
-                <div key={g.name} className={`analysis-group ${gCls}`}>
-                  <div className="analysis-group__title">{g.name}</div>
-                  {g.indicators.map(ind => (
-                    <div key={ind.name} className="analysis-indicator">
-                      <span className="analysis-indicator__name">{ind.name}</span>
-                      <span className="analysis-indicator__value mono">{ind.value}</span>
-                      <SignalBadge signal={ind.signal} />
-                      {ind.detail && <span className="analysis-indicator__detail dim">{ind.detail}</span>}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
           </div>
         )}
       </div>

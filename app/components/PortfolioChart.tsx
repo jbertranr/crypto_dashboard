@@ -145,11 +145,9 @@ export default function PortfolioChart({ refreshTick, period, setPeriod, onStats
   if (allData.length < 2) {
     return (
       <div className="pchart">
-        <div className="pchart__header">
-          <span className="pchart__title">
-            <i className="fa-solid fa-chart-line" /> Evolució del portfolio
-          </span>
-          {periodBtns}
+        <div className="section-title pchart__header">
+          <i className="fa-solid fa-chart-line" /> Evolució del portfolio
+          <span className="section-title__right">{periodBtns}</span>
         </div>
         <div className="pchart__empty">
           <i className="fa-solid fa-hourglass-half" />
@@ -174,33 +172,14 @@ export default function PortfolioChart({ refreshTick, period, setPeriod, onStats
 
   return (
     <div className="pchart">
-      <div className="pchart__header">
-        <span className="pchart__title">
-          <i className="fa-solid fa-chart-line" /> Evolució del portfolio
-        </span>
-        {periodBtns}
-        <div className="pchart__stats">
-          <span className="pchart__current mono">{formatCurrency(last)}</span>
-          <span className={`pchart__change pchart__change--${up ? "up" : "down"}`}>
-            {up ? "+" : ""}{formatCurrency(diff)}
-            <span className="pchart__change-pct">
-              ({up ? "+" : ""}{pct.toFixed(2)}%)
-            </span>
-          </span>
-          {showBtc && btcRaw.length >= 2 && (
-            <span className={`pchart__btc-stat pchart__change--${btcPct >= 0 ? "up" : "down"}`}>
-              ₿ {btcPct >= 0 ? "+" : ""}{btcPct.toFixed(2)}%
-            </span>
-          )}
-          <span className="pchart__snapshots dim">
-            {displayData.length} snapshots
-          </span>
-        </div>
+      <div className="section-title pchart__header">
+        <i className="fa-solid fa-chart-line" /> Evolució del portfolio
+        <span className="section-title__right">{periodBtns}</span>
       </div>
 
       <div className="pchart__canvas">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={mergedData} margin={{ top: 4, right: 16, bottom: 0, left: 0 }}>
+          <ComposedChart data={mergedData} margin={{ top: 4, right: 20, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="pchart-grad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%"  stopColor={color} stopOpacity={0.18} />

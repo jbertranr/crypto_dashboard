@@ -1822,17 +1822,26 @@ function HistoryTable({ orders, loading, error }: {
 }
 
 /* ── Balance cards ── */
-function BalanceTable({ balances, loading, error, coins }: {
+function BalanceTable({ balances, loading, error, coins, openOrders }: {
   balances: BinanceBalance[]; loading: boolean; error: string | null; coins: CoinRow[];
+  openOrders: BinanceOrder[];
 }) {
-  if (loading) return <div className="state-empty">Loading…</div>;
+  if (loading) return <div className="state-empty">Carregant…</div>;
   if (error)   return <div className="state-error">{error}</div>;
-  if (!balances.length) return <div className="state-empty">No assets with balance.</div>;
+  if (!balances.length) return <div className="state-empty">Cap asset amb saldo.</div>;
 
   const priceMap = new Map<string, number>();
   for (const c of coins) priceMap.set(c.symbol, c.price);
   priceMap.set("USDT", 1);
   priceMap.set("BUSD", 1);
+
+  const ordersPerAsset = new Map<string, number>();
+  for (const o of openOrders) {
+    const asset = o.symbol.endsWith("USDT") ? o.symbol.slice(0, -4)
+                : o.symbol.endsWith("BUSD") ? o.symbol.slice(0, -4)
+                : o.symbol;
+    ordersPerAsset.set(asset, (ordersPerAsset.get(asset) ?? 0) + 1);
+  }
 
   const enriched = balances.map(b => {
     const free   = parseFloat(b.free);
@@ -1842,7 +1851,6 @@ function BalanceTable({ balances, loading, error, coins }: {
     const usdVal = total * price;
     return { ...b, free, locked, total, price, usdVal };
   }).sort((a, b_) => {
-    // USDT/stablecoins first, then by USD value
     const aStable = a.asset === "USDT" || a.asset === "BUSD";
     const bStable = b_.asset === "USDT" || b_.asset === "BUSD";
     if (aStable && !bStable) return -1;
@@ -1850,55 +1858,166 @@ function BalanceTable({ balances, loading, error, coins }: {
     return b_.usdVal - a.usdVal;
   });
 
-  const totalUsd = enriched.reduce((s, b) => s + b.usdVal, 0);
+  const totalUsd    = enriched.reduce((s, b) => s + b.usdVal, 0);
+  const totalFree   = enriched.reduce((s, b) => s + b.free * b.price, 0);
+  const totalLocked = enriched.reduce((s, b) => s + b.locked * b.price, 0);
+  const nonStable   = enriched.filter(b => b.asset !== "USDT" && b.asset !== "BUSD");
+  const biggest     = nonStable.length > 0 ? nonStable[0] : null;
+  const assetCount  = nonStable.length;
 
   return (
-    <div className="bal-wrap">
-      {totalUsd > 0 && (
-        <div className="bal-total-bar">
-          <span className="bal-total-bar__label">Valor total</span>
-          <span className="bal-total-bar__val mono">{formatCurrency(totalUsd)}</span>
+    <div className="bal-tab">
+      <div className="section-title">
+        <i className="fa-solid fa-coins" /> Balanç
+      </div>
+
+      {/* ── 5 indicadors ── */}
+      <div className="portfolio__cards bal-cards-row">
+        <div className="portfolio__card portfolio__card--blue">
+          <span className="portfolio__card-label"><i className="fa-solid fa-wallet" /> Total</span>
+          <span className="portfolio__card-value">{formatCurrency(totalUsd)}</span>
+          <span className="portfolio__card-sub">{enriched.length} assets</span>
         </div>
-      )}
-      <div className="bal-cards">
-        {enriched.map(b => {
-          const dp = b.total < 1 ? 6 : b.total < 100 ? 4 : 2;
-          const pct = totalUsd > 0 ? (b.usdVal / totalUsd) * 100 : 0;
-          return (
-            <div key={b.asset} className="bal-card">
-              <div className="bal-card__header">
-                <CoinIcon symbol={b.asset} size={22} />
-                <div className="bal-card__name">
-                  <span className="bal-card__symbol">{b.asset}</span>
-                  {pct > 0 && <span className="bal-card__pct dim">{pct.toFixed(1)}%</span>}
-                </div>
-                {b.usdVal > 0 && (
-                  <span className="bal-card__usd mono">{formatCurrency(b.usdVal)}</span>
-                )}
-              </div>
-              <div className="bal-card__amount mono">
-                {b.total.toFixed(dp)}
-                <span className="dim"> {b.asset}</span>
-              </div>
-              {b.locked > 0 && (
-                <div className="bal-card__locked">
-                  <span className="dim">Lliure: {b.free.toFixed(dp)}</span>
-                  <span className="bal-card__locked-val">
-                    <i className="fa-solid fa-lock" /> {b.locked.toFixed(dp)}
+        <div className="portfolio__card portfolio__card--green">
+          <span className="portfolio__card-label"><i className="fa-solid fa-lock-open" /> Lliure</span>
+          <span className="portfolio__card-value">{formatCurrency(totalFree)}</span>
+          <span className="portfolio__card-sub">{totalUsd > 0 ? ((totalFree / totalUsd) * 100).toFixed(1) : "0"}% del total</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${totalLocked > 0 ? "neutral" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-lock" /> Blocat</span>
+          <span className="portfolio__card-value" style={{ color: totalLocked > 0 ? "var(--yellow)" : "var(--text-3)" }}>
+            {formatCurrency(totalLocked)}
+          </span>
+          <span className="portfolio__card-sub">{totalUsd > 0 ? ((totalLocked / totalUsd) * 100).toFixed(1) : "0"}% del total</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-layer-group" /> Cryptos</span>
+          <span className="portfolio__card-value" style={{ color: "var(--text-1)", fontSize: "1.6rem" }}>{assetCount}</span>
+          <span className="portfolio__card-sub">actius no-stable</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-trophy" /> Major posició</span>
+          {biggest ? (
+            <>
+              <span className="portfolio__card-value" style={{ fontSize: "1rem" }}>{biggest.asset}</span>
+              <span className="portfolio__card-sub">{formatCurrency(biggest.usdVal)} · {totalUsd > 0 ? ((biggest.usdVal / totalUsd) * 100).toFixed(1) : "0"}%</span>
+            </>
+          ) : (
+            <span className="portfolio__card-value" style={{ color: "var(--text-3)" }}>—</span>
+          )}
+        </div>
+      </div>
+
+      <div className="bal-body">
+
+        {/* ── Taula ── */}
+        <div className="bal-table-col">
+          <div className="bal-header">
+            <div />
+            <span>Asset</span>
+            <span>Total</span>
+            <span>Lliure</span>
+            <span>Bloq.</span>
+            <span>Ord.</span>
+            <span>Preu</span>
+          </div>
+          <div className="bal-list">
+            {enriched.map(b => {
+              const isStable = b.asset === "USDT" || b.asset === "BUSD";
+              const dp  = b.total < 1 ? 6 : b.total < 100 ? 4 : 2;
+              const pct = totalUsd > 0 ? (b.usdVal / totalUsd) * 100 : 0;
+              const freeUsd   = b.free   * b.price;
+              const lockedUsd = b.locked * b.price;
+              const ordCount  = ordersPerAsset.get(b.asset) ?? 0;
+              return (
+                <div key={b.asset} className="bal-row">
+                  <div className="bal-row__accent"
+                    style={{ background: isStable ? "var(--blue)" : "var(--accent)" }} />
+                  <div className="bal-row__identity">
+                    <CoinIcon symbol={b.asset} size={26} />
+                    <div>
+                      <span className="bal-row__symbol">{b.asset}</span>
+                      {pct > 0 && <span className="bal-row__pct">{pct.toFixed(1)}%</span>}
+                    </div>
+                  </div>
+                  {/* Total */}
+                  <div className="bal-row__cell">
+                    {b.usdVal > 0 && <span className="bal-row__cell-main">{formatCurrency(b.usdVal)}</span>}
+                    <span className="mono bal-row__cell-sub">{b.total.toFixed(dp)}</span>
+                  </div>
+                  {/* Lliure */}
+                  <div className="bal-row__cell bal-row__cell--free">
+                    {freeUsd > 0 && <span className="bal-row__cell-main">{formatCurrency(freeUsd)}</span>}
+                    <span className="mono bal-row__cell-sub">{b.free.toFixed(dp)}</span>
+                  </div>
+                  {/* Blocat */}
+                  <div className={`bal-row__cell${b.locked > 0 ? " bal-row__cell--locked" : " bal-row__cell--zero"}`}>
+                    {b.locked > 0 ? (
+                      <>
+                        {lockedUsd > 0 && <span className="bal-row__cell-main">{formatCurrency(lockedUsd)}</span>}
+                        <span className="mono bal-row__cell-sub">
+                          <i className="fa-solid fa-lock" style={{ fontSize: "0.5rem" }} /> {b.locked.toFixed(dp)}
+                        </span>
+                      </>
+                    ) : <span className="bal-row__cell-main" style={{ color: "var(--text-3)" }}>—</span>}
+                  </div>
+                  {/* Ordres obertes */}
+                  <div className="bal-row__orders">
+                    {ordCount > 0
+                      ? <span className="bal-row__orders-badge">{ordCount}</span>
+                      : <span className="bal-row__orders--none">—</span>}
+                  </div>
+                  {/* Preu */}
+                  <span className="mono bal-row__price">
+                    {b.price > 0 && !isStable ? formatCurrency(b.price) : "—"}
                   </span>
                 </div>
-              )}
-              {b.price > 0 && b.asset !== "USDT" && b.asset !== "BUSD" && (
-                <div className="bal-card__price dim mono">{formatCurrency(b.price)} / {b.asset}</div>
-              )}
-              {pct > 0 && (
-                <div className="bal-card__bar">
-                  <div className="bal-card__bar-fill" style={{ width: `${Math.min(pct, 100)}%` }} />
-                </div>
-              )}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Gràfic de barres ── */}
+        <div className="bal-chart-col">
+          <div className="section-title">
+            <i className="fa-solid fa-chart-bar" /> Distribució
+          </div>
+          <div className="bal-bars">
+            {(() => {
+              const visible  = enriched.filter(b => b.usdVal > 0);
+              const maxUsd   = Math.max(...visible.map(b => b.usdVal));
+              return visible.map(b => {
+                const pct       = totalUsd > 0 ? (b.usdVal / totalUsd) * 100 : 0;
+                const barWidth  = maxUsd  > 0 ? (b.usdVal / maxUsd)   * 100 : 0;
+                const freePct   = b.total > 0 ? (b.free   / b.total)  * 100 : 100;
+                const lockedPct = b.total > 0 ? (b.locked / b.total)  * 100 : 0;
+                return (
+                  <div key={b.asset} className="bal-bar">
+                    <div className="bal-bar__label">
+                      <CoinIcon symbol={b.asset} size={11} />
+                      <span className="bal-bar__sym">{b.asset}</span>
+                      <span className="bal-bar__pct">{pct.toFixed(1)}%</span>
+                      <span className="bal-bar__usd">{formatCurrency(b.usdVal)}</span>
+                    </div>
+                    <div className="bal-bar__track">
+                      <div className="bal-bar__fill" style={{
+                        width: `${barWidth}%`,
+                        background: lockedPct > 0
+                          ? `linear-gradient(to right, var(--green) ${freePct}%, var(--yellow) ${freePct}%)`
+                          : `var(--green)`,
+                      }} />
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+            <div className="bal-bar__legend">
+              <span className="bal-bar__legend-item bal-bar__legend-item--free">Lliure</span>
+              <span className="bal-bar__legend-item bal-bar__legend-item--locked">Blocat</span>
             </div>
-          );
-        })}
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -2103,7 +2222,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
       {tab === "portfolio" && <ErrorBoundary label="Portfolio"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} /></ErrorBoundary>}
       {tab === "open"      && <ErrorBoundary label="Open Orders"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
       {tab === "history"   && <ErrorBoundary label="History"><HistoryTable   orders={history}    loading={loadingH} error={errorH} /></ErrorBoundary>}
-      {tab === "balance"   && <ErrorBoundary label="Balance"><BalanceTable   balances={balances} loading={loadingB} error={errorB} coins={coins} /></ErrorBoundary>}
+      {tab === "balance"   && <ErrorBoundary label="Balance"><BalanceTable   balances={balances} loading={loadingB} error={errorB} coins={coins} openOrders={openOrders} /></ErrorBoundary>}
       {tab === "analysis"  && <ErrorBoundary label="Anàlisi"><AnalysisTab onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
       {tab === "matrix"    && <ErrorBoundary label="Escàner"><StrategyMatrix coins={coins} onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
       {tab === "errors"    && <ErrorsPanel />}

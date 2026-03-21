@@ -435,7 +435,7 @@ function TopOpportunities({
 
   return (
     <div className="sm-top">
-      <div className="portfolio__section-title sm-top__title">
+      <div className="section-title sm-top__title">
         <i className="fa-solid fa-star" /> Top oportunitats
         {!loading && !hasData && (
           <button className="sm-scan-btn" onClick={onScan}>
@@ -789,33 +789,8 @@ export default function StrategyMatrix({ coins, onOpenOrder }: {
       <div className="strat-matrix__body">
         <div className="strat-matrix__left">
 
-          {/* Legend */}
-          <div className="strat-matrix__bar">
-            <div className="strat-matrix__legend">
-              {STRAT_META.map((m, i) => (
-                <span key={i} className="sm-legend-item">
-                  <span className="sm-legend-dot" style={{ background: m.color }} />
-                  <span className="sm-legend-short">{m.short}</span>
-                  <span className="sm-legend-label">{m.label}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Colour key */}
-          <div className="strat-matrix__key">
-            <span className="sm-key-item"><span className="sm-key-dot" style={{ background: "#16a34a" }} />Alta confiança</span>
-            <span className="sm-key-item"><span className="sm-key-dot" style={{ background: "#16a34a99" }} />Moderada</span>
-            <span className="sm-key-item"><span className="sm-key-dot" style={{ background: "#16a34a4d" }} />Baixa</span>
-            <span className="sm-key-item"><span className="sm-key-dot" style={{ background: "var(--border)" }} />Inactiva</span>
-            <span className="sm-key-sep" />
-            <span className="sm-key-item sm-key-item--buy">■ BUY</span>
-            <span className="sm-key-item sm-key-item--wait">■ WAIT</span>
-            <span className="sm-key-item sm-key-item--avoid">■ EVIT</span>
-          </div>
-
           {/* Grouped matrix */}
-          <div className="portfolio__section-title strat-matrix__section-title">
+          <div className="section-title strat-matrix__section-title">
             <i className="fa-solid fa-table-list" /> Matriu d'estratègies
             <span className="strat-matrix__bar-right">
               {loading
@@ -980,11 +955,11 @@ function StrategyGuide() {
 
   return (
     <div className="sm-guide">
-      <div className="sm-guide__header">
+      <div className="section-title">
         <i className="fa-solid fa-book-open" /> Guia d'estratègies
       </div>
 
-      <div className="sm-guide__section-title">Estratègies</div>
+      <div className="section-title"><i className="fa-solid fa-diagram-project" /> Estratègies</div>
       {STRATEGY_GUIDE.map(s => {
         const isOpen = expanded === s.short;
         return (
@@ -1023,7 +998,7 @@ function StrategyGuide() {
         );
       })}
 
-      <div className="sm-guide__section-title" style={{ marginTop: "1.25rem" }}>Nivells de confiança</div>
+      <div className="section-title"><i className="fa-solid fa-circle-half-stroke" /> Nivells de confiança</div>
       {CONFIDENCE_GUIDE.map(c => (
         <div key={c.level} className="sm-guide-row">
           <span className="sm-key-dot" style={{ background: c.dot, flexShrink: 0 }} />
@@ -1032,7 +1007,7 @@ function StrategyGuide() {
         </div>
       ))}
 
-      <div className="sm-guide__section-title" style={{ marginTop: "1.25rem" }}>Veredictes</div>
+      <div className="section-title"><i className="fa-solid fa-gavel" /> Veredictes</div>
       {VERDICT_GUIDE.map(v => (
         <div key={v.verdict} className="sm-guide-row">
           <i className={`fa-solid ${v.icon} sm-guide-row__icon`} style={{ color: v.color }} />

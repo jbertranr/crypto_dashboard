@@ -5,21 +5,33 @@ import { Tab } from "./OrdersPanel";
 import { useServerEvents } from "../hooks/useServerEvents";
 import type { AppError } from "../lib/error-store";
 
-const VIEWS: { key: Tab; label: string; icon: string }[] = [
-  { key: "portfolio", label: "Portfolio",    icon: "fa-wallet"                },
-  { key: "open",      label: "Open Orders",  icon: "fa-list-check"            },
-  { key: "history",   label: "History",      icon: "fa-clock-rotate-left"     },
-  { key: "balance",   label: "Balance",      icon: "fa-coins"                 },
+type NavItem = { key: Tab; label: string; icon: string };
+
+const CARTERA: NavItem[] = [
+  { key: "portfolio", label: "Portfolio", icon: "fa-wallet"            },
+  { key: "balance",   label: "Balance",   icon: "fa-coins"             },
+];
+const ORDRES: NavItem[] = [
+  { key: "open",    label: "Ordres obertes", icon: "fa-list-check"       },
+  { key: "history", label: "Historial",      icon: "fa-clock-rotate-left"},
+];
+const ANALISI: NavItem[] = [
+  { key: "analysis", label: "Anàlisi",  icon: "fa-magnifying-glass-chart" },
+  { key: "matrix",   label: "Escàner",  icon: "fa-table-cells"            },
+  { key: "journal",  label: "Diari",    icon: "fa-book-open"              },
+];
+const AUTOMATITZACIO: NavItem[] = [
+  { key: "simulation", label: "Simulació",    icon: "fa-flask-vial"          },
+  { key: "equalizer",  label: "Equalitzador", icon: "fa-sliders"             },
+  { key: "autolab",    label: "AutoLab",      icon: "fa-wand-magic-sparkles" },
+  { key: "bot",        label: "Bot",          icon: "fa-robot"               },
 ];
 
-const ANALYSIS: { key: Tab; label: string; icon: string }[] = [
-  { key: "analysis",    label: "Anàlisi",      icon: "fa-magnifying-glass-chart" },
-  { key: "matrix",      label: "Escàner",       icon: "fa-table-cells"           },
-  { key: "journal",     label: "Diari",         icon: "fa-book-open"             },
-  { key: "simulation",  label: "Simulació",     icon: "fa-flask-vial"            },
-  { key: "bot",         label: "Bot",           icon: "fa-robot"                 },
-  { key: "equalizer",   label: "Equalitzador",  icon: "fa-sliders"               },
-  { key: "autolab",     label: "AutoLab",       icon: "fa-wand-magic-sparkles"   },
+const GROUPS: { label: string; tabs: NavItem[] }[] = [
+  { label: "Cartera",        tabs: CARTERA        },
+  { label: "Ordres",         tabs: ORDRES         },
+  { label: "Anàlisi",        tabs: ANALISI        },
+  { label: "Automatització", tabs: AUTOMATITZACIO },
 ];
 
 export default function Nav({ tab, onTab, openOrdersCount }: {
@@ -71,29 +83,23 @@ export default function Nav({ tab, onTab, openOrdersCount }: {
         <i className="fa-solid fa-bars" />
       </button>
 
-      {!c && <span className="nav__section-label">Vistes</span>}
-      {VIEWS.map(({ key, label, icon }) => (
-        <button key={key} onClick={() => onTab(key)} title={c ? label : undefined}
-          className={`nav__item${tab === key ? " nav__item--active" : ""}`}>
-          <i className={`fa-solid ${icon} nav__item-icon`} />
-          {!c && label}
-          {!c && key === "open" && (openOrdersCount ?? 0) > 0 && (
-            <span className="nav__badge">{openOrdersCount}</span>
-          )}
-          {c && key === "open" && (openOrdersCount ?? 0) > 0 && (
-            <span className="nav__badge nav__badge--dot" />
-          )}
-        </button>
-      ))}
-
-      {!c && <span className="nav__section-label">Anàlisi</span>}
-      {c && <div className="nav__section-divider" />}
-      {ANALYSIS.map(({ key, label, icon }) => (
-        <button key={key} onClick={() => onTab(key)} title={c ? label : undefined}
-          className={`nav__item${tab === key ? " nav__item--active" : ""}`}>
-          <i className={`fa-solid ${icon} nav__item-icon`} />
-          {!c && label}
-        </button>
+      {GROUPS.map(({ label, tabs }, gi) => (
+        <div key={label}>
+          {gi > 0 && c && <div className="nav__section-divider" />}
+          {!c && <span className="nav__section-label">{label}</span>}
+          {tabs.map(({ key, label: lbl, icon }) => (
+            <button key={key} onClick={() => onTab(key)} title={c ? lbl : undefined}
+              className={`nav__item${tab === key ? " nav__item--active" : ""}`}>
+              <i className={`fa-solid ${icon} nav__item-icon`} />
+              {!c && lbl}
+              {key === "open" && (openOrdersCount ?? 0) > 0 && (
+                <span className={`nav__badge${c ? " nav__badge--dot" : ""}`}>
+                  {c ? "" : openOrdersCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       ))}
 
       <div className="nav__spacer" />

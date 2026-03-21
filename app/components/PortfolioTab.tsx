@@ -162,12 +162,8 @@ function PnlSummaryPanel({ unrealizedRows }: {
 
   return (
     <div className="pf-pnl-summary">
-      <div className="pf-pnl-title">
-        <span className="pf-pnl-title__label">Evolució</span>
-      </div>
-
       {/* Portfolio evolution from snapshots */}
-      <div className="pf-pnl-section-header">
+      <div className="section-title">
         <i className="fa-solid fa-chart-line" /> Valor del portfolio
       </div>
       {loadingSnap && <div className="pf-pnl-row pf-pnl-row--empty"><i className="fa-solid fa-spinner fa-spin" /></div>}
@@ -180,9 +176,9 @@ function PnlSummaryPanel({ unrealizedRows }: {
       )}
 
       {/* Si tanques ara */}
-      <div className="pf-pnl-section-header">
+      <div className="section-title">
         <i className="fa-solid fa-door-open" /> Si tanques ara
-        <span className={`pf-pnl-section-header__total pf-pnl-row__val--${totalUnrealized >= 0 ? "up" : "dn"}`}>
+        <span className={`section-title__right pf-pnl-row__val--${totalUnrealized >= 0 ? "up" : "dn"}`}>
           {fmtPnl(totalUnrealized)}
         </span>
       </div>
@@ -390,6 +386,9 @@ export default function PortfolioTab({
     <div className="portfolio">
 
       {/* Summary cards */}
+      <div className="section-title">
+        <i className="fa-solid fa-gauge-high" /> Resum del portfolio
+      </div>
       <div className="portfolio__cards">
         <div className="portfolio__card portfolio__card--blue">
           <span className="portfolio__card-label">
@@ -419,6 +418,44 @@ export default function PortfolioTab({
           );
         })()}
 
+        {/* Millor actiu 24h */}
+        {(() => {
+          const best = pnlRanking[0] ?? null;
+          const up   = best ? best.pnl24h >= 0 : true;
+          return (
+            <div className={`portfolio__card portfolio__card--${best ? (up ? "green" : "red") : "neutral"}`}>
+              <span className="portfolio__card-label">
+                <i className="fa-solid fa-trophy" /> Millor 24h
+              </span>
+              <span className="portfolio__card-value">
+                {best ? best.asset : "—"}
+              </span>
+              <span className={`portfolio__card-sub${best ? ` portfolio__card-sub--${up ? "up" : "down"}` : ""}`}>
+                {best ? `${up ? "+" : ""}${formatCurrency(best.pnl24h)} (${(best.change24h ?? 0) >= 0 ? "+" : ""}${(best.change24h ?? 0).toFixed(2)}%)` : "—"}
+              </span>
+            </div>
+          );
+        })()}
+
+        {/* Pitjor actiu 24h */}
+        {(() => {
+          const worst = pnlRanking.length > 1 ? pnlRanking[pnlRanking.length - 1] : null;
+          const up    = worst ? worst.pnl24h >= 0 : false;
+          return (
+            <div className={`portfolio__card portfolio__card--${worst ? (up ? "green" : "red") : "neutral"}`}>
+              <span className="portfolio__card-label">
+                <i className="fa-solid fa-arrow-down-wide-short" /> Pitjor 24h
+              </span>
+              <span className="portfolio__card-value">
+                {worst ? worst.asset : "—"}
+              </span>
+              <span className={`portfolio__card-sub${worst ? ` portfolio__card-sub--${up ? "up" : "down"}` : ""}`}>
+                {worst ? `${up ? "+" : ""}${formatCurrency(worst.pnl24h)} (${(worst.change24h ?? 0) >= 0 ? "+" : ""}${(worst.change24h ?? 0).toFixed(2)}%)` : "—"}
+              </span>
+            </div>
+          );
+        })()}
+
         <div className="portfolio__card portfolio__card--neutral">
           <span className="portfolio__card-label">
             <i className="fa-solid fa-list-check" /> Ordres obertes
@@ -429,18 +466,19 @@ export default function PortfolioTab({
           </span>
         </div>
 
-        {unrealizedRows.length > 0 && (() => {
+        {(() => {
+          const hasData = unrealizedRows.length > 0;
           const up = totalUnrealizedPnl >= 0;
           return (
-            <div className={`portfolio__card portfolio__card--${up ? "green" : "red"}`}>
+            <div className={`portfolio__card portfolio__card--${hasData ? (up ? "green" : "red") : "neutral"}`}>
               <span className="portfolio__card-label">
                 <i className="fa-solid fa-door-open" /> Si tanques ara
               </span>
               <span className="portfolio__card-value">
-                {up ? "+" : ""}{formatCurrency(totalUnrealizedPnl)}
+                {hasData ? `${up ? "+" : ""}${formatCurrency(totalUnrealizedPnl)}` : "—"}
               </span>
-              <span className={`portfolio__card-sub portfolio__card-sub--${up ? "up" : "down"}`}>
-                vs cost basis · {unrealizedRows.length} actius
+              <span className={`portfolio__card-sub${hasData ? ` portfolio__card-sub--${up ? "up" : "down"}` : ""}`}>
+                {hasData ? `vs cost basis · ${unrealizedRows.length} actius` : "sense cost basis"}
               </span>
             </div>
           );
@@ -454,7 +492,7 @@ export default function PortfolioTab({
 
           {/* Donut chart */}
           <div className="portfolio__donut-section">
-            <div className="portfolio__section-title">Portfolio distribució</div>
+            <div className="section-title"><i className="fa-solid fa-chart-pie" /> Portfolio distribució</div>
             <div className="portfolio__donut-row">
               <div className="portfolio__donut-chart-wrap">
                 <PieChart width={160} height={160}>
@@ -512,24 +550,6 @@ export default function PortfolioTab({
           <button onClick={() => setSellResult(null)}><i className="fa-solid fa-xmark" /></button>
         </div>
       )}
-
-      {/* Sort controls */}
-      <div className="portfolio__sort-bar">
-        <span className="portfolio__sort-label">Ordenar per</span>
-        {([
-          { key: "value",  label: "Valor",   icon: "fa-dollar-sign"    },
-          { key: "pnl",    label: "P&L 24h", icon: "fa-arrow-trend-up" },
-          { key: "change", label: "% 24h",   icon: "fa-percent"        },
-          { key: "name",   label: "Nom",     icon: "fa-arrow-down-a-z" },
-        ] as { key: typeof sortBy; label: string; icon: string }[]).map(opt => (
-          <button key={opt.key}
-            className={`portfolio__sort-btn${sortBy === opt.key ? " portfolio__sort-btn--active" : ""}`}
-            onClick={() => setSortBy(opt.key)}>
-            <i className={`fa-solid ${opt.icon}`} />
-            {opt.label}
-          </button>
-        ))}
-      </div>
 
       {/* Asset list */}
       {(() => {
@@ -814,10 +834,10 @@ export default function PortfolioTab({
         );
 
         const StableHeader = () => (
-          <div className="pf-header pf-header--stable">
-            <div />
-            <span>Stablecoin</span>
-            <span className="r">Valor</span>
+          <div className="section-title pf-header--stable">
+            <i className="fa-solid fa-circle-dollar-to-slot" />
+            Stablecoin
+            <span className="section-title__right">Valor</span>
           </div>
         );
 
@@ -870,7 +890,7 @@ export default function PortfolioTab({
             {/* Gràfic de distribució crypto / stables */}
             {nonStableRows.length > 0 && stableRows.length > 0 && splitTotal > 0 && (
               <div className="pf-split-col">
-                <span className="pf-split-col__title">Distribució</span>
+                <div className="section-title pf-split-col__title"><i className="fa-solid fa-chart-pie" /> Distribució</div>
                 <PieChart width={100} height={100}>
                   <Pie data={splitData} cx={50} cy={50}
                     innerRadius={30} outerRadius={46}
@@ -907,7 +927,7 @@ export default function PortfolioTab({
       {/* Dust section — assets < $1 */}
       {dustRows.length > 0 && (
         <div className="portfolio__dust">
-          <div className="portfolio__dust-header">
+          <div className="section-title">
             <i className="fa-solid fa-coins" />
             Dust · {dustRows.length} assets amb valor &lt; ${DUST_THRESHOLD}
           </div>

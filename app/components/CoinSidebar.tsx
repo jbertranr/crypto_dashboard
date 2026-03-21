@@ -33,9 +33,10 @@ export default function CoinSidebar({ coins }: { coins: CoinRow[] }) {
       <div className={`market-panel${collapsed ? " market-panel--collapsed" : ""}`}
         onClick={collapsed ? () => setCollapsed(false) : undefined}
         style={collapsed ? { cursor: "pointer" } : undefined}>
-        <div className="market-panel__head">
-          {!collapsed && <span className="market-panel__title">Markets</span>}
-          {!collapsed && <span className="market-panel__badge">{coins.length} pairs</span>}
+        <div className={collapsed ? "market-panel__head" : "section-title market-panel__head"}>
+          {!collapsed && <i className="fa-solid fa-chart-mixed" />}
+          {!collapsed && <span>Markets</span>}
+          {!collapsed && <span className="market-panel__badge section-title__right">{coins.length} pairs</span>}
           <button className="market-panel__toggle" onClick={e => { e.stopPropagation(); setCollapsed(v => !v); }} title={collapsed ? "Mostrar markets" : "Amagar markets"}>
             <i className="fa-solid fa-bars" />
           </button>
