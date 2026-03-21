@@ -1,0 +1,32 @@
+{
+  "name": "conf_sol_pump_154pct [EQ 2026-03-21]",
+  "savedAt": "2026-03-21T09:48:22.640Z",
+  "config": {
+    "maxHoldingBars": 225.2,
+    "pumpVolMin": 2.5,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 3000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 95,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 1.5,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4.09,
+    "breakEvenAtr": 2.29,
+    "entryMode": "PUMP"
+  },
+  "pnlPct": 61.636984997713775
+}

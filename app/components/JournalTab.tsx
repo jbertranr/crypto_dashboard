@@ -486,7 +486,10 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
   return (
     <div className="journal-tab">
 
-      {/* ── Stat cards ─────────────────────────────────────────────────────── */}
+      {/* ── 5 KPIs ─────────────────────────────────────────────────────── */}
+      <div className="section-title">
+        <i className="fa-solid fa-book-open" /> Diari d'operacions
+      </div>
       <div className="portfolio__cards">
 
         <div className={`portfolio__card portfolio__card--${pnlUp ? "green" : "red"}`}>
@@ -497,7 +500,7 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
             {stats ? fmtPnl(stats.totalPnlUsdt) : "—"}
           </span>
           <span className={`portfolio__card-sub portfolio__card-sub--${pnlUp ? "up" : "down"}`}>
-            {stats ? `${stats.wins}G · ${stats.losses}P · ${stats.totalEntries} ops.` : "—"}
+            {stats ? `${stats.wins}G · ${stats.losses}P` : "—"}
           </span>
         </div>
 
@@ -521,9 +524,29 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
             {stats ? `-${stats.totalCommission.toFixed(4)}` : "—"}
           </span>
           <span className="portfolio__card-sub">
-            {stats
-              ? `Millor: ${fmtPnl(stats.biggestWin)} · Pitjor: ${fmtPnl(stats.biggestLoss)}`
-              : "—"}
+            {stats ? `Millor: ${fmtPnl(stats.biggestWin)}` : "—"}
+          </span>
+        </div>
+
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label">
+            <i className="fa-solid fa-list-ol" /> Entrades totals
+          </span>
+          <span className="portfolio__card-value portfolio__card-value--count">
+            {stats ? stats.totalEntries : "—"}
+          </span>
+          <span className="portfolio__card-sub">operacions registrades</span>
+        </div>
+
+        <div className={`portfolio__card portfolio__card--${stats && stats.biggestWin > 0 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label">
+            <i className="fa-solid fa-trophy" /> Millor operació
+          </span>
+          <span className="portfolio__card-value mono">
+            {stats ? fmtPnl(stats.biggestWin) : "—"}
+          </span>
+          <span className="portfolio__card-sub">
+            {stats ? `Pitjor: ${fmtPnl(stats.biggestLoss)}` : "—"}
           </span>
         </div>
 

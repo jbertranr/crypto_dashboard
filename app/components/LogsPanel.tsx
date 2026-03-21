@@ -89,8 +89,46 @@ export default function LogsPanel() {
     },
   });
 
+  const errorEntries = entries.filter(e => e.level >= 50);
+  const warnEntries  = entries.filter(e => e.level >= 40 && e.level < 50);
+  const uniqueMods   = new Set(entries.map(e => e.module).filter(Boolean)).size;
+
   return (
     <div className="logs-panel">
+
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-terminal" /> Logs del servidor
+      </div>
+      <div className="portfolio__cards">
+        <div className="portfolio__card portfolio__card--blue">
+          <span className="portfolio__card-label"><i className="fa-solid fa-list" /> Entrades</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{entries.length}</span>
+          <span className="portfolio__card-sub">logs en memòria (màx 300)</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${errorEntries.length > 0 ? "red" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-circle-exclamation" /> Errors</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{errorEntries.length}</span>
+          <span className="portfolio__card-sub">nivell ERROR / FATAL</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${warnEntries.length > 0 ? "neutral" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-triangle-exclamation" /> Avisos</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{warnEntries.length}</span>
+          <span className="portfolio__card-sub">nivell WARN</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-cubes" /> Mòduls</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{uniqueMods}</span>
+          <span className="portfolio__card-sub">fonts actives</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-clock" /> Últim event</span>
+          <span className="portfolio__card-value" style={{ fontSize: "0.9rem" }}>
+            {entries.length > 0 ? fmtTime(entries[0].ts) : "—"}
+          </span>
+          <span className="portfolio__card-sub">{live ? "mode live actiu" : "mode estàtic"}</span>
+        </div>
+      </div>
 
       {/* Toolbar */}
       <div className="logs-toolbar">

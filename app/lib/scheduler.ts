@@ -12,7 +12,19 @@ import { sendPortfolioReport, sendHourlyPortfolioReport, isConfigured } from "./
 import { log }                        from "./logger";
 import { STABLES, BINANCE_BASE }      from "./constants";
 declare global {
-  var __schedulerStarted: boolean | undefined;
+  var __schedulerStarted:      boolean | undefined;
+  var __schedulerLastSnapshot: number  | undefined;
+  var __schedulerLastHourly:   number  | undefined;
+  var __schedulerLastDaily:    number  | undefined;
+}
+
+export function getSchedulerStatus() {
+  return {
+    started:      !!global.__schedulerStarted,
+    lastSnapshot: global.__schedulerLastSnapshot ?? null,
+    lastHourly:   global.__schedulerLastHourly   ?? null,
+    lastDaily:    global.__schedulerLastDaily     ?? null,
+  };
 }
 
 function msUntilNextHour(): number {
@@ -129,6 +141,7 @@ async function sendHourlyReport(): Promise<void> {
       top:         portfolio.top,
       stables:     portfolio.stables,
     });
+    global.__schedulerLastHourly = Date.now();
     log.telegram.info("informe horari enviat");
   } catch (err) {
     log.telegram.error({ err: (err as Error).message }, "error informe horari");
@@ -158,6 +171,7 @@ async function sendDailyReport(): Promise<void> {
       stables:     portfolio.stables,
     });
 
+    global.__schedulerLastDaily = Date.now();
     log.telegram.info("informe diari enviat");
   } catch (err) {
     log.telegram.error({ err: (err as Error).message }, "error informe diari");
@@ -198,6 +212,7 @@ async function takePortfolioSnapshot(): Promise<void> {
       addSnapshot({ time: Date.now(), value: total });
       log.telegram.debug({ total }, "snapshot del portfolio desat");
     }
+    global.__schedulerLastSnapshot = Date.now();
   } catch (err) {
     log.telegram.warn({ err: (err as Error).message }, "error en prendre snapshot");
   }

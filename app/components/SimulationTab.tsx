@@ -219,6 +219,193 @@ function LayerBar({ label, value }: { label: string; value: number }) {
   );
 }
 
+// ── Capital Allocation Chart (invested vs total per day at midnight) ───────────
+function interpolateCurve(curve: EquityPoint[], t: number): number {
+  if (t <= curve[0].time) return curve[0].value;
+  if (t >= curve[curve.length - 1].time) return curve[curve.length - 1].value;
+  const i = curve.findIndex(p => p.time >= t);
+  if (i <= 0) return curve[0].value;
+  const a = curve[i - 1], b = curve[i];
+  return a.value + ((t - a.time) / (b.time - a.time)) * (b.value - a.value);
+}
+
+const CAP_PALETTE = [
+  "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#3b82f6",
+  "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#84cc16",
+  "#06b6d4", "#a16207", "#be185d", "#15803d", "#b45309",
+];
+
+function CapitalChart({
+  trades, equityCurve, btcCurve, initialCapital,
+}: {
+  trades: SimTrade[]; equityCurve: EquityPoint[]; btcCurve: EquityPoint[]; initialCapital: number;
+}) {
+  if (equityCurve.length < 2) return null;
+
+  const minT = equityCurve[0].time;
+  const maxT = equityCurve[equityCurve.length - 1].time;
+
+  // Midnight (00:00 UTC) timestamps for every day
+  const midnights: number[] = [];
+  let cur = new Date(minT);
+  cur.setUTCHours(0, 0, 0, 0);
+  while (cur.getTime() <= maxT) {
+    midnights.push(cur.getTime());
+    cur = new Date(cur.getTime() + 86_400_000);
+  }
+  if (midnights.length < 2) return null;
+
+  // Symbols sorted by total capital (descending)
+  const symbols = Array.from(new Set(trades.map(t => t.symbol)));
+  symbols.sort((a, b) =>
+    trades.filter(t => t.symbol === b).reduce((s, t) => s + t.tradeCapital, 0) -
+    trades.filter(t => t.symbol === a).reduce((s, t) => s + t.tradeCapital, 0)
+  );
+
+  // Per-symbol, per-midnight invested capital
+  const symLayers = symbols.map((sym, idx) => ({
+    sym,
+    color: CAP_PALETTE[idx % CAP_PALETTE.length],
+    vals: midnights.map(t =>
+      trades
+        .filter(tr => tr.symbol === sym && tr.entryTime <= t && tr.exitTime > t)
+        .reduce((s, tr) => s + tr.tradeCapital, 0)
+    ),
+  }));
+
+  // Cumulative stacks[i][j] = sum of symbols[0..i] at midnight[j]
+  const stacks = symLayers.map((_, i) =>
+    midnights.map((_, j) => symLayers.slice(0, i + 1).reduce((s, l) => s + l.vals[j], 0))
+  );
+
+  const totalPts = midnights.map((t, j) => ({
+    time: t,
+    total: interpolateCurve(equityCurve, t),
+    invested: stacks[stacks.length - 1]?.[j] ?? 0,
+  }));
+
+  const W = 800, H = 220;
+  const pad = { t: 14, r: 125, b: 28, l: 68 };
+  const pw = W - pad.l - pad.r;
+  const ph = H - pad.t - pad.b;
+  const tRange = maxT - minT || 1;
+
+  const allV = [
+    ...totalPts.map(p => p.total),
+    ...totalPts.map(p => p.invested),
+    ...(btcCurve.length > 1 ? btcCurve.map(p => p.value) : []),
+    0, initialCapital,
+  ];
+  const minV = Math.min(...allV) * 0.97;
+  const maxV = Math.max(...allV) * 1.03;
+  const vRange = maxV - minV || 1;
+
+  const xs = (t: number) => pad.l + ((t - minT) / tRange) * pw;
+  const ys = (v: number) => pad.t + ph - ((v - minV) / vRange) * ph;
+  const fmtV = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0);
+
+  // Stacked area polygon: top of layer i, bottom = layer i-1 (or 0)
+  function stackedAreaD(topRow: number[], botRow: number[]): string {
+    const fwd = midnights.map((t, j) => `${xs(t).toFixed(1)},${ys(topRow[j]).toFixed(1)}`);
+    const bwd = [...midnights].reverse().map((t, j) => {
+      const origJ = midnights.length - 1 - j;
+      return `${xs(t).toFixed(1)},${ys(botRow[origJ]).toFixed(1)}`;
+    });
+    return `M ${fwd[0]} L ${[...fwd.slice(1), ...bwd].join(" L ")} Z`;
+  }
+
+  const zeroes = midnights.map(() => 0);
+
+  // Date labels (1st of each month)
+  const dateTicks = midnights
+    .filter(t => new Date(t).getUTCDate() === 1)
+    .map(t => {
+      const d = new Date(t);
+      return { time: t, label: `${d.getUTCMonth() + 1}/${d.getUTCFullYear().toString().slice(2)}` };
+    });
+
+  // BTC normalised to initialCapital scale
+  const btcValid = btcCurve.length > 1;
+  const btcPolyPts = btcValid
+    ? btcCurve.map(p => `${xs(p.time).toFixed(1)},${ys(p.value).toFixed(1)}`).join(" ")
+    : "";
+  const lastBtc  = btcValid ? btcCurve[btcCurve.length - 1].value : initialCapital;
+  const btcPctFmt = ((lastBtc - initialCapital) / initialCapital * 100).toFixed(1);
+
+  const yTicks = Array.from(new Set([minV, initialCapital, maxV]));
+  const lastTot = totalPts[totalPts.length - 1].total;
+  const lastInv = totalPts[totalPts.length - 1].invested;
+  const totPolyPts = totalPts.map(p => `${xs(p.time).toFixed(1)},${ys(p.total).toFixed(1)}`).join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="sim-chart" preserveAspectRatio="xMidYMid meet">
+      {/* Grid */}
+      {yTicks.map((v, i) => (
+        <g key={i}>
+          <line x1={pad.l} y1={ys(v).toFixed(1)} x2={W - pad.r} y2={ys(v).toFixed(1)}
+            stroke="var(--border)" strokeWidth="1" opacity="0.4" />
+          <text x={pad.l - 4} y={Number(ys(v).toFixed(1)) + 4}
+            textAnchor="end" fontSize="9" fill="var(--text-3)">${fmtV(v)}</text>
+        </g>
+      ))}
+
+      {/* X-axis date labels */}
+      {dateTicks.map(dt => (
+        <text key={dt.time} x={xs(dt.time).toFixed(1)} y={H - 4}
+          textAnchor="middle" fontSize="8" fill="var(--text-3)">{dt.label}</text>
+      ))}
+
+      {/* Initial capital baseline */}
+      <line x1={pad.l} y1={ys(initialCapital).toFixed(1)} x2={W - pad.r} y2={ys(initialCapital).toFixed(1)}
+        stroke="var(--text-3)" strokeWidth="1" strokeDasharray="5,4" opacity="0.35" />
+
+      {/* Stacked areas per symbol */}
+      {symLayers.map((layer, i) => (
+        <path key={layer.sym}
+          d={stackedAreaD(stacks[i], i === 0 ? zeroes : stacks[i - 1])}
+          fill={layer.color} opacity="0.65" />
+      ))}
+
+      {/* BTC reference line */}
+      {btcValid && (
+        <polyline points={btcPolyPts} fill="none"
+          stroke="#F7931A" strokeWidth="1.5" strokeDasharray="6,3"
+          strokeLinejoin="round" opacity="0.9" />
+      )}
+
+      {/* Total equity line (on top) */}
+      <polyline points={totPolyPts} fill="none"
+        stroke="var(--green)" strokeWidth="2.5" strokeLinejoin="round" />
+      <circle cx={xs(totalPts[totalPts.length - 1].time)} cy={ys(lastTot)} r="3.5" fill="var(--green)" />
+
+      {/* Legend */}
+      <g transform={`translate(${W - pad.r + 8}, ${pad.t})`}>
+        {/* Total line */}
+        <line x1="0" y1="5" x2="14" y2="5" stroke="var(--green)" strokeWidth="2.5" />
+        <text x="17" y="9" fontSize="8" fill="var(--green)">Total ${fmtV(lastTot)}</text>
+        <text x="17" y="19" fontSize="7.5" fill="var(--text-3)">Invertit ${fmtV(lastInv)} · Lliure ${fmtV(lastTot - lastInv)}</text>
+        {btcValid && (
+          <g transform="translate(0, 24)">
+            <line x1="0" y1="5" x2="14" y2="5" stroke="#F7931A" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.9" />
+            <text x="17" y="9" fontSize="8" fill="#F7931A">BTC ref. {Number(btcPctFmt) >= 0 ? "+" : ""}{btcPctFmt}%</text>
+          </g>
+        )}
+        {/* Per-symbol swatches */}
+        {symLayers.slice(0, 12).map((layer, i) => {
+          const label = layer.sym.replace(/USDT$|BUSD$|USDC$|FDUSD$/, "");
+          const lastVal = layer.vals[layer.vals.length - 1];
+          return (
+            <g key={layer.sym} transform={`translate(0, ${(btcValid ? 42 : 28) + i * 14})`}>
+              <rect x="0" y="0" width="10" height="8" rx="2" fill={layer.color} opacity="0.8" />
+              <text x="13" y="8" fontSize="8" fill="var(--text-2)">{label} ${fmtV(lastVal)}</text>
+            </g>
+          );
+        })}
+      </g>
+    </svg>
+  );
+}
+
 // ── Equity Chart SVG ───────────────────────────────────────────────────────────
 const BTC_COLOR = "#F7931A";
 
@@ -1115,8 +1302,45 @@ export default function SimulationTab() {
   const stats = result?.stats;
   const pnlUp = (stats?.totalPnl ?? 0) >= 0;
 
+  const simStats = result?.stats ?? null;
+  const simPnlUp = (simStats?.totalPnlPct ?? 0) >= 0;
+
   return (
     <>
+    {/* ── 5 KPIs ── */}
+    <div className="section-title">
+      <i className="fa-solid fa-flask-vial" /> Simulació
+    </div>
+    <div className="portfolio__cards">
+      <div className="portfolio__card portfolio__card--blue">
+        <span className="portfolio__card-label"><i className="fa-solid fa-coins" /> Símbols</span>
+        <span className="portfolio__card-value portfolio__card-value--count">{config.symbols.length}</span>
+        <span className="portfolio__card-sub">{config.symbols.map(tickerLabel).join(" · ")}</span>
+      </div>
+      <div className="portfolio__card portfolio__card--neutral">
+        <span className="portfolio__card-label"><i className="fa-solid fa-clock" /> Interval</span>
+        <span className="portfolio__card-value" style={{ fontSize: "1.4rem" }}>{config.interval}</span>
+        <span className="portfolio__card-sub">{config.from} → {config.to}</span>
+      </div>
+      <div className="portfolio__card portfolio__card--neutral">
+        <span className="portfolio__card-label"><i className="fa-solid fa-sack-dollar" /> Capital inicial</span>
+        <span className="portfolio__card-value mono">${config.initialCapital.toLocaleString()}</span>
+        <span className="portfolio__card-sub">{savedConfigs.length} configs desades</span>
+      </div>
+      <div className={`portfolio__card portfolio__card--${loading ? "blue" : simStats ? (simPnlUp ? "green" : "red") : "neutral"}`}>
+        <span className="portfolio__card-label"><i className="fa-solid fa-gauge-high" /> P&amp;L</span>
+        <span className="portfolio__card-value mono">
+          {loading ? "…" : simStats ? `${simPnlUp ? "+" : ""}${simStats.totalPnlPct.toFixed(1)}%` : "—"}
+        </span>
+        <span className="portfolio__card-sub">{loading ? "simulant…" : simStats ? `${simStats.totalTrades} operacions` : "sense resultats"}</span>
+      </div>
+      <div className={`portfolio__card portfolio__card--${simStats ? (simStats.winRate >= 50 ? "green" : "red") : "neutral"}`}>
+        <span className="portfolio__card-label"><i className="fa-solid fa-percent" /> Win Rate</span>
+        <span className="portfolio__card-value">{simStats ? `${simStats.winRate.toFixed(1)}%` : "—"}</span>
+        <span className="portfolio__card-sub">{simStats ? `PF ${simStats.profitFactor.toFixed(2)}` : "executeu la simulació"}</span>
+      </div>
+    </div>
+
     {saveModalOpen && (
       <div className="sim-modal-overlay" onClick={() => setSaveModalOpen(false)}>
         <div className="sim-modal" onClick={e => e.stopPropagation()}>
@@ -1161,12 +1385,12 @@ export default function SimulationTab() {
             Reprodueix el comportament real: parells simultanis, capital compartit, lògica OCO → Trailing SL idèntica a producció.
           </span>
           <div className="sim-box-header__actions">
-            <button className="btn-primary sim-run-btn" onClick={runSimulation} disabled={loading}>
+            <button className="btn-primary" onClick={runSimulation} disabled={loading}>
               {loading
                 ? <><i className="fa-solid fa-spinner fa-spin" /> Simulant&hellip;</>
                 : <><i className="fa-solid fa-play" /> Executar simulació</>}
             </button>
-            <button className="btn-secondary sim-save-btn" onClick={openSaveModal} disabled={savingConfig}>
+            <button className="btn-secondary btn-sm" onClick={openSaveModal} disabled={savingConfig}>
               <i className="fa-solid fa-floppy-disk" /> Desar configuració
             </button>
             {loading && (
@@ -1359,25 +1583,25 @@ export default function SimulationTab() {
           <div className="sim-section-body">
             <div className="sim-exit-mode-row" style={{ marginBottom: "0.5rem" }}>
               <button
-                className={`sim-exit-mode-btn${config.capitalMode === "RISK_PCT" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.capitalMode === "RISK_PCT" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => set("capitalMode", "RISK_PCT")}
               >
                 <i className="fa-solid fa-percent" /> Risc fix %
               </button>
               <button
-                className={`sim-exit-mode-btn${config.capitalMode === "FIXED" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.capitalMode === "FIXED" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => set("capitalMode", "FIXED")}
               >
                 <i className="fa-solid fa-dollar-sign" /> USDT fix
               </button>
               <button
-                className={`sim-exit-mode-btn${config.capitalMode === "PCT" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.capitalMode === "PCT" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => set("capitalMode", "PCT")}
               >
                 <i className="fa-solid fa-chart-pie" /> % capital
               </button>
               <button
-                className={`sim-exit-mode-btn${config.capitalMode === "ANTI_MARTINGALE" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.capitalMode === "ANTI_MARTINGALE" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => set("capitalMode", "ANTI_MARTINGALE")}
               >
                 <i className="fa-solid fa-chart-pyramid" /> Anti-Martingala
@@ -1446,15 +1670,15 @@ export default function SimulationTab() {
           </div>
           <div className="sim-exit-mode-row">
             <button onClick={() => set("entryMode", "ANALYSIS")}
-              className={`sim-exit-mode-btn${config.entryMode === "ANALYSIS" ? " sim-exit-mode-btn--on" : ""}`}>
+              className={`btn btn-sm ${config.entryMode === "ANALYSIS" ? "btn-primary" : "btn-secondary"}`}>
               <i className="fa-solid fa-chart-line" /> Anàlisi tècnica
             </button>
             <button onClick={() => set("entryMode", "PUMP")}
-              className={`sim-exit-mode-btn${config.entryMode === "PUMP" ? " sim-exit-mode-btn--on" : ""}`}>
+              className={`btn btn-sm ${config.entryMode === "PUMP" ? "btn-primary" : "btn-secondary"}`}>
               🚀 Pump / Volum
             </button>
             <button onClick={() => set("entryMode", "CANDLES")}
-              className={`sim-exit-mode-btn${config.entryMode === "CANDLES" ? " sim-exit-mode-btn--on" : ""}`}>
+              className={`btn btn-sm ${config.entryMode === "CANDLES" ? "btn-primary" : "btn-secondary"}`}>
               🕯️ Candlesticks
             </button>
           </div>
@@ -1485,7 +1709,7 @@ export default function SimulationTab() {
                   const active = ((config as unknown as Record<string, string[]>).candlePatterns ?? []).includes(name);
                   return (
                     <button key={name}
-                      className={`sim-candle-pat-btn${active ? " sim-candle-pat-btn--on" : ""}`}
+                      className={`btn btn-xs ${active ? "btn-primary" : "btn-ghost"}`}
                       onClick={() => {
                         const cur: string[] = (config as unknown as Record<string, string[]>).candlePatterns ?? [];
                         const next = active ? cur.filter(n => n !== name) : [...cur, name];
@@ -1506,7 +1730,7 @@ export default function SimulationTab() {
           <div className="sim-section-body">
             <div className="sim-exit-mode-row" style={{ marginBottom: "0.5rem" }}>
               <button
-                className={`sim-exit-mode-btn${config.exitMode === "LET_RUN" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.exitMode === "LET_RUN" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => {
                   const def = ATR_DEFAULTS[config.interval] ?? ATR_DEFAULTS["1h"];
                   setConfig(prev => ({ ...prev, exitMode: "LET_RUN", trailDistanceAtr: def.letRunTrailDist, breakEvenAtr: def.breakEven, maxHoldingBars: 300 }));
@@ -1515,7 +1739,7 @@ export default function SimulationTab() {
                 <i className="fa-solid fa-rocket" /> Let it Run ★
               </button>
               <button
-                className={`sim-exit-mode-btn${config.exitMode === "BREAK_EVEN" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.exitMode === "BREAK_EVEN" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => {
                   const def = ATR_DEFAULTS[config.interval] ?? ATR_DEFAULTS["1h"];
                   setConfig(prev => ({ ...prev, exitMode: "BREAK_EVEN", trailDistanceAtr: def.trailDist, breakEvenAtr: def.breakEven, maxHoldingBars: 20 }));
@@ -1524,7 +1748,7 @@ export default function SimulationTab() {
                 <i className="fa-solid fa-shield-halved" /> Break-Even
               </button>
               <button
-                className={`sim-exit-mode-btn${config.exitMode === "TRAILING" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.exitMode === "TRAILING" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => {
                   const def = ATR_DEFAULTS[config.interval] ?? ATR_DEFAULTS["1h"];
                   setConfig(prev => ({ ...prev, exitMode: "TRAILING", trailDistanceAtr: def.trailDist, maxHoldingBars: 20 }));
@@ -1533,7 +1757,7 @@ export default function SimulationTab() {
                 <i className="fa-solid fa-route" /> Trailing SL
               </button>
               <button
-                className={`sim-exit-mode-btn${config.exitMode === "MOON" ? " sim-exit-mode-btn--on" : ""}`}
+                className={`btn btn-sm ${config.exitMode === "MOON" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => setConfig(prev => ({ ...prev, exitMode: "MOON", maxHoldingBars: 500 }))}
               >
                 🌙 Moon
@@ -1685,7 +1909,7 @@ export default function SimulationTab() {
             <div className="portfolio__section-title" style={{ margin: 0 }}>
               <i className="fa-solid fa-chart-mixed" /> Resultats de la simulació
             </div>
-            <button className="sim-export-btn" onClick={exportSimulation}>
+            <button className="btn-ghost btn-sm" onClick={exportSimulation}>
               <i className="fa-solid fa-file-export" /> Exportar per a IA
             </button>
             {exportMsg && (
@@ -1695,7 +1919,10 @@ export default function SimulationTab() {
             )}
           </div>
 
-          {/* 3 stat cards */}
+          {/* 5 KPIs */}
+          <div className="section-title">
+            <i className="fa-solid fa-flask-vial" /> Resultats de la simulació
+          </div>
           <div className="portfolio__cards">
             <div className="portfolio__card portfolio__card--blue">
               <span className="portfolio__card-label">
@@ -1723,19 +1950,47 @@ export default function SimulationTab() {
               <span className="portfolio__card-label">
                 <i className="fa-solid fa-list-check" /> Operacions
               </span>
-              <span className="portfolio__card-value">{stats.totalTrades}</span>
+              <span className="portfolio__card-value portfolio__card-value--count">{stats.totalTrades}</span>
               <span className="portfolio__card-sub">
-                {stats.wins}✓ guany&nbsp; {stats.losses}✗ pèrdua
-                &nbsp;·&nbsp;{config.symbols.length} parell{config.symbols.length > 1 ? "s" : ""}
+                {stats.wins}✓ guany · {stats.losses}✗ pèrdua
               </span>
+            </div>
+
+            <div className={`portfolio__card portfolio__card--${stats.winRate >= 50 ? "green" : "red"}`}>
+              <span className="portfolio__card-label">
+                <i className="fa-solid fa-percent" /> Win Rate
+              </span>
+              <span className="portfolio__card-value">{fmtNum(stats.winRate, 1)}%</span>
+              <span className="portfolio__card-sub">{config.symbols.length} parell{config.symbols.length > 1 ? "s" : ""}</span>
+            </div>
+
+            <div className={`portfolio__card portfolio__card--${stats.profitFactor >= 1 ? "green" : "red"}`}>
+              <span className="portfolio__card-label">
+                <i className="fa-solid fa-scale-balanced" /> Profit Factor
+              </span>
+              <span className="portfolio__card-value mono">{fmtNum(stats.profitFactor, 2)}</span>
+              <span className="portfolio__card-sub">{stats.profitFactor >= 1 ? "estratègia rendible" : "estratègia deficitària"}</span>
+            </div>
+          </div>
+
+          {/* Capital allocation chart */}
+          <div className="analysis-section">
+            <div className="portfolio__section-title">
+              <i className="fa-solid fa-gauge-high" /> Indicadors de rendiment
+            </div>
+            <div className="sim-chart-inner" style={{ padding: "0.5rem 0 0" }}>
+              <CapitalChart
+                trades={result.trades}
+                equityCurve={result.equityCurve}
+                btcCurve={result.btcCurve ?? []}
+                initialCapital={config.initialCapital}
+              />
             </div>
           </div>
 
           {/* Detail metrics */}
           <div className="analysis-section">
-            <div className="portfolio__section-title">
-              <i className="fa-solid fa-gauge-high" /> Indicadors de rendiment
-            </div>
+            <div className="portfolio__section-title" style={{ display: "none" }} />
             <div className="sim-metrics-row">
               <div className="metric-col">
                 <span className="metric-col__label"><i className="fa-solid fa-bullseye" /> Win Rate</span>

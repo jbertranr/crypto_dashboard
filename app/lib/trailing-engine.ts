@@ -22,6 +22,23 @@ declare global {
   var __trailingEngineStarted: boolean | undefined;
   var __trailingErrorCounts:   Map<string, number>  | undefined;
   var __trailingPauseUntil:    Map<string, number>  | undefined;
+  var __trailingLastRun:       number | undefined;
+  var __trailingLastResult:    string | undefined;
+}
+
+export function getTrailingEngineStatus() {
+  const actives  = trailingActiveGetAll();
+  const pendings = trailingGetAll();
+  return {
+    started:        !!global.__trailingEngineStarted,
+    lastRun:        global.__trailingLastRun    ?? null,
+    lastResult:     global.__trailingLastResult ?? null,
+    activeCount:    actives.length,
+    pendingCount:   pendings.length,
+    activeSymbols:  actives.map(t => ({ symbol: t.symbol, currentSl: t.currentSl, peakPrice: t.peakPrice })),
+    pendingSymbols: pendings.map(t => t.symbol),
+    pausedSymbols:  [...pauseUntil.keys()],
+  };
 }
 
 const errorCounts = (global.__trailingErrorCounts ??= new Map<string, number>());
@@ -87,6 +104,9 @@ async function runCycle() {
       recordError(key, t.symbol, err as Error);
     }
   }
+
+  global.__trailingLastRun    = Date.now();
+  global.__trailingLastResult = `ok: ${actives.length} actius, ${suggestions.length} pendents`;
 }
 
 async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {

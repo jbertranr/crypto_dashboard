@@ -29,6 +29,18 @@ declare global {
   var __checkFillsRunning:       boolean | undefined;
   var __knownOpenOrders:         Map<number, StoredOrder> | undefined;
   var __trailingReplacedSls:     Set<number> | undefined;
+  var __orderMonitorLastRun:     number | undefined;
+  var __orderMonitorLastResult:  string | undefined;
+}
+
+export function getOrderMonitorStatus() {
+  return {
+    started:         !!global.__orderMonitorStarted,
+    running:         !!global.__checkFillsRunning,
+    lastRun:         global.__orderMonitorLastRun    ?? null,
+    lastResult:      global.__orderMonitorLastResult ?? null,
+    knownOrderCount: knownOrders.size,
+  };
 }
 
 const knownOrders          = (global.__knownOpenOrders      ??= new Map<number, StoredOrder>());
@@ -69,8 +81,13 @@ async function checkFills(): Promise<void> {
   global.__checkFillsRunning = true;
   try {
     await checkFillsInner();
+    global.__orderMonitorLastResult = "ok";
+  } catch (err) {
+    global.__orderMonitorLastResult = `error: ${(err as Error).message}`;
+    throw err;
   } finally {
     global.__checkFillsRunning = false;
+    global.__orderMonitorLastRun = Date.now();
   }
 }
 

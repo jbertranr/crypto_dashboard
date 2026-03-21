@@ -452,7 +452,7 @@ export default function AnalysisTab({ onOpenOrder }: {
               </button>
             ))}
           </div>
-          <button className="analysis-refresh-btn"
+          <button className="btn-ghost btn-xs"
             onClick={async () => {
               await fetch("/api/cache/invalidate?prefix=analysis%3A", { method: "DELETE" });
               PAIRS.forEach(p => load(p.pair, interval));
@@ -954,7 +954,7 @@ function StrategyCard({ s, price, atr, coinColor, candles, onOpenOrder }: {
               <span className={`strat-risk ${riskCls}`}>Risc {s.risk}</span>
             </div>
             {!bearish && (
-              <button className="strat-oco-btn" onClick={() => onOpenOrder(tpStr, slStr, slLimStr)}>
+              <button className="btn-success btn-sm" onClick={() => onOpenOrder(tpStr, slStr, slLimStr)}>
                 <i className="fa-solid fa-plus" /> Obre OCO
               </button>
             )}
@@ -1169,7 +1169,7 @@ function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false, hi
                 </div>
 
                 {canEnter && (
-                  <button className="chart-panel__btn" onClick={() => onOpenOrder(result)}>
+                  <button className="btn-primary" style={{ width: "100%", marginTop: "auto", justifyContent: "center" }} onClick={() => onOpenOrder(result)}>
                     <i className="fa-solid fa-plus" /> Obre ordre OCO
                   </button>
                 )}
@@ -1211,7 +1211,7 @@ function AnalysisView({ result, onOpenOrder, cache, pair, simplified = false, hi
               </div>
             </div>
             {canEnter && (
-              <button className="chart-panel__btn" style={{ marginTop: "0.75rem" }} onClick={() => onOpenOrder(result)}>
+              <button className="btn-primary" style={{ width: "100%", marginTop: "0.75rem", justifyContent: "center" }} onClick={() => onOpenOrder(result)}>
                 <i className="fa-solid fa-plus" /> Obre ordre OCO
               </button>
             )}

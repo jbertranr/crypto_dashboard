@@ -402,6 +402,26 @@ export default function SettingsTab() {
             Màx {settings?.capital_max_open ?? "3"} posicions obertes
           </span>
         </div>
+
+        <div className={`portfolio__card portfolio__card--${bots.filter(b => b.enabled).length > 0 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label">
+            <i className="fa-solid fa-robot" /> Bots actius
+          </span>
+          <span className="portfolio__card-value portfolio__card-value--count">
+            {bots.filter(b => b.enabled).length}
+          </span>
+          <span className="portfolio__card-sub">de {bots.length} configurats</span>
+        </div>
+
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label">
+            <i className="fa-solid fa-bolt" /> Tipus entrada
+          </span>
+          <span className="portfolio__card-value" style={{ fontSize: "1.1rem" }}>
+            {settings?.entry_type ?? "LIMIT"}
+          </span>
+          <span className="portfolio__card-sub">mode d'execució d'ordres</span>
+        </div>
       </div>
 
       {/* \u2500\u2500 Telegram section \u2500\u2500 */}

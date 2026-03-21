@@ -16,7 +16,19 @@ import { sendTelegram } from "./telegram";
 const NEVER_SELL = new Set(["USDT", "BUSD", "USDC", "FDUSD", "TUSD", "BNB"]);
 
 declare global {
-  var __crashMonitorStarted: boolean | undefined;
+  var __crashMonitorStarted:    boolean | undefined;
+  var __crashMonitorLastRun:    number  | undefined;
+  var __crashMonitorLastResult: string  | undefined;
+}
+
+export function getCrashMonitorStatus() {
+  return {
+    started:       !!global.__crashMonitorStarted,
+    lastRun:       global.__crashMonitorLastRun    ?? null,
+    lastResult:    global.__crashMonitorLastResult ?? null,
+    historyPoints: history.length,
+    lastAlertTs:   lastAlertTs > 0 ? lastAlertTs : null,
+  };
 }
 
 const POLL_MS      = 60_000;          // check every minute
@@ -142,9 +154,14 @@ async function checkCrash(): Promise<void> {
         log.orders.error({ err: (e as Error).message }, "Crash monitor: error en sortida d'emergència");
       }
 
+      global.__crashMonitorLastResult = `crash: ${drop.toFixed(1)}% en ${windowMin}m`;
+      global.__crashMonitorLastRun    = Date.now();
       return; // don't check more thresholds after triggering
     }
   }
+
+  global.__crashMonitorLastRun    = Date.now();
+  global.__crashMonitorLastResult = `ok: ${history.length} punts`;
 }
 
 export function ensureCrashMonitor(): void {

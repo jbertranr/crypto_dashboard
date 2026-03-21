@@ -24,6 +24,7 @@ interface ChatItem {
 
 interface BotInfo {
   id:             string;
+  code:           string;
   name:           string;
   simId:          string;
   enabled:        boolean;
@@ -32,8 +33,23 @@ interface BotInfo {
   hoursFrom:      number;
   hoursTo:        number;
   requireMultiTf: boolean;
+  entryDesc:      string;
+  exitDesc:       string;
   simConfig: {
-    config?: { interval?: string; symbols?: string[] };
+    name?: string;
+    pnlPct?: number;
+    config?: {
+      interval?: string;
+      symbols?: string[];
+      tpAtr?: number;
+      slAtr?: number;
+      minProbability?: number;
+      capitalMode?: string;
+      capitalFixed?: number;
+      capitalPct?: number;
+      trailActivateAtr?: number;
+      trailDistanceAtr?: number;
+    };
   } | null;
 }
 
@@ -97,9 +113,18 @@ const EXIT_REASONS: Record<string, string> = {
 
 // ── Bot detail panel ──────────────────────────────────────────────────────────
 
-function BotDetailPanel({ bot, onBack }: { bot: BotInfo; onBack: () => void }) {
-  const [entries, setEntries] = useState<TradeEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () => void; onUpdated: (b: BotInfo) => void }) {
+  const [entries,    setEntries]    = useState<TradeEntry[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [entryDesc,  setEntryDesc]  = useState(bot.entryDesc);
+  const [exitDesc,   setExitDesc]   = useState(bot.exitDesc);
+  const [saving,     setSaving]     = useState(false);
+  const [saveOk,     setSaveOk]     = useState(false);
+
+  useEffect(() => {
+    setEntryDesc(bot.entryDesc);
+    setExitDesc(bot.exitDesc);
+  }, [bot.entryDesc, bot.exitDesc]);
 
   useEffect(() => {
     setLoading(true);
@@ -114,6 +139,25 @@ function BotDetailPanel({ bot, onBack }: { bot: BotInfo; onBack: () => void }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [bot.name]);
+
+  async function saveDescriptions() {
+    setSaving(true);
+    try {
+      const r = await fetch("/api/bots", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bot.id, entryDesc, exitDesc }),
+      });
+      if (r.ok) {
+        const d = await r.json() as { bot: BotInfo };
+        onUpdated(d.bot);
+        setSaveOk(true);
+        setTimeout(() => setSaveOk(false), 2000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
 
   // Closed trades sorted by time
   const exits = entries
@@ -160,6 +204,7 @@ function BotDetailPanel({ bot, onBack }: { bot: BotInfo; onBack: () => void }) {
           <span>Bots</span>
         </button>
         <span className="bc-detail__title">
+          {bot.code && <span className="bc-code-badge">{bot.code}</span>}
           <i className="fa-solid fa-robot" /> {bot.name}
         </span>
         {exits.length > 0 && (
@@ -167,6 +212,44 @@ function BotDetailPanel({ bot, onBack }: { bot: BotInfo; onBack: () => void }) {
             {totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(2)} USDT
           </span>
         )}
+      </div>
+
+      {/* ── Strategy description ── */}
+      <div className="bc-strategy">
+        <div className="bc-strategy__col">
+          <div className="bc-strategy__label">
+            <i className="fa-solid fa-arrow-right-to-bracket" /> Condicions d'entrada
+          </div>
+          <textarea
+            className="bc-strategy__textarea"
+            value={entryDesc}
+            onChange={e => setEntryDesc(e.target.value)}
+            placeholder="Descriu quan el bot entra al mercat: indicadors, condicions de senyal, filtre de tendència, confirmació multi-TF…"
+            rows={3}
+          />
+        </div>
+        <div className="bc-strategy__col">
+          <div className="bc-strategy__label">
+            <i className="fa-solid fa-arrow-right-from-bracket" /> Condicions de sortida
+          </div>
+          <textarea
+            className="bc-strategy__textarea"
+            value={exitDesc}
+            onChange={e => setExitDesc(e.target.value)}
+            placeholder="Descriu com gestiona la sortida: TP/SL en ATR, trailing stop, sortida parcial, condicions especials…"
+            rows={3}
+          />
+        </div>
+        <button
+          className={`btn ${saveOk ? "btn-success" : "btn-primary"} btn-sm bc-strategy__save`}
+          onClick={saveDescriptions}
+          disabled={saving}>
+          {saving
+            ? <><i className="fa-solid fa-spinner fa-spin" /> Desant…</>
+            : saveOk
+              ? <><i className="fa-solid fa-check" /> Desat</>
+              : <><i className="fa-solid fa-floppy-disk" /> Desar</>}
+        </button>
       </div>
 
       {/* ── Stats row ── */}
@@ -329,6 +412,23 @@ function BotDetailPanel({ bot, onBack }: { bot: BotInfo; onBack: () => void }) {
 
 // ── Bot status table ──────────────────────────────────────────────────────────
 
+function simTooltip(sim: BotInfo["simConfig"]): string {
+  if (!sim) return "Simulació no trobada";
+  const c = sim.config ?? {};
+  const parts: string[] = [];
+  if (sim.name)               parts.push(`"${sim.name}"`);
+  if (c.interval)             parts.push(`Interval: ${c.interval}`);
+  if (c.symbols?.length)      parts.push(`Parells: ${c.symbols.join(", ")}`);
+  if (c.tpAtr != null)        parts.push(`TP: ${c.tpAtr}× ATR`);
+  if (c.slAtr != null)        parts.push(`SL: ${c.slAtr}× ATR`);
+  if (c.trailActivateAtr != null) parts.push(`Trail activa: ${c.trailActivateAtr}× ATR`);
+  if (c.trailDistanceAtr != null) parts.push(`Trail dist: ${c.trailDistanceAtr}× ATR`);
+  if (c.minProbability != null)   parts.push(`Score mínim: ${c.minProbability}`);
+  if (c.capitalMode)          parts.push(`Capital: ${c.capitalMode}${c.capitalFixed ? ` (${c.capitalFixed} USDT)` : c.capitalPct ? ` (${c.capitalPct}%)` : ""}`);
+  if (sim.pnlPct != null)     parts.push(`P&L sim: ${sim.pnlPct > 0 ? "+" : ""}${sim.pnlPct.toFixed(1)}%`);
+  return parts.join(" · ") || "Sense paràmetres";
+}
+
 function BotTable({
   bots, selectedId, onSelect,
 }: {
@@ -344,73 +444,86 @@ function BotTable({
   void tick;
 
   return (
-    <div className="bc-table-wrap">
-      <table className="data-table">
-        <thead className="data-table__head">
-          <tr>
-            <th>Nom</th>
-            <th>Estat</th>
-            <th>Interval</th>
-            <th>Símbols</th>
-            <th className="r">Pressupost</th>
-            <th className="r">Màx/dia</th>
-            <th>Finestra UTC</th>
-            <th>Multi-TF</th>
-            <th className="r">Proper scan</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bots.map(bot => {
-            const interval = bot.simConfig?.config?.interval ?? "—";
-            const symbols  = bot.simConfig?.config?.symbols ?? [];
-            const active   = bot.enabled && inWindow(bot.hoursFrom, bot.hoursTo);
-            const selected = selectedId === bot.id;
+    <div className="bc-cards">
+      {bots.map(bot => {
+        const interval = bot.simConfig?.config?.interval ?? "—";
+        const symbols  = bot.simConfig?.config?.symbols ?? [];
+        const active   = bot.enabled && inWindow(bot.hoursFrom, bot.hoursTo);
+        const selected = selectedId === bot.id;
+        const statusCls = active ? "bc-status--active" : bot.enabled ? "bc-status--paused" : "bc-status--off";
+        const statusLbl = !bot.enabled ? "Desactivat" : active ? "Actiu" : "Fora d'hores";
 
-            return (
-              <tr key={bot.id}
-                className={`data-table__row bc-table__row${selected ? " bc-table__row--selected" : ""}`}
-                onClick={() => onSelect(bot)}
-                title="Veure historial d'operacions">
+        return (
+          <div key={bot.id}
+            className={`bc-bot-card${selected ? " bc-bot-card--selected" : ""}`}
+            onClick={() => onSelect(bot)}>
 
-                <td className="data-table__cell bold">
-                  <span className="bc-row__name">{bot.name}</span>
-                </td>
+            {/* ── Identity ── */}
+            <div className="bc-bot-card__identity">
+              <div className="bc-bot-card__name-row">
+                {bot.code && <span className="bc-code-badge">{bot.code}</span>}
+                <span className="bc-bot-card__name">{bot.name}</span>
+              </div>
+              <span className="bc-sim-badge" data-tooltip={simTooltip(bot.simConfig)}>
+                <i className="fa-solid fa-flask" />{bot.simConfig?.name ?? bot.simId}
+              </span>
+              <span className={`bc-status ${statusCls}`}>
+                <span className="bc-status__dot" />{statusLbl}
+              </span>
+            </div>
 
-                <td className="data-table__cell">
-                  <span className={`bc-status${active ? " bc-status--active" : bot.enabled ? " bc-status--paused" : " bc-status--off"}`}>
-                    <span className="bc-status__dot" />
-                    {!bot.enabled ? "Desactivat" : active ? "Actiu" : "Fora d'hores"}
+            {/* ── Strategy descriptions ── */}
+            <div className="bc-bot-card__strat">
+              {bot.entryDesc
+                ? <span className="bc-strat-preview__item" title={bot.entryDesc}>
+                    <i className="fa-solid fa-arrow-right-to-bracket" />
+                    {bot.entryDesc.length > 55 ? bot.entryDesc.slice(0, 55) + "…" : bot.entryDesc}
                   </span>
-                </td>
+                : <span className="bc-strat-preview__empty">Sense descripció d'entrada</span>}
+              {bot.exitDesc
+                ? <span className="bc-strat-preview__item bc-strat-preview__item--exit" title={bot.exitDesc}>
+                    <i className="fa-solid fa-arrow-right-from-bracket" />
+                    {bot.exitDesc.length > 55 ? bot.exitDesc.slice(0, 55) + "…" : bot.exitDesc}
+                  </span>
+                : null}
+            </div>
 
-                <td className="data-table__cell mono">{interval}</td>
+            {/* ── Params chips ── */}
+            <div className="bc-bot-card__params">
+              {interval !== "—" && (
+                <span className="bc-param-chip"><i className="fa-solid fa-clock" />{interval}</span>
+              )}
+              {symbols.length > 0 && (
+                <span className="bc-param-chip" title={symbols.join(", ")}>
+                  <i className="fa-solid fa-coins" />{symbols.length} parells
+                </span>
+              )}
+              <span className="bc-param-chip">
+                <i className="fa-solid fa-wallet" />{bot.budgetUsdt} USDT
+              </span>
+              <span className="bc-param-chip">
+                <i className="fa-solid fa-repeat" />màx {bot.maxDaily}/dia
+              </span>
+              <span className="bc-param-chip">
+                <i className="fa-solid fa-hourglass" />{bot.hoursFrom}:00–{bot.hoursTo}:00 UTC
+              </span>
+              {bot.requireMultiTf && (
+                <span className="bc-param-chip bc-param-chip--accent">
+                  <i className="fa-solid fa-layer-group" />Multi-TF
+                </span>
+              )}
+            </div>
 
-                <td className="data-table__cell dim">
-                  {symbols.length > 0
-                    ? <span title={symbols.join(", ")}>{symbols.length} parells</span>
-                    : "—"}
-                </td>
-
-                <td className="data-table__cell mono r">{bot.budgetUsdt} USDT</td>
-                <td className="data-table__cell mono r">{bot.maxDaily}</td>
-                <td className="data-table__cell mono">{bot.hoursFrom}:00 – {bot.hoursTo}:00</td>
-
-                <td className="data-table__cell">
-                  {bot.requireMultiTf
-                    ? <span className="bc-tag bc-tag--yes">Sí</span>
-                    : <span className="bc-tag bc-tag--no">No</span>}
-                </td>
-
-                <td className="data-table__cell mono r">
-                  {bot.enabled && interval !== "—"
-                    ? <span className="bc-countdown">{nextClose(interval)}</span>
-                    : <span className="dim">—</span>}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            {/* ── Next scan countdown ── */}
+            <div className="bc-bot-card__scan">
+              {bot.enabled && interval !== "—"
+                ? <><span className="bc-bot-card__scan-label">Proper scan</span>
+                    <span className="bc-countdown">{nextClose(interval)}</span></>
+                : <span className="dim">—</span>}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -603,8 +716,47 @@ export default function BotTab() {
     rows.push(item);
   }
 
+  const todayItems  = items.filter(i => new Date(i.ts).toDateString() === new Date().toDateString());
+  const errorItems  = items.filter(i => i.kind === "error" || i.kind === "warn");
+
   return (
     <div className="bot-chat">
+
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-robot" /> Bot
+      </div>
+      <div className="portfolio__cards">
+        <div className={`portfolio__card portfolio__card--${activeBots.length > 0 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-circle-play" /> Bots actius</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{activeBots.length}</span>
+          <span className="portfolio__card-sub">de {bots.length} configurats</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-pause" /> En pausa</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{inactiveBots.length}</span>
+          <span className="portfolio__card-sub">bots desactivats</span>
+        </div>
+        <div className="portfolio__card portfolio__card--blue">
+          <span className="portfolio__card-label"><i className="fa-solid fa-message" /> Events avui</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{todayItems.length}</span>
+          <span className="portfolio__card-sub">activitat del dia</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${errorItems.length > 0 ? "red" : "green"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-triangle-exclamation" /> Incidents</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{errorItems.length}</span>
+          <span className="portfolio__card-sub">errors i avisos</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-clock" /> Últim event</span>
+          <span className="portfolio__card-value" style={{ fontSize: "0.9rem" }}>
+            {items.length > 0
+              ? new Date(items[items.length - 1].ts).toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })
+              : "—"}
+          </span>
+          <span className="portfolio__card-sub">{items.length} events en memòria</span>
+        </div>
+      </div>
 
       {/* ── Toolbar ── */}
       <div className="bot-chat__toolbar">
@@ -657,7 +809,11 @@ export default function BotTab() {
 
       {/* ── Detail panel OR chat ── */}
       {selectedBot ? (
-        <BotDetailPanel bot={selectedBot} onBack={() => setSelectedBotId(null)} />
+        <BotDetailPanel
+          bot={selectedBot}
+          onBack={() => setSelectedBotId(null)}
+          onUpdated={updated => setBots(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))}
+        />
       ) : (
         visible.length === 0 ? (
           <div className="bot-chat__empty">

@@ -35,10 +35,19 @@ db.exec(`
   );
 `);
 
+// ── Schema migration — add columns introduced after initial release ────────────
+{
+  const cols = (db.prepare("PRAGMA table_info(bots)").all() as { name: string }[]).map(r => r.name);
+  if (!cols.includes("code"))       db.exec("ALTER TABLE bots ADD COLUMN code        TEXT NOT NULL DEFAULT ''");
+  if (!cols.includes("entry_desc")) db.exec("ALTER TABLE bots ADD COLUMN entry_desc  TEXT NOT NULL DEFAULT ''");
+  if (!cols.includes("exit_desc"))  db.exec("ALTER TABLE bots ADD COLUMN exit_desc   TEXT NOT NULL DEFAULT ''");
+}
+
 /* ── Types ───────────────────────────────────────────────────── */
 
 export interface Bot {
   id:             string;
+  code:           string;
   name:           string;
   simId:          string;
   enabled:        boolean;
@@ -47,11 +56,14 @@ export interface Bot {
   hoursFrom:      number;
   hoursTo:        number;
   requireMultiTf: boolean;
+  entryDesc:      string;
+  exitDesc:       string;
   createdAt:      number;
 }
 
 interface BotRow {
   id:               string;
+  code:             string;
   name:             string;
   sim_id:           string;
   enabled:          number;
@@ -60,12 +72,15 @@ interface BotRow {
   hours_from:       number;
   hours_to:         number;
   require_multi_tf: number;
+  entry_desc:       string;
+  exit_desc:        string;
   created_at:       number;
 }
 
 function rowToBot(row: BotRow): Bot {
   return {
     id:             row.id,
+    code:           row.code || "",
     name:           row.name,
     simId:          row.sim_id,
     enabled:        row.enabled === 1,
@@ -74,8 +89,15 @@ function rowToBot(row: BotRow): Bot {
     hoursFrom:      row.hours_from,
     hoursTo:        row.hours_to,
     requireMultiTf: row.require_multi_tf === 1,
+    entryDesc:      row.entry_desc || "",
+    exitDesc:       row.exit_desc  || "",
     createdAt:      row.created_at,
   };
+}
+
+function nextBotCode(): string {
+  const row = db.prepare("SELECT COUNT(*) as cnt FROM bots").get() as { cnt: number };
+  return `B-${String(row.cnt + 1).padStart(3, "0")}`;
 }
 
 /* ── Accessors ───────────────────────────────────────────────── */
@@ -91,15 +113,16 @@ export function botGet(id: string): Bot | null {
 }
 
 export function botCreate(data: {
-  name:           string;
-  simId:          string;
-  budgetUsdt?:    number;
-  maxDaily?:      number;
-  hoursFrom?:     number;
-  hoursTo?:       number;
+  name:            string;
+  simId:           string;
+  budgetUsdt?:     number;
+  maxDaily?:       number;
+  hoursFrom?:      number;
+  hoursTo?:        number;
   requireMultiTf?: boolean;
+  entryDesc?:      string;
+  exitDesc?:       string;
 }): Bot {
-  // C4: validate operational parameters
   if (data.budgetUsdt !== undefined && data.budgetUsdt <= 0)
     throw new Error("budgetUsdt ha de ser > 0");
   if (data.maxDaily !== undefined && data.maxDaily < 1)
@@ -109,26 +132,29 @@ export function botCreate(data: {
   if (data.hoursTo !== undefined && (data.hoursTo < 0 || data.hoursTo >= 24))
     throw new Error("hoursTo ha d'estar entre 0 i 23");
 
-  const id = `bot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-  const now = Date.now();
+  const id   = `bot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const code = nextBotCode();
+  const now  = Date.now();
   db.prepare(`
-    INSERT INTO bots (id, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, created_at)
-    VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+    INSERT INTO bots
+      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, created_at)
+    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    id,
-    data.name,
-    data.simId,
+    id, code,
+    data.name, data.simId,
     data.budgetUsdt  ?? 500,
     data.maxDaily    ?? 3,
     data.hoursFrom   ?? 8,
     data.hoursTo     ?? 22,
     data.requireMultiTf ? 1 : 0,
+    data.entryDesc   ?? "",
+    data.exitDesc    ?? "",
     now,
   );
   return botGet(id)!;
 }
 
-export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "createdAt">>): Bot | null {
+export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "createdAt">>): Bot | null {
   const existing = botGet(id);
   if (!existing) return null;
 
@@ -143,6 +169,8 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "createdAt
   if (patch.hoursFrom      !== undefined) { fields.push("hours_from = ?");         values.push(patch.hoursFrom); }
   if (patch.hoursTo        !== undefined) { fields.push("hours_to = ?");           values.push(patch.hoursTo); }
   if (patch.requireMultiTf !== undefined) { fields.push("require_multi_tf = ?");   values.push(patch.requireMultiTf ? 1 : 0); }
+  if (patch.entryDesc      !== undefined) { fields.push("entry_desc = ?");         values.push(patch.entryDesc); }
+  if (patch.exitDesc       !== undefined) { fields.push("exit_desc = ?");          values.push(patch.exitDesc); }
 
   if (fields.length === 0) return existing;
   values.push(id);

@@ -19,20 +19,37 @@ import SimulationTab from "./SimulationTab";
 import BotTab from "./BotTab";
 import EqualizerTab from "./EqualizerTab";
 import AutoLabTab from "./AutoLabTab";
+import StatusTab from "./StatusTab";
 
-export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab";
+export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab" | "status";
 
 /* ── Strategies ── */
 export const STRATEGIES = [
-  { name: "Swing",    color: "#6366f1" },
-  { name: "Scalp",    color: "#f59e0b" },
-  { name: "DCA",      color: "#10b981" },
-  { name: "Breakout", color: "#ef4444" },
-  { name: "Hedge",    color: "#8b5cf6" },
+  {
+    name: "Swing", color: "#6366f1",
+    desc: "Posicions de mitjà termini (hores/dies). Entrada en retrocessos dins la tendència principal. TP ampli basat en múltiples d'ATR, SL ajustat per preservar capital.",
+  },
+  {
+    name: "Scalp", color: "#f59e0b",
+    desc: "Operatives ràpides (1m–15m). Entrada en momentum puntual. TP reduït (0.5–1× ATR), gestió estricta del risc. Alt volum d'operacions, baix risc per trade.",
+  },
+  {
+    name: "DCA", color: "#10b981",
+    desc: "Acumulació progressiva en caigudes. Entrades múltiples per promediar el preu. Ideal per actius amb tendència alcista confirmada a llarg termini.",
+  },
+  {
+    name: "Breakout", color: "#ef4444",
+    desc: "Entrada en ruptura de resistències o màxims rellevants. Confirmació de volum necessària. TP basat en l'amplada del rang previ al breakout.",
+  },
+  {
+    name: "Hedge", color: "#8b5cf6",
+    desc: "Cobertura de posicions obertes. Operativa inversa per limitar exposició en entorns d'alta incertesa o volatilitat extrema.",
+  },
 ] as const;
 
 export type StrategyName = (typeof STRATEGIES)[number]["name"];
-const STRATEGY_MAP = Object.fromEntries(STRATEGIES.map(s => [s.name, s.color])) as Record<string, string>;
+const STRATEGY_MAP  = Object.fromEntries(STRATEGIES.map(s => [s.name, s.color])) as Record<string, string>;
+const STRATEGY_DESC = Object.fromEntries(STRATEGIES.map(s => [s.name, s.desc]))  as Record<string, string>;
 
 export interface OrderMeta {
   interval:   string | null;
@@ -399,8 +416,52 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
       })
     : groups;
 
+  const ocoCount    = groups.filter(g => g.kind === "oco").length;
+  const symbolCount = new Set(orders.map(o => o.symbol)).size;
+  const kpiPairMap  = new Map(coins.map(c => [c.pair, c.price]));
+  const capitalAtRisk = groups.reduce((sum, g) => {
+    if (g.kind === "oco") {
+      const price = kpiPairMap.get(g.symbol) ?? 0;
+      return sum + parseFloat(g.tpOrd.origQty) * price;
+    }
+    const price = kpiPairMap.get(g.order.symbol) ?? 0;
+    return sum + parseFloat(g.order.origQty) * price;
+  }, 0);
+
   return (
     <>
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-list-check" /> Ordres obertes
+      </div>
+      <div className="portfolio__cards bal-cards-row">
+        <div className="portfolio__card portfolio__card--blue">
+          <span className="portfolio__card-label"><i className="fa-solid fa-layer-group" /> Posicions</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{groups.length}</span>
+          <span className="portfolio__card-sub">{orders.length} ordres actives</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-arrows-split-up-and-left" /> OCO</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{ocoCount}</span>
+          <span className="portfolio__card-sub">TP + SL parells</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-tag" /> Trailing</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{trailingActive.length}</span>
+          <span className="portfolio__card-sub">stops dinàmics actius</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-coins" /> Símbols</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{symbolCount}</span>
+          <span className="portfolio__card-sub">cryptos actives</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-dollar-sign" /> Capital en risc</span>
+          <span className="portfolio__card-value">{capitalAtRisk > 0 ? formatCurrency(capitalAtRisk) : "—"}</span>
+          <span className="portfolio__card-sub">valor posicions obertes</span>
+        </div>
+      </div>
+
       {cancelError && <div className="state-error" style={{ margin: "0.5rem 1rem" }}>{cancelError}</div>}
 
       {/* Strategy stats */}
@@ -468,316 +529,238 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
               const ocoKey = stratKey("oco", g.listId);
               const ocoStrat = strategies[ocoKey] ?? null;
 
-              return (
-                <div key={g.listId} className="order-card">
+              return (() => {
+                const tpFromEntry = entryP > 0 && tpPrice > 0 ? ((tpPrice - entryP) / entryP) * 100 : null;
+                const slFromEntry = entryP > 0 && slPrice > 0 ? ((slPrice - entryP) / entryP) * 100 : null;
+                const tpPnl = entryP > 0 && qty > 0 && tpPrice > 0 ? (tpPrice - entryP) * qty : null;
+                const slPnl = entryP > 0 && qty > 0 && slPrice > 0 ? (slPrice - entryP) * qty : null;
+                const sugg = trailingSugg[g.listId];
+                const activeTs = trailingActive.find(t => t?.symbol === g.symbol && t?.status === "active");
+                const reached = !!(sugg && currentPrice > 0 && (
+                  (g.side === "SELL" && currentPrice >= sugg.activateAt) ||
+                  (g.side === "BUY"  && currentPrice <= sugg.activateAt)
+                ));
+                const isActivating = !!activatingTs[g.listId];
+                const tsErr = tsError[g.listId];
+                const isOpen  = openExitKey === ocoKey;
+                const meta    = orderMeta[ocoKey] ?? {};
+                const current = localExitNotes[ocoKey] ?? meta.exitNotes ?? "";
+                const hasPlan = !!current;
 
-                  {/* A) Header — context only, no numbers */}
-                  <div className="order-card__header">
-                    <div className="order-card__identity">
-                      <CoinIcon symbol={g.symbol.replace("USDT", "")} size={20} />
-                      <span className="order-card__pair">
-                        {g.symbol.replace("USDT", "")}
-                        <span className="order-card__quote">/USDT</span>
-                      </span>
-                      <span className={`pill ${g.side === "BUY" ? "pill--buy" : "pill--sell"}`}>{g.side}</span>
-                      <span className="pill pill--oco">OCO</span>
-                    </div>
-                    <div className="order-card__header-right">
-                      <span className="order-card__date">{fmtDate(g.startTime)}</span>
-                      {orderMeta[ocoKey]?.tradeCode && (
-                        <span className="order-card__tc-badge">{orderMeta[ocoKey].tradeCode}</span>
-                      )}
-                      {orderMeta[ocoKey]?.interval && (
-                        <span className="order-card__tf-badge">{orderMeta[ocoKey].interval}</span>
-                      )}
-                      {orderMeta[ocoKey]?.botName && (
-                        <span className="order-card__bot-badge" title={`Bot: ${orderMeta[ocoKey].botName}`}>
-                          <i className="fa-solid fa-robot" /> {orderMeta[ocoKey].botName}
-                        </span>
-                      )}
-                      <span className="pill pill--new">Activa</span>
-                      {/* Strategy badge */}
-                      <div className="strategy-picker">
-                        <button
-                          className="strategy-picker__badge"
-                          style={ocoStrat ? { background: `${STRATEGY_MAP[ocoStrat]}22`, color: STRATEGY_MAP[ocoStrat], borderColor: `${STRATEGY_MAP[ocoStrat]}66` } : {}}
-                          onClick={() => setOpenPickerKey(k => k === ocoKey ? null : ocoKey)}>
-                          {ocoStrat
-                            ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ocoStrat] }} />{ocoStrat}</>
-                            : <><i className="fa-solid fa-tag" /> Estratègia</>}
-                        </button>
-                        {openPickerKey === ocoKey && (
-                          <StrategyPicker orderKey={ocoKey} current={ocoStrat}
-                            onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                const handleActivate = async () => {
+                  setActivatingTs(p => ({ ...p, [g.listId]: true }));
+                  setTsError(p => { const n = { ...p }; delete n[g.listId]; return n; });
+                  try {
+                    const exInfo = await fetch(`/api/exchange-info?symbol=${g.symbol}`).then(r => r.json());
+                    const tickSize = exInfo.tickSize ?? "0.01";
+                    const res = await fetch("/api/orders/trailing/activate", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        orderListId: g.listId, symbol: g.symbol,
+                        side: g.side, quantity: g.tpOrd.origQty,
+                        tpPrice: g.tpOrd.price,
+                        trailDist: sugg!.distance, tickSize,
+                        entryPrice: sugg!.entryPrice > 0 ? sugg!.entryPrice : (entryPrices[g.listId] ?? 0),
+                      }),
+                    });
+                    const d = await res.json();
+                    if (d.error) throw new Error(d.error);
+                    fetchTrailing(); onRefresh();
+                  } catch (e) {
+                    setTsError(p => ({ ...p, [g.listId]: (e as Error).message }));
+                  } finally {
+                    setActivatingTs(p => { const n = { ...p }; delete n[g.listId]; return n; });
+                  }
+                };
 
-                  {/* Amount banner */}
-                  {qty > 0 && (
-                    <div className="order-card__amount">
-                      <span className="order-card__amount-value">
-                        {qty} {g.symbol.replace("USDT", "")}
-                      </span>
-                      <span className="order-card__amount-label">
-                        {entryP > 0
-                          ? `(${formatCurrency(entryP * qty)}) · entrada`
-                          : valueUSD > 0
-                            ? `(${formatCurrency(valueUSD)}) · actual`
-                            : ""}
-                      </span>
-                    </div>
-                  )}
+                return (
+                  <div key={g.listId} className="order-card order-card--oco">
 
-                  {/* B) Price track — entrada vs vigent */}
-                  {(entryP > 0 || currentPrice > 0) && (
-                    <div className="price-track">
-                      <div className="price-track__col">
-                        <div className="price-track__label">Entrada</div>
-                        <div className="price-track__total mono">
-                          {entryP > 0 && qty > 0 ? formatCurrency(entryP * qty) : "—"}
-                        </div>
-                        <div className="price-track__unit dim">
-                          {entryP > 0 ? `${qty} × ${formatCurrency(entryP)}` : ""}
-                        </div>
-                        <div className="price-track__time">
-                          <i className="fa-regular fa-clock" />
-                          {" "}{fmtDate(g.startTime)}
-                        </div>
-                      </div>
+                    {/* ── Main horizontal row ── */}
+                    <div className="order-card__row">
 
-                      <div className="price-track__arrow">
-                        {fromEntry !== null && (
-                          <span className={`price-track__delta${fromEntry >= 0 ? " price-track__delta--up" : " price-track__delta--down"}`}>
-                            {fromEntry >= 0 ? "+" : ""}{fromEntry.toFixed(2)}%
+                      {/* 1. Identity: top (code+date) / middle (logo+hero) / bottom (badges+actions) */}
+                      <div className="order-card__col-identity">
+                        {/* TOP: code + date */}
+                        <div className="order-card__col-top">
+                          <span className="pill order-card__tc-badge">
+                            <i className="fa-solid fa-hashtag" />
+                            {orderMeta[ocoKey]?.tradeCode || `OCO-${g.listId}`}
                           </span>
-                        )}
-                        <i className="fa-solid fa-arrow-right price-track__icon" />
+                          <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(g.startTime)}</span>
+                        </div>
+                        {/* MIDDLE: logo + hero amounts */}
+                        <div className="order-card__col-hero">
+                          <CoinIcon symbol={g.symbol.replace("USDT", "")} size={44} />
+                          <div className="order-card__hero-info">
+                            <span className="order-card__hero-crypto">{g.symbol.replace("USDT", "")}</span>
+                            {qty > 0 && entryP > 0 && (
+                              <>
+                                <span className="order-card__section-label">INVERTIT</span>
+                                <span className="order-card__hero-val mono">{formatCurrency(entryP * qty)}</span>
+                                <span className="order-card__hero-sub">
+                                  ENTRADA <span className="mono">{formatCurrency(entryP)}</span>
+                                  {" "}(#{formatCurrency(entryP * qty)})
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {/* BOTTOM: status badges + actions */}
+                        <div className="order-card__col-bottom">
+                          <span className="pill pill--new"><i className="fa-solid fa-circle-play" />Activa</span>
+                          <span className={`pill ${g.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
+                            <i className={`fa-solid ${g.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{g.side}
+                          </span>
+                          <span className="pill pill--oco"><i className="fa-solid fa-link" />OCO</span>
+                          {orderMeta[ocoKey]?.interval && (
+                            <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ocoKey].interval}</span>
+                          )}
+                          {orderMeta[ocoKey]?.botName && (
+                            <span className="pill order-card__bot-badge" title={`Bot: ${orderMeta[ocoKey].botName}`}>
+                              <i className="fa-solid fa-robot" />{orderMeta[ocoKey].botName}
+                            </span>
+                          )}
+                          <div className="strategy-picker">
+                            <button
+                              className="strategy-picker__badge"
+                              style={ocoStrat ? { background: `${STRATEGY_MAP[ocoStrat]}22`, color: STRATEGY_MAP[ocoStrat] } : {}}
+                              data-tooltip={ocoStrat ? STRATEGY_DESC[ocoStrat] : undefined}
+                              onClick={() => setOpenPickerKey(k => k === ocoKey ? null : ocoKey)}>
+                              {ocoStrat
+                                ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ocoStrat] }} />{ocoStrat}</>
+                                : <><i className="fa-solid fa-tag" /> Estratègia</>}
+                            </button>
+                            {openPickerKey === ocoKey && (
+                              <StrategyPicker orderKey={ocoKey} current={ocoStrat}
+                                onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
+                            )}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="price-track__col price-track__col--now">
-                        <div className="price-track__label">
-                          <span className="price-track__live" title="Preu en temps real" />
-                          Vigent
-                        </div>
-                        <div className="price-track__total mono">
-                          {currentPrice > 0 && qty > 0 ? formatCurrency(currentPrice * qty) : "—"}
-                        </div>
-                        <div className="price-track__unit dim">
-                          {currentPrice > 0 ? `${qty} × ${formatCurrency(currentPrice)}` : ""}
-                        </div>
-                        <div className="price-track__time">
-                          <i className="fa-regular fa-clock" />
-                          {" ara · "}{new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}h
+                      {/* 2. TP */}
+                      <div className="order-card__col-tp">
+                        <span className="order-card__section-label order-card__section-label--tp">OBJECTIU (TP)</span>
+                        <span className="order-card__col-price mono">{formatCurrency(tpPrice)}</span>
+                        {tpFromEntry !== null && <span className="order-card__delta order-card__delta--up">{tpFromEntry > 0 ? "+" : ""}{tpFromEntry.toFixed(2)}%</span>}
+                        {tpPnl !== null && <span className="order-card__pnl order-card__pnl--up">{tpPnl > 0 ? "+" : ""}{formatCurrency(tpPnl)}</span>}
+                        {toTp !== null && <span className="order-card__price-sub dim">dist {toTp > 0 ? "+" : ""}{toTp.toFixed(2)}%</span>}
+                      </div>
+
+                      {/* 3. SL */}
+                      <div className="order-card__col-sl">
+                        <span className="order-card__section-label order-card__section-label--sl">STOP (SL)</span>
+                        <span className="order-card__col-price mono">{formatCurrency(slPrice)}</span>
+                        {slFromEntry !== null && <span className="order-card__delta order-card__delta--down">{slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%</span>}
+                        {slPnl !== null && <span className="order-card__pnl order-card__pnl--down">{slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}</span>}
+                        {toSl !== null && <span className="order-card__price-sub dim">dist {toSl > 0 ? "+" : ""}{toSl.toFixed(2)}%</span>}
+                      </div>
+
+                      {/* 4. Chart */}
+                      <div className="order-card__col-chart">
+                        <OcoProgressChart
+                          symbol={g.symbol} startTime={g.startTime}
+                          tpPrice={tpPrice} slPrice={slPrice} side={g.side}
+                          onEntryPrice={p => setEntryPrices(prev => ({ ...prev, [g.listId]: p }))}
+                        />
+                      </div>
+
+                      {/* 5. Last col: trailing stop info (if available) + Edit + Cancel */}
+                      <div className={`order-card__col-trailing${sugg && !activeTs && reached ? " order-card__col-trailing--reached" : ""}`}>
+                        {sugg && !activeTs && (
+                          <>
+                            <div className="order-card__trailing-header">
+                              <i className="fa-solid fa-flag-checkered" />
+                              <span>Trailing Stop</span>
+                              {reached && <span className="order-card__trailing-alert"><i className="fa-solid fa-bolt" /></span>}
+                            </div>
+                            <div className="order-card__trailing-levels">
+                              {sugg.activateAtr > 0 ? (
+                                <div className="order-card__trailing-level">
+                                  <span className="order-card__trailing-lbl">Activació</span>
+                                  <span className="mono">{formatCurrency(sugg.activateAt)}</span>
+                                  <span className="order-card__trailing-atr">{sugg.activateAtr}×ATR</span>
+                                </div>
+                              ) : (
+                                <div className="order-card__trailing-level">
+                                  <span className="order-card__trailing-lbl">Activació</span>
+                                  <span className="order-card__trailing-atr">immediata</span>
+                                </div>
+                              )}
+                              <div className="order-card__trailing-level">
+                                <span className="order-card__trailing-lbl">Distància</span>
+                                <span className="mono">{formatCurrency(sugg.distance)}</span>
+                                <span className="order-card__trailing-atr">{sugg.distanceAtr}×ATR</span>
+                              </div>
+                            </div>
+                            {reached && <div className="order-card__trailing-reached">Preu assolit!</div>}
+                            {tsErr && <div className="order-trailing__err">{tsErr}</div>}
+                            <button
+                              className={`order-trailing__btn${reached ? " order-trailing__btn--ready" : ""}`}
+                              onClick={handleActivate} disabled={isActivating}
+                            >
+                              {isActivating
+                                ? <><i className="fa-solid fa-spinner fa-spin" /> Activant…</>
+                                : reached
+                                  ? <><i className="fa-solid fa-bolt" /> Activar ara</>
+                                  : <><i className="fa-solid fa-flag-checkered" /> Activa Trailing</>}
+                            </button>
+                          </>
+                        )}
+                        <div className="order-card__col-trailing-actions">
+                          <button className="order-btn order-btn--secondary"
+                            onClick={() => setEditTarget({
+                              kind: "oco", symbol: g.symbol, orderListId: g.listId,
+                              side: g.side as "BUY" | "SELL", quantity: g.tpOrd.origQty,
+                              tpOrder: g.tpOrd, slOrder: g.slOrd,
+                            })}>
+                            <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
+                          </button>
+                          <button className="order-btn order-btn--cancel" disabled={isCanceling}
+                            onClick={() => handleCancelOco(g)}>
+                            {isCanceling
+                              ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
+                              : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
+                          </button>
                         </div>
                       </div>
+
                     </div>
-                  )}
 
-                  {/* C) TP / SL cards */}
-                  {(() => {
-                    const tpFromEntry = entryP > 0 && tpPrice > 0 ? ((tpPrice - entryP) / entryP) * 100 : null;
-                    const slFromEntry = entryP > 0 && slPrice > 0 ? ((slPrice - entryP) / entryP) * 100 : null;
-                    const tpPnl = entryP > 0 && qty > 0 && tpPrice > 0 ? (tpPrice - entryP) * qty : null;
-                    const slPnl = entryP > 0 && qty > 0 && slPrice > 0 ? (slPrice - entryP) * qty : null;
-                    return (
-                      <div className="tpsl-grid">
-                        <div className="tpsl-card tpsl-card--tp">
-                          <div className="tpsl-card__label">Take Profit</div>
-                          <div className="tpsl-card__total-big mono">
-                            {qty > 0 && tpPrice > 0 ? formatCurrency(tpPrice * qty) : formatCurrency(tpPrice)}
-                          </div>
-                          <div className="tpsl-card__row">
-                            {tpFromEntry !== null && (
-                              <span className="tpsl-card__pct">
-                                {tpFromEntry > 0 ? "+" : ""}{tpFromEntry.toFixed(2)}%
-                              </span>
-                            )}
-                            {tpPnl !== null && (
-                              <span className="tpsl-card__pnl">
-                                {tpPnl > 0 ? "+" : ""}{formatCurrency(tpPnl)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="tpsl-card__ref dim">preu {formatCurrency(tpPrice)} · dist. {toTp !== null ? `${toTp > 0 ? "+" : ""}${toTp.toFixed(2)}%` : "—"}</div>
+                    {/* ── Exit plan ── */}
+                    <div className="order-card__exit">
+                      <button
+                        className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
+                        onClick={() => setOpenExitKey(k => k === ocoKey ? null : ocoKey)}
+                      >
+                        <i className="fa-solid fa-route" />
+                        <span>Pla de sortida</span>
+                        {hasPlan && <span className="order-card__exit-indicator" />}
+                        <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
+                      </button>
+                      {isOpen && (
+                        <div className="order-card__exit-body">
+                          <textarea
+                            className="journal-notes"
+                            rows={3}
+                            placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
+                            value={current}
+                            onChange={ev => handleExitNotesChange(ocoKey, ev.target.value)}
+                          />
                         </div>
+                      )}
+                    </div>
 
-                        <div className="tpsl-card tpsl-card--sl">
-                          <div className="tpsl-card__label">Stop Loss</div>
-                          <div className="tpsl-card__total-big mono">
-                            {qty > 0 && slPrice > 0 ? formatCurrency(slPrice * qty) : formatCurrency(slPrice)}
-                          </div>
-                          <div className="tpsl-card__row">
-                            {slFromEntry !== null && (
-                              <span className="tpsl-card__pct">
-                                {slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%
-                              </span>
-                            )}
-                            {slPnl !== null && (
-                              <span className="tpsl-card__pnl">
-                                {slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="tpsl-card__ref dim">preu {formatCurrency(slPrice)} · dist. {toSl !== null ? `${toSl > 0 ? "+" : ""}${toSl.toFixed(2)}%` : "—"}</div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* C) Chart — always visible */}
-                  <div className="order-card__chart">
-                    <OcoProgressChart
-                      symbol={g.symbol} startTime={g.startTime}
-                      tpPrice={tpPrice} slPrice={slPrice} side={g.side}
-                      onEntryPrice={p => setEntryPrices(prev => ({ ...prev, [g.listId]: p }))}
-                    />
                   </div>
-
-                  {/* Trailing stop */}
-                  {(() => {
-                    const sugg = trailingSugg[g.listId];
-                    const activeTs = trailingActive.find(
-                      t => t.symbol === g.symbol && t.status === "active"
-                    );
-                    const reached = sugg && currentPrice > 0 && (
-                      (g.side === "SELL" && currentPrice >= sugg.activateAt) ||
-                      (g.side === "BUY"  && currentPrice <= sugg.activateAt)
-                    );
-
-                    if (activeTs) return null; // already activated, shows as separate order
-
-                    if (!sugg) return null;
-
-                    const isActivating = !!activatingTs[g.listId];
-                    const err = tsError[g.listId];
-
-                    const handleActivate = async () => {
-                      setActivatingTs(p => ({ ...p, [g.listId]: true }));
-                      setTsError(p => { const n = { ...p }; delete n[g.listId]; return n; });
-                      try {
-                        const exInfo = await fetch(`/api/exchange-info?symbol=${g.symbol}`).then(r => r.json());
-                        const tickSize = exInfo.tickSize ?? "0.01";
-                        const res = await fetch("/api/orders/trailing/activate", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            orderListId: g.listId, symbol: g.symbol,
-                            side: g.side, quantity: g.tpOrd.origQty,
-                            tpPrice: g.tpOrd.price,
-                            trailDist: sugg.distance, tickSize,
-                            entryPrice: sugg.entryPrice > 0 ? sugg.entryPrice : (entryPrices[g.listId] ?? 0),
-                          }),
-                        });
-                        const d = await res.json();
-                        if (d.error) throw new Error(d.error);
-                        fetchTrailing(); onRefresh();
-                      } catch (e) {
-                        setTsError(p => ({ ...p, [g.listId]: (e as Error).message }));
-                      } finally {
-                        setActivatingTs(p => { const n = { ...p }; delete n[g.listId]; return n; });
-                      }
-                    };
-
-                    return (
-                      <div className={`order-trailing${reached ? " order-trailing--active" : ""}`}>
-                        <div className="order-trailing__header">
-                          <i className="fa-solid fa-flag-checkered" />
-                          <span>Trailing Stop</span>
-                          {reached && <span className="order-trailing__alert">Preu assolit!</span>}
-                        </div>
-                        <div className="order-trailing__levels">
-                          {sugg.activateAtr > 0 && (
-                            <div className="order-trailing__level">
-                              <span>Activació</span>
-                              <span className="mono">{formatCurrency(sugg.activateAt)}</span>
-                              <span className="order-trailing__atr">{sugg.activateAtr}×ATR</span>
-                            </div>
-                          )}
-                          {sugg.activateAtr === 0 && (
-                            <div className="order-trailing__level">
-                              <span>Activació</span>
-                              <span className="order-trailing__atr">immediata · auto</span>
-                            </div>
-                          )}
-                          <div className="order-trailing__level">
-                            <span>Distància</span>
-                            <span className="mono">{formatCurrency(sugg.distance)}</span>
-                            <span className="order-trailing__atr">{sugg.distanceAtr}×ATR</span>
-                          </div>
-                        </div>
-                        <div className="order-trailing__logic">{sugg.logic}</div>
-                        {err && <div className="order-trailing__err">{err}</div>}
-                        <button
-                          className={`order-trailing__btn${reached ? " order-trailing__btn--ready" : ""}`}
-                          onClick={handleActivate} disabled={isActivating}
-                        >
-                          {isActivating
-                            ? <><i className="fa-solid fa-spinner fa-spin" /> Activant…</>
-                            : reached
-                              ? <><i className="fa-solid fa-bolt" /> Activar ara (auto en ~30s)</>
-                              : <><i className="fa-solid fa-flag-checkered" /> Activa Trailing Stop</>}
-                        </button>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Exit plan */}
-                  {(() => {
-                    const isOpen  = openExitKey === ocoKey;
-                    const meta    = orderMeta[ocoKey] ?? {};
-                    const current = localExitNotes[ocoKey] ?? meta.exitNotes ?? "";
-                    const hasPlan = !!current;
-                    return (
-                      <div className="order-card__exit">
-                        <button
-                          className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
-                          onClick={() => setOpenExitKey(k => k === ocoKey ? null : ocoKey)}
-                        >
-                          <i className="fa-solid fa-route" />
-                          <span>Pla de sortida</span>
-                          {hasPlan && <span className="order-card__exit-indicator" />}
-                          <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
-                        </button>
-                        {isOpen && (
-                          <div className="order-card__exit-body">
-                            <textarea
-                              className="journal-notes"
-                              rows={3}
-                              placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
-                              value={current}
-                              onChange={ev => handleExitNotesChange(ocoKey, ev.target.value)}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Actions */}
-                  <div className="order-card__actions">
-                    <button className="order-btn order-btn--secondary"
-                      onClick={() => setEditTarget({
-                        kind: "oco", symbol: g.symbol, orderListId: g.listId,
-                        side: g.side as "BUY" | "SELL", quantity: g.tpOrd.origQty,
-                        tpOrder: g.tpOrd, slOrder: g.slOrd,
-                      })}>
-                      <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
-                    </button>
-                    <button className="order-btn order-btn--cancel" disabled={isCanceling}
-                      onClick={() => handleCancelOco(g)}>
-                      {isCanceling
-                        ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
-                        : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
-                    </button>
-                  </div>
-                </div>
-              );
+                );
+              })();
             }
 
             /* Single order card */
             const o = g.order;
+            if (!o) return null;
             const coin = coins.find(c => c.pair === o.symbol);
             const currentPrice = coin?.price ?? 0;
             const price     = parseFloat(o.price);
@@ -790,187 +773,107 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
             const ordKey  = stratKey("ord", o.orderId);
             const ordStrat = strategies[ordKey] ?? null;
             // Check if this is an active trailing stop SL order
-            const activeTs = trailingActive.find(t => t.slOrderId === o.orderId && t.status === "active");
+            const activeTs = trailingActive.find(t => t?.slOrderId === o.orderId && t?.status === "active");
 
-            return (
-              <div key={o.orderId} className="order-card">
-                {/* Header */}
-                <div className="order-card__header">
-                  <div className="order-card__identity">
-                    <CoinIcon symbol={o.symbol.replace("USDT", "")} size={22} />
-                    <span className="order-card__pair">{o.symbol.replace("USDT", "")} <span className="order-card__quote">/ USDT</span></span>
-                    <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>{o.side}</span>
-                    {activeTs
-                      ? <span className="pill pill--trailing"><i className="fa-solid fa-chart-line" /> Trailing</span>
-                      : <span className={`pill ${info.cls}`}>{info.label}</span>}
-                  </div>
-                  <div className="order-card__header-right">
-                    <span className="order-card__date">{fmtDate(o.time)}</span>
-                    {orderMeta[ordKey]?.tradeCode && (
-                      <span className="order-card__tc-badge">{orderMeta[ordKey].tradeCode}</span>
-                    )}
-                    {orderMeta[ordKey]?.interval && (
-                      <span className="order-card__tf-badge">{orderMeta[ordKey].interval}</span>
-                    )}
-                    {orderMeta[ordKey]?.botName && (
-                      <span className="order-card__bot-badge" title={`Bot: ${orderMeta[ordKey].botName}`}>
-                        <i className="fa-solid fa-robot" /> {orderMeta[ordKey].botName}
-                      </span>
-                    )}
-                    {activeTs && <span className="order-trailing__pulse" style={{ marginRight: "0.25rem" }} />}
-                    <div className="strategy-picker">
-                      <button
-                        className="strategy-picker__badge"
-                        style={ordStrat ? { background: `${STRATEGY_MAP[ordStrat]}22`, color: STRATEGY_MAP[ordStrat], borderColor: `${STRATEGY_MAP[ordStrat]}66` } : {}}
-                        onClick={() => setOpenPickerKey(k => k === ordKey ? null : ordKey)}>
-                        {ordStrat
-                          ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ordStrat] }} />{ordStrat}</>
-                          : <><i className="fa-solid fa-tag" /> Estratègia</>}
-                      </button>
-                      {openPickerKey === ordKey && (
-                        <StrategyPicker orderKey={ordKey} current={ordStrat}
-                          onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
-                      )}
-                    </div>
-                  </div>
-                </div>
+            /* ── Trailing stop card: same layout as OCO ── */
+            if (activeTs) {
+              const entryP       = activeTs.entryPrice > 0 ? activeTs.entryPrice : 0;
+              const slP          = activeTs.currentSl;
+              const peakP        = activeTs.peakPrice;
+              const slFromEntry  = entryP > 0 && slP > 0   ? ((slP   - entryP) / entryP) * 100 : null;
+              const peakFromEntry= entryP > 0 && peakP > 0 ? ((peakP - entryP) / entryP) * 100 : null;
+              const slPnl        = entryP > 0 && qty > 0 && slP > 0
+                ? (slP - entryP) * qty * (o.side === "SELL" ? 1 : -1) : null;
+              const peakPnl      = entryP > 0 && qty > 0 && peakP > 0
+                ? (peakP - entryP) * qty * (o.side === "SELL" ? 1 : -1) : null;
+              const toSlDist     = slP > 0   && currentPrice > 0 ? dist(slP,   currentPrice) : null;
+              const toPeakDist   = peakP > 0 && currentPrice > 0 ? dist(peakP, currentPrice) : null;
+              const isOpen       = openExitKey === ordKey;
+              const meta         = orderMeta[ordKey] ?? {};
+              const exitCurrent  = localExitNotes[ordKey] ?? meta.exitNotes ?? "";
+              const hasPlan      = !!exitCurrent;
 
-                {activeTs ? (() => {
-                  // ── Trailing stop card layout (similar to OCO) ──
-                  const entryP  = activeTs.entryPrice > 0 ? activeTs.entryPrice : 0;
-                  const slP     = activeTs.currentSl;
-                  const peakP   = activeTs.peakPrice;
-                  const fromEntry = entryP > 0 && currentPrice > 0
-                    ? ((currentPrice - entryP) / entryP) * 100 : null;
-                  const slFromEntry = entryP > 0 && slP > 0
-                    ? ((slP - entryP) / entryP) * 100 : null;
-                  const peakFromEntry = entryP > 0 && peakP > 0
-                    ? ((peakP - entryP) / entryP) * 100 : null;
-                  const slPnl   = entryP > 0 && qty > 0 && slP > 0
-                    ? (slP - entryP) * qty * (o.side === "SELL" ? 1 : -1) : null;
-                  const peakPnl = entryP > 0 && qty > 0 && peakP > 0
-                    ? (peakP - entryP) * qty * (o.side === "SELL" ? 1 : -1) : null;
-                  const toSlDist = slP > 0 && currentPrice > 0 ? dist(slP, currentPrice) : null;
-                  const toPeakDist = peakP > 0 && currentPrice > 0 ? dist(peakP, currentPrice) : null;
+              return (
+                <div key={o.orderId} className="order-card order-card--oco">
+                  <div className="order-card__row">
 
-                  return (<>
-                    {/* Amount banner */}
-                    {qty > 0 && (
-                      <div className="order-card__amount">
-                        <span className="order-card__amount-value">
-                          {qty} {o.symbol.replace("USDT", "")}
+                    {/* 1. Identity */}
+                    <div className="order-card__col-identity">
+                      <div className="order-card__col-top">
+                        <span className="pill order-card__tc-badge">
+                          <i className="fa-solid fa-hashtag" />
+                          {orderMeta[ordKey]?.tradeCode || `ORD-${o.orderId}`}
                         </span>
-                        <span className="order-card__amount-label">
-                          {entryP > 0
-                            ? `(${formatCurrency(entryP * qty)}) · entrada`
-                            : currentPrice > 0
-                              ? `(${formatCurrency(currentPrice * qty)}) · actual`
-                              : ""}
+                        <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(activeTs.createdAt)}</span>
+                      </div>
+                      <div className="order-card__col-hero">
+                        <CoinIcon symbol={o.symbol.replace("USDT", "")} size={44} />
+                        <div className="order-card__hero-info">
+                          <span className="order-card__hero-crypto">{o.symbol.replace("USDT", "")}</span>
+                          {entryP > 0 && qty > 0 && (
+                            <>
+                              <span className="order-card__section-label">INVERTIT</span>
+                              <span className="order-card__hero-val mono">{formatCurrency(entryP * qty)}</span>
+                              <span className="order-card__hero-sub">
+                                ENTRADA <span className="mono">{formatCurrency(entryP)}</span>
+                                {" "}(#{formatCurrency(entryP * qty)})
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="order-card__col-bottom">
+                        <span className="pill pill--trailing"><i className="fa-solid fa-chart-line" /> Trailing</span>
+                        <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
+                          <i className={`fa-solid ${o.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{o.side}
                         </span>
-                      </div>
-                    )}
-
-                    {/* Price track: entrada → vigent */}
-                    {(entryP > 0 || currentPrice > 0) && (
-                      <div className="price-track">
-                        <div className="price-track__col">
-                          <div className="price-track__label">Entrada</div>
-                          <div className="price-track__total mono">
-                            {entryP > 0 && qty > 0 ? formatCurrency(entryP * qty) : "—"}
-                          </div>
-                          <div className="price-track__unit dim">
-                            {entryP > 0 ? `${qty} × ${formatCurrency(entryP)}` : ""}
-                          </div>
-                          <div className="price-track__time">
-                            <i className="fa-regular fa-clock" />
-                            {" "}{fmtDate(activeTs.createdAt)}
-                          </div>
-                        </div>
-                        <div className="price-track__arrow">
-                          {fromEntry !== null && (
-                            <span className={`price-track__delta${fromEntry >= 0 ? " price-track__delta--up" : " price-track__delta--down"}`}>
-                              {fromEntry >= 0 ? "+" : ""}{fromEntry.toFixed(2)}%
-                            </span>
+                        {orderMeta[ordKey]?.interval && (
+                          <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ordKey].interval}</span>
+                        )}
+                        {orderMeta[ordKey]?.botName && (
+                          <span className="pill order-card__bot-badge" title={`Bot: ${orderMeta[ordKey].botName}`}>
+                            <i className="fa-solid fa-robot" />{orderMeta[ordKey].botName}
+                          </span>
+                        )}
+                        <div className="strategy-picker">
+                          <button
+                            className="strategy-picker__badge"
+                            style={ordStrat ? { background: `${STRATEGY_MAP[ordStrat]}22`, color: STRATEGY_MAP[ordStrat], borderColor: `${STRATEGY_MAP[ordStrat]}66` } : {}}
+                            data-tooltip={ordStrat ? STRATEGY_DESC[ordStrat] : undefined}
+                            onClick={() => setOpenPickerKey(k => k === ordKey ? null : ordKey)}>
+                            {ordStrat
+                              ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ordStrat] }} />{ordStrat}</>
+                              : <><i className="fa-solid fa-tag" /> Estratègia</>}
+                          </button>
+                          {openPickerKey === ordKey && (
+                            <StrategyPicker orderKey={ordKey} current={ordStrat}
+                              onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
                           )}
-                          <i className="fa-solid fa-arrow-right price-track__icon" />
-                        </div>
-                        <div className="price-track__col price-track__col--now">
-                          <div className="price-track__label">
-                            <span className="price-track__live" title="Preu en temps real" />
-                            Vigent
-                          </div>
-                          <div className="price-track__total mono">
-                            {currentPrice > 0 && qty > 0 ? formatCurrency(currentPrice * qty) : "—"}
-                          </div>
-                          <div className="price-track__unit dim">
-                            {currentPrice > 0 ? `${qty} × ${formatCurrency(currentPrice)}` : ""}
-                          </div>
-                          <div className="price-track__time">
-                            <i className="fa-regular fa-clock" />
-                            {" ara · "}{new Date().toLocaleTimeString("ca-ES", { hour: "2-digit", minute: "2-digit" })}h
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* SL Trail + Màxim vist (com tpsl-grid) */}
-                    <div className="tpsl-grid">
-                      <div className="tpsl-card tpsl-card--sl">
-                        <div className="tpsl-card__label">
-                          <i className="fa-solid fa-shield-halved" style={{ marginRight: "0.25rem" }} />
-                          SL Trailing
-                        </div>
-                        <div className="tpsl-card__total-big mono">
-                          {qty > 0 && slP > 0 ? formatCurrency(slP * qty) : formatCurrency(slP)}
-                        </div>
-                        <div className="tpsl-card__row">
-                          {slFromEntry !== null && (
-                            <span className="tpsl-card__pct">
-                              {slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%
-                            </span>
-                          )}
-                          {slPnl !== null && (
-                            <span className="tpsl-card__pnl">
-                              {slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="tpsl-card__ref dim">
-                          preu {formatCurrency(slP)}
-                          {toSlDist !== null ? ` · dist. ${toSlDist > 0 ? "+" : ""}${toSlDist.toFixed(2)}%` : ""}
-                        </div>
-                      </div>
-
-                      <div className="tpsl-card tpsl-card--tp">
-                        <div className="tpsl-card__label">
-                          <i className="fa-solid fa-arrow-trend-up" style={{ marginRight: "0.25rem" }} />
-                          Màxim vist
-                        </div>
-                        <div className="tpsl-card__total-big mono">
-                          {qty > 0 && peakP > 0 ? formatCurrency(peakP * qty) : formatCurrency(peakP)}
-                        </div>
-                        <div className="tpsl-card__row">
-                          {peakFromEntry !== null && (
-                            <span className="tpsl-card__pct">
-                              {peakFromEntry > 0 ? "+" : ""}{peakFromEntry.toFixed(2)}%
-                            </span>
-                          )}
-                          {peakPnl !== null && (
-                            <span className="tpsl-card__pnl">
-                              {peakPnl > 0 ? "+" : ""}{formatCurrency(peakPnl)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="tpsl-card__ref dim">
-                          preu {formatCurrency(peakP)}
-                          {toPeakDist !== null ? ` · dist. ${toPeakDist > 0 ? "+" : ""}${toPeakDist.toFixed(2)}%` : ""}
                         </div>
                       </div>
                     </div>
 
-                    {/* Chart with trailing SL history */}
+                    {/* 2. SL Trailing */}
+                    <div className="order-card__col-sl">
+                      <span className="order-card__section-label order-card__section-label--sl">SL TRAILING</span>
+                      <span className="order-card__col-price mono">{slP > 0 ? formatCurrency(slP) : "—"}</span>
+                      {slFromEntry !== null && <span className="order-card__delta order-card__delta--down">{slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%</span>}
+                      {slPnl !== null && <span className="order-card__pnl order-card__pnl--down">{slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}</span>}
+                      {toSlDist !== null && <span className="order-card__price-sub dim">dist {toSlDist > 0 ? "+" : ""}{toSlDist.toFixed(2)}%</span>}
+                    </div>
+
+                    {/* 3. Màxim vist */}
+                    <div className="order-card__col-tp">
+                      <span className="order-card__section-label order-card__section-label--tp">MÀXIM VIST</span>
+                      <span className="order-card__col-price mono">{peakP > 0 ? formatCurrency(peakP) : "—"}</span>
+                      {peakFromEntry !== null && <span className="order-card__delta order-card__delta--up">{peakFromEntry > 0 ? "+" : ""}{peakFromEntry.toFixed(2)}%</span>}
+                      {peakPnl !== null && <span className="order-card__pnl order-card__pnl--up">{peakPnl > 0 ? "+" : ""}{formatCurrency(peakPnl)}</span>}
+                      {toPeakDist !== null && <span className="order-card__price-sub dim">dist {toPeakDist > 0 ? "+" : ""}{toPeakDist.toFixed(2)}%</span>}
+                    </div>
+
+                    {/* 4. Chart */}
                     {slP > 0 && peakP > 0 && (
-                      <div className="order-card__chart">
+                      <div className="order-card__col-chart">
                         <OcoProgressChart
                           symbol={o.symbol} startTime={activeTs.createdAt}
                           tpPrice={peakP} slPrice={slP}
@@ -982,40 +885,120 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                       </div>
                     )}
 
-                    {/* Trailing running info */}
-                    <div className="order-trailing order-trailing--running">
-                      <div className="order-trailing__header">
+                    {/* 5. Trailing info + Edit / Cancel */}
+                    <div className="order-card__col-trailing order-card__col-trailing--running">
+                      <div className="order-card__trailing-header">
                         <i className="fa-solid fa-chart-line" />
-                        <span>Trailing Stop Actiu</span>
+                        <span>Trailing Actiu</span>
                         <span className="order-trailing__pulse" />
                       </div>
-                      <div className="order-trailing__levels">
-                        <div className="order-trailing__level">
-                          <span>Distància</span>
+                      <div className="order-card__trailing-levels">
+                        <div className="order-card__trailing-level">
+                          <span className="order-card__trailing-lbl">Distància</span>
                           <span className="mono">{formatCurrency(activeTs.trailDist)}</span>
                         </div>
                       </div>
-                      <div className="order-trailing__logic" style={{ color: "#059669" }}>
-                        El SL puja automàticament quan el preu fa nous màxims. Actualitzat {new Date(activeTs.updatedAt).toLocaleTimeString("ca-ES")}.
+                      <div className="order-card__trailing-logic" style={{ color: "#059669", fontSize: "0.6rem" }}>
+                        Actualitzat {new Date(activeTs.updatedAt).toLocaleTimeString("ca-ES")}
+                      </div>
+                      <div className="order-card__col-trailing-actions">
+                        <button className="order-btn order-btn--secondary"
+                          onClick={() => setEditTarget({ kind: "single", order: o })}>
+                          <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
+                        </button>
+                        <button className="order-btn order-btn--cancel" disabled={isCanceling}
+                          onClick={() => handleCancel(o)}>
+                          {isCanceling
+                            ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
+                            : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
+                        </button>
                       </div>
                     </div>
-                  </>);
-                })() : (<>
-                  {/* Amount banner — ordre simple sense trailing */}
-                  {qty > 0 && (
-                    <div className="order-card__amount">
-                      <span className="order-card__amount-value">
-                        {qty} {o.symbol.replace("USDT", "")}
-                      </span>
-                      <span className="order-card__amount-label">
-                        {valueUSD > 0
-                          ? `(${formatCurrency(valueUSD)}) · actual`
-                          : price > 0
-                            ? `(${formatCurrency(price * qty)}) · ordre`
-                            : ""}
-                      </span>
+
+                  </div>
+
+                  {/* Exit plan */}
+                  <div className="order-card__exit">
+                    <button
+                      className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
+                      onClick={() => setOpenExitKey(k => k === ordKey ? null : ordKey)}
+                    >
+                      <i className="fa-solid fa-route" />
+                      <span>Pla de sortida</span>
+                      {hasPlan && <span className="order-card__exit-indicator" />}
+                      <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
+                    </button>
+                    {isOpen && (
+                      <div className="order-card__exit-body">
+                        <textarea
+                          className="journal-notes"
+                          rows={3}
+                          placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
+                          value={exitCurrent}
+                          onChange={ev => handleExitNotesChange(ordKey, ev.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            /* ── Regular single order card ── */
+            {
+              const isOpen  = openExitKey === ordKey;
+              const meta    = orderMeta[ordKey] ?? {};
+              const exitCurrent = localExitNotes[ordKey] ?? meta.exitNotes ?? "";
+              const hasPlan = !!exitCurrent;
+              return (
+                <div key={o.orderId} className="order-card">
+                  {/* Header */}
+                  <div className="order-card__header">
+                    <div className="order-card__hero">
+                      <CoinIcon symbol={o.symbol.replace("USDT", "")} size={40} />
+                      <div className="order-card__hero-info">
+                        {qty > 0 && <span className="order-card__hero-crypto">{qty} {o.symbol.replace("USDT", "")}</span>}
+                        {qty > 0 && valueUSD > 0 && <span className="order-card__hero-usd">{formatCurrency(valueUSD)}</span>}
+                      </div>
                     </div>
-                  )}
+                    <div className="order-card__header-right">
+                      <div className="order-card__header-top">
+                        {orderMeta[ordKey]?.tradeCode && (
+                          <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{orderMeta[ordKey].tradeCode}</span>
+                        )}
+                        <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(o.time)}</span>
+                      </div>
+                      <div className="order-card__header-bottom">
+                        {orderMeta[ordKey]?.interval && (
+                          <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ordKey].interval}</span>
+                        )}
+                        {orderMeta[ordKey]?.botName && (
+                          <span className="pill order-card__bot-badge" title={`Bot: ${orderMeta[ordKey].botName}`}>
+                            <i className="fa-solid fa-robot" />{orderMeta[ordKey].botName}
+                          </span>
+                        )}
+                        <div className="strategy-picker">
+                          <button
+                            className="strategy-picker__badge"
+                            style={ordStrat ? { background: `${STRATEGY_MAP[ordStrat]}22`, color: STRATEGY_MAP[ordStrat], borderColor: `${STRATEGY_MAP[ordStrat]}66` } : {}}
+                            data-tooltip={ordStrat ? STRATEGY_DESC[ordStrat] : undefined}
+                            onClick={() => setOpenPickerKey(k => k === ordKey ? null : ordKey)}>
+                            {ordStrat
+                              ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ordStrat] }} />{ordStrat}</>
+                              : <><i className="fa-solid fa-tag" /> Estratègia</>}
+                          </button>
+                          {openPickerKey === ordKey && (
+                            <StrategyPicker orderKey={ordKey} current={ordStrat}
+                              onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
+                          )}
+                        </div>
+                        <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
+                          <i className={`fa-solid ${o.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{o.side}
+                        </span>
+                        <span className={`pill ${info.cls}`}>{info.label}</span>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Price level */}
                   <div className="order-card__level order-card__level--single">
@@ -1031,72 +1014,59 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                         {toDist > 0 ? "+" : ""}{toDist.toFixed(2)}%
                       </span>
                     )}
-                    {stopPrice > 0 && (
-                      <span className="order-card__sublabel">Trigger: {formatCurrency(stopPrice)}</span>
-                    )}
+                    {stopPrice > 0 && <span className="order-card__sublabel">Trigger: {formatCurrency(stopPrice)}</span>}
                   </div>
 
-                  {/* Meta */}
                   <div className="order-card__meta">
                     <span className="order-card__qty">
                       <i className="fa-solid fa-layer-group" />
                       {" "}{qty} {o.symbol.replace("USDT", "")}
                       {price > 0 && <span className="dim"> ({formatCurrency(price * qty)})</span>}
                     </span>
-                    {currentPrice > 0 && (
-                      <span className="order-card__current dim">Mercat: {formatCurrency(currentPrice)}</span>
-                    )}
+                    {currentPrice > 0 && <span className="order-card__current dim">Mercat: {formatCurrency(currentPrice)}</span>}
                     <StatusPill status={o.status} />
                   </div>
-                </>)}
 
-                {/* Exit plan */}
-                {(() => {
-                  const isOpen  = openExitKey === ordKey;
-                  const meta    = orderMeta[ordKey] ?? {};
-                  const current = localExitNotes[ordKey] ?? meta.exitNotes ?? "";
-                  const hasPlan = !!current;
-                  return (
-                    <div className="order-card__exit">
-                      <button
-                        className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
-                        onClick={() => setOpenExitKey(k => k === ordKey ? null : ordKey)}
-                      >
-                        <i className="fa-solid fa-route" />
-                        <span>Pla de sortida</span>
-                        {hasPlan && <span className="order-card__exit-indicator" />}
-                        <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
-                      </button>
-                      {isOpen && (
-                        <div className="order-card__exit-body">
-                          <textarea
-                            className="journal-notes"
-                            rows={3}
-                            placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
-                            value={current}
-                            onChange={ev => handleExitNotesChange(ordKey, ev.target.value)}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                  {/* Exit plan */}
+                  <div className="order-card__exit">
+                    <button
+                      className={`order-card__exit-header${isOpen ? " order-card__exit-header--open" : ""}`}
+                      onClick={() => setOpenExitKey(k => k === ordKey ? null : ordKey)}
+                    >
+                      <i className="fa-solid fa-route" />
+                      <span>Pla de sortida</span>
+                      {hasPlan && <span className="order-card__exit-indicator" />}
+                      <i className={`fa-solid fa-chevron-${isOpen ? "up" : "down"} order-card__exit-chevron`} />
+                    </button>
+                    {isOpen && (
+                      <div className="order-card__exit-body">
+                        <textarea
+                          className="journal-notes"
+                          rows={3}
+                          placeholder="Descriu el pla de sortida: parcials, condicions de tancament, gestió del stop…"
+                          value={exitCurrent}
+                          onChange={ev => handleExitNotesChange(ordKey, ev.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
 
-                {/* Actions */}
-                <div className="order-card__actions">
-                  <button className="order-btn order-btn--edit"
-                    onClick={() => setEditTarget({ kind: "single", order: o })}>
-                    <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
-                  </button>
-                  <button className="order-btn order-btn--cancel" disabled={isCanceling}
-                    onClick={() => handleCancel(o)}>
-                    {isCanceling
-                      ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
-                      : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
-                  </button>
+                  {/* Actions */}
+                  <div className="order-card__actions">
+                    <button className="order-btn order-btn--edit"
+                      onClick={() => setEditTarget({ kind: "single", order: o })}>
+                      <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
+                    </button>
+                    <button className="order-btn order-btn--cancel" disabled={isCanceling}
+                      onClick={() => handleCancel(o)}>
+                      {isCanceling
+                        ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
+                        : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
+              );
+            }
           })}
         </div>
       )}
@@ -1751,48 +1721,41 @@ function HistoryTable({ orders, loading, error }: {
   return (
     <div className="hist-wrap">
 
-      {/* Summary bar */}
-      <div className="hist-summary">
-        {winRate !== null && (
-          <div className="hist-summary__pill hist-summary__pill--main">
-            <span className="hist-summary__big" style={{ color: winRate >= 50 ? "#16a34a" : "#dc2626" }}>
-              {winRate}%
-            </span>
-            <span className="hist-summary__sub">Win rate</span>
-          </div>
-        )}
-        <div className="hist-summary__divider" />
-        {wins > 0 && (
-          <div className="hist-summary__pill hist-summary__pill--tp">
-            <i className="fa-solid fa-check" />
-            <span className="hist-summary__big">{wins}</span>
-            <span className="hist-summary__sub">TP</span>
-          </div>
-        )}
-        {losses > 0 && (
-          <div className="hist-summary__pill hist-summary__pill--sl">
-            <i className="fa-solid fa-xmark" />
-            <span className="hist-summary__big">{losses}</span>
-            <span className="hist-summary__sub">SL</span>
-          </div>
-        )}
-        {canceled > 0 && (
-          <div className="hist-summary__pill hist-summary__pill--dim">
-            <i className="fa-solid fa-ban" />
-            <span className="hist-summary__big">{canceled}</span>
-            <span className="hist-summary__sub">Cancel·lats</span>
-          </div>
-        )}
-        {totalVolume > 0 && (
-          <>
-            <div className="hist-summary__divider" />
-            <div className="hist-summary__pill hist-summary__pill--main">
-              <i className="fa-solid fa-chart-bar" style={{ fontSize: "0.7rem" }} />
-              <span className="hist-summary__big">{formatCurrency(totalVolume)}</span>
-              <span className="hist-summary__sub">Volum operat</span>
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-clock-rotate-left" /> Historial
+      </div>
+      <div className="portfolio__cards bal-cards-row">
+        {(() => {
+          const wrColor = winRate === null ? "neutral" : winRate >= 50 ? "green" : "red";
+          return (
+            <div className={`portfolio__card portfolio__card--${wrColor}`}>
+              <span className="portfolio__card-label"><i className="fa-solid fa-percent" /> Win rate</span>
+              <span className="portfolio__card-value">{winRate !== null ? `${winRate}%` : "—"}</span>
+              <span className="portfolio__card-sub">{wins + losses} operacions tancades</span>
             </div>
-          </>
-        )}
+          );
+        })()}
+        <div className="portfolio__card portfolio__card--green">
+          <span className="portfolio__card-label"><i className="fa-solid fa-check" /> TP Guanys</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{wins}</span>
+          <span className="portfolio__card-sub">take profit assolits</span>
+        </div>
+        <div className="portfolio__card portfolio__card--red">
+          <span className="portfolio__card-label"><i className="fa-solid fa-xmark" /> SL Pèrdues</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{losses}</span>
+          <span className="portfolio__card-sub">stop loss activats</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-ban" /> Cancel·lats</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{canceled}</span>
+          <span className="portfolio__card-sub">ordres cancel·lades</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-chart-bar" /> Volum operat</span>
+          <span className="portfolio__card-value">{totalVolume > 0 ? formatCurrency(totalVolume) : "—"}</span>
+          <span className="portfolio__card-sub">USDT total executat</span>
+        </div>
       </div>
 
       {/* Cards list */}
@@ -1837,9 +1800,7 @@ function BalanceTable({ balances, loading, error, coins, openOrders }: {
 
   const ordersPerAsset = new Map<string, number>();
   for (const o of openOrders) {
-    const asset = o.symbol.endsWith("USDT") ? o.symbol.slice(0, -4)
-                : o.symbol.endsWith("BUSD") ? o.symbol.slice(0, -4)
-                : o.symbol;
+    const asset = o.symbol.replace(/USDT$|BUSD$|USDC$|FDUSD$|TUSD$/, "");
     ordersPerAsset.set(asset, (ordersPerAsset.get(asset) ?? 0) + 1);
   }
 
@@ -1892,7 +1853,7 @@ function BalanceTable({ balances, loading, error, coins, openOrders }: {
         </div>
         <div className="portfolio__card portfolio__card--neutral">
           <span className="portfolio__card-label"><i className="fa-solid fa-layer-group" /> Cryptos</span>
-          <span className="portfolio__card-value" style={{ color: "var(--text-1)", fontSize: "1.6rem" }}>{assetCount}</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{assetCount}</span>
           <span className="portfolio__card-sub">actius no-stable</span>
         </div>
         <div className="portfolio__card portfolio__card--neutral">
@@ -2139,6 +2100,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
           {tab === "bot"        && "Bot"}
           {tab === "equalizer"  && "Equalitzador"}
           {tab === "autolab"    && "AutoLab"}
+          {tab === "status"     && "Comando"}
         </span>
         <div className="panel-controls__right">
 
@@ -2233,6 +2195,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
       {tab === "bot"        && <ErrorBoundary label="Bot"><BotTab /></ErrorBoundary>}
       {tab === "equalizer"  && <ErrorBoundary label="Equalitzador"><EqualizerTab /></ErrorBoundary>}
       {tab === "autolab"    && <ErrorBoundary label="AutoLab"><AutoLabTab /></ErrorBoundary>}
+      {tab === "status"     && <ErrorBoundary label="Comando"><StatusTab /></ErrorBoundary>}
 
       <div className="panel-footer">
         <span className="panel-footer__dot" />

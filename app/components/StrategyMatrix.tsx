@@ -438,7 +438,7 @@ function TopOpportunities({
       <div className="section-title sm-top__title">
         <i className="fa-solid fa-star" /> Top oportunitats
         {!loading && !hasData && (
-          <button className="sm-scan-btn" onClick={onScan}>
+          <button className="btn-primary btn-sm" onClick={onScan}>
             <i className="fa-solid fa-magnifying-glass-chart" /> Analitzar ara
           </button>
         )}
@@ -718,13 +718,18 @@ export default function StrategyMatrix({ coins, onOpenOrder }: {
   const activeCount = Object.values(cache).filter(v => v && v !== "loading" && v !== "error").length;
   const total       = coins.length * INTERVALS.length;
   const buyCount    = Object.values(cache).filter(v => v && v !== "loading" && v !== "error" && (v as CellData).verdict === "BUY").length;
+  const avoidCount  = Object.values(cache).filter(v => v && v !== "loading" && v !== "error" && (v as CellData).verdict === "AVOID").length;
   const topOpp      = computeOpportunities(coins, cache)[0];
   const topProb     = topOpp?.probability ?? 0;
+  const coveragePct = total > 0 ? Math.round((activeCount / total) * 100) : 0;
 
   return (
     <div className="strat-matrix">
 
-      {/* Stat cards (full width, above both columns) */}
+      {/* 5 KPIs (full width, above both columns) */}
+      <div className="section-title">
+        <i className="fa-solid fa-table-cells" /> Escàner
+      </div>
       <div className="portfolio__cards">
         <div className="portfolio__card portfolio__card--blue">
           <span className="portfolio__card-label">
@@ -740,8 +745,16 @@ export default function StrategyMatrix({ coins, onOpenOrder }: {
           <span className="portfolio__card-label">
             <i className={`fa-solid fa-arrow-trend-${buyCount > 0 ? "up" : "right"}`} /> Senyals BUY
           </span>
-          <span className="portfolio__card-value">{buyCount}</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{buyCount}</span>
           <span className="portfolio__card-sub">de {activeCount} cel·les analitzades</span>
+        </div>
+
+        <div className={`portfolio__card portfolio__card--${avoidCount > 0 ? "red" : "neutral"}`}>
+          <span className="portfolio__card-label">
+            <i className={`fa-solid fa-arrow-trend-${avoidCount > 0 ? "down" : "right"}`} /> Evitar
+          </span>
+          <span className="portfolio__card-value portfolio__card-value--count">{avoidCount}</span>
+          <span className="portfolio__card-sub">senyals AVOID</span>
         </div>
 
         <div className="portfolio__card portfolio__card--neutral">
@@ -755,6 +768,14 @@ export default function StrategyMatrix({ coins, onOpenOrder }: {
           <span className="portfolio__card-sub">
             {topOpp ? `${topOpp.coin.symbol} · ${topOpp.interval}` : "sense dades"}
           </span>
+        </div>
+
+        <div className={`portfolio__card portfolio__card--${coveragePct === 100 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label">
+            <i className="fa-solid fa-circle-check" /> Cobertura
+          </span>
+          <span className="portfolio__card-value">{coveragePct}%</span>
+          <span className="portfolio__card-sub">{activeCount}/{total} cel·les carregades</span>
         </div>
       </div>
 
@@ -802,7 +823,7 @@ export default function StrategyMatrix({ coins, onOpenOrder }: {
                     </span>
                   )
               }
-              <button className="sm-refresh" onClick={fetchAll} disabled={loading} title="Recarregar ara">
+              <button className="btn-ghost btn-xs" onClick={fetchAll} disabled={loading} title="Recarregar ara">
                 <i className={`fa-solid fa-arrows-rotate${loading ? " fa-spin" : ""}`} />
               </button>
             </span>

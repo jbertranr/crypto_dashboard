@@ -221,7 +221,8 @@ export default function EqualizerTab() {
   const [savingBot,    setSavingBot]    = useState<number | null>(null);
   const [savedBotMsg,  setSavedBotMsg]  = useState<string | null>(null);
 
-  const abortRef = useRef(false);
+  const abortRef     = useRef(false);
+  const pendingRunRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/simulation/configs")
@@ -353,6 +354,18 @@ export default function EqualizerTab() {
   }, [selected, aFrom, aTo, iterations, metric, ranges]);
 
   const handleAbort = () => { abortRef.current = true; };
+
+  const handleRunConfig = useCallback((cfg: SavedConfig) => {
+    pendingRunRef.current = true;
+    selectConfig(cfg);
+  }, [selectConfig]);
+
+  useEffect(() => {
+    if (pendingRunRef.current && selected) {
+      pendingRunRef.current = false;
+      handleSearch();
+    }
+  }, [selected, handleSearch]);
 
   const handleValidate = useCallback(async (item: IterResult) => {
     if (!selected) return;
@@ -727,8 +740,46 @@ export default function EqualizerTab() {
 
   /* ── Render ─────────────────────────────────────────────────────── */
 
+  const bestResult = results[0] ?? null;
+
   return (
     <div className="eq-tab">
+
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-sliders" /> Equalitzador
+      </div>
+      <div className="portfolio__cards">
+        <div className="portfolio__card portfolio__card--blue">
+          <span className="portfolio__card-label"><i className="fa-solid fa-database" /> Configuracions</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{configs.length}</span>
+          <span className="portfolio__card-sub">simulacions disponibles</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-list-ol" /> Iteracions</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{iterations}</span>
+          <span className="portfolio__card-sub">iteracions configurades</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${running ? "blue" : results.length > 0 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-rotate" /> Progrés</span>
+          <span className="portfolio__card-value">{running ? `${progress}%` : results.length > 0 ? "Complet" : "—"}</span>
+          <span className="portfolio__card-sub">{results.length} resultats obtinguts</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${bestResult ? (bestResult.stats.totalPnlPct >= 0 ? "green" : "red") : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-trophy" /> Millor P&amp;L</span>
+          <span className="portfolio__card-value mono">
+            {bestResult ? `${bestResult.stats.totalPnlPct >= 0 ? "+" : ""}${bestResult.stats.totalPnlPct.toFixed(1)}%` : "—"}
+          </span>
+          <span className="portfolio__card-sub">{bestResult ? `WR ${bestResult.stats.winRate.toFixed(0)}%` : "sense resultats"}</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${valResult ? (valResult.stats.totalPnlPct >= 0 ? "green" : "red") : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-shield-check" /> Validació</span>
+          <span className="portfolio__card-value mono">
+            {valResult ? `${valResult.stats.totalPnlPct >= 0 ? "+" : ""}${valResult.stats.totalPnlPct.toFixed(1)}%` : "—"}
+          </span>
+          <span className="portfolio__card-sub">{valResult ? "període fora-de-mostra" : "no validat"}</span>
+        </div>
+      </div>
 
       {/* ══════════════════════════════════════════════════════════════
           FILA 1 — 3 columnes: selecció | paràmetres | rangs
@@ -737,16 +788,29 @@ export default function EqualizerTab() {
 
         {/* Col 1 — Selecció de la simulació */}
         <div className="eq-col eq-col-sim">
-          <div className="eq-col-header">
-            <span className="eq-col-title">
-              <i className="fa-solid fa-database" /> Simulació base
+          <div className="section-title">
+            <i className="fa-solid fa-database" /> Simulació base
+            <span className="section-title__right">
+              {selected && (
+                <span style={{ fontSize: "0.65rem", color: "var(--accent)", marginRight: "0.5rem" }}>
+                  <i className="fa-solid fa-circle-check" /> {selected.name}
+                </span>
+              )}
+              {running ? (
+                <button className="btn-danger btn-sm" onClick={handleAbort}>
+                  <i className="fa-solid fa-stop" /> Aturar
+                </button>
+              ) : (
+                <button
+                  className="btn-primary btn-sm"
+                  onClick={handleSearch}
+                  disabled={!selected}
+                  title={!selected ? "Selecciona una simulació base primer" : "Iniciar optimització"}
+                >
+                  <i className="fa-solid fa-play" /> Executar
+                </button>
+              )}
             </span>
-            {selected && (
-              <span className="eq-col-sel dim">
-                <i className="fa-solid fa-circle-check" style={{ color: "var(--accent)" }} />
-                &nbsp;{selected.name}
-              </span>
-            )}
           </div>
           {configs.length === 0
             ? <div className="eq-col-empty dim">Sense simulacions guardades</div>
@@ -812,6 +876,18 @@ export default function EqualizerTab() {
                         </div>
                       </div>
 
+                      {/* Botó executar */}
+                      <div className="eq-sim-card__actions">
+                        <button
+                          className="btn-primary btn-sm"
+                          onClick={e => { e.stopPropagation(); handleRunConfig(cfg); }}
+                          disabled={running}
+                          title="Seleccionar i executar optimització"
+                        >
+                          <i className="fa-solid fa-play" /> Executar
+                        </button>
+                      </div>
+
                     </div>
                   );
                 })}
@@ -821,12 +897,10 @@ export default function EqualizerTab() {
 
         {/* Col 2 — Paràmetres + Rangs de cerca (bloc únic) */}
         <div className="eq-col eq-col-config">
-          <div className="eq-col-header">
-            <span className="eq-col-title">
-              <i className="fa-solid fa-sliders" /> Paràmetres i rangs de cerca
-            </span>
+          <div className="section-title">
+            <i className="fa-solid fa-sliders" /> Paràmetres i rangs de cerca
             {selected && (
-              <span className="dim" style={{ fontSize: "0.68rem" }}>
+              <span className="section-title__right" style={{ fontSize: "0.65rem" }}>
                 {exitMode} · {entryMode}
               </span>
             )}
@@ -885,16 +959,16 @@ export default function EqualizerTab() {
 
                   <div className="eq-actions">
                     {!running ? (
-                      <button className="eq-run-btn" onClick={handleSearch}>
+                      <button className="btn-primary btn-sm" onClick={handleSearch}>
                         <i className="fa-solid fa-magnifying-glass-chart" /> Cercar
                       </button>
                     ) : (
-                      <button className="eq-run-btn eq-run-btn--abort" onClick={handleAbort}>
+                      <button className="btn-danger btn-sm" onClick={handleAbort}>
                         <i className="fa-solid fa-stop" /> Aturar
                       </button>
                     )}
                     {results.length > 0 && !running && (
-                      <button className="eq-narrow-btn" onClick={narrowRanges}
+                      <button className="btn-ghost btn-sm" onClick={narrowRanges}
                         title="Afina els rangs al voltant del millor resultat">
                         <i className="fa-solid fa-compress" /> Affinar
                       </button>
@@ -988,15 +1062,13 @@ export default function EqualizerTab() {
 
         {/* Col esquerra — Iteracions completades */}
         <div className="eq-col2 eq-col2-results">
-          <div className="eq-col-header">
-            <span className="eq-col-title">
-              <i className="fa-solid fa-trophy" /> Iteracions
-              {results.length > 0 && (
-                <span className="eq-col-badge">{results.length}</span>
-              )}
-            </span>
+          <div className="section-title">
+            <i className="fa-solid fa-trophy" /> Iteracions
             {results.length > 0 && (
-              <span className="dim" style={{ fontSize: "0.68rem" }}>
+              <span className="nav__badge" style={{ marginLeft: "0.3rem" }}>{results.length}</span>
+            )}
+            {results.length > 0 && (
+              <span className="section-title__right" style={{ fontSize: "0.65rem" }}>
                 {METRIC_OPTIONS.find(o => o.key === metric)?.label}
               </span>
             )}
@@ -1048,7 +1120,7 @@ export default function EqualizerTab() {
                           <td className="mono dim">{r.stats.totalTrades}</td>
                           <td className="eq-row-actions">
                             <button
-                              className={`eq-validate-btn${isActive ? " eq-validate-btn--active" : ""}`}
+                              className={`btn btn-xs ${isActive ? "btn-primary" : "btn-ghost"}`}
                               onClick={e => { e.stopPropagation(); handleValidate(r); }}
                               disabled={validating}
                               title="Valida al periode de backtest">
@@ -1057,7 +1129,7 @@ export default function EqualizerTab() {
                                 : <i className="fa-solid fa-vial-circle-check" />}
                             </button>
                             <button
-                              className="eq-report-btn"
+                              className="btn btn-ghost btn-xs"
                               onClick={e => { e.stopPropagation(); handleSaveReport(r); }}
                               disabled={savingReport !== null}
                               title="Exporta informe per IA (JSON autoexplicatiu amb totes les operacions i estadístiques)">
@@ -1066,7 +1138,7 @@ export default function EqualizerTab() {
                                 : <i className="fa-solid fa-file-export" />}
                             </button>
                             <button
-                              className="eq-bot-btn"
+                              className="btn btn-ghost btn-xs"
                               onClick={e => { e.stopPropagation(); handleSaveBot(r); }}
                               disabled={savingBot !== null}
                               title="Guarda la simulació per usar-la al Bot">
@@ -1086,12 +1158,10 @@ export default function EqualizerTab() {
 
         {/* Col dreta — Corbes equity */}
         <div className="eq-col2 eq-col2-equity">
-          <div className="eq-col-header">
-            <span className="eq-col-title">
-              <i className="fa-solid fa-chart-line" /> Corbes equity
-            </span>
+          <div className="section-title">
+            <i className="fa-solid fa-chart-line" /> Corbes equity
             {results.length > 0 && (
-              <span className="dim" style={{ fontSize: "0.68rem" }}>
+              <span className="section-title__right" style={{ fontSize: "0.65rem" }}>
                 {results.filter(r => r.equityCurve?.length > 1).length} sèries
               </span>
             )}

@@ -76,8 +76,46 @@ export default function ErrorsPanel() {
     critical: errors.filter(e => e.severity === "critical").length,
   };
 
+  const lastError = errors[0] ?? null;
+
   return (
     <div className="err-panel">
+
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-triangle-exclamation" /> Errors del sistema
+      </div>
+      <div className="portfolio__cards">
+        <div className={`portfolio__card portfolio__card--${errors.length > 0 ? "red" : "green"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-list" /> Total errors</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{errors.length}</span>
+          <span className="portfolio__card-sub">errors en memòria</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${counts.critical > 0 ? "red" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-skull" /> Crítics</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{counts.critical}</span>
+          <span className="portfolio__card-sub">requereixen acció immediata</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${counts.error > 0 ? "red" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-circle-exclamation" /> Errors</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{counts.error}</span>
+          <span className="portfolio__card-sub">errors no crítics</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${counts.warn > 0 ? "neutral" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-triangle-exclamation" /> Avisos</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{counts.warn}</span>
+          <span className="portfolio__card-sub">warnings del sistema</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-clock" /> Últim error</span>
+          <span className="portfolio__card-value" style={{ fontSize: "0.85rem" }}>
+            {lastError ? relTime(lastError.ts) : "—"}
+          </span>
+          <span className="portfolio__card-sub">
+            {lastError ? (lastError.message.slice(0, 28) + (lastError.message.length > 28 ? "…" : "")) : "cap error registrat"}
+          </span>
+        </div>
+      </div>
 
       {/* Capçalera */}
       <div className="err-panel__header">

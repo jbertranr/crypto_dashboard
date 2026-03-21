@@ -329,13 +329,31 @@ El fitxer `app/styles/dashboard.css` utilitza **BEM** (Block\_\_Element--Modifie
 ## 9. Components reutilitzables clau
 
 ### 9.1 Cards de estadística (`portfolio__card`)
-S'utilitzen a PortfolioTab, AnalysisTab i StrategyMatrix per mostrar KPIs.
+
+**REGLA OBLIGATÒRIA:** Tota pàgina principal (tab) ha de començar amb:
+1. Un `<div className="section-title">` amb la icona i títol del tab
+2. Exactament **5 cards KPI** (`portfolio__cards bal-cards-row`) rellevants per al context
+
+Els KPIs han de resumir l'estat global de la secció d'un cop d'ull. Escollir els 5 més significatius per a cada tab:
+
+| Tab | KPIs recomanats |
+|-----|----------------|
+| Open orders | Posicions · OCO · Singles · Símbols · Capital en risc |
+| History | Win rate · TP Guanys · SL Pèrdues · Cancel·lats · Volum operat |
+| Balance | Total · Lliure · Blocat · Cryptos · Major posició |
+| Portfolio | Total · Variació · P&L no realitzat · Assets · Millor/Pitjor |
 
 ```jsx
-<div className="portfolio__card portfolio__card--green|red|blue|neutral">
-  <span className="portfolio__card-label">Etiqueta</span>
-  <span className="portfolio__card-value">Valor destacat</span>
-  <span className="portfolio__card-sub">Subtext</span>
+<div className="section-title">
+  <i className="fa-solid fa-..." /> Títol del tab
+</div>
+<div className="portfolio__cards bal-cards-row">
+  <div className="portfolio__card portfolio__card--green|red|blue|neutral">
+    <span className="portfolio__card-label"><i className="fa-solid fa-..." /> Etiqueta</span>
+    <span className="portfolio__card-value">Valor destacat</span>
+    <span className="portfolio__card-sub">Subtext explicatiu</span>
+  </div>
+  {/* × 5 */}
 </div>
 ```
 
@@ -608,7 +626,9 @@ app/
 6. **Idioma:** Tota la UI en català. No barrejar castellà o anglès a les etiquetes.
 7. **Fonts de dades de "Variació":** El panell de stats i el gràfic usen snapshots locals. NO usar el `%change24h` de Binance per a la card "Variació" (donaria resultats inconsistents).
 8. **El tab "Escàner" (`matrix`) auto-fetch** en muntar. No eliminar el `useEffect` de `fetchAll`.
+9. **5 KPIs obligatoris per tab:** Cada pàgina principal ha de mostrar un `section-title` + 5 cards `portfolio__card` al principi. Vegeu §9.1 per als KPIs recomanats per tab.
+10. **Taules de balance:** Les cel·les amb doble valor mostren l'import en $ en gran (`bal-row__cell-main`) i la quantitat de crypto en petit (`bal-row__cell-sub`).
 
 ---
 
-*Última actualització: 2026-03-20 (v2 — portfolio redesign, section-title unificat, 6 indicadors flex)*
+*Última actualització: 2026-03-20 (v3 — 5 KPIs obligatoris per tab, balance redesign, nav 5 categories)*

@@ -106,6 +106,12 @@ export default function Nav({ tab, onTab, openOrdersCount }: {
 
       {!c && <span className="nav__section-label">Sistema</span>}
       {c && <div className="nav__section-divider" />}
+      <button onClick={() => onTab("status")} title={c ? "Comando" : undefined}
+        className={`nav__item${tab === "status" ? " nav__item--active" : ""}`}>
+        <i className="fa-solid fa-tower-control nav__item-icon" />
+        {!c && "Comando"}
+      </button>
+
       <button onClick={handleErrorsTab} title={c ? "Errors" : undefined}
         className={`nav__item${tab === "errors" ? " nav__item--active" : ""}${errorCount > 0 ? " nav__item--alert" : ""}`}>
         <i className="fa-solid fa-triangle-exclamation nav__item-icon" />

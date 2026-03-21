@@ -38,8 +38,7 @@ export default function OcoProgressChart({
   const [loading,    setLoading]    = useState(true);
   const [panning,    setPanning]    = useState(false); // soft-refresh in progress
   const [error,      setError]      = useState<string | null>(null);
-  const [tf,         setTf]         = useState<TF>("tot");
-  const [showZones,  setShowZones]  = useState(true);
+  const [tf,         setTf]         = useState<TF>("4h");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback((soft = false) => {
@@ -141,8 +140,11 @@ export default function OcoProgressChart({
 
   return (
     <div className="oco-chart">
-      {/* Toolbar */}
+      {/* Toolbar — TF pills right-aligned */}
       <div className="oco-chart__toolbar">
+        {(loading && data.length > 0 || panning) && (
+          <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.7rem", color: "var(--text-3)" }} />
+        )}
         <div className="oco-chart__tfs">
           {(["1h", "4h", "1d", "tot"] as TF[]).map(t => (
             <button key={t}
@@ -152,15 +154,6 @@ export default function OcoProgressChart({
             </button>
           ))}
         </div>
-        <button
-          className={`oco-chart__zone-toggle${showZones ? " oco-chart__zone-toggle--on" : ""}`}
-          onClick={() => setShowZones(z => !z)}>
-          <i className="fa-solid fa-layer-group" />
-          <span className="oco-chart__zone-label">Zones TP/SL</span>
-        </button>
-        {(loading && data.length > 0 || panning) && (
-          <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.7rem", color: "var(--text-3)", marginLeft: 4 }} />
-        )}
       </div>
 
       {/* Canvas */}
@@ -197,12 +190,12 @@ export default function OcoProgressChart({
                 ]}
               />
 
-              {/* TP/SL zones */}
-              {showZones && side === "SELL" && <>
+              {/* TP/SL zones — always visible */}
+              {side === "SELL" && <>
                 <ReferenceArea y1={tpPrice} y2={maxP + pad} fill="#059669" fillOpacity={0.10} />
                 <ReferenceArea y1={minP - pad} y2={slPrice} fill="#dc2626" fillOpacity={0.10} />
               </>}
-              {showZones && side === "BUY" && <>
+              {side === "BUY" && <>
                 <ReferenceArea y1={minP - pad} y2={tpPrice} fill="#059669" fillOpacity={0.10} />
                 <ReferenceArea y1={slPrice} y2={maxP + pad} fill="#dc2626" fillOpacity={0.10} />
               </>}

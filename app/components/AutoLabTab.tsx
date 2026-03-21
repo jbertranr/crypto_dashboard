@@ -400,8 +400,44 @@ export default function AutoLabTab() {
 
   /* ── Render ──────────────────────────────────────────────────────────────── */
 
+  const promotedCount = results.filter(r => r.promoted).length;
+
   return (
     <div className="al-tab">
+
+      {/* ── 5 KPIs ── */}
+      <div className="section-title">
+        <i className="fa-solid fa-wand-magic-sparkles" /> AutoLab
+      </div>
+      <div className="portfolio__cards">
+        <div className="portfolio__card portfolio__card--blue">
+          <span className="portfolio__card-label"><i className="fa-solid fa-grid-2" /> Arquetips</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{poolSize}</span>
+          <span className="portfolio__card-sub">{symCount} símbols × combinacions</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-list-ol" /> Iteracions</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{totalIter}</span>
+          <span className="portfolio__card-sub">{budgetOk ? "pressupost suficient" : "⚠ pressupost escàs"}</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${running ? "blue" : results.length > 0 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-rotate" /> Estat</span>
+          <span className="portfolio__card-value" style={{ fontSize: "0.95rem" }}>
+            {running ? "Executant…" : results.length > 0 ? "Complet" : "Pendent"}
+          </span>
+          <span className="portfolio__card-sub">{results.length} arquetips processats</span>
+        </div>
+        <div className={`portfolio__card portfolio__card--${promotedCount > 0 ? "green" : "neutral"}`}>
+          <span className="portfolio__card-label"><i className="fa-solid fa-robot" /> Bots creats</span>
+          <span className="portfolio__card-value portfolio__card-value--count">{promotedCount}</span>
+          <span className="portfolio__card-sub">promoguts automàticament</span>
+        </div>
+        <div className="portfolio__card portfolio__card--neutral">
+          <span className="portfolio__card-label"><i className="fa-solid fa-coins" /> Pressupost bot</span>
+          <span className="portfolio__card-value mono">{budgetU} USDT</span>
+          <span className="portfolio__card-sub">per bot creat</span>
+        </div>
+      </div>
 
       {/* ── Left: config ──────────────────────────────────────────── */}
       <div className="al-col al-col--config">
@@ -462,11 +498,11 @@ export default function AutoLabTab() {
           <div className="al-dim-header">
             <h3 className="al-section__title">Dimensions a explorar</h3>
             <div className="al-dim-btns">
-              <button className="al-dim-btn" onClick={() => {
+              <button className="btn-ghost btn-xs" onClick={() => {
                 setSelExits(new Set(ALL_EXITS)); setSelEntries(new Set(ALL_ENTRIES));
                 setSelTfs(new Set(ALL_INTERVALS)); setSelCapModes(new Set(ALL_CAP_MODES));
               }}>Tot</button>
-              <button className="al-dim-btn" onClick={() => {
+              <button className="btn-ghost btn-xs" onClick={() => {
                 setSelExits(new Set()); setSelEntries(new Set());
                 setSelTfs(new Set()); setSelCapModes(new Set());
               }}>Cap</button>
@@ -542,13 +578,13 @@ export default function AutoLabTab() {
 
         <div className="al-run-row">
           {!running ? (
-            <button className="al-btn al-btn--start" onClick={handleStart}
+            <button className="btn-primary btn-lg" style={{ width: "100%", justifyContent: "center" }} onClick={handleStart}
               disabled={poolSize === 0 || !baseId || symCount === 0}>
               <i className="fa-solid fa-wand-magic-sparkles" /> Iniciar AutoLab
               {poolSize > 0 && <span className="al-arch-count">({poolSize} · {totalIter} iters)</span>}
             </button>
           ) : (
-            <button className="al-btn al-btn--stop" onClick={() => { abortRef.current = true; }}>
+            <button className="btn-danger btn-lg" style={{ width: "100%", justifyContent: "center" }} onClick={() => { abortRef.current = true; }}>
               <i className="fa-solid fa-stop" /> Aturar
             </button>
           )}

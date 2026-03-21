@@ -25,8 +25,19 @@ import path from "path";
 import fs from "fs";
 
 declare global {
-  var __autoTraderStarted: boolean | undefined;
-  var __autoTraderTimer:   ReturnType<typeof setInterval> | undefined;
+  var __autoTraderStarted:    boolean | undefined;
+  var __autoTraderTimer:      ReturnType<typeof setInterval> | undefined;
+  var __autoTraderLastRun:    number | undefined;
+  var __autoTraderLastResult: string | undefined;
+}
+
+export function getAutoTraderStatus() {
+  return {
+    started:    !!global.__autoTraderStarted,
+    running:    _polling,
+    lastRun:    global.__autoTraderLastRun    ?? null,
+    lastResult: global.__autoTraderLastResult ?? null,
+  };
 }
 
 /* ── SavedConfig (same shape as simulation/configs) ──────────── */
@@ -398,6 +409,8 @@ async function globalPoll(): Promise<void> {
     }
   } finally {
     _polling = false;
+    global.__autoTraderLastRun    = Date.now();
+    global.__autoTraderLastResult = "ok";
   }
 }
 
