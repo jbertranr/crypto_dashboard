@@ -13,6 +13,14 @@ type StratProposal = {
 };
 type AnalysisSnap = { price: number; atr: number; strategies: StratProposal[] };
 
+type BotPreset = {
+  id: string; code: string; name: string; enabled: boolean;
+  simConfig: { config: {
+    interval?: string; tpAtr?: number; slAtr?: number;
+    trailActivateAtr?: number; trailDistanceAtr?: number;
+  } } | null;
+};
+
 /* ── precision helpers ── */
 function stepDp(step: string) {
   const i = step.indexOf(".");
@@ -86,6 +94,26 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       setBalances(m);
     }).catch(() => {});
   }, []);
+
+  /* bot presets */
+  const [bots,          setBots]          = useState<BotPreset[]>([]);
+  const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/bots").then(r => r.json())
+      .then((d: { bots: BotPreset[] }) => setBots(d.bots ?? []))
+      .catch(() => {});
+  }, []);
+
+  const selectedBot = bots.find(b => b.id === selectedBotId) ?? null;
+
+  const selectBot = useCallback((botId: string | null) => {
+    setSelectedBotId(botId);
+    if (!botId) return;
+    const bot = bots.find(b => b.id === botId);
+    const iv = bot?.simConfig?.config?.interval;
+    if (iv === "5m" || iv === "1h" || iv === "4h") setAnalysisInterval(iv);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bots]);
 
   /* form state */
   const [side,         setSide]         = useState<"BUY" | "SELL">("SELL");
@@ -232,8 +260,8 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       const entry = currentRef || (d.price ?? currentRef);
       if (atr <= 0) return;
       const prec = entry >= 100 ? 2 : entry >= 1 ? 4 : 6;
-      const actMult = 0, distMult = 1.5;
-      const activateAt = entry; // activació immediata des del preu d'entrada
+      const actMult = 2.0, distMult = 1.5;
+      const activateAt = currentSide === "SELL" ? entry + actMult * atr : entry - actMult * atr;
       const distance   = atr * distMult;
       const atrFmt = atr >= 100 ? atr.toFixed(2) : atr >= 1 ? atr.toFixed(4) : atr.toFixed(6);
       const extrm = currentSide === "SELL" ? "màxim" : "mínim";
@@ -242,7 +270,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       setTrailingDistance(distance.toFixed(prec));
       setTrailingActivateAtr(actMult);
       setTrailingDistanceAtr(distMult);
-      setTrailingLogic(`S'activa automàticament des del preu d'entrada. Segueix el ${extrm} assolit amb una cua de ${distMult}×ATR (≈${atrFmt}) — protegeix beneficis sense tancar massa aviat.`);
+      setTrailingLogic(`S'activa quan el preu supera ${actMult}×ATR (≈${atrFmt}) per sobre de l'entrada (guany mínim abans d'activar). Llavors segueix el ${extrm} assolit amb una cua de ${distMult}×ATR.`);
     } catch { /* keep empty */ }
     finally { setTrailingLoading(false); }
   }, []);
@@ -285,13 +313,46 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
 
   /* apply selected strategy — OCO: absolute prices; buy-exit: percentages */
   useEffect(() => {
-    if (!analysisSnap) return;
+    if (!analysisSnap || selectedBot) return;
     const s = analysisSnap.strategies[selectedStratIdx];
     if (!s || s.type === "bearish") return;
     if (mode === "oco" && tickSize) applyStrategy(s, analysisSnap.price, analysisSnap.atr, tickSize);
     if (mode === "buy-exit")        applyStrategyToBuyExit(s, analysisSnap.price, analysisSnap.atr);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, analysisSnap, selectedStratIdx, tickSize]);
+  }, [mode, analysisSnap, selectedStratIdx, tickSize, selectedBot]);
+
+  /* apply bot config when bot selected + analysis loaded */
+  useEffect(() => {
+    if (!selectedBot || !analysisSnap) return;
+    const cfg = selectedBot.simConfig?.config;
+    if (!cfg) return;
+    const { atr, price } = analysisSnap;
+    if (!atr || !price) return;
+    const tpAtr   = cfg.tpAtr            ?? 2.5;
+    const slAtr   = cfg.slAtr            ?? 1.0;
+    const trailAct = cfg.trailActivateAtr ?? 1.5;
+    const trailDst = cfg.trailDistanceAtr ?? 1.0;
+    const prec = price >= 100 ? 2 : price >= 1 ? 4 : 6;
+    // buy-exit: percentages
+    setBeTpPct((tpAtr * atr / price * 100).toFixed(2));
+    setBeSlPct((slAtr * atr / price * 100).toFixed(2));
+    // oco: absolute prices
+    const tpP  = roundNearest(price + tpAtr * atr, tickSize);
+    const slP  = roundNearest(price - slAtr * atr, tickSize);
+    const sllP = roundNearest(parseFloat(slP) * 0.999, tickSize);
+    setTpPrice(tpP);       setTpPct(pctOf(parseFloat(tpP), price));
+    setSlStopPrice(slP);   setSlStopPct(pctOf(parseFloat(slP), price));
+    setSlLimitPrice(sllP); setSlLimitPct(pctOf(parseFloat(sllP), price));
+    // trailing (always on when bot applies)
+    setTrailingOn(true);
+    setTrailingAtr(atr);
+    setTrailingActivateAt((price + trailAct * atr).toFixed(prec));
+    setTrailingDistance((trailDst * atr).toFixed(prec));
+    setTrailingActivateAtr(trailAct);
+    setTrailingDistanceAtr(trailDst);
+    setTrailingLogic(`${selectedBot.name} · TP ${tpAtr}×ATR · SL ${slAtr}×ATR · Trail: activa ${trailAct}×ATR, dist ${trailDst}×ATR`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBot, analysisSnap, tickSize]);
 
   const submitBuyExit = async () => {
     setError(null);
@@ -299,32 +360,34 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     const tpPct = parseFloat(beTpPct);
     const slPct = parseFloat(beSlPct);
     if (!usd || usd <= 0)        { setError("Enter a valid USDT amount."); return; }
-    if (!tpPct || tpPct <= 0)    { setError("Take Profit % must be > 0."); return; }
-    if (!slPct || slPct <= 0)    { setError("Stop Loss % must be > 0."); return; }
     if (!ref || ref <= 0)        { setError("Preu de referència no disponible."); return; }
     if ((balances["USDT"] ?? 0) < usd) { setError(`Insufficient USDT balance (${balances["USDT"] ?? 0})`); return; }
+    if (!tpPct || tpPct <= 0)   { setError("Take Profit % must be > 0."); return; }
+    if (!slPct || slPct <= 0)   { setError("Stop Loss % must be > 0."); return; }
 
-    const tpPrice = ref * (1 + tpPct / 100);
-    const slPrice = ref * (1 - slPct / 100);
+    const tpPriceVal = ref * (1 + tpPct / 100);
+    const slPriceVal = ref * (1 - slPct / 100);
+
+    const trailing = trailingOn && trailingActivateAt && trailingDistance ? {
+      activateAt:  parseFloat(trailingActivateAt),
+      distance:    parseFloat(trailingDistance),
+      activateAtr: trailingActivateAtr,
+      distanceAtr: trailingDistanceAtr,
+      logic:       trailingLogic,
+    } : null;
 
     setSaving(true);
     try {
-      const trailing = trailingOn && trailingActivateAt && trailingDistance ? {
-        activateAt:  parseFloat(trailingActivateAt),
-        distance:    parseFloat(trailingDistance),
-        activateAtr: trailingActivateAtr,
-        distanceAtr: trailingDistanceAtr,
-        logic:       trailingLogic,
-      } : null;
       const res = await fetch("/api/orders/buy-and-exit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           symbol: activeCoin.pair,
           quoteOrderQty: usd.toFixed(2),
-          tpPrice,
-          slPrice,
+          tpPrice: tpPriceVal,
+          slPrice: slPriceVal,
           trailing,
+          botName: selectedBot?.name ?? null,
         }),
       });
       const d = await res.json();
@@ -368,6 +431,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           symbol: activeCoin.pair, side, quantity: qty,
           tpPrice, slStopPrice, slLimitPrice, trailing,
           interval: analysisInterval,
+          botName: selectedBot?.name ?? null,
         }),
       });
       const d = await res.json();
@@ -449,7 +513,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             {analysisLoading && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.65rem", color: "var(--text-3)", marginLeft: 4 }} />}
           </div>
 
-          {analysisSnap && (
+          {analysisSnap && !selectedBot && (
             <div className="new-order__strategies">
               {analysisSnap.strategies
                 .map((s, i) => ({ s, i }))
@@ -465,6 +529,22 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             </div>
           )}
 
+          {bots.length > 0 && (
+            <div className="new-order__bot-presets">
+              <span className="new-order__analysis-label"><i className="fa-solid fa-robot" /> Bot preset</span>
+              <select
+                className="order-edit__input new-order__bot-select"
+                value={selectedBotId ?? ""}
+                onChange={e => selectBot(e.target.value || null)}>
+                <option value="">— Manual —</option>
+                {bots.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} · {b.name}{!b.enabled ? " (inactiu)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Quantity */}
           <div className="order-edit__field">
@@ -628,7 +708,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             {analysisLoading && <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.65rem", color: "var(--text-3)", marginLeft: 4 }} />}
           </div>
 
-          {analysisSnap && (
+          {analysisSnap && !selectedBot && (
             <div className="new-order__strategies">
               {analysisSnap.strategies
                 .map((s, i) => ({ s, i }))
@@ -641,6 +721,23 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                     <span className={`new-order__strategy-conf new-order__strategy-conf--${s.confidence}`}>{s.confidence}</span>
                   </button>
                 ))}
+            </div>
+          )}
+
+          {bots.length > 0 && (
+            <div className="new-order__bot-presets">
+              <span className="new-order__analysis-label"><i className="fa-solid fa-robot" /> Bot preset</span>
+              <select
+                className="order-edit__input new-order__bot-select"
+                value={selectedBotId ?? ""}
+                onChange={e => selectBot(e.target.value || null)}>
+                <option value="">— Manual —</option>
+                {bots.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.code} · {b.name}{!b.enabled ? " (inactiu)" : ""}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -659,8 +756,6 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                 onChange={e => setBeUsdAmount(e.target.value)} placeholder="0.00" />
             </div>
           </div>
-
-          <div className="new-order__divider"><span>Sortida automàtica</span></div>
 
           {/* TP % */}
           <div className="order-edit__field">
@@ -699,7 +794,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             </div>
           </div>
 
-          {/* Trailing Stop (reused) */}
+          {/* Trailing Stop */}
           <div className="new-order__trailing">
             <div className="new-order__trailing-toggle" onClick={toggleTrailing} role="button">
               <div className="new-order__trailing-label">
@@ -712,7 +807,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
               </div>
             </div>
             {trailingOn && (
-              <div className="new-order__trailing-body">
+              <div className="new-order__trailing-body" style={{ borderTop: "none", paddingTop: 0 }}>
                 <div className="new-order__trailing-row">
                   <div className="order-edit__field" style={{ flex: 1 }}>
                     <span className="order-edit__label">
@@ -732,11 +827,6 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                   </div>
                 </div>
                 {trailingLogic && <div className="new-order__trailing-logic">{trailingLogic}</div>}
-                {!trailingLoading && trailingAtr === 0 && (
-                  <div className="new-order__trailing-logic" style={{ color: "var(--text-3)" }}>
-                    Introdueix els valors manualment o espera que carregui la suggerència.
-                  </div>
-                )}
               </div>
             )}
           </div>

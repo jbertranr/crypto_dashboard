@@ -6,22 +6,40 @@ import {
 } from "recharts";
 import { formatCurrency } from "../lib/format";
 
-interface Point { time: number; close: number; trailSl?: number; }
-type TF = "1h" | "4h" | "1d" | "tot";
+interface Point { time: number; close: number; trailSl?: number; trailActivate?: number; }
+type TF = "1h" | "4h" | "1d" | "1w" | "1M" | "3m";
 
-const TF_LABELS: Record<TF, string> = { "1h": "1h", "4h": "4h", "1d": "1D", "tot": "Tot" };
+const TF_LABELS: Record<TF, string> = { "1h": "1h", "4h": "4h", "1d": "1D", "1w": "1S", "1M": "1M", "3m": "3M" };
 
-// How many candles to keep visible in the sliding window per TF.
-// "tot" always shows all; for windowed TFs we pan the last N candles.
-const VISIBLE_CANDLES: Record<TF, number> = {
-  "1h": 70, "4h": 60, "1d": 72, "tot": Infinity,
+// Window duration in ms per TF (used to auto-select default)
+const TF_MS: Record<TF, number> = {
+  "1h":        3_600_000,
+  "4h":    4 * 3_600_000,
+  "1d":   24 * 3_600_000,
+  "1w":  7 * 24 * 3_600_000,
+  "1M": 30 * 24 * 3_600_000,
+  "3m": 90 * 24 * 3_600_000,
 };
 
-const POLL_MS = 60_000; // soft-refresh interval
+// How many candles to keep visible in the sliding window per TF.
+const VISIBLE_CANDLES: Record<TF, number> = {
+  "1h": 70, "4h": 60, "1d": 72, "1w": Infinity, "1M": Infinity, "3m": Infinity,
+};
+
+const POLL_MS = 60_000;
+
+/** Pick the smallest TF whose window fully contains startTime */
+function autoTf(startTime: number): TF {
+  const elapsed = Date.now() - startTime;
+  for (const tf of ["1h", "4h", "1d", "1w", "1M", "3m"] as TF[]) {
+    if (elapsed <= TF_MS[tf]) return tf;
+  }
+  return "3m";
+}
 
 export default function OcoProgressChart({
   symbol, startTime, tpPrice, slPrice, side, onEntryPrice,
-  tpLabel = "TP", slLabel = "SL", trailDist, trailEntryPrice,
+  tpLabel = "TP", slLabel = "SL", trailDist, trailEntryPrice, trailActivateAt,
 }: {
   symbol: string;
   startTime: number;
@@ -31,31 +49,28 @@ export default function OcoProgressChart({
   onEntryPrice?: (price: number) => void;
   tpLabel?: string;
   slLabel?: string;
-  trailDist?: number;       // if set, renders the theoretical trailing SL history
-  trailEntryPrice?: number; // initial peak / entry price for trailing computation
+  trailDist?: number;
+  trailEntryPrice?: number;
+  trailActivateAt?: number;
 }) {
-  const [data,       setData]       = useState<Point[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [panning,    setPanning]    = useState(false); // soft-refresh in progress
-  const [error,      setError]      = useState<string | null>(null);
-  const [tf,         setTf]         = useState<TF>("4h");
+  const [data,    setData]    = useState<Point[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [panning, setPanning] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+  const [tf,      setTf]      = useState<TF>(() => autoTf(startTime));
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback((soft = false) => {
     if (!soft) { setLoading(true); setError(null); }
     else setPanning(true);
 
-    const qs = tf === "tot"
-      ? `symbol=${symbol}&startTime=${startTime}`
-      : `symbol=${symbol}&startTime=${startTime}&window=${tf}`;
-
-    fetch(`/api/klines-range?${qs}`)
+    fetch(`/api/klines-range?symbol=${symbol}&startTime=${startTime}&window=${tf}`)
       .then(r => r.json())
       .then((d: Point[]) => {
         if (d && (d as unknown as { error: string }).error)
           throw new Error((d as unknown as { error: string }).error);
         setData(d);
-        if (tf === "tot" && d.length > 0) {
+        if (d.length > 0) {
           const closest = d.reduce((best, p) =>
             Math.abs(p.time - startTime) < Math.abs(best.time - startTime) ? p : best
           );
@@ -67,12 +82,8 @@ export default function OcoProgressChart({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbol, startTime, tf]);
 
-  // Initial + TF-change fetch
-  useEffect(() => {
-    fetchData(false);
-  }, [fetchData]);
+  useEffect(() => { fetchData(false); }, [fetchData]);
 
-  // Polling: soft-refresh every POLL_MS, pan the chart to show new candle
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(() => fetchData(true), POLL_MS);
@@ -88,38 +99,43 @@ export default function OcoProgressChart({
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
-  // Compute trailing SL history from price data when trailDist is provided
+  // Compute trailing SL history from price peaks — only from startTime onwards
   const chartData: Point[] = (() => {
-    if (!trailDist || !data.length) return data;
+    if (!data.length) return data;
     let peak = trailEntryPrice && trailEntryPrice > 0 ? trailEntryPrice : data[0].close;
+    let started = false;
     return data.map(p => {
-      if (side === "SELL") {
-        if (p.close > peak) peak = p.close;
-        return { ...p, trailSl: peak - trailDist };
-      } else {
-        if (p.close < peak) peak = p.close;
-        return { ...p, trailSl: peak + trailDist };
+      if (!started && p.time >= startTime) started = true;
+      if (!started) return p; // before entry: no overlays
+      const point: Point = { ...p };
+      if (trailDist) {
+        if (side === "SELL") {
+          if (p.close > peak) peak = p.close;
+          point.trailSl = peak - trailDist;
+        } else {
+          if (p.close < peak) peak = p.close;
+          point.trailSl = peak + trailDist;
+        }
       }
+      if (trailActivateAt) point.trailActivate = trailActivateAt;
+      return point;
     });
   })();
 
-  // Computed chart values (only when data is ready)
-  const prices  = chartData.map(d => d.close);
+  const prices       = chartData.map(d => d.close);
   const trailSlPrices = trailDist ? chartData.map(d => d.trailSl ?? 0).filter(v => v > 0) : [];
-  const minP    = data.length ? Math.min(...prices, slPrice, ...trailSlPrices)  : slPrice;
-  const maxP    = data.length ? Math.max(...prices, tpPrice)  : tpPrice;
-  const range   = maxP - minP || minP * 0.01;
-  const pad     = range * 0.08;
+  const minP  = data.length ? Math.min(...prices, slPrice, ...trailSlPrices) : slPrice;
+  const maxP  = data.length ? Math.max(...prices, tpPrice) : tpPrice;
+  const range = maxP - minP || minP * 0.01;
+  const pad   = range * 0.08;
   const yDomain: [number, number] = [minP - pad, maxP + pad];
   const current = data.length ? data[data.length - 1].close : 0;
   const entryP  = data.length ? data[0].close : 0;
   const pnlPct  = entryP ? ((current - entryP) / entryP) * 100 : 0;
-  const pnlUp   = pnlPct >= 0;
-  const color   = pnlUp ? "#059669" : "#dc2626";
+  const color   = pnlPct >= 0 ? "#059669" : "#dc2626";
   const gradId  = `og-${symbol}-${startTime}`;
 
-  // Sliding-window X-axis domain: clamp to last VISIBLE_CANDLES entries so
-  // each soft-refresh naturally pans the chart to the right.
+  // Sliding-window X-axis domain
   const xDomain: [number | string, number | string] = (() => {
     const n = VISIBLE_CANDLES[tf];
     if (!isFinite(n) || chartData.length <= n) return ["dataMin", "dataMax"];
@@ -128,10 +144,10 @@ export default function OcoProgressChart({
     return [first, last];
   })();
 
-  // Entry moment marker: only meaningful in windowed views (in "tot" mode the chart starts AT startTime)
+  // Entry marker: vertical line at startTime if it falls within fetched data
   const entryMarkerTime: number | null = (() => {
-    if (tf === "tot" || data.length === 0) return null;
-    if (startTime < data[0].time) return null; // entry is before current window
+    if (data.length === 0) return null;
+    if (startTime < data[0].time) return null;
     const closest = data.reduce((best, p) =>
       Math.abs(p.time - startTime) < Math.abs(best.time - startTime) ? p : best
     );
@@ -140,13 +156,12 @@ export default function OcoProgressChart({
 
   return (
     <div className="oco-chart">
-      {/* Toolbar — TF pills right-aligned */}
       <div className="oco-chart__toolbar">
         {(loading && data.length > 0 || panning) && (
           <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: "0.7rem", color: "var(--text-3)" }} />
         )}
         <div className="oco-chart__tfs">
-          {(["1h", "4h", "1d", "tot"] as TF[]).map(t => (
+          {(["1h", "4h", "1d", "1w", "1M", "3m"] as TF[]).map(t => (
             <button key={t}
               className={`oco-chart__tf${tf === t ? " oco-chart__tf--active" : ""}`}
               onClick={() => setTf(t)}>
@@ -156,7 +171,6 @@ export default function OcoProgressChart({
         </div>
       </div>
 
-      {/* Canvas */}
       {error ? (
         <div className="oco-chart__error">{error}</div>
       ) : loading && !data.length ? (
@@ -174,8 +188,7 @@ export default function OcoProgressChart({
                 </linearGradient>
               </defs>
               <XAxis dataKey="time" tickFormatter={fmt}
-                domain={xDomain}
-                type="number" scale="time"
+                domain={xDomain} type="number" scale="time"
                 tick={{ fill: "#94a3b8", fontSize: 9 }} tickLine={false} axisLine={false}
                 interval="preserveStartEnd" />
               <YAxis domain={yDomain} tickFormatter={v => formatCurrency(v)}
@@ -186,11 +199,11 @@ export default function OcoProgressChart({
                 labelFormatter={v => fmt(v as number)}
                 formatter={(v, name) => [
                   v != null ? formatCurrency(v as number) : "",
-                  name === "trailSl" ? "SL Trail" : "Preu",
+                  name === "trailSl" ? "SL Trail" : name === "trailActivate" ? "Activa Trail" : "Preu",
                 ]}
               />
 
-              {/* TP/SL zones — always visible */}
+              {/* TP/SL zones */}
               {side === "SELL" && <>
                 <ReferenceArea y1={tpPrice} y2={maxP + pad} fill="#059669" fillOpacity={0.10} />
                 <ReferenceArea y1={minP - pad} y2={slPrice} fill="#dc2626" fillOpacity={0.10} />
@@ -200,16 +213,10 @@ export default function OcoProgressChart({
                 <ReferenceArea y1={slPrice} y2={maxP + pad} fill="#dc2626" fillOpacity={0.10} />
               </>}
 
-              {/* Entry moment — vertical line (windowed views only) */}
+              {/* Entry moment vertical line */}
               {entryMarkerTime !== null && (
                 <ReferenceLine x={entryMarkerTime} stroke="#f59e0b" strokeDasharray="4 3" strokeWidth={1.5}
                   label={{ value: "Entrada", position: "insideTopRight", fill: "#f59e0b", fontSize: 9, fontWeight: 600 }} />
-              )}
-
-              {/* Entry price — horizontal dashed line (Tot view) */}
-              {tf === "tot" && entryP > 0 && (
-                <ReferenceLine y={entryP} stroke="#94a3b8" strokeDasharray="3 3" strokeWidth={1}
-                  label={{ value: "E", position: "right", fill: "#94a3b8", fontSize: 9 }} />
               )}
 
               {/* TP line */}
@@ -218,15 +225,23 @@ export default function OcoProgressChart({
               {/* SL line */}
               <ReferenceLine y={slPrice} stroke="#dc2626" strokeDasharray="5 3" strokeWidth={1.5}
                 label={{ value: slLabel, position: "right", fill: "#dc2626", fontSize: 10, fontWeight: 700 }} />
+              {/* Trailing activation threshold — only from entry onwards */}
+              {trailActivateAt && <>
+                <Line type="monotone" dataKey="trailActivate"
+                  stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4 4"
+                  dot={false} legendType="none" connectNulls={false} />
+                <ReferenceLine y={trailActivateAt} stroke="transparent"
+                  label={{ value: "Trail", position: "right", fill: "#f59e0b", fontSize: 10, fontWeight: 700 }} />
+              </>}
 
               <Area type="monotone" dataKey="close"
                 stroke={color} strokeWidth={2}
                 fill={`url(#${gradId})`} dot={false} />
 
-              {/* Trailing SL history — computed from price peaks */}
+              {/* Trailing SL — solid rising line */}
               {trailDist && (
                 <Line type="monotone" dataKey="trailSl"
-                  stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="4 3"
+                  stroke="#f59e0b" strokeWidth={2}
                   dot={false} legendType="none" connectNulls />
               )}
             </ComposedChart>

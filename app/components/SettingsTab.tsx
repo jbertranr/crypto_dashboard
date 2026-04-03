@@ -6,6 +6,8 @@ interface Settings {
   tg_on_order_close:        string;
   tg_on_sl_modify:          string;
   tg_on_trailing_activate:  string;
+  tg_on_motor_anomaly:      string;
+  motor_anomaly_multiplier: string;
   entry_type:               string;
   // Global trailing mode (not per-TF/type)
   trailing_sl_mode:         string;
@@ -60,7 +62,7 @@ interface Bot {
 }
 
 type TgSettings = Pick<Settings,
-  "tg_on_new_order" | "tg_on_order_close" | "tg_on_sl_modify" | "tg_on_trailing_activate"
+  "tg_on_new_order" | "tg_on_order_close" | "tg_on_sl_modify" | "tg_on_trailing_activate" | "tg_on_motor_anomaly"
 >;
 
 const CFG_INTERVALS = ["5m", "1h", "4h"] as const;
@@ -116,6 +118,8 @@ const DEFAULTS = {
   auto_trade_enabled: "0",
   cancel_auto_sell:   "0",
   sl_sell_remaining:  "0",
+  tg_on_motor_anomaly:      "1",
+  motor_anomaly_multiplier: "3",
 };
 
 const ALL_PAIRS = [
@@ -155,6 +159,12 @@ const NOTIFICATIONS: {
     icon:  "fa-route",
     title: "Trailing Stop activat",
     desc:  "Notifica quan un trailing stop s'activa (el preu supera el nivell d'activaci\u00f3 i l'OCO es converteix en trailing SL).",
+  },
+  {
+    key:   "tg_on_motor_anomaly" as keyof TgSettings,
+    icon:  "fa-triangle-exclamation",
+    title: "Anomalia de motor",
+    desc:  "Alerta si un motor no ha corregut en el temps esperat o ha retornat un error. M\u00e0xim 1 alerta cada 30 min per motor.",
   },
 ];
 
@@ -497,6 +507,26 @@ export default function SettingsTab() {
               </div>
             );
           })}
+
+          {/* Multiplicador anomalia motor */}
+          {settings?.tg_on_motor_anomaly === "1" && (
+          <div className="cfg-toggle-row">
+            <i className="fa-solid fa-clock cfg-toggle-row__icon" />
+            <div className="cfg-toggle-row__body">
+              <div className="cfg-toggle-row__title">Multiplicador de temps</div>
+              <div className="cfg-toggle-row__desc">
+                Alerta si el motor no ha corregut en <strong>N × interval</strong> esperat.
+              </div>
+            </div>
+            <input
+              type="number" min="1" max="20" step="1"
+              className="cfg-num-input"
+              value={settings?.motor_anomaly_multiplier ?? "3"}
+              onChange={e => setSetting("motor_anomaly_multiplier", e.target.value)}
+              style={{ width: "4rem" }}
+            />
+          </div>
+          )}
         </div>
       </div>
 

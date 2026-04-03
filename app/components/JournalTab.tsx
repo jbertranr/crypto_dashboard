@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { STRATEGIES } from "./OrdersPanel";
 import CoinIcon from "./CoinIcon";
 
@@ -29,6 +29,9 @@ interface JournalEntry {
   capitalMode: string | null;
   notes: string | null;
   tradeCode: string | null;
+  tpPrice: number | null;
+  slPrice: number | null;
+  trailingActivateAt: number | null;
   source: string;
   executedAt: number;
   createdAt: number;
@@ -119,6 +122,21 @@ const TYPE_ICONS: Record<string, string> = {
   MANUAL:        "fa-pen",
   CANCELED:      "fa-xmark",
 };
+
+function describeEntry(e: JournalEntry): string {
+  switch (e.type) {
+    case "ENTRY_BUY":     return "Compra executada";
+    case "ENTRY_OCO":     return "OCO creat — fixat TP i SL";
+    case "TRAIL_ACTIVE":  return "Trailing stop activat";
+    case "EXIT_TP":       return "Venda per Take Profit";
+    case "EXIT_SL":       return "Venda per Stop Loss";
+    case "EXIT_TRAILING": return "Venda per Trailing Stop";
+    case "EXIT_MARKET":   return "Venda a mercat";
+    case "CANCELED":      return "Ordre cancel·lada";
+    case "MANUAL":        return "Entrada manual";
+    default:              return e.type;
+  }
+}
 
 // ── JournalTimeline sub-component ─────────────────────────────────────────────
 
@@ -641,11 +659,14 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
             <div className="journal-table__head">
               <span>Actiu</span>
               <span>Tipus</span>
-              <span className="ta-right">Preu</span>
+              <span>Codis</span>
               <span className="ta-right">Import $</span>
+              <span className="ta-right">SL</span>
+              <span className="ta-right">TP</span>
+              <span className="ta-right">Trailing</span>
+              <span className="ta-right">Preu</span>
               <span className="ta-right">P&amp;L</span>
-              <span>Estratègia</span>
-              <span>Detalls</span>
+              <span>Descripció</span>
               <span></span>
             </div>
 
@@ -659,10 +680,9 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                 const importVal  = e.quoteQty
                   ? parseFloat(e.quoteQty).toFixed(2)
                   : (parseFloat(e.qty) * parseFloat(e.price)).toFixed(2);
-                const stratColor = STRATEGIES.find(s => s.name === e.strategy)?.color ?? "var(--text-3)";
                 const isClosed   = !inGroup && (e.type.startsWith("EXIT") || e.type === "CANCELED");
 
-                return (
+                const mainRow = (
                   <div key={e.id} className={`journal-table__row-wrap${isOpen ? " journal-table__row-wrap--open" : ""}${inGroup ? " journal-table__row-wrap--sub" : ""}${isClosed ? " jrow--closed" : ""}`}>
 
                     <div className="journal-table__row" onClick={() => handleExpand(e.id, isOpen)}>
@@ -676,25 +696,88 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                         </div>
                       </div>
 
+                      {/* Tipus */}
                       <div className="jcell">
                         <span className="jcell__main" style={{ color: typeClr, fontSize: "0.72rem", letterSpacing: "0.04em" }}>
+                          <span style={{ color: e.side === "BUY" ? "var(--green)" : "var(--red)", fontWeight: 800, marginRight: 4 }}>{e.side}</span>
                           {typeLbl}
-                        </span>
-                        <span className="jcell__sub" style={{ color: e.side === "BUY" ? "var(--green)" : "var(--red)", fontWeight: 800, letterSpacing: "0.06em" }}>
-                          {e.side}
                         </span>
                       </div>
 
+                      {/* Codis */}
+                      <div className="jcell">
+                        {e.tradeCode && (
+                          <span className="jcell__main" style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.72rem" }}>{e.tradeCode}</span>
+                        )}
+                        <span className="jcell__sub" style={{ fontSize: "0.6rem", color: "var(--text-3)", display: "flex", flexDirection: "column", gap: 1 }}>
+                          {e.orderListId != null && e.orderListId > 0 && <span>OCO#{e.orderListId}</span>}
+                          {e.orderId != null && <span>ORD#{e.orderId}</span>}
+                        </span>
+                      </div>
+
+                      {/* Import $ */}
+                      <div className="jcell jcell--right">
+                        <span className="jcell__main mono" style={{ fontWeight: 700 }}>${importVal}</span>
+                        <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{parseFloat(e.qty).toPrecision(5)} {e.symbol.replace("USDT","")}</span>
+                      </div>
+
+                      {/* SL */}
+                      <div className="jcell jcell--right">
+                        {(e.type === "EXIT_SL" || e.type === "EXIT_TRAILING") ? (
+                          <>
+                            <span className="jcell__main mono" style={{ color: "var(--red)", fontWeight: 700 }}>${(parseFloat(e.qty) * parseFloat(e.price)).toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{parseFloat(e.price).toFixed(2)}</span>
+                          </>
+                        ) : e.slPrice != null ? (
+                          <>
+                            <span className="jcell__main mono" style={{ color: "var(--red)", fontWeight: 700 }}>${(parseFloat(e.qty) * e.slPrice).toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{e.slPrice.toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <span className="jcell__main" style={{ color: "var(--text-3)" }}>—</span>
+                        )}
+                      </div>
+
+                      {/* TP */}
+                      <div className="jcell jcell--right">
+                        {e.type === "EXIT_TP" ? (
+                          <>
+                            <span className="jcell__main mono" style={{ color: "var(--green)", fontWeight: 700 }}>${(parseFloat(e.qty) * parseFloat(e.price)).toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{parseFloat(e.price).toFixed(2)}</span>
+                          </>
+                        ) : e.tpPrice != null ? (
+                          <>
+                            <span className="jcell__main mono" style={{ color: "var(--green)", fontWeight: 700 }}>${(parseFloat(e.qty) * e.tpPrice).toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{e.tpPrice.toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <span className="jcell__main" style={{ color: "var(--text-3)" }}>—</span>
+                        )}
+                      </div>
+
+                      {/* Trailing */}
+                      <div className="jcell jcell--right">
+                        {(e.type === "EXIT_TRAILING" || e.type === "TRAIL_ACTIVE") ? (
+                          <>
+                            <span className="jcell__main mono" style={{ color: "#f59e0b", fontWeight: 700 }}>${(parseFloat(e.qty) * parseFloat(e.price)).toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{parseFloat(e.price).toFixed(2)}</span>
+                          </>
+                        ) : e.trailingActivateAt != null ? (
+                          <>
+                            <span className="jcell__main mono" style={{ color: "#f59e0b", fontWeight: 700 }}>${(parseFloat(e.qty) * e.trailingActivateAt).toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem", color: "var(--text-3)" }}>{e.trailingActivateAt.toFixed(2)}</span>
+                          </>
+                        ) : (
+                          <span className="jcell__main" style={{ color: "var(--text-3)" }}>—</span>
+                        )}
+                      </div>
+
+                      {/* Preu */}
                       <div className="jcell jcell--right">
                         <span className="jcell__main mono">{parseFloat(e.price).toFixed(2)}</span>
                         {e.entryPrice
                           ? <span className="jcell__sub mono">e: {parseFloat(e.entryPrice).toFixed(2)}</span>
                           : <span className="jcell__sub">—</span>}
-                      </div>
-
-                      <div className="jcell jcell--right">
-                        <span className="jcell__main mono">${importVal}</span>
-                        <span className="jcell__sub mono">{parseFloat(e.qty).toPrecision(5)}</span>
                       </div>
 
                       <div className="jcell jcell--right">
@@ -706,19 +789,10 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                           : <span className="jcell__sub">—</span>}
                       </div>
 
+                      {/* Descripció */}
                       <div className="jcell">
-                        {e.strategy
-                          ? <span className="jcell__main" style={{ color: stratColor, fontSize: "0.72rem" }}>{e.strategy}</span>
-                          : <span className="jcell__main" style={{ color: "var(--text-3)" }}>—</span>}
-                        <span className="jcell__sub">{e.interval ?? "—"}</span>
-                      </div>
-
-                      <div className="jcell">
-                        {e.exitReason
-                          ? <span className="jcell__main" style={{ color: typeClr, fontSize: "0.68rem" }}>{e.exitReason}</span>
-                          : <span className="jcell__main" style={{ color: "var(--text-3)", fontSize: "0.68rem" }}>—</span>}
-                        <span className="jcell__sub" style={{ color: e.source === "AUTO" ? "var(--accent)" : "#d97706", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                          {e.source}
+                        <span className="jcell__main" style={{ fontSize: "0.68rem", color: "var(--text-2)" }}>
+                          {describeEntry(e)}
                         </span>
                       </div>
 
@@ -796,6 +870,8 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
 
                   </div>
                 );
+
+                return mainRow;
               }
 
               // ── Build display list: grouped trades + ungrouped entries merged by time ──
@@ -846,6 +922,16 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                 // CANCELED as a close-signal would incorrectly dim still-active trades.
                 const isClosed = g.entries.some(e => e.type.startsWith("EXIT"));
 
+                const exitSl      = g.entries.find(e => e.type === "EXIT_SL");
+                const exitTp      = g.entries.find(e => e.type === "EXIT_TP");
+                const entryWithSl = g.entries.find(e => e.slPrice != null);
+                const entryWithTp = g.entries.find(e => e.tpPrice != null);
+                const gSlPrice    = exitSl ? parseFloat(exitSl.price) : (entryWithSl?.slPrice ?? null);
+                const gTpPrice    = exitTp ? parseFloat(exitTp.price) : (entryWithTp?.tpPrice ?? null);
+                const gTrailPrice = (g.entries.find(e => e.type === "EXIT_TRAILING") ?? g.entries.find(e => e.type === "TRAIL_ACTIVE"))?.price ?? null;
+                const qty         = g.entries.find(e => e.type.startsWith("ENTRY"))?.qty ?? "0";
+                const fmtGPrice   = (p: number | null) => p ? p.toFixed(2) : "—";
+
                 return (
                   <div key={g.tradeCode} className={`jtrade-group${isClosed ? " jrow--closed" : ""}`}>
 
@@ -880,6 +966,21 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                         {strategy && (
                           <span className="jtrade-group__strat" style={{ color: stratColor }}>{strategy}</span>
                         )}
+                      </div>
+
+                      {/* Prices: SL / TP / Trailing */}
+                      <div className="jtrade-group__prices">
+                        <div className="jtrade-price jtrade-price--sl">
+                          <span>{fmtGPrice(gSlPrice)}</span>
+                          {gSlPrice && <span className="jtrade-price__sub">${(gSlPrice * parseFloat(qty)).toFixed(2)}</span>}
+                        </div>
+                        <div className="jtrade-price jtrade-price--tp">
+                          <span>{fmtGPrice(gTpPrice)}</span>
+                          {gTpPrice && <span className="jtrade-price__sub">${(gTpPrice * parseFloat(qty)).toFixed(2)}</span>}
+                        </div>
+                        <div className="jtrade-price jtrade-price--trail">
+                          <span>{gTrailPrice ? parseFloat(gTrailPrice).toFixed(2) : "—"}</span>
+                        </div>
                       </div>
 
                       {/* Right: count + net P&L + chevron */}

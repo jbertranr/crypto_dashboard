@@ -621,8 +621,8 @@ export default function BotTab() {
 
   const liveRef      = useRef(live);
   const showDebugRef = useRef(showDebug);
-  liveRef.current      = live;
-  showDebugRef.current = showDebug;
+  useEffect(() => { liveRef.current = live; }, [live]);
+  useEffect(() => { showDebugRef.current = showDebug; }, [showDebug]);
 
   useEffect(() => {
     if (!selectedBotId) anchorRef.current?.scrollIntoView({ behavior: "smooth" });

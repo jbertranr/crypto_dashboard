@@ -6,15 +6,16 @@ import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
 import { settingGetBool, settingGet } from "../../../lib/settings-store";
 import { notifyNewOrder } from "../../../lib/telegram";
-import { journalAdd } from "../../../lib/journal-store";
+import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, quoteOrderQty, tpPrice: tpTarget, slPrice: slTarget, trailing } = await req.json() as {
+    const { symbol, quoteOrderQty, tpPrice: tpTarget, slPrice: slTarget, trailing, botName } = await req.json() as {
       symbol: string;
       quoteOrderQty: string;
       tpPrice: number;
       slPrice: number;
+      botName?: string | null;
       trailing?: {
         activateAt: number; distance: number;
         activateAtr: number; distanceAtr: number; logic: string;
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
     let tradeCode: string | null = null;
     if (typeof ocoResult.orderListId === "number" && ocoResult.orderListId > 0) {
       tradeCode = nextTradeCode();
-      orderMetaSet(`oco:${ocoResult.orderListId}`, { tradeCode });
+      orderMetaSet(`oco:${ocoResult.orderListId}`, { tradeCode, botName: botName ?? null, entrySource: "MANUAL" });
     }
 
     // 6. Save trailing suggestion if provided (with all fields for auto-activation)
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
     // --- Journal: record market buy entry + OCO exit ---
     try {
       const buyUsdt = parseFloat(quoteOrderQty);
-      journalAdd({
+      const jId = journalAdd({
         type:            "ENTRY_BUY",
         symbol,
         side:            "BUY",
@@ -145,15 +146,17 @@ export async function POST(req: NextRequest) {
         strategy:        null,
         interval:        null,
         entryType:       "MARKET",
-        trailingMode:    trailing ? settingGet("trailing_sl_mode") : null,
-        exitReason:      null,
-        capitalUsdt:     buyUsdt,
-        capitalMode:     settingGet("capital_mode"),
-        notes:           null,
+        trailingMode:       trailing ? settingGet("trailing_sl_mode") : null,
+        exitReason:         null,
+        capitalUsdt:        buyUsdt,
+        capitalMode:        settingGet("capital_mode"),
+        notes:              null,
         tradeCode,
-        source:          "AUTO",
-        executedAt:      Date.now(),
+        source:             "AUTO",
+        trailingActivateAt: trailing?.activateAt ?? null,
+        executedAt:         Date.now(),
       });
+      journalPatchTpSl(jId, parseFloat(tpPrice), parseFloat(slStopPrice));
     } catch (je) {
       log.orders.warn({ err: (je as Error).message }, "journal buy-and-exit entry fallida");
     }

@@ -5,9 +5,9 @@
 
 import { getOpenOrders, getOrder, placeMarketSell, getAccount } from "./binance-auth";
 import { notifyOrderFill } from "./telegram";
-import { journalAdd, type JournalType, type JournalExitReason } from "./journal-store";
+import { journalAdd, journalGetLastEntryPrice, type JournalType, type JournalExitReason } from "./journal-store";
 import { settingGetBool, settingGet } from "./settings-store";
-import { cacheGet, orderMetaGet } from "./cache-store";
+import { cacheGet, cacheDelete, orderMetaGet } from "./cache-store";
 import { log } from "./logger";
 
 const POLL_MS = 35_000; // lleugerament desfasat del trailing engine (30s)
@@ -50,6 +50,14 @@ const trailingReplacedSls  = (global.__trailingReplacedSls  ??= new Set<number>(
 export function trailingSlLock(orderId: number)   { trailingReplacedSls.add(orderId); }
 /** Unmark after the new SL has been placed. */
 export function trailingSlUnlock(orderId: number) { trailingReplacedSls.delete(orderId); }
+
+function calcPnl(symbol: string, tradeCode: string | null, execPrice: number, execQty: number) {
+  const entry = journalGetLastEntryPrice(symbol, tradeCode);
+  if (!entry || entry.price <= 0) return { entryPrice: null, pnlUsdt: null, pnlPct: null };
+  const pnlUsdt = (execPrice - entry.price) * execQty;
+  const pnlPct  = ((execPrice - entry.price) / entry.price) * 100;
+  return { entryPrice: String(entry.price), pnlUsdt, pnlPct };
+}
 
 function storeOrder(o: { orderId: number; symbol: string; type: string; side: "BUY" | "SELL"; price: string; stopPrice: string; origQty: string; orderListId: number }) {
   knownOrders.set(o.orderId, {
@@ -104,6 +112,10 @@ async function checkFillsInner(): Promise<void> {
   // Ordres que eren obertes i ja no hi són
   const disappeared = [...knownOrders.entries()].filter(([id]) => !currentIds.has(id));
 
+  // Registrem quins orderListId han tingut un FILL en aquest cicle
+  // per evitar journalitzar la cancel·lació automàtica de la parella OCO
+  const filledOcoLists = new Set<number>();
+
   for (const [orderId, meta] of disappeared) {
     try {
       const status = await getOrder(meta.symbol, orderId);
@@ -145,6 +157,8 @@ async function checkFillsInner(): Promise<void> {
                                                 : meta.side === "SELL" ? "MARKET_SELL"
                                                 : null;
         try {
+          const isExit = isTp || isSl || (!isEntry && meta.side === "SELL");
+          const pnl = isExit ? calcPnl(meta.symbol, tradeCode, execPrice, execQty) : { entryPrice: null, pnlUsdt: null, pnlPct: null };
           journalAdd({
             type:            journalType,
             symbol:          meta.symbol,
@@ -154,9 +168,9 @@ async function checkFillsInner(): Promise<void> {
             quoteQty:        String(execValue),
             commission:      "0",
             commissionAsset: "BNB",
-            entryPrice:      null,
-            pnlUsdt:         null,
-            pnlPct:          null,
+            entryPrice:      pnl.entryPrice,
+            pnlUsdt:         pnl.pnlUsdt,
+            pnlPct:          pnl.pnlPct,
             orderId,
             orderListId:     meta.orderListId > 0 ? meta.orderListId : null,
             strategy:        null,
@@ -171,6 +185,9 @@ async function checkFillsInner(): Promise<void> {
             source:          "AUTO",
             executedAt:      Date.now(),
           });
+          if (isExit) cacheDelete("pnl:summary");
+        // Registrar que aquest OCO ha tingut fill per ignorar la cancel·lació de la parella
+        if (meta.orderListId > 0) filledOcoLists.add(meta.orderListId);
         } catch (je) {
           log.monitor.warn({ err: (je as Error).message }, "journal fill fallida");
         }
@@ -205,6 +222,7 @@ async function checkFillsInner(): Promise<void> {
                 const eVal2  = parseFloat(sell2.cummulativeQuoteQty);
                 const ePx2   = eQty2 > 0 ? eVal2 / eQty2 : 0;
                 try {
+                  const pnl2 = calcPnl(meta.symbol, tradeCode, ePx2, eQty2);
                   journalAdd({
                     type:            "EXIT_MARKET",
                     symbol:          meta.symbol,
@@ -214,9 +232,9 @@ async function checkFillsInner(): Promise<void> {
                     quoteQty:        String(eVal2),
                     commission:      "0",
                     commissionAsset: "BNB",
-                    entryPrice:      null,
-                    pnlUsdt:         null,
-                    pnlPct:          null,
+                    entryPrice:      pnl2.entryPrice,
+                    pnlUsdt:         pnl2.pnlUsdt,
+                    pnlPct:          pnl2.pnlPct,
                     orderId:         sell2.orderId,
                     orderListId:     meta.orderListId > 0 ? meta.orderListId : null,
                     strategy:        null,
@@ -231,6 +249,7 @@ async function checkFillsInner(): Promise<void> {
                     source:          "AUTO",
                     executedAt:      Date.now(),
                   });
+                  cacheDelete("pnl:summary");
                 } catch (je) {
                   log.monitor.warn({ err: (je as Error).message }, "journal sl_sell_remaining fallida");
                 }
@@ -262,6 +281,7 @@ async function checkFillsInner(): Promise<void> {
           const execValue = parseFloat(sell.cummulativeQuoteQty);
           const execPrice = execQty > 0 ? execValue / execQty : 0;
           try {
+            const pnl3 = calcPnl(meta.symbol, null, execPrice, execQty);
             journalAdd({
               type:            "EXIT_MARKET",
               symbol:          meta.symbol,
@@ -271,9 +291,9 @@ async function checkFillsInner(): Promise<void> {
               quoteQty:        String(execValue),
               commission:      "0",
               commissionAsset: "BNB",
-              entryPrice:      null,
-              pnlUsdt:         null,
-              pnlPct:          null,
+              entryPrice:      pnl3.entryPrice,
+              pnlUsdt:         pnl3.pnlUsdt,
+              pnlPct:          pnl3.pnlPct,
               orderId:         sell.orderId,
               orderListId:     null,
               strategy:        null,
@@ -283,9 +303,12 @@ async function checkFillsInner(): Promise<void> {
               exitReason:      "MARKET_SELL",
               capitalUsdt:     execValue,
               capitalMode:     null,
-              notes:           "Auto-sell: SL cancel·lat",              tradeCode:       null,              source:          "AUTO",
+              notes:           "Auto-sell: SL cancel·lat",
+              tradeCode:       null,
+              source:          "AUTO",
               executedAt:      Date.now(),
             });
+            cacheDelete("pnl:summary");
           } catch (je) {
             log.monitor.warn({ err: (je as Error).message }, "journal auto-sell fallida");
           }
@@ -301,8 +324,53 @@ async function checkFillsInner(): Promise<void> {
         } catch (se) {
           log.monitor.error({ symbol: meta.symbol, err: (se as Error).message }, "cancel_auto_sell: venda fallida");
         }
+      } else if (
+        status.status === "CANCELED" &&
+        meta.side === "SELL" &&
+        meta.orderListId > 0 &&
+        !filledOcoLists.has(meta.orderListId) &&
+        !trailingReplacedSls.has(orderId) &&
+        // Journalitzem només el LIMIT_MAKER (TP) per evitar doble entrada per OCO
+        (meta.type === "LIMIT_MAKER" || meta.type === "TAKE_PROFIT_LIMIT")
+      ) {
+        // OCO cancel·lada manualment (ex: sell-all, cancel manual a Binance)
+        const tradeCode = meta.orderListId > 0
+          ? (orderMetaGet(`oco:${meta.orderListId}`)?.tradeCode ?? null)
+          : null;
+        log.monitor.info({ symbol: meta.symbol, orderId, orderListId: meta.orderListId }, "OCO cancel·lada manualment — journalitzant CANCELED");
+        try {
+          journalAdd({
+            type:            "CANCELED",
+            symbol:          meta.symbol,
+            side:            meta.side,
+            qty:             meta.origQty,
+            price:           meta.price,
+            quoteQty:        "0",
+            commission:      "0",
+            commissionAsset: "BNB",
+            entryPrice:      null,
+            pnlUsdt:         null,
+            pnlPct:          null,
+            orderId,
+            orderListId:     meta.orderListId,
+            strategy:        null,
+            interval:        null,
+            entryType:       null,
+            trailingMode:    null,
+            exitReason:      "CANCELED",
+            capitalUsdt:     null,
+            capitalMode:     null,
+            notes:           "OCO cancel·lada manualment",
+            tradeCode,
+            source:          "AUTO",
+            executedAt:      Date.now(),
+          });
+          cacheDelete("pnl:summary");
+        } catch (je) {
+          log.monitor.warn({ err: (je as Error).message }, "journal OCO canceled fallida");
+        }
       }
-      // Altres CANCELED (OCO partner, etc.) — no notifiquem
+      // Altres CANCELED (parella OCO auto-cancel·lada, etc.) — no notifiquem
     } catch (err) {
       log.monitor.error({ orderId, err: (err as Error).message }, "no s'ha pogut verificar ordre");
     }
@@ -318,7 +386,7 @@ export function ensureOrderMonitor(): void {
   global.__orderMonitorStarted = true;
   log.monitor.info("monitor iniciat");
   // Primer: pobla el mapa sense notificar, després inicia el polling
-  initKnownOrders().then(() => {
-    setInterval(checkFills, POLL_MS);
-  });
+  initKnownOrders()
+    .then(() => { setInterval(checkFills, POLL_MS); })
+    .catch(err => log.monitor.error({ err: (err as Error).message }, "initKnownOrders fallida — monitor aturat"));
 }

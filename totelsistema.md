@@ -1,9 +1,11 @@
 # TOTELSISTEMA — Documentació completa del sistema de trading automatitzat de criptomonedes
 
-> **Versió:** 2.0 · **Data:** Març 2026 · **Autor:** Projecte privat
+> **Versió:** 2.1 · **Data:** Març 2026 · **Autor:** Projecte privat
 > *Aquest document descriu de manera exhaustiva l'arquitectura, el funcionament, les estratègies i el potencial econòmic d'un sistema de trading de criptomonedes basat en anàlisi tècnica automatitzada i gestió activa del risc.*
 >
 > **Canvis v2.0:** Multi-bot auto-trader complet, crash monitor BTC, SSE en temps real, journal de trades, simulació integrada, mode PIVOT_LOW per al trailing, validació de seguretat robusta (path traversal, whitelist de settings, timeouts AbortSignal), correccions de race condition al trailing engine.
+>
+> **Canvis v2.1:** Traçabilitat completa del trailing stop (comptador d'ajustos SL, data de creació OCO, propagació de codi de trade per cadena d'ordres); gràfica OCO amb nous time frames (1S, 1M, 3M, eliminat "Tot", auto-selecció de TF pel startTime); línia SL del gràfic només visible des del punt d'entrada; targeta OCO amb doble badge OCO-xxx + T-xxx (tooltip amb historial del trailing); barra de títol "Detall ordres vigents" a les targetes d'ordre.
 
 ---
 
@@ -14,11 +16,19 @@
 3. [Visió general del projecte](#3-visió-general-del-projecte)
 4. [Arquitectura tècnica](#4-arquitectura-tècnica)
 5. [Interfície d'usuari — el Dashboard](#5-interfície-dusuari--el-dashboard)
+   - [5a. Guia detallada de pantalles](#5a-guia-detallada-de-pantalles)
 6. [El sistema d'ordres](#6-el-sistema-dordres)
 7. [El motor de trailing stop](#7-el-motor-de-trailing-stop)
 8. [Anàlisi tècnica automatitzada](#8-anàlisi-tècnica-automatitzada)
 9. [L'escàner d'estratègies — Strategy Matrix](#9-lescàner-destrategies--strategy-matrix)
-10. [El sistema de multi-bot auto-trader](#10-el-sistema-de-multi-bot-auto-trader)
+10. [El sistema de multi-bot auto-trader i simulacions](#10-el-sistema-de-multi-bot-auto-trader-i-simulacions)
+    - 10.1 Visió general
+    - 10.2 Configuracions de simulació (SavedConfig)
+    - 10.3 Estructura i gestió de bots
+    - 10.4 Motor d'auto-trading (globalPoll, runBotScan, executeBuy)
+    - 10.5 Seguretat i validació
+    - 10.6 Gestió des de la interfície
+    - 10.7 Flux complet bot → posició → sortida
 11. [El monitor de crash BTC](#11-el-monitor-de-crash-btc)
 12. [Sistema de notificacions Telegram](#12-sistema-de-notificacions-telegram)
 13. [Gestió de logs i monitoratge en temps real](#13-gestió-de-logs-i-monitoratge-en-temps-real)
@@ -180,7 +190,7 @@ crypto_dashboard/
 │   │   ├── exchange-info/        # Metadades dels parells (tickSize, stepSize)
 │   │   ├── journal/              # Journal intern de trades (GET/POST)
 │   │   ├── klines/               # Dades de veles (OHLC) amb caché
-│   │   ├── klines-range/         # Veles d'un rang temporal concret
+│   │   ├── klines-range/         # Veles d'un rang temporal concret (finestres: 1h/4h/1d/1w/1M/3m)
 │   │   ├── logs/                 # Lectura de fitxers de log diaris
 │   │   ├── market/               # Dades de mercat agregades (tickers)
 │   │   ├── orders/               # CRUD complet d'ordres
@@ -214,7 +224,7 @@ crypto_dashboard/
 │   │   ├── LogsPanel.tsx         # Visualitzador de logs en temps real (SSE)
 │   │   ├── Nav.tsx               # Navegació principal
 │   │   ├── NewOrderModal.tsx     # Modal de nova ordre
-│   │   ├── OcoProgressChart.tsx  # Gràfica de progrés OCO
+│   │   ├── OcoProgressChart.tsx  # Gràfica de progrés OCO (TF: 1h/4h/1D/1S/1M/3M, auto-select, línia SL des d'entrada)
 │   │   ├── OrdersPanel.tsx       # Panell principal (tabs)
 │   │   ├── PnlStats.tsx          # Estadístiques de P&L
 │   │   ├── PortfolioChart.tsx    # Gràfica d'evolució del portfolio
@@ -328,20 +338,22 @@ CREATE TABLE IF NOT EXISTS cache (
 
 -- Trailing stops actius
 CREATE TABLE IF NOT EXISTS trailing_active (
-  id                INTEGER PRIMARY KEY AUTOINCREMENT,
-  sl_order_id       INTEGER NOT NULL,
-  symbol            TEXT NOT NULL,
-  side              TEXT NOT NULL,
-  quantity          TEXT NOT NULL,
-  trail_dist        REAL NOT NULL,
-  tick_size         TEXT NOT NULL,
-  current_sl        REAL NOT NULL,
-  peak_price        REAL NOT NULL,
-  entry_price       REAL NOT NULL,
-  status            TEXT NOT NULL DEFAULT 'active',
+  id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+  sl_order_id        INTEGER NOT NULL,
+  symbol             TEXT NOT NULL,
+  side               TEXT NOT NULL,
+  quantity           TEXT NOT NULL,
+  trail_dist         REAL NOT NULL,
+  tick_size          TEXT NOT NULL,
+  current_sl         REAL NOT NULL,
+  peak_price         REAL NOT NULL,
+  entry_price        REAL NOT NULL,
+  status             TEXT NOT NULL DEFAULT 'active',
   origin_oco_list_id INTEGER,
-  created_at        INTEGER NOT NULL,
-  updated_at        INTEGER NOT NULL
+  sl_update_count    INTEGER NOT NULL DEFAULT 0,   -- nº d'ajustos de SL realitzats
+  oco_created_at     INTEGER,                      -- timestamp creació OCO original (ms)
+  created_at         INTEGER NOT NULL,
+  updated_at         INTEGER NOT NULL
 );
 
 -- Estratègies assignades a cada ordre
@@ -406,6 +418,7 @@ Vista de conjunt de totes les criptomonedes que componen el compte. Inclou:
 
 #### Ordres obertes (Open Orders)
 Llista de totes les ordres actives. Cada ordre es mostra com una "targeta" que inclou:
+- **Barra de títol** ("Detall ordres vigents") per identificar visualment el bloc de columnes
 - Identificació: coin, par, tipus d'ordre, data
 - Import de l'entrada en gran (prominent)
 - Gràfica de progrés entre el preu d'entrada i els nivells de TP/SL
@@ -413,6 +426,31 @@ Llista de totes les ordres actives. Cada ordre es mostra com una "targeta" que i
 - Controls per editar o cancel·lar l'ordre
 
 Quan una ordre té trailing stop configurat, la targeta mostra l'estat del trailing: pic de preu màxim vist, stop loss actual, distància de trailing.
+
+**Identificació d'ordres i badges (v2.1):**
+Cada targeta d'ordre OCO mostra a la columna d'identitat dos badges:
+1. **OCO-xxx** (opacitat reduïda) — l'identificador de l'OCO a Binance.
+2. **T-xxx** — el codi intern de l'operació (codi de trade). En fer *hover*, apareix un tooltip amb les dades de l'ordre pare: data de creació OCO, preu d'entrada, pic màxim, SL actual i les seves percentages, distància de trailing i nombre d'ajustos de SL realitzats.
+
+Addicionalment, cada targeta inclou una barra de títol superior ("Detall ordres vigents") que identifica visualment el bloc de columnes.
+
+**Gràfica OcoProgressChart (v2.1):**
+Mostra el progrés del preu des del moment d'inici de l'OCO fins ara, superposant la línia de trailing SL (només visible a partir del punt d'entrada). Time frames disponibles:
+- **1h, 4h, 1D** — vistes curtes
+- **1S** (1 setmana), **1M** (1 mes), **3M** (3 mesos) — vistes llargues
+
+El TF s'autoselecciona en funció del `startTime` de l'OCO: el sistema escull el TF mínim que permet veure tot el recorregut des de l'entrada. L'opció "Tot" ha estat eliminada en favor d'aquesta selecció automàtica.
+
+Internament, la gràfica crida l'endpoint `/api/klines-range?symbol=X&window=TF` que mapeja cada TF a un interval de Binance i una durada en ms:
+
+| TF | Interval Binance | Finestra |
+|----|-----------------|---------|
+| 1h | 1m | 1 hora |
+| 4h | 5m | 4 hores |
+| 1d | 15m | 1 dia |
+| 1w | 4h | 7 dies |
+| 1M | 4h | 30 dies |
+| 3m | 1d | 90 dies |
 
 #### Historial (History)
 Registre de totes les ordres executades o cancel·lades. Les compres de mercat i les OCO associades es mostren **agrupades** en una sola targeta que reflecteix el trade complet:
@@ -487,6 +525,284 @@ Un detall important de la interfície és l'ús dels **colors de marca oficials*
 | AVAX | Vermell Avalanche | `#E84142` |
 | LINK | Blau Chainlink | `#2A5ADA` |
 | XRP | Blau XRP | `#00AAE4` |
+
+### 5.5 Elements persistents de la interfície
+
+Independentment de la tab activa, la interfície mostra sempre:
+
+#### Barra superior (TopbarTicker)
+Franja animada a la part superior de la pàgina amb:
+- **Preu BTC** actual amb color verd/vermell segons la variació en 24h
+- **Volum 24h** en USDT del mercat global
+- **Major guanyador i major perdedor** del dia entre els parells monitorats
+- **P&L del portfolio** en els períodes: 24h / 7d / 1m / 1a
+
+S'actualitza automàticament cada vegada que el `DashboardShell` fa el refresc de mercat.
+
+#### Barra de navegació (Nav)
+Llista horitzontal de tabs. Cada tab porta un comptador quan hi ha elements rellevants (p. ex. el nombre d'ordres obertes a "Ordres"). La tab activa es ressalta visualment.
+
+#### Barra lateral de preus (CoinSidebar)
+Columna dreta (o col·lapsable en pantalles petites) amb el preu en temps real de cada criptomoneda monitorada. Cada entrada mostra: icona de la moneda amb el seu color de marca, symbol, preu actual i variació en 24h.
+
+---
+
+## 5a. Guia detallada de pantalles
+
+### 5a.1 Portfolio
+
+**Objectiu:** Visió global de tot el capital del compte.
+
+**Estructura de la pantalla:**
+```
+┌─────────────────────────────────────────────────────┐
+│  Valor total del portfolio: XX.XXX USDT             │
+│  ┌──────────────┐  ┌───────────────────────────────┐│
+│  │ Gràfic pastís│  │ Crypto vs Estables (donut)    ││
+│  │  (per actiu) │  │ % en posicions / % lliure     ││
+│  └──────────────┘  └───────────────────────────────┘│
+│                                                      │
+│  Gràfica d'evolució del portfolio (corba temporal)  │
+│  [selector de rang: 24h / 7d / 1m / tot]           │
+│                                                      │
+│  Taula d'actius:                                    │
+│  Coin | Quantitat | Preu | Valor USDT | Canvi 24h  │
+└─────────────────────────────────────────────────────┘
+```
+
+**Funcionalitats:**
+- El gràfic de pastís usa els colors de marca oficials de cada moneda.
+- La gràfica d'evolució es genera a partir dels snapshots de portfolio guardats cada 15 minuts.
+- La taula inclou el **cost mitjà** (FIFO) quan hi ha historial de compres.
+- Les monedes estables (USDT, BUSD) es mostren separades de les cryptos en el donut.
+
+---
+
+### 5a.2 Ordres obertes
+
+**Objectiu:** Gestió en temps real de totes les posicions obertes.
+
+**Estructura d'una targeta OCO:**
+```
+┌─ Detall ordres vigents ─────────────────────────────────────────────┐
+│ [Identitat]    [OBJECTIU (TP)]  [STOP (SL)]  [Gràfica]  [Trailing] │
+│                                                                      │
+│  OCO-12345     97.50 USDT       88.00 USDT   [Chart]    Activació: │
+│  T-0035        +10.2%           -0.8%                   95.00 USDT │
+│  SOLUSDT SELL  dist +5.3%       dist -5.1%              Distància: │
+│  0.45 SOL                                               1.20 USDT  │
+│  entrada: 90.12 USDT                                    [Activar]  │
+│                                                                      │
+│                                              [Editar] [Cancel·lar] │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Columnes de la targeta:**
+
+| Columna | Contingut |
+|---------|-----------|
+| **Identitat** | Symbol, par, costat (BUY/SELL), quantitat, preu d'entrada, data d'ordre. Badges: OCO-xxx + T-xxx (tooltip al T-xxx amb historial del trailing). |
+| **OBJECTIU (TP)** | Preu de Take Profit, % des de l'entrada, P&L potencial en USDT, distància al preu actual. |
+| **STOP (SL)** | Preu de Stop Loss, % des de l'entrada, pèrdua potencial en USDT, distància al preu actual. |
+| **Gràfica** | `OcoProgressChart`: evolució del preu des de l'obertura de l'OCO. Línia de preu (blava), línia de trailing SL (taronja sòlida, des del punt d'entrada). Selector de TF: 1h / 4h / 1D / 1S / 1M / 3M. |
+| **Trailing** | Si no activat: paràmetres suggerits (activació, distància) + botó "Activa Trailing". Si ja actiu: info de trailing running (Distància, última actualització). |
+
+**Tooltip del badge T-xxx (hover):**
+```
+Ordre pare: OCO-12345
+OCO creat: 15/03/2026
+Entrada: 90.12 USDT
+Pic: 96.80 USDT (+7.4%)
+SL actual: 95.23 USDT (+5.7%)
+Distància: 1.57 USDT
+Ajustos SL: 3
+```
+
+**Targetes de trailing stop actiu (ordre SL individual):**
+Quan el trailing s'ha activat (l'OCO s'ha cancel·lat i hi ha una ordre STOP_LOSS_LIMIT activa), la targeta té un disseny diferent:
+- Columna d'identitat: badges OCO-xxx + T-xxx (igual que l'OCO)
+- Columna de trailing: "Trailing Actiu" amb puls animat, distància actual, hora darrera actualització
+- Gràfica: idèntica però el `startTime` usa `ocoCreatedAt` per mostrar tot el recorregut
+
+**Accions disponibles:**
+- `Editar` → obre modal per modificar els preus TP/SL (crea nova OCO substituint l'antiga)
+- `Cancel·lar` → cancel·la l'OCO a Binance (amb confirmació)
+- `Activa Trailing` → activa el motor de trailing manualment (si el preu no ha assolit `activateAt`)
+
+---
+
+### 5a.3 Historial (History)
+
+**Objectiu:** Revisar el rendiment de les operacions tancades.
+
+Les operacions apareixen agrupades: compra de mercat + OCO associada = 1 targeta. Cada targeta mostra:
+- Coin i par
+- Preu d'entrada i preu de sortida (TP o SL)
+- **P&L** en USDT i % (verd si guany, vermell si pèrdua)
+- Durada del trade (de l'entrada a la sortida)
+- Tipus de sortida: TP (Take Profit), SL (Stop Loss), TRAIL (Trailing Stop)
+- Comissions pagades (en BNB o USDT)
+
+Les targetes es poden filtrar per: symbol, tipus de sortida, rang de dates.
+
+---
+
+### 5a.4 Balance
+
+**Objectiu:** Veure el saldo detallat de cada actiu del compte.
+
+Cada actiu es mostra com una fitxa card:
+```
+┌──────────────────────────────┐
+│  🔶 BTC                      │
+│  0.00234 BTC                 │
+│  ≈ 235.40 USDT               │
+│  Lliure: 0.00234             │
+│  Bloquejat: 0.00000 (ordres) │
+│  Preu actual: 100.597 USDT   │
+│  ████████░░ 12.3% portfolio  │
+└──────────────────────────────┘
+```
+
+Les estables (USDT, BUSD) apareixen primer. La barra de proporció indica visualment el pes de cada actiu en el portfolio total.
+
+---
+
+### 5a.5 Anàlisi tècnica (AnalysisTab)
+
+**Objectiu:** Anàlisi en profunditat d'un par concret.
+
+**Controls:**
+- Selector de symbol (qualsevol par USDT)
+- Selector de temporalitat: 5m / 1h / 4h
+
+**Resultat de l'anàlisi:**
+```
+SOLUSDT — 1h
+Puntuació: 72/100 ●●●●●●●○○○
+Veredicte: BUY  (confiança alta)
+
+┌─ Estratègia 1: EMA Trend ────────────────────── ACTIVA ─┐
+│  Confiança: 85%                                          │
+│  TP suggerit: 96.50 USDT (+7.1%)                        │
+│  SL suggerit: 85.20 USDT (-5.5%)                        │
+│  Trailing: Activació 94.30 USDT | Distància 1.8 USDT   │
+└──────────────────────────────────────────────────────────┘
+... (fins a 5 estratègies)
+```
+
+Cada estratègia activa mostra el seu TP/SL i els paràmetres de trailing stop basats en ATR. El veredicte final combina les puntuacions de totes les estratègies actives.
+
+Des d'aquí es pot iniciar directament una ordre "Compra i Surt" amb els paràmetres de la millor estratègia.
+
+---
+
+### 5a.6 Escàner d'estratègies (Strategy Matrix)
+
+**Objectiu:** Detectar les millors oportunitats d'entrada en temps real.
+
+**Top Oportunitats (part superior):**
+Targetes individuals per als parells amb la puntuació més alta. Cada targeta inclou:
+- Gràfica de preu (48 períodes, mini-corba)
+- Probabilitat estimada d'èxit (%)
+- Preu actual, TP i SL suggerits
+- Botons: "Compra directa" (MARKET) i "Compra límit" (LIMIT)
+
+**Matriu de veredictes (part inferior):**
+Taula on les files són els parells monitorats i les columnes les temporalitats (5m, 1h, 4h). Cada cel·la mostra el veredicte (BUY en verd, WAIT en groc, AVOID en vermell) amb la puntuació numèrica.
+
+---
+
+### 5a.7 Journal de trades (JournalTab)
+
+**Objectiu:** Registre cronològic de tots els events de trading.
+
+**Tipus d'entrada:**
+
+| Tipus | Descripció |
+|-------|-----------|
+| `ENTRY_BUY` | Compra de mercat executada |
+| `ENTRY_OCO` | OCO col·locada (TP + SL) |
+| `TRAIL_ACTIVE` | Trailing stop activat (OCO cancel·lada, SL mòbil col·locat) |
+| `EXIT_TRAILING` | Posició tancada pel trailing SL |
+| `EXIT_MARKET` | Posició tancada per venda de mercat |
+| `EXIT_TP` | Take Profit executat |
+| `EXIT_SL` | Stop Loss fix executat |
+
+**Camps per entrada:** Data/hora, symbol, tipus, preu, quantitat, P&L (si és sortida), codi de trade (T-xxx), interval de l'estratègia, notes.
+
+**Filtres disponibles:** Per symbol, tipus d'entrada, rang de dates, codi de trade.
+
+**Estadístiques globals** al peu: nº operacions, win rate, P&L total, P&L mitjà per trade, millor/pitjor operació.
+
+---
+
+### 5a.8 Simulació (SimulationTab)
+
+**Objectiu:** Gestió de configuracions de backtesting per als bots.
+
+Cada configuració és un fitxer JSON a `/simulation/` que defineix:
+- Parells a operar
+- Temporalitat (interval)
+- Paràmetres ATR per a TP, SL i trailing
+- Capital assignat
+
+Des d'aquesta tab es poden crear, editar, duplicar i assignar configuracions als bots d'auto-trading. El backtesting usa dades historials de klines de Binance.
+
+---
+
+### 5a.9 Configuració (SettingsTab)
+
+**Objectiu:** Controlar tots els paràmetres operatius del sistema.
+
+**Seccions:**
+
+| Secció | Contingut |
+|--------|-----------|
+| **Notificacions Telegram** | Toggle per cada tipus d'event (compra, trailing actiu, sortida, crash, informe horari, resum diari) |
+| **Trailing Stop** | Mode (ATR o PIVOT_LOW), multiplicador de distància, multiplicador d'activació, interval de càlcul, offset pivot |
+| **Gestió de capital** | Modalitat (FIXED import en USDT / PCT_PORTFOLIO percentatge), import per defecte |
+| **Presets per temporalitat** | Valors recomanats de TP%, SL% i ATR per a 5m / 1h / 4h |
+| **Multi-bot** | Taula de bots: nom, budget, simulació assignada, horari actiu, límit diari, estat (ON/OFF). Botons d'afegir / editar / eliminar bot. |
+| **Switch mestre** | Activa/desactiva tot l'auto-trading d'un sol clic |
+
+Els canvis es desen immediatament a la base de dades SQLite via `POST /api/settings`.
+
+---
+
+### 5a.10 Errors del sistema (ErrorsPanel)
+
+**Objectiu:** Diagnòstic ràpid de problemes del servidor sense accedir als fitxers de log.
+
+Mostra els últims errors del servidor en ordre cronològic invers:
+- Timestamp
+- Mòdul d'origen (trailing-engine, order-monitor, etc.)
+- Missatge d'error
+- Stack trace (expandible)
+
+S'actualitza en temps real via SSE (`/api/stream`). Quan arriba un error nou, apareix una notificació visual al tab.
+
+---
+
+### 5a.11 Logs del servidor (LogsPanel)
+
+**Objectiu:** Monitoratge en temps real del comportament intern del sistema.
+
+**Fonts de logs:**
+- `trailing-engine` — actualitzacions de SL, activacions, errors d'ordres
+- `order-monitor` — detecció d'ordres completades/cancel·lades
+- `auto-trader` — cicles de bot, compres automàtiques
+- `crash-monitor` — detecció de crash BTC
+- `scheduler` — enviament d'informes Telegram
+- `api` — peticions entrants al servidor
+
+**Controls:**
+- Filtre per nivell: DEBUG / INFO / WARN / ERROR
+- Filtre per mòdul (multiselecció)
+- Pausa del feed en temps real (per llegir sense que avanci)
+- Botó "Netejar" per buidar la vista (no esborra els fitxers de log)
+
+Els logs es mostren en ordre cronològic invers. La connexió SSE es reinicia automàticament si es talla.
 
 ---
 
@@ -694,6 +1010,24 @@ El motor inclou gestió d'errors exhaustiva:
 
 **Notificacions no bloquejants:** Totes les crides a `notifyX()` de Telegram usen `.catch(err => log.trailing.warn(...))` — un error de Telegram no atura el cicle del motor ni perd la traçabilitat.
 
+### 7.6 Traçabilitat i metadades del trailing (v2.1)
+
+Per garantir la traçabilitat completa de cada operació amb trailing stop, el sistema manté metadades addicionals:
+
+**Comptador d'ajustos de SL (`sl_update_count`):**
+Cada vegada que el motor actualitza el SL (cancel·la l'ordre antiga i col·loca la nova), incrementa en 1 el comptador `sl_update_count` a la taula `trailing_active`. Permet saber quants ajustos s'han realitzat durant la vida del trailing.
+
+**Data de creació de l'OCO (`oco_created_at`):**
+Quan s'activa el trailing (es cancel·la l'OCO original i es crea l'ordre SL trailing), es desa la data de creació de l'OCO original al camp `oco_created_at`. Aquest timestamp s'usa com a `startTime` per a la gràfica OcoProgressChart, assegurant que la gràfica mostra el recorregut complet des que es va obrir la posició (no des que es va activar el trailing).
+
+**Propagació de codi de trade per cadena d'ordres:**
+Quan el motor actualitza el SL (cancel·la `ord:oldSlOrderId` i crea `ord:newSlOrderId`), copia les metadades (`tradeCode`, `interval`) de l'ordre anterior a la nova. Si la metadada no es troba a l'ordre anterior directament, el sistema fa *fallback* a les metadades de l'OCO pare (`oco:{originOcoListId}`). Això evita la pèrdua del codi de trade en cadenes llargues d'actualitzacions de SL.
+
+**Codi de trade a la targeta d'ordre:**
+El component `OrdersPanel` mostra el codi de trade buscant en ordre:
+1. `orderMeta[ord:{orderId}]?.tradeCode`
+2. Fallback: `orderMeta[oco:{orderListId}]?.tradeCode`
+
 ---
 
 ## 8. Anàlisi tècnica automatitzada
@@ -871,64 +1205,339 @@ El sistema inclou una funcionalitat opcional d'auto-compra: quan la probabilitat
 
 ---
 
-## 10. El sistema de multi-bot auto-trader
+## 10. El sistema de multi-bot auto-trader i simulacions
 
 ### 10.1 Visió general
 
-L'auto-trader permet configurar múltiples **bots d'auto-trading** que operen de manera autònoma, cadascun amb la seva pròpia configuració de símbols, capital, horari i límits diaris. Tots els bots comparteixen el master switch `auto_trade_enabled` (configurable des de Settings).
+L'auto-trader permet configurar múltiples **bots d'auto-trading** que operen de manera autònoma. Cada bot porta associada una **configuració de simulació** (un fitxer JSON generat pel backtester) que defineix quins parells operar, en quina temporalitat, i amb quins paràmetres de TP/SL/trailing. D'aquesta manera, la configuració que ha funcionat bé en backtesting s'aplica directament en trading real sense haver de reintroduir cap paràmetre manualment.
 
-### 10.2 Arquitectura del bot
+Tots els bots comparteixen un **master switch** global (`auto_trade_enabled`), configurable des de Settings. Si el switch és OFF, cap bot opera, independentment del seu estat individual.
 
-Cada bot és un registre a la taula `bots` de SQLite amb els camps:
+---
 
-| Camp | Descripció | Exemple |
-|------|-----------|---------|
-| `name` | Nom identificador | "Scalper 5m BTC/ETH" |
-| `simId` | ID de la configuració de simulació assignada | "sim_20260308_abc12" |
-| `enabled` | Bot actiu/inactiu | `true` |
-| `budgetUsdt` | Capital màxim del bot en USDT | `500` |
-| `maxDaily` | Màxim d'operacions per dia | `3` |
-| `hoursFrom` | Hora UTC d'inici de la finestra de trading | `8` |
-| `hoursTo` | Hora UTC de fi de la finestra de trading | `22` |
-| `requireMultiTf` | Requereix confirmació del TF superior | `true` |
+### 10.2 Les configuracions de simulació (SavedConfig)
 
-La configuració de trading (símbols, interval, ATR per a TP/SL/trailing) prové del fitxer de simulació associat (`simulation/{simId}.json`). Això permet reutilitzar configuracions validades per backtesting directament en trading real.
+#### 10.2.1 Estructura d'un fitxer de simulació
 
-### 10.3 El cicle de poll global
+Els fitxers de simulació es guarden a `simulation/{timestamp}_{nom}.json`. Cada fitxer conté:
 
-El motor globalPoll s'executa cada **60 segons** al servidor:
+```json
+{
+  "name": "AutoLab SOLUSDT TRAILING 4h",
+  "savedAt": "2026-03-17T11:42:51.914Z",
+  "pnlPct": 47.87,
+  "config": {
+    "symbols":        ["SOLUSDT"],
+    "interval":       "4h",
+    "from":           "2022-09-14",
+    "to":             "2026-03-14",
+    "initialCapital": 1000,
+
+    "capitalMode":    "PCT",
+    "capitalFixed":   100,
+    "capitalPct":     80,
+    "riskPct":        60,
+
+    "exitMode":       "TRAILING",
+    "tpAtr":          3.65,
+    "slAtr":          1.30,
+    "trailActivateAtr": 1.69,
+    "trailDistanceAtr": 3.89,
+    "breakEvenAtr":   2.30,
+
+    "maxHoldingBars": 100,
+    "useMarketFilter": false,
+
+    "pumpVolMin":     3,
+    "moonSlPct":      25,
+    "moonPartialAt":  2,
+    "moonPartialPct": 50,
+    "moonTrailPct":   20
+  }
+}
+```
+
+#### 10.2.2 Paràmetres de la SavedConfig explicats
+
+**Parells i temporalitat:**
+
+| Paràmetre | Descripció |
+|-----------|-----------|
+| `symbols` | Llista de parells USDT a operar (p. ex. `["SOLUSDT","BTCUSDT"]`) |
+| `interval` | Temporalitat de les candles: `"5m"`, `"1h"`, `"4h"` |
+| `from` / `to` | Rang de dates del backtesting (no afecta el trading real) |
+
+**Gestió del capital:**
+
+| Paràmetre | Descripció |
+|-----------|-----------|
+| `capitalMode` | `"FIXED"` = import fix en USDT per operació; `"PCT"` = percentatge del capital disponible; `"ANTI_MARTINGALE"` = augmenta l'import en racxes guanyadores |
+| `capitalFixed` | Import en USDT per operació quan `capitalMode = "FIXED"` |
+| `capitalPct` | % del capital disponible per operació quan `capitalMode = "PCT"` (p. ex. 80 = 80%) |
+| `riskPct` | % de risc màxim per operació (per calcular la mida de posició òptima) |
+| `initialCapital` | Capital inicial del backtesting (no afecta el trading real) |
+
+**Paràmetres de sortida i trailing:**
+
+| Paràmetre | Descripció |
+|-----------|-----------|
+| `exitMode` | `"TRAILING"` = sortida per trailing stop; `"TP_SL"` = sortida clàssica per TP o SL |
+| `tpAtr` | Multiplicador ATR per calcular el TP (p. ex. 3.65 × ATR des de l'entrada) |
+| `slAtr` | Multiplicador ATR per calcular el SL (p. ex. 1.30 × ATR) |
+| `trailActivateAtr` | Multiplicador ATR que ha de superar el preu des de l'entrada per activar el trailing |
+| `trailDistanceAtr` | Distància del trailing en multiplicadors ATR (el SL es manté a `pic - dist × ATR`) |
+| `breakEvenAtr` | Quan el preu supera `entrada + breakEvenAtr × ATR`, el SL es mou al punt d'entrada (break-even) |
+| `maxHoldingBars` | Nombre màxim de candles que es pot mantenir una posició oberta sense sortir |
+
+**Filtres addicionals:**
+
+| Paràmetre | Descripció |
+|-----------|-----------|
+| `useMarketFilter` | Si `true`, el bot comprova que BTC estigui en tendència alcista abans d'operar |
+| `pumpVolMin` | Volum mínim de candle (× el normal) per filtrar senyals de pump |
+| `moonSlPct` | % màxim de caiguda des del pic (filtre anti-dump brusc) |
+| `moonPartialAt` | Multiplicador de guany a partir del qual es fa sortida parcial |
+| `moonPartialPct` | % de la posició que es ven en la sortida parcial |
+| `moonTrailPct` | % de trailing per a la part restant de la posició en mode moon |
+
+#### 10.2.3 Nomenclatura dels fitxers de simulació
+
+El nom del fitxer segueix el patró: `{timestamp_ms}_{descripció}.json`
+
+El `timestamp_ms` actua com a ID únic del fitxer. El `{descripció}` és lliure i sovint inclou el rendiment del backtesting (p. ex. `_425pct` = 425% de retorn).
+
+Exemples reals del sistema:
+```
+1773507497520_conf_sol_btc_454pct.json            → BTC+SOL / 4h / +454% en backtesting
+1773747771914_AutoLab_SOLUSDT_TRAILING_4h.json    → SOLUSDT / 4h / trailing / +47.9%
+1773872086391_conf_sol_btc_2024_850pct.json       → BTC+SOL / optimitzat 2024 / +850%
+1774086176347_conf_sol_pump_154pct.json           → SOLUSDT pump filter / +154%
+```
+
+Els fitxers amb sufix `_EQ_{data}` indiquen una còpia de la configuració feta en aquella data per comparació d'equitat.
+
+---
+
+### 10.3 Els bots: configuració i gestió
+
+#### 10.3.1 Estructura d'un bot (taula `bots` a SQLite)
+
+| Camp | Tipus | Descripció | Exemple |
+|------|-------|-----------|---------|
+| `id` | INTEGER PK | Identificador intern autoincremental | `1` |
+| `code` | TEXT | Codi llegible auto-generat | `"B-001"` |
+| `name` | TEXT | Nom descriptiu | `"Scalper SOL 4h"` |
+| `simId` | TEXT | ID de la simulació assignada (timestamp del fitxer) | `"1773747771914_AutoLab_SOLUSDT_TRAILING_4h"` |
+| `enabled` | INTEGER | Bot actiu (1) o en pausa (0) | `1` |
+| `budgetUsdt` | REAL | Pressupost màxim total del bot en USDT | `500` |
+| `maxDaily` | INTEGER | Màxim d'operacions per dia (reset a mitjanit UTC) | `3` |
+| `hoursFrom` | INTEGER | Hora UTC d'inici de la finestra de trading | `8` |
+| `hoursTo` | INTEGER | Hora UTC de fi de la finestra de trading | `22` |
+| `requireMultiTf` | INTEGER | Requereix confirmació en el TF superior (1 = sí) | `1` |
+| `entryDesc` | TEXT | Notes de l'operador sobre l'estratègia d'entrada | `"Opero en tendència alcista BTC"` |
+| `exitDesc` | TEXT | Notes de l'operador sobre la gestió de la sortida | `"Trailing agresiu, no tancar manual"` |
+| `created_at` | INTEGER | Timestamp de creació (ms) | `1741234567000` |
+
+**Codis de bot:** S'auto-generen en format `B-001`, `B-002`, etc., ordenats per creació. Són únics i llegibles als logs i al journal.
+
+#### 10.3.2 Cicle de vida d'un bot
 
 ```
-1. Comprovar master switch (auto_trade_enabled)
-2. Obtenir tots els bots enabled
-3. Per cada bot:
-   a. Carregar la configuració de simulació (simId validat contra path traversal)
-   b. Comprovar si la candle del seu interval acaba de tancar (últims 60s)
-   c. Si sí → runBotScan(bot, simConfig) en paral·lel (no bloqueja altres bots)
+CREAT (enabled=false)
+  → [usuari activa] → ACTIU (enabled=true)
+  → [master switch OFF o bot disabled] → EN PAUSA
+  → [usuari elimina] → ELIMINAT
 ```
 
-### 10.4 El scan per bot (runBotScan)
+Un bot actiu executa compres mentre:
+- El master switch estigui ON
+- La finestra horària estigui activa (`hoursFrom ≤ hora_UTC < hoursTo`)
+- No s'hagi assolit el límit diari (`maxDaily`)
+- El pressupost no estigui exhaurit (suma de ordres OCO obertes < `budgetUsdt`)
+- La candle de l'interval configurat acabi de tancar
+
+---
+
+### 10.4 El motor d'auto-trading (auto-trader.ts)
+
+#### 10.4.1 Arrancada: singleton globalPoll
+
+El motor s'inicia una sola vegada per vida del servidor via el patró singleton:
+
+```typescript
+export function ensureAutoTrader() {
+  if (global.__autoTraderStarted) return;
+  global.__autoTraderStarted = true;
+  setInterval(globalPoll, 60_000);
+}
+```
+
+`ensureAutoTrader()` es crida des de l'API route `/api/bots` en cada petició, garantint que si el servidor es reinicia, el motor torna a arrencar a la primera petició.
+
+#### 10.4.2 El cicle principal (globalPoll, cada 60s)
 
 ```
-Per cada symbol de la configuració:
-  1. Comprovar finestra horària UTC (hoursFrom ≤ nowHour < hoursTo)
-  2. Comprovar límit diari (comptador en memòria, reset a mitjanit UTC)
-  3. Comprovar pressupost (ordres OCO obertes × USDT/op ≤ budgetUsdt)
-  4. fetchAndAnalyze(symbol, interval):
-     - Crida directa a Binance API (250 candles)
-     - Retry automàtic fins a 3 vegades en cas de 429 (backoff exponencial: 1s, 2s, 4s)
-  5. Si score ≥ minScore i verdict = "BUY":
-     a. Si requireMultiTf: confirmar en el TF superior
-     b. executeBuy(): compra a mercat + OCO + trailing suggestion + journal
-     c. Incrementar comptador diari
-     d. Espera 2s entre compres per evitar flooding de l'API
+globalPoll():
+  1. Comprovar master switch → si OFF, sortir
+  2. Obtenir tots els bots enabled de la BD
+  3. Per cada bot (en paral·lel):
+     a. Carregar SavedConfig (simId → llegir fitxer JSON)
+        - Validar simId: regex /^[a-zA-Z0-9_-]+$/ + verificar path dins simulation/
+        - Si no vàlid o no existeix → skip (log WARN)
+     b. Detectar si la candle acaba de tancar:
+        - 1m: (now % 60_000) < 60_000
+        - 5m: (now % 300_000) < 60_000
+        - 1h: (now % 3_600_000) < 60_000
+        - 4h: (now % 14_400_000) < 60_000
+        - 1d: (now % 86_400_000) < 60_000
+        - Si la candle no ha tancat → skip (no és el moment d'analitzar)
+     c. Si candle tancada → runBotScan(bot, config)
 ```
 
-### 10.5 Seguretat i validació
+**Lògica de detecció de tancament de candle:** El bot s'executa exactament en els 60 primers segons de cada nova candle. Això garanteix que l'anàlisi es fa amb dades de la candle acabada de tancar, evitant senyals falsos basats en candles incompletes.
 
-- **Path traversal previngut:** El `simId` es valida amb `/^[a-zA-Z0-9_-]+$/` i es verifica que el path resolt és dins de `simulation/`. Un `simId` com `../../.env.local` retorna `null` immediatament.
-- **Paràmetres validats:** `budgetUsdt > 0`, `maxDaily ≥ 1`, `hoursFrom/hoursTo` entre 0 i 23 (validat tant a l'API com al store).
-- **Comptadors en memòria** (no persistents): Es reinicien si el servidor es reinicia. Disseny intencionat per evitar bloquejos accidentals de bots.
+#### 10.4.3 El scan per bot (runBotScan)
+
+Per cada symbol de la configuració, en seqüència:
+
+```
+1. COMPROVACIÓ HORÀRIA
+   hoursFrom ≤ hora_UTC_actual < hoursTo
+   → si fora de finestra: skip (log INFO)
+
+2. COMPROVACIÓ LÍMIT DIARI
+   dailyCounter[botId][avui] < maxDaily
+   → si assolit: skip + log WARN
+
+3. COMPROVACIÓ PRESSUPOST
+   Suma de les ordres OCO obertes del bot ≤ budgetUsdt
+   → si exhaurit: skip + log WARN
+
+4. ANÀLISI TÈCNICA (fetchAndAnalyze)
+   a. Descarregar 250 candles de Binance (interval de la config)
+   b. Calcular els 5 indicadors (EMA, MACD, RSI, Bollinger, Stochastic)
+   c. Obtenir score (0-100) i verdict
+   d. Retry fins a 3 vegades en 429 Too Many Requests (backoff: 1s, 2s, 4s)
+
+5. SI verdict = "BUY" i score ≥ minScore:
+   a. Si requireMultiTf = true:
+      - Calcular el TF superior (5m→1h, 1h→4h, 4h→1d)
+      - Repetir l'anàlisi en el TF superior
+      - Si verdict superior ≠ "BUY": skip (no confirmació)
+   b. executeBuy(symbol, config, bot)
+   c. Esperar 2s (evitar flooding API Binance)
+   d. Incrementar dailyCounter
+
+6. SI verdict ≠ "BUY": log DEBUG, continuar al proper symbol
+```
+
+#### 10.4.4 L'execució de compra (executeBuy)
+
+Quan es compleixen totes les condicions, `executeBuy` realitza la seqüència completa d'operació:
+
+```
+1. CÀLCUL DEL CAPITAL
+   - FIXED: usar capitalFixed USDT
+   - PCT: usar (saldo_lliure_USDT × capitalPct / 100)
+   - ANTI_MARTINGALE: augmentar l'import en racxes guanyadores
+
+2. COMPRA DE MERCAT
+   POST /api/v3/order (MARKET BUY)
+   → Obtenir fill_price exacte i quantitat executada
+   → Deduir comissió (normalment 0.1% o 0.075% amb BNB)
+
+3. CÀLCUL DE TP / SL
+   - ATR(14) de les últimes candles
+   - TP  = fill_price + tpAtr × ATR    (arrodonit CAP AMUNT al tick)
+   - SL_stop = fill_price - slAtr × ATR (arrodonit CAP AVALL al tick)
+   - SL_limit = SL_stop × 0.999        (0.1% per sota del stop)
+
+4. COL·LOCACIÓ DE L'OCO
+   POST /api/v3/orderList/oco
+   → LIMIT_MAKER per al TP
+   → STOP_LOSS_LIMIT per al SL
+   → Desar metadades: orderMetaSet(oco:{listId}, { tradeCode, interval })
+
+5. TRAILING SUGGESTION
+   Si exitMode = "TRAILING":
+   - activateAt = fill_price + trailActivateAtr × ATR
+   - distance   = trailDistanceAtr × ATR
+   - Desar a trailing_suggestions (serà monitorat pel trailing engine)
+
+6. NOTIFICACIÓ TELEGRAM
+   Enviar missatge amb: symbol, preu entrada, TP, SL, capital invertit
+
+7. JOURNAL
+   Inserir entrada ENTRY_BUY (compra) + ENTRY_OCO (OCO col·locada)
+   Codi de trade auto-generat: T-{seq:04d} (p. ex. T-0036)
+```
+
+---
+
+### 10.5 Seguretat i validació del sistema de bots
+
+| Mesura | Detall |
+|--------|--------|
+| **Path traversal** | `simId` validat amb regex `/^[a-zA-Z0-9_-]+$/`; el path resolt es verifica que comenci per `simulation/` |
+| **Paràmetres de bot** | `budgetUsdt > 0`, `maxDaily ≥ 1`, `hoursFrom/hoursTo` entre 0 i 23, validats tant a l'API com al store |
+| **Comptadors diaris** | En memòria (no persistents). Disseny intencionat: si el servidor es reinicia, els comptadors es reinicien evitant bloquejos permanents de bots |
+| **Concurrència** | Cada bot es processa en paral·lel (Promise.all) però cada bot analitza els seus symbols en seqüència (evitar flooding) |
+| **Retry i backoff** | Fins a 3 intents amb backoff exponencial (1s, 2s, 4s) en cas de 429 de Binance |
+| **AbortSignal** | Totes les crides externes porten `AbortSignal.timeout(10_000)` |
+
+---
+
+### 10.6 Gestió de bots des de la interfície (SettingsTab)
+
+A la tab de Configuració, la secció **Multi-bot** permet:
+
+**Taula de bots actuals:**
+```
+┌──────┬──────────────────┬──────────┬────────────┬───────┬──────────┬──────────┬──────┐
+│ Codi │ Nom              │ Simulació│ Pressupost │ /dia  │ Horari   │ Multi-TF │ ON/OFF│
+├──────┼──────────────────┼──────────┼────────────┼───────┼──────────┼──────────┼──────┤
+│ B-001│ Scalper SOL 4h   │ AutoLab… │ 500 USDT   │ max 3 │ 8h-22h UTC│ ✓       │ ●    │
+│ B-002│ BTC/SOL 1h       │ conf_btc…│ 300 USDT   │ max 5 │ 0h-24h UTC│ ✗       │ ○    │
+└──────┴──────────────────┴──────────┴────────────┴───────┴──────────┴──────────┴──────┘
+```
+
+**Accions per bot:**
+- `[+ Afegir bot]` → formulari de creació (nom, simId del desplegable, pressupost, límits)
+- `[Editar]` → modal de modificació de qualsevol camp
+- `[Activar/Pausar]` → toggle enabled sense eliminar la configuració
+- `[Eliminar]` → confirmació + eliminació de la BD
+
+**Switch mestre:**
+```
+Auto-trading global: [●──────────] ON
+```
+Quan s'apaga el switch mestre, cap bot executa cap compra en el proper cicle de 60s.
+
+---
+
+### 10.7 El flux complet bot → posició → sortida
+
+```
+[BOT actiu, candle tancada]
+     │
+     ▼
+[Anàlisi: BUY + score ≥ threshold]
+     │
+     ▼
+[executeBuy → MARKET BUY → OCO col·locada → trailing_suggestion desada]
+     │
+     ├─ [Preu no assoleix activateAt] → OCO espera (TP o SL fix)
+     │        │
+     │        ├─ [Preu arriba al TP] → EXIT_TP → journal + Telegram
+     │        └─ [Preu cau al SL]   → EXIT_SL → journal + Telegram
+     │
+     └─ [Preu assoleix activateAt] → trailing-engine activa trailing
+              │  [OCO cancel·lada → STOP_LOSS_LIMIT col·locat]
+              │
+              ├─ [Preu puja] → SL s'actualitza (sl_update_count++)
+              │
+              └─ [Preu cau al SL mòbil] → EXIT_TRAILING → journal + Telegram
+```
 
 ---
 
@@ -973,7 +1582,7 @@ El sistema usa un bot de Telegram per enviar notificacions i informes al trader.
 3. Obtenir el Chat ID del canal/grup destí
 4. Configurar les variables d'entorn `TELEGRAM_BOT_TOKEN` i `TELEGRAM_CHAT_ID`
 
-### 10.2 Tipus de notificacions
+### 12.2 Tipus de notificacions
 
 #### Informe horari de P&L
 Enviat cada hora en punt (00:00, 01:00, 02:00...).
@@ -1040,7 +1649,7 @@ Fill: 97,234.56 USDT/BTC
 OCO: TP 99,456.78 / SL 95,678.90
 ```
 
-### 10.3 La planificació de les notificacions
+### 12.3 La planificació de les notificacions
 
 El sistema de notificacions usa un planificador (scheduler) que calcula exactament quan s'ha d'enviar cada notificació:
 
@@ -1248,7 +1857,7 @@ A banda de la caché genèrica, la base de dades conté:
 |-------|-----------|
 | `cache` | Clau-valor amb TTL (tickers, klines, exchange-info) |
 | `trailing_suggestions` | Trailing stops pendents d'activació (lligats a OCO) |
-| `trailing_active` | Trailing stops actius amb SL actual i pic de preu |
+| `trailing_active` | Trailing stops actius amb SL actual, pic de preu, comptador d'ajustos SL (`sl_update_count`) i data de creació OCO (`oco_created_at`) |
 | `order_meta` | Metadades per ordre: codi de trade, interval, notes de sortida |
 | `journal` | Registre intern de totes les operacions (ENTRY/EXIT/TRAIL) |
 | `portfolio_snapshots` | Valor del portfolio cada 15 minuts (per a la gràfica d'evolució) |
@@ -1316,7 +1925,7 @@ Un bon trader manté sempre un percentatge de capital lliure per aprofitar oport
 
 ## 17. Estratègies de trading implementades
 
-### 15.1 Resum de les estratègies predefinides
+### 17.1 Resum de les estratègies predefinides
 
 A part de les estratègies d'anàlisi tècnica automàtica, el sistema permet etiquetar cada ordre oberta amb una "estratègia" personalitzada. Això facilita el seguiment del rendiment per estratègia en el historial.
 
@@ -1330,7 +1939,7 @@ Les etiquetes predefinides:
 | DCA | Lila | Dollar-Cost Averaging (compres periòdiques) |
 | Breakout | Groc | Ruptura de resistència |
 
-### 15.2 Recomanacions operatives per a cada estratègia
+### 17.2 Recomanacions operatives per a cada estratègia
 
 #### Scalp (intradiaria)
 - **Temporalitat d'anàlisi:** 5m, màxim 15m
@@ -1363,7 +1972,7 @@ No és un trade actiu sinó una estratègia d'acumulació: es compra una quantit
 - **SL:** Per sota del nivell roto (ara suport)
 - **Temporalitat:** 1h com a mínim
 
-### 15.3 Gestió activa de les posicions
+### 17.3 Gestió activa de les posicions
 
 #### Millora de l'entrada (averaging down)
 Quan una posició va en contra però la tesi segueix sent vàlida, alguns traders afegeixen a la posició per reduir el preu mig d'entrada. **Risc elevat.** Recomanem NO fer averaging down com a norma general: si la tesi és errònia, en realitat s'amplifica la pèrdua.
@@ -1382,7 +1991,7 @@ Implementació: Cancel·lar l'OCO, executar una venda parcial de mercat, i crear
 
 ## 18. Gestió del risc
 
-### 16.1 Per què la gestió del risc és l'element més important
+### 18.1 Per què la gestió del risc és l'element més important
 
 El trading és un joc de probabilitats, no de certeses. Fins i tot les millors estratègies fallen el 30-40% de les vegades. La clau per ser rendible a llarg termini és que les operacions guanyadores siguin significativament majors que les perdedores.
 
@@ -1395,7 +2004,7 @@ Exemple numèric (10 operacions, risc 1% per operació, capital 10.000 USDT):
 | 55% TP, ratio 2:1 | 5.5 × 2% = +11% | 4.5 × 1% = -4.5% | **+6.5% net** |
 | 70% TP, ratio 1:1 | 7 × 1% = +7% | 3 × 1% = -3% | **+4% net** |
 
-### 16.2 Regles de gestió del risc
+### 18.2 Regles de gestió del risc
 
 #### La regla del 1-2%
 Mai arriscar més del 1-2% del capital total en una sola operació. Si el capital és 10.000 USDT, el risc màxim per operació és 100-200 USDT.
@@ -1424,7 +2033,7 @@ BTC, ETH, SOL i la majoria d'altcoins estan altament correlacionats: quan BTC ca
 
 En períodes d'incertesa macro o caiguda de BTC, reduir exposició general.
 
-### 16.3 El rol del Stop Loss automàtic
+### 18.3 El rol del Stop Loss automàtic
 
 El sistema força l'ús de Stop Loss en totes les posicions via les OCO. No és possible tenir una posició oberta sense SL configurat.
 
@@ -1433,7 +2042,7 @@ Avantatges:
 2. **Disponibilitat 24/7:** El mercat opera 24 hores. Un SL automàtic protegeix durant les hores de son
 3. **Consistència:** El pla de gestió del risc s'executa sempre, fins i tot quan l'usuari no pot monitorar el mercat
 
-### 16.4 Psicologia del trading
+### 18.4 Psicologia del trading
 
 Fins i tot amb un sistema ben configurat, la psicologia és un factor crític. Els errors psicològics més comuns:
 
@@ -1449,7 +2058,7 @@ Fins i tot amb un sistema ben configurat, la psicologia és un factor crític. E
 
 ## 19. Historial i anàlisi de rendiment
 
-### 17.1 Estructura del historial
+### 19.1 Estructura del historial
 
 El sistema desa totes les ordres executades i cancel·lades, consultant-les directament de l'API de Binance. Cada operació completada mostra:
 
@@ -1464,7 +2073,7 @@ El sistema desa totes les ordres executades i cancel·lades, consultant-les dire
 
 Per a les OCO que deriven en trailing stop, la card mostra la cadena completa: compra → OCO activa → trailing activat → sortida final.
 
-### 17.2 Mètriques de rendiment clau
+### 19.2 Mètriques de rendiment clau
 
 #### Win Rate (taxa d'encert)
 Percentatge d'operacions guanyadores sobre el total de closes. Mostrat a la barra de resum del historial.
@@ -1484,7 +2093,7 @@ La màxima caiguda des d'un màxim fins al mínim subsequiente. Un drawdown > 20
 #### Sharpe Ratio
 Rendiment ajustat per risc. Difícil de calcular directament, però com a aproximació: si el rendiment mensual supera la volatilitat mensual, el Sharpe és > 1 (bo).
 
-### 17.3 Anàlisi per temporalitat
+### 19.3 Anàlisi per temporalitat
 
 El sistema etiqueta cada ordre amb la temporalitat de l'anàlisi que va generar la senyal. Esto permet analitzar quin timeframe genera millors resultats:
 
@@ -1494,7 +2103,7 @@ En general, les temporalitats majors (4h, 1D) generen menys senyals però de mé
 
 ## 20. Flux de treball diari
 
-### 18.1 La rutina del trader
+### 20.1 La rutina del trader
 
 Per aprofitar al màxim el sistema, recomanem la següent rutina diària:
 
@@ -1526,7 +2135,7 @@ Per aprofitar al màxim el sistema, recomanem la següent rutina diària:
 
 **Temps total:** 50-85 minuts/dia
 
-### 18.2 Comportament en situacions especials
+### 20.2 Comportament en situacions especials
 
 **Crash de mercat repentí (-10% o més en 1h)**
 1. No entrar en pànic
@@ -1548,7 +2157,7 @@ Per aprofitar al màxim el sistema, recomanem la següent rutina diària:
 
 ## 21. Integració amb Binance
 
-### 19.1 L'API de Binance
+### 21.1 L'API de Binance
 
 Binance proporciona una de les APIs de trading més completes del sector. El sistema usa exclusivament els endpoints REST (no WebSocket) per simplicitat i fiabilitat.
 
@@ -1568,7 +2177,7 @@ Binance proporciona una de les APIs de trading més completes del sector. El sis
 | `DELETE /api/v3/orderList` | Cancel·lar OCO |
 | `DELETE /api/v3/order` | Cancel·lar ordre individual |
 
-### 19.2 Rate limits de l'API
+### 21.2 Rate limits de l'API
 
 Binance imposa límits de peticions per evitar l'abús:
 
@@ -1577,7 +2186,7 @@ Binance imposa límits de peticions per evitar l'abús:
 
 El sistema respecta aquests límits cachejant les dades i no fent peticions innecessàries.
 
-### 19.3 Testnet vs Producció
+### 21.3 Testnet vs Producció
 
 El sistema opera per defecte en la **testnet de Binance** (demo): `https://demo-api.binance.com`. La testnet és idèntica en funcionament a la producció però usa diners virtuals.
 
@@ -1682,7 +2291,7 @@ Suport per gestionar diversos comptes de Binance (per exemple, comptes familiars
 
 ## 23. Previsió de guanys i anàlisi econòmica
 
-### 21.1 Metodologia de la previsió
+### 23.1 Metodologia de la previsió
 
 Aquesta secció presenta projeccions financeres basades en:
 1. Rendiments típics de l'anàlisi tècnica en mercats de criptomonedes documentats per traders retails
@@ -1691,7 +2300,7 @@ Aquesta secció presenta projeccions financeres basades en:
 
 **Advertència important:** Les projeccions financeres en criptomonedes estan subjectes a un alt grau d'incertesa. Els resultats passats no garanteixen resultats futurs. Les xifres presentades representen escenaris possibles basats en supòsits raonables, no promeses de rendiment.
 
-### 21.2 Supòsits base
+### 23.2 Supòsits base
 
 Per a les projeccions, usem els següents supòsits:
 
@@ -1706,7 +2315,7 @@ Per a les projeccions, usem els següents supòsits:
 | SL mig (quan perd) | -1.5% | 1-2.5% |
 | Mercat | Mercat lateral a alcista | — |
 
-### 21.3 Escenari conservador
+### 23.3 Escenari conservador
 
 **Condicions:** Mercat lateral, 8-10 operacions/mes, win rate 50%, TP 2% / SL 1.5%
 
@@ -1720,7 +2329,7 @@ Per a les projeccions, usem els següents supòsits:
 
 Amb 5.000 USDT inicials: **+308 USDT el primer any**
 
-### 21.4 Escenari base (el més probable)
+### 23.4 Escenari base (el més probable)
 
 **Condicions:** Mercat lateral a lleugerament alcista, 15 operacions/mes, win rate 55%, TP 2.5% / SL 1.5%
 
@@ -1744,7 +2353,7 @@ Nota: Aquesta xifra és la projeccció teòrica. En pràctica, no tots els mesos
 
 Amb 5.000 USDT inicials i reinversió constant dels guanys: **22.421 USDT als 5 anys (+348%).**
 
-### 21.5 Escenari optimista
+### 23.5 Escenari optimista
 
 **Condicions:** Bull market, 20-25 operacions/mes, win rate 60%, TP 3.5% / SL 1.5%, trailing stop actiu en posicions guanyadores
 
@@ -1764,7 +2373,7 @@ En pràctica, ajustat per la impossibilitat de mantenir aquest ritme de manera c
 | 2   | 10.000 USDT    | +80%            | 18.000 USDT   |
 | 3   | 18.000 USDT    | +60%            | 28.800 USDT   |
 
-### 21.6 Escenari pessimista
+### 23.6 Escenari pessimista
 
 **Condicions:** Bear market prolongat, errors d'execució freqüents, mercat en caiguda lliure
 
@@ -1783,7 +2392,7 @@ Amb 5.000 USDT inicials: **2.650 USDT al final de l'any** (-2.350 USDT de pèrdu
 2. No fer trading durant bears markets prolongs
 3. La regla del drawdown màxim: parar si el capital cau > 15%
 
-### 21.7 L'impacte de les comissions
+### 23.7 L'impacte de les comissions
 
 Les comissions de Binance poden semblar petites (0.10% per operació) però s'acumulen significativament:
 
@@ -1800,7 +2409,7 @@ Formes de reduir les comissions:
 2. **Tiered fee structure:** A partir d'un cert volum mensual (> 500.000 USDT/mes), les comissions baixen al 0.08%, 0.06%, etc.
 3. **Usar ordres Maker:** Les ordres Limit (que no s'executen immediatament) paguen la comissió "maker" (0.10%), mentre que les ordres Market (immediates) paguen la "taker" (0.10% o superior)
 
-### 21.8 Comparativa amb altres alternatives d'inversió
+### 23.8 Comparativa amb altres alternatives d'inversió
 
 | Instrument | Rendiment anual esperat | Risc | Liquiditat |
 |-----------|------------------------|------|-----------|
@@ -1812,7 +2421,7 @@ Formes de reduir les comissions:
 | Fons de capital risc (VC) | 15-25% anual | Alt | Molt baixa |
 | Inversió en immobles | 6-10% net | Moderat | Molt baixa |
 
-### 21.9 L'efecte del reinvestiment (interès compost)
+### 23.9 L'efecte del reinvestiment (interès compost)
 
 Una de les característiques més poderoses del sistema és la capacitat de reinvertir els guanys immediatament:
 
@@ -1830,7 +2439,7 @@ Una de les característiques més poderoses del sistema és la capacitat de rein
 
 **La clau:** Mantenir els guanys al compte i augmentar gradual·ment la mida de les posicions a mesura que el capital creix.
 
-### 21.10 Gestió fiscal dels guanys
+### 23.10 Gestió fiscal dels guanys
 
 A Espanya i Catalunya, els guanys derivats del trading de criptomonedes tributen com a guanys patrimonials a l'IRPF:
 
@@ -1911,7 +2520,7 @@ npm run build
 npm run start
 ```
 
-### 22.4 Desplegar en un servidor dedicat
+### 24.4 Desplegar en un servidor dedicat
 
 Per a operació 24/7 amb màxima fiabilitat, recomanem desplegar en un VPS (Virtual Private Server):
 
@@ -1940,7 +2549,7 @@ sudo apt-get install -y nginx certbot python3-certbot-nginx
 # Configurar el teu domini i certificat SSL
 ```
 
-### 22.5 Configuració de l'API Key de Binance
+### 24.5 Configuració de l'API Key de Binance
 
 **Pas a pas per crear una API Key segura:**
 
@@ -1951,7 +2560,7 @@ sudo apt-get install -y nginx certbot python3-certbot-nginx
 5. Restringir per IP: afegir la IP del teu servidor (recomanat fortament)
 6. Guardar la API Key i Secret Key de manera segura (no als fitxers del projecte)
 
-### 22.6 Format dels fitxers de log
+### 24.6 Format dels fitxers de log
 
 Cada línia del fitxer de log és un objecte JSON independent (format NDJSON):
 
@@ -1968,7 +2577,7 @@ cat logs/2026-03-08.log | npx pino-pretty
 
 ---
 
-## 23. Glossari
+## 25. Glossari
 
 **ATR (Average True Range):** Indicador de volatilitat que mesura l'amplitud mitjana de les veles en N períodes.
 
@@ -2028,7 +2637,7 @@ cat logs/2026-03-08.log | npx pino-pretty
 
 ---
 
-## 24. Consideracions legals i fiscals
+## 26. Consideracions legals i fiscals
 
 ### 24.1 Marc legal a Espanya i Catalunya
 
@@ -2076,11 +2685,11 @@ Bona sort, i que els mercats t'acompanyin.
 
 ---
 
-*Document generat el 8 de març de 2026. Versió 1.0.*
+*Document actualitzat el 22 de març de 2026. Versió 2.1.*
 *Propietat privada. Distribució no autoritzada.*
 
 ---
 
 **Fi del document — TOTELSISTEMA.md**
 
-*Total de seccions: 24 | Total d'apartats: 87 | Taules: 18 | Exemples de codi: 24*
+*Total de seccions: 26 (+ secció 5a i epíleg) | Versió 2.1 — inclou bots/simulacions, traçabilitat trailing, guia de pantalles*

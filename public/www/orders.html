@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Ordres · CryptDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js"></script>
+</head>
+<body>
+  <div id="loading-overlay" class="loading-overlay">Carregant…</div>
+  <div id="login-screen" style="display:none">
+    <div class="login-box">
+      <h1><i class="fa-solid fa-robot"></i> CryptDesk</h1>
+      <p>Accés mòbil al sistema de trading</p>
+      <form id="login-form">
+        <input id="user-input" type="text" placeholder="Usuari" autocomplete="username" />
+        <input id="pw-input" type="password" placeholder="Contrasenya" autocomplete="current-password" />
+        <button id="login-btn" type="submit">Entrar</button>
+      </form>
+      <div id="login-err" class="login-error"></div>
+    </div>
+  </div>
+  <div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
+    <header class="app-header">
+      <button id="hamburger-btn" class="hamburger-btn"><span></span><span></span><span></span></button>
+      <div class="app-logo"><i class="fa-solid fa-robot"></i>CryptDesk</div>
+      <div style="flex:1"></div>
+      <div class="header-status">
+        <span id="sse-dot" class="sse-dot"></span>
+        <span id="countdown" class="countdown">30s</span>
+      </div>
+      <button id="refresh-btn" class="refresh-btn"><i class="fa-solid fa-rotate"></i></button>
+    </header>
+    <div class="app-content">
+    <div class="page-title"><i class="fa-solid fa-list-check"></i> Ordres</div>
+
+    <div class="portfolio-total">
+      <div class="pt-label">Valor total en posicions</div>
+      <div class="pt-hero-row">
+        <i class="fa-solid fa-coins pt-hero-icon"></i>
+        <div class="pt-value" id="orders-hero-value">—</div>
+      </div>
+      <div class="pt-change">
+        <span id="orders-hero-sub" class="pt-sub"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-clock"></i>Obertes</span>
+        <span id="orders-count" class="card-count">0</span>
+      </div>
+      <div class="card-desc">Ordres límit i stop actives a Binance. Els grups OCO es mostren vinculats amb l'evolució des de la compra.</div>
+      <div id="orders-body"><div class="empty">Carregant…</div></div>
+    </div>
+    <div id="updated-at" class="updated-bar"></div>
+    </div><!-- /.app-content -->
+  </div>
+
+  <!-- Pause notification panel -->
+  <div id="pause-panel" class="pause-panel">
+    <div class="pause-panel-icon"><i class="fa-solid fa-circle-pause"></i></div>
+    <div class="pause-panel-body">
+      <div class="pause-panel-title">Refresc aturat</div>
+      <div id="pause-panel-elapsed" class="pause-panel-sub"></div>
+    </div>
+    <button class="pause-panel-btn" id="pause-resume-btn">Reprendre</button>
+  </div>
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="orders.js"></script>
+  <script>document.addEventListener("DOMContentLoaded",()=>initHamburger("orders"));</script>
+</body>
+</html>

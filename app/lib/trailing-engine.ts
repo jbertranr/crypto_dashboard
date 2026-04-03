@@ -4,7 +4,7 @@ import {
 } from "./cache-store";
 import {
   cancelOrder, cancelOcoOrder, placeStopLossLimitOrder, placeMarketSell, getTickerPrice, getOrder, getAccount, roundPrice,
-  getKlines,
+  getKlines, getOpenOrders,
 } from "./binance-auth";
 import { notifyTrailingFill, notifyTrailingActivated, notifySlModified } from "./telegram";
 import { settingGetBool, settingGet } from "./settings-store";
@@ -79,9 +79,24 @@ export function ensureTrailingEngine() {
 }
 
 async function runCycle() {
-  // 1. Auto-activate pending suggestions
+  // 0. Cleanup stale suggestions: remove order_trailing entries whose OCO no longer exists on Binance
   const suggestions = trailingGetAll();
-  for (const s of suggestions) {
+  if (suggestions.length > 0) {
+    try {
+      const openOrders  = await getOpenOrders();
+      const activeOcoIds = new Set(openOrders.map(o => o.orderListId).filter(id => id > 0));
+      for (const s of suggestions) {
+        if (!activeOcoIds.has(s.orderListId)) {
+          log.trailing.info({ symbol: s.symbol, orderListId: s.orderListId }, "eliminant trailing pendent — OCO ja no existeix a Binance");
+          trailingDelete(s.orderListId);
+        }
+      }
+    } catch { /* si Binance falla, mantenim les entrades i ho intentem el proper cicle */ }
+  }
+
+  // 1. Auto-activate pending suggestions
+  const freshSuggestions = trailingGetAll();
+  for (const s of freshSuggestions) {
     const key = trailKey("suggest", s.orderListId);
     if (isPaused(key)) continue;
     try {
@@ -154,15 +169,17 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
     currentSl: initialSl, trailDist: s.distance,
     peakPrice: price, entryPrice: s.entryPrice ?? price, tickSize: s.tickSize,
     originOcoListId: s.orderListId,
+    ocoCreatedAt: s.createdAt ?? null,
   });
 
   // Propagate tradeCode from original OCO to the new SL order
   const ocoMeta = orderMetaGet(`oco:${s.orderListId}`);
   if (ocoMeta?.tradeCode) {
     orderMetaSet(`ord:${slOrd.orderId}`, {
-      tradeCode: ocoMeta.tradeCode,
-      ...(ocoMeta.interval ? { interval: ocoMeta.interval } : {}),
-      ...(ocoMeta.botName  ? { botName:  ocoMeta.botName  } : {}),
+      tradeCode:   ocoMeta.tradeCode,
+      ...(ocoMeta.interval     ? { interval:     ocoMeta.interval     } : {}),
+      ...(ocoMeta.botName      ? { botName:      ocoMeta.botName      } : {}),
+      ...(ocoMeta.entrySource  ? { entrySource:  ocoMeta.entrySource  } : {}),
     });
   }
 
@@ -223,9 +240,16 @@ async function processTrailing(t: TrailingActive) {
   try {
     const ord = await getOrder(t.symbol, t.slOrderId);
     status = ord.status;
-  } catch {
-    trailingActiveSetStatus(t.id, "error");
-    return;
+  } catch (e) {
+    const msg = (e as Error).message ?? "";
+    // -2013: Order does not exist → mark permanently as error
+    if (msg.includes("-2013") || msg.includes("Order does not exist")) {
+      log.trailing.warn({ symbol: t.symbol, slOrderId: t.slOrderId }, "ordre SL no existeix — marcant com a error");
+      trailingActiveSetStatus(t.id, "error");
+      return;
+    }
+    // Transient error (network, timeout) → re-throw so recordError/backoff applies
+    throw e;
   }
 
   if (status === "FILLED") {
@@ -449,9 +473,13 @@ async function processTrailing(t: TrailingActive) {
       }) as { orderId: number };
 
       trailingActiveUpdateSl(t.id, newOrder.orderId, parseFloat(stopStr), Math.max(newPeak, t.peakPrice));
-      // Carry tradeCode forward to the replacement SL order
-      const slMeta = orderMetaGet(`ord:${oldSlOrderId}`);
-      if (slMeta?.tradeCode) orderMetaSet(`ord:${newOrder.orderId}`, { tradeCode: slMeta.tradeCode });
+      // Carry tradeCode forward to the replacement SL order (fallback: OCO meta)
+      const slMeta = orderMetaGet(`ord:${oldSlOrderId}`)
+        ?? (t.originOcoListId ? orderMetaGet(`oco:${t.originOcoListId}`) : null);
+      if (slMeta?.tradeCode) orderMetaSet(`ord:${newOrder.orderId}`, {
+        tradeCode: slMeta.tradeCode,
+        ...(slMeta.interval ? { interval: slMeta.interval } : {}),
+      });
       log.trailing.info(
         { symbol: t.symbol, mode: slMode, oldSl: t.currentSl, newSl: stopStr, peak: newPeak },
         slMode === "PIVOT_LOW" ? "SL actualitzat a pivot low" : "SL pujat"
@@ -499,9 +527,13 @@ async function processTrailing(t: TrailingActive) {
       }) as { orderId: number };
 
       trailingActiveUpdateSl(t.id, newOrder.orderId, parseFloat(stopStr), newPeak);
-      // Carry tradeCode forward to the replacement SL order
-      const slMeta = orderMetaGet(`ord:${oldSlOrderId}`);
-      if (slMeta?.tradeCode) orderMetaSet(`ord:${newOrder.orderId}`, { tradeCode: slMeta.tradeCode });
+      // Carry tradeCode forward to the replacement SL order (fallback: OCO meta)
+      const slMeta = orderMetaGet(`ord:${oldSlOrderId}`)
+        ?? (t.originOcoListId ? orderMetaGet(`oco:${t.originOcoListId}`) : null);
+      if (slMeta?.tradeCode) orderMetaSet(`ord:${newOrder.orderId}`, {
+        tradeCode: slMeta.tradeCode,
+        ...(slMeta.interval ? { interval: slMeta.interval } : {}),
+      });
       log.trailing.info({ symbol: t.symbol, oldSl: t.currentSl, newSl: stopStr, peak: newPeak }, "SL baixat");
 
       if (settingGetBool("tg_on_sl_modify")) {

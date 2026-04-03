@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Configuració · CryptDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="settings-page">
+  <div class="settings-panel">
+    <div class="nav-drawer-header">
+      <span class="nav-drawer-title"><i class="fa-solid fa-sliders"></i> Configuració</span>
+      <button class="nav-drawer-close" onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></button>
+    </div>
+
+    <div class="nav-drawer-about">
+      <p>Preferències visuals de l'aplicació. Els canvis s'apliquen immediatament i es desen al dispositiu.</p>
+    </div>
+
+    <div class="nav-drawer-section-label">Aparença</div>
+    <div class="nav-drawer-links" id="font-size-options"></div>
+
+    <div class="nav-drawer-footer">
+      <i class="fa-solid fa-circle-info"></i> Les preferències es desen localment al dispositiu
+    </div>
+  </div>
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

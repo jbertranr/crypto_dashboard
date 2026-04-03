@@ -2,13 +2,15 @@
  * Scheduler — tasques periòdiques de Telegram
  *
  * • Cada hora en punt: canvi real de saldo vs snapshot 1h
+ * • Cada hora en punt: comprovació consistència ordres Binance vs DB local
  * • Cada dia a les 7:30: resum 24h amb gràfic de portfolio
  * • Cada 15 min: snapshot del portfolio (per calcular deltes)
  */
 
 import { getAccount, getOpenOrders } from "./binance-auth";
 import { getSnapshots, addSnapshot } from "./snapshot-store";
-import { sendPortfolioReport, sendHourlyPortfolioReport, isConfigured } from "./telegram";
+import { sendPortfolioReport, sendHourlyPortfolioReport, sendTelegram, isConfigured } from "./telegram";
+import { db, orderMetaGet } from "./cache-store";
 import { log }                        from "./logger";
 import { STABLES, BINANCE_BASE }      from "./constants";
 declare global {
@@ -117,6 +119,55 @@ async function fetchPortfolioData(): Promise<PortfolioData> {
 function snapshotNear(targetMs: number) {
   const snaps = getSnapshots().filter(s => s.time <= targetMs);
   return snaps.length > 0 ? snaps[snaps.length - 1] : null;
+}
+
+// ── Comprovació consistència ordres (cada hora) ───────────────────────────────
+
+async function checkOrderConsistency(): Promise<void> {
+  if (!isConfigured()) return;
+  try {
+    const binanceOrders = await getOpenOrders();
+
+    // Reconstruïm les ordres enriquides igual que fa /api/orders
+    const trailingRows = db.prepare(
+      "SELECT sl_order_id, origin_oco_list_id, sl_update_count FROM trailing_active WHERE status = 'active'"
+    ).all() as Array<{ sl_order_id: number; origin_oco_list_id: number | null; sl_update_count: number }>;
+    const trailingMap = new Map(trailingRows.map(r => [r.sl_order_id, r]));
+
+    const binanceIds = new Set(binanceOrders.map(o => o.orderId));
+
+    // Ordres que la nostra DB té com a trailing_active però Binance ja no té
+    const orphanTrailing: number[] = [];
+    for (const [slOrderId] of trailingMap) {
+      if (!binanceIds.has(slOrderId)) orphanTrailing.push(slOrderId);
+    }
+
+    if (orphanTrailing.length === 0) {
+      log.telegram.debug({ total: binanceOrders.length }, "comprovació ordres OK");
+      return;
+    }
+
+    // Construïm l'alerta
+    const lines: string[] = [
+      "⚠️ *Divergència d'ordres detectada*",
+      "",
+      `Binance té *${binanceOrders.length}* ordres obertes.`,
+    ];
+
+    if (orphanTrailing.length > 0) {
+      lines.push("", `🔴 Trailing actiu a la DB però absent a Binance (${orphanTrailing.length}):`)
+      for (const id of orphanTrailing) {
+        const meta = orderMetaGet(`order:${id}`);
+        lines.push(`  • orderId=${id}${meta?.tradeCode ? ` tradeCode=${meta.tradeCode}` : ""}`);
+      }
+    }
+
+    lines.push("", `_${new Date().toLocaleString("ca-ES")}_`);
+    await sendTelegram(lines.join("\n"));
+    log.telegram.warn({ orphanTrailing }, "divergència d'ordres detectada");
+  } catch (err) {
+    log.telegram.error({ err: (err as Error).message }, "error comprovació ordres");
+  }
 }
 
 // ── Informe horari ────────────────────────────────────────────────────────────
@@ -236,10 +287,11 @@ export function ensureScheduler(): void {
   takePortfolioSnapshot();
   setInterval(takePortfolioSnapshot, SNAPSHOT_INTERVAL_MS);
 
-  // Informe horari: alineat al pròxim toc d'hora
+  // Informe horari + comprovació ordres: alineats al pròxim toc d'hora
   setTimeout(() => {
     sendHourlyReport();
-    setInterval(sendHourlyReport, 60 * 60 * 1000);
+    checkOrderConsistency();
+    setInterval(() => { sendHourlyReport(); checkOrderConsistency(); }, 60 * 60 * 1000);
   }, msHour);
 
   // Informe diari: 7:30 cada dia

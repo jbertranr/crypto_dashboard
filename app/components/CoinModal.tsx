@@ -43,10 +43,16 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
 
   useEffect(() => {
     const { interval, limit } = TIMEFRAMES.find(t => t.label === tf)!;
-    setLoading(true);
-    fetch(`/api/klines?pair=${coin.pair}&interval=${interval}&limit=${limit}`)
-      .then(r => r.json()).then(d => { setChart(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    const load = async () => {
+      setLoading(true);
+      try {
+        const r = await fetch(`/api/klines?pair=${coin.pair}&interval=${interval}&limit=${limit}`);
+        setChart(await r.json());
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, [coin.pair, tf]);
 
   useEscapeKey(onClose);

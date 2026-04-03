@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       currentSl: initialSl, trailDist, peakPrice: price,
       entryPrice: entryPrice ?? price, tickSize,
       originOcoListId: orderListId,
+      ocoCreatedAt: Date.now(),
     });
 
     // 5. Propagate tradeCode (and interval/botName) from the original OCO to the new SL order

@@ -52,10 +52,11 @@ const STRATEGY_MAP  = Object.fromEntries(STRATEGIES.map(s => [s.name, s.color]))
 const STRATEGY_DESC = Object.fromEntries(STRATEGIES.map(s => [s.name, s.desc]))  as Record<string, string>;
 
 export interface OrderMeta {
-  interval:   string | null;
-  exitNotes:  string | null;
-  tradeCode:  string | null;
-  botName:    string | null;
+  interval:    string | null;
+  exitNotes:   string | null;
+  tradeCode:   string | null;
+  botName:     string | null;
+  entrySource: "AUTO" | "MANUAL" | null;
 }
 
 function stratKey(kind: "oco" | "ord", id: number): string {
@@ -268,7 +269,7 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
   const exitTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [filterStrategy, setFilterStrategy] = useState<string | null>(null);
   type TrailingSuggestion = { orderListId: number; activateAt: number; distance: number; activateAtr: number; distanceAtr: number; logic: string; entryPrice: number };
-  type TrailingActiveRec  = { id: number; symbol: string; side: "BUY" | "SELL"; slOrderId: number; currentSl: number; trailDist: number; peakPrice: number; entryPrice: number; status: string; updatedAt: number; createdAt: number };
+  type TrailingActiveRec  = { id: number; symbol: string; side: "BUY" | "SELL"; slOrderId: number; currentSl: number; trailDist: number; peakPrice: number; entryPrice: number; status: string; updatedAt: number; createdAt: number; originOcoListId: number | null; slUpdateCount: number; ocoCreatedAt: number | null };
   const [trailingSugg,   setTrailingSugg]   = useState<Record<number, TrailingSuggestion>>({});
   const [trailingActive, setTrailingActive] = useState<TrailingActiveRec[]>([]);
   const [activatingTs,   setActivatingTs]   = useState<Record<number, boolean>>({});
@@ -597,17 +598,15 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                             <span className="order-card__hero-crypto">{g.symbol.replace("USDT", "")}</span>
                             {qty > 0 && entryP > 0 && (
                               <>
-                                <span className="order-card__section-label">INVERTIT</span>
                                 <span className="order-card__hero-val mono">{formatCurrency(entryP * qty)}</span>
                                 <span className="order-card__hero-sub">
                                   ENTRADA <span className="mono">{formatCurrency(entryP)}</span>
-                                  {" "}(#{formatCurrency(entryP * qty)})
                                 </span>
                               </>
                             )}
                           </div>
                         </div>
-                        {/* BOTTOM: status badges + actions */}
+                        {/* BOTTOM: status badges + entrada/sortida */}
                         <div className="order-card__col-bottom">
                           <span className="pill pill--new"><i className="fa-solid fa-circle-play" />Activa</span>
                           <span className={`pill ${g.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
@@ -617,58 +616,102 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                           {orderMeta[ocoKey]?.interval && (
                             <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ocoKey].interval}</span>
                           )}
-                          {orderMeta[ocoKey]?.botName && (
-                            <span className="pill order-card__bot-badge" title={`Bot: ${orderMeta[ocoKey].botName}`}>
-                              <i className="fa-solid fa-robot" />{orderMeta[ocoKey].botName}
-                            </span>
-                          )}
-                          <div className="strategy-picker">
-                            <button
-                              className="strategy-picker__badge"
-                              style={ocoStrat ? { background: `${STRATEGY_MAP[ocoStrat]}22`, color: STRATEGY_MAP[ocoStrat] } : {}}
-                              data-tooltip={ocoStrat ? STRATEGY_DESC[ocoStrat] : undefined}
-                              onClick={() => setOpenPickerKey(k => k === ocoKey ? null : ocoKey)}>
-                              {ocoStrat
-                                ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ocoStrat] }} />{ocoStrat}</>
-                                : <><i className="fa-solid fa-tag" /> Estratègia</>}
-                            </button>
-                            {openPickerKey === ocoKey && (
-                              <StrategyPicker orderKey={ocoKey} current={ocoStrat}
-                                onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
-                            )}
-                          </div>
+                          {(() => {
+                            const bn = orderMeta[ocoKey]?.botName;
+                            const src = orderMeta[ocoKey]?.entrySource;
+                            const entryIsBot = src === "AUTO" && !!bn;
+                            return <>
+                              <span className={`pill ${entryIsBot ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                                <i className={`fa-solid ${entryIsBot ? "fa-robot" : "fa-hand"}`} />
+                                {entryIsBot ? `Entrada: ${bn}` : "Entrada Manual"}
+                              </span>
+                              <span className={`pill ${bn ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                                <i className={`fa-solid ${bn ? "fa-robot" : "fa-hand"}`} />
+                                {bn ? `Sortida: ${bn}` : "Sortida Manual"}
+                              </span>
+                            </>;
+                          })()}
                         </div>
                       </div>
 
-                      {/* 2. TP */}
-                      <div className="order-card__col-tp">
-                        <span className="order-card__section-label order-card__section-label--tp">OBJECTIU (TP)</span>
-                        <span className="order-card__col-price mono">{formatCurrency(tpPrice)}</span>
-                        {tpFromEntry !== null && <span className="order-card__delta order-card__delta--up">{tpFromEntry > 0 ? "+" : ""}{tpFromEntry.toFixed(2)}%</span>}
-                        {tpPnl !== null && <span className="order-card__pnl order-card__pnl--up">{tpPnl > 0 ? "+" : ""}{formatCurrency(tpPnl)}</span>}
-                        {toTp !== null && <span className="order-card__price-sub dim">dist {toTp > 0 ? "+" : ""}{toTp.toFixed(2)}%</span>}
-                      </div>
-
-                      {/* 3. SL */}
-                      <div className="order-card__col-sl">
-                        <span className="order-card__section-label order-card__section-label--sl">STOP (SL)</span>
-                        <span className="order-card__col-price mono">{formatCurrency(slPrice)}</span>
-                        {slFromEntry !== null && <span className="order-card__delta order-card__delta--down">{slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%</span>}
-                        {slPnl !== null && <span className="order-card__pnl order-card__pnl--down">{slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}</span>}
-                        {toSl !== null && <span className="order-card__price-sub dim">dist {toSl > 0 ? "+" : ""}{toSl.toFixed(2)}%</span>}
+                      {/* 2. TP + SL combinats */}
+                      <div className="order-card__col-tpsl">
+                        <div className="order-card__tpsl-half order-card__tpsl-half--tp">
+                          <span className="order-card__section-label order-card__section-label--tp">TP</span>
+                          <span className="order-card__col-price mono">{formatCurrency(tpPrice)}</span>
+                          {tpFromEntry !== null && <span className="order-card__delta order-card__delta--up">{tpFromEntry > 0 ? "+" : ""}{tpFromEntry.toFixed(2)}%</span>}
+                          {tpPnl !== null && tpPnl !== 0 && <span className="order-card__pnl order-card__pnl--up">{tpPnl > 0 ? "+" : ""}{formatCurrency(tpPnl)}</span>}
+                          {toTp !== null && <span className="order-card__price-sub dim">dist {toTp > 0 ? "+" : ""}{toTp.toFixed(2)}%</span>}
+                        </div>
+                        <div className="order-card__tpsl-half order-card__tpsl-half--sl">
+                          <span className="order-card__section-label order-card__section-label--sl">SL</span>
+                          <span className="order-card__col-price mono">{formatCurrency(slPrice)}</span>
+                          {slFromEntry !== null && <span className="order-card__delta order-card__delta--down">{slFromEntry > 0 ? "+" : ""}{slFromEntry.toFixed(2)}%</span>}
+                          {slPnl !== null && slPnl !== 0 && <span className="order-card__pnl order-card__pnl--down">{slPnl > 0 ? "+" : ""}{formatCurrency(slPnl)}</span>}
+                          {toSl !== null && <span className="order-card__price-sub dim">dist {toSl > 0 ? "+" : ""}{toSl.toFixed(2)}%</span>}
+                        </div>
                       </div>
 
                       {/* 4. Chart */}
                       <div className="order-card__col-chart">
                         <OcoProgressChart
-                          symbol={g.symbol} startTime={g.startTime}
-                          tpPrice={tpPrice} slPrice={slPrice} side={g.side}
+                          symbol={g.symbol}
+                          startTime={activeTs ? (activeTs.ocoCreatedAt ?? g.startTime) : g.startTime}
+                          tpPrice={tpPrice} slPrice={activeTs ? activeTs.currentSl : slPrice}
+                          side={g.side}
+                          slLabel={activeTs ? "SL Trail" : "SL"}
                           onEntryPrice={p => setEntryPrices(prev => ({ ...prev, [g.listId]: p }))}
+                          trailDist={activeTs ? activeTs.trailDist : undefined}
+                          trailEntryPrice={activeTs && activeTs.entryPrice > 0 ? activeTs.entryPrice : undefined}
+                          trailActivateAt={sugg && !activeTs ? sugg.activateAt : undefined}
                         />
                       </div>
 
                       {/* 5. Last col: trailing stop info (if available) + Edit + Cancel */}
                       <div className={`order-card__col-trailing${sugg && !activeTs && reached ? " order-card__col-trailing--reached" : ""}`}>
+                        {activeTs && (() => {
+                          const slFromEntryPct = activeTs.entryPrice > 0 && activeTs.currentSl > 0
+                            ? ((activeTs.currentSl - activeTs.entryPrice) / activeTs.entryPrice * 100) : null;
+                          const peakFromEntryPct = activeTs.entryPrice > 0 && activeTs.peakPrice > 0
+                            ? ((activeTs.peakPrice - activeTs.entryPrice) / activeTs.entryPrice * 100) : null;
+                          return (
+                            <>
+                              <div className="order-card__trailing-header">
+                                <i className="fa-solid fa-chart-line" />
+                                <span>Trailing Actiu</span>
+                                <span className="order-trailing__pulse" />
+                              </div>
+                              <div className="order-card__trailing-levels">
+                                <div className="order-card__trailing-level">
+                                  <span className="order-card__trailing-lbl">Distància</span>
+                                  <span className="mono">{formatCurrency(activeTs.trailDist)}</span>
+                                </div>
+                                <div className="order-card__trailing-level">
+                                  <span className="order-card__trailing-lbl">SL actual</span>
+                                  <span className="mono">{formatCurrency(activeTs.currentSl)}</span>
+                                  {slFromEntryPct !== null && (
+                                    <span className={`order-card__trailing-atr ${slFromEntryPct >= 0 ? "order-card__trailing-atr--up" : "order-card__trailing-atr--down"}`}>
+                                      {slFromEntryPct >= 0 ? "+" : ""}{slFromEntryPct.toFixed(2)}%
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="order-card__trailing-level">
+                                  <span className="order-card__trailing-lbl">Pic</span>
+                                  <span className="mono">{formatCurrency(activeTs.peakPrice)}</span>
+                                  {peakFromEntryPct !== null && (
+                                    <span className="order-card__trailing-atr order-card__trailing-atr--up">
+                                      +{peakFromEntryPct.toFixed(2)}%
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="order-card__trailing-level">
+                                  <span className="order-card__trailing-lbl">Ajustos SL</span>
+                                  <span className="mono">{activeTs.slUpdateCount}</span>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
                         {sugg && !activeTs && (
                           <>
                             <div className="order-card__trailing-header">
@@ -795,16 +838,50 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
 
               return (
                 <div key={o.orderId} className="order-card order-card--oco">
+                  <div className="order-card__section-title">
+                    <i className="fa-solid fa-list-check" />
+                    Detall ordres vigents
+                  </div>
                   <div className="order-card__row">
 
                     {/* 1. Identity */}
                     <div className="order-card__col-identity">
                       <div className="order-card__col-top">
-                        <span className="pill order-card__tc-badge">
-                          <i className="fa-solid fa-hashtag" />
-                          {orderMeta[ordKey]?.tradeCode || `ORD-${o.orderId}`}
+                        {(() => {
+                          const tc = orderMeta[ordKey]?.tradeCode
+                            ?? (activeTs.originOcoListId ? orderMeta[stratKey("oco", activeTs.originOcoListId)]?.tradeCode : null);
+                          const pnlPct = activeTs.entryPrice > 0 && activeTs.currentSl > 0
+                            ? ((activeTs.currentSl - activeTs.entryPrice) / activeTs.entryPrice * 100).toFixed(2)
+                            : null;
+                          const peakPct = activeTs.entryPrice > 0 && activeTs.peakPrice > 0
+                            ? ((activeTs.peakPrice - activeTs.entryPrice) / activeTs.entryPrice * 100).toFixed(2)
+                            : null;
+                          const ocoDate = activeTs.ocoCreatedAt ?? null;
+                          const tooltip = tc ? [
+                            `Ordre pare: ${activeTs.originOcoListId ? `OCO-${activeTs.originOcoListId}` : "—"}`,
+                            ocoDate ? `OCO creat: ${fmtDate(ocoDate)}` : null,
+                            `Entrada: ${formatCurrency(activeTs.entryPrice)}`,
+                            `Pic: ${formatCurrency(activeTs.peakPrice)}${peakPct ? ` (${peakPct}%)` : ""}`,
+                            `SL actual: ${formatCurrency(activeTs.currentSl)}${pnlPct ? ` (${pnlPct}%)` : ""}`,
+                            `Distància: ${formatCurrency(activeTs.trailDist)}`,
+                            `Ajustos SL: ${activeTs.slUpdateCount}`,
+                          ].filter(Boolean).join("\n") : undefined;
+                          return (<>
+                            <span className="pill order-card__tc-badge" style={{ opacity: 0.6 }}>
+                              <i className="fa-solid fa-link" />
+                              {activeTs.originOcoListId ? `OCO-${activeTs.originOcoListId}` : `ORD-${o.orderId}`}
+                            </span>
+                            {tc && (
+                              <span className="pill order-card__tc-badge" title={tooltip}>
+                                <i className="fa-solid fa-hashtag" />{tc}
+                              </span>
+                            )}
+                          </>);
+                        })()}
+                        <span className="pill order-card__date">
+                          <i className="fa-regular fa-calendar" />
+                          {activeTs.ocoCreatedAt ? fmtDate(activeTs.ocoCreatedAt) : fmtDate(activeTs.createdAt)}
                         </span>
-                        <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(activeTs.createdAt)}</span>
                       </div>
                       <div className="order-card__col-hero">
                         <CoinIcon symbol={o.symbol.replace("USDT", "")} size={44} />
@@ -830,26 +907,21 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                         {orderMeta[ordKey]?.interval && (
                           <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ordKey].interval}</span>
                         )}
-                        {orderMeta[ordKey]?.botName && (
-                          <span className="pill order-card__bot-badge" title={`Bot: ${orderMeta[ordKey].botName}`}>
-                            <i className="fa-solid fa-robot" />{orderMeta[ordKey].botName}
-                          </span>
-                        )}
-                        <div className="strategy-picker">
-                          <button
-                            className="strategy-picker__badge"
-                            style={ordStrat ? { background: `${STRATEGY_MAP[ordStrat]}22`, color: STRATEGY_MAP[ordStrat], borderColor: `${STRATEGY_MAP[ordStrat]}66` } : {}}
-                            data-tooltip={ordStrat ? STRATEGY_DESC[ordStrat] : undefined}
-                            onClick={() => setOpenPickerKey(k => k === ordKey ? null : ordKey)}>
-                            {ordStrat
-                              ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ordStrat] }} />{ordStrat}</>
-                              : <><i className="fa-solid fa-tag" /> Estratègia</>}
-                          </button>
-                          {openPickerKey === ordKey && (
-                            <StrategyPicker orderKey={ordKey} current={ordStrat}
-                              onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
-                          )}
-                        </div>
+                        {(() => {
+                          const bn = orderMeta[ordKey]?.botName;
+                          const src = orderMeta[ordKey]?.entrySource;
+                          const entryIsBot = src === "AUTO" && !!bn;
+                          return <>
+                            <span className={`pill ${entryIsBot ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                              <i className={`fa-solid ${entryIsBot ? "fa-robot" : "fa-hand"}`} />
+                              {entryIsBot ? `Entrada: ${bn}` : "Entrada Manual"}
+                            </span>
+                            <span className={`pill ${bn ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                              <i className={`fa-solid ${bn ? "fa-robot" : "fa-hand"}`} />
+                              {bn ? `Sortida: ${bn}` : "Sortida Manual"}
+                            </span>
+                          </>;
+                        })()}
                       </div>
                     </div>
 
@@ -875,7 +947,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                     {slP > 0 && peakP > 0 && (
                       <div className="order-card__col-chart">
                         <OcoProgressChart
-                          symbol={o.symbol} startTime={activeTs.createdAt}
+                          symbol={o.symbol}
+                          startTime={activeTs.ocoCreatedAt ?? activeTs.createdAt}
                           tpPrice={peakP} slPrice={slP}
                           side={activeTs.side}
                           tpLabel="Pic" slLabel="SL Trail"
@@ -963,35 +1036,34 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                     </div>
                     <div className="order-card__header-right">
                       <div className="order-card__header-top">
-                        {orderMeta[ordKey]?.tradeCode && (
-                          <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{orderMeta[ordKey].tradeCode}</span>
-                        )}
+                        {(() => {
+                          const tc = orderMeta[ordKey]?.tradeCode
+                            ?? (o.orderListId !== -1 ? orderMeta[stratKey("oco", o.orderListId)]?.tradeCode : null);
+                          return tc ? (
+                            <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{tc}</span>
+                          ) : null;
+                        })()}
                         <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(o.time)}</span>
                       </div>
                       <div className="order-card__header-bottom">
                         {orderMeta[ordKey]?.interval && (
                           <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ordKey].interval}</span>
                         )}
-                        {orderMeta[ordKey]?.botName && (
-                          <span className="pill order-card__bot-badge" title={`Bot: ${orderMeta[ordKey].botName}`}>
-                            <i className="fa-solid fa-robot" />{orderMeta[ordKey].botName}
-                          </span>
-                        )}
-                        <div className="strategy-picker">
-                          <button
-                            className="strategy-picker__badge"
-                            style={ordStrat ? { background: `${STRATEGY_MAP[ordStrat]}22`, color: STRATEGY_MAP[ordStrat], borderColor: `${STRATEGY_MAP[ordStrat]}66` } : {}}
-                            data-tooltip={ordStrat ? STRATEGY_DESC[ordStrat] : undefined}
-                            onClick={() => setOpenPickerKey(k => k === ordKey ? null : ordKey)}>
-                            {ordStrat
-                              ? <><span className="strategy-picker__dot" style={{ background: STRATEGY_MAP[ordStrat] }} />{ordStrat}</>
-                              : <><i className="fa-solid fa-tag" /> Estratègia</>}
-                          </button>
-                          {openPickerKey === ordKey && (
-                            <StrategyPicker orderKey={ordKey} current={ordStrat}
-                              onSelect={onStrategyChange} onClose={() => setOpenPickerKey(null)} />
-                          )}
-                        </div>
+                        {(() => {
+                          const bn = orderMeta[ordKey]?.botName;
+                          const src = orderMeta[ordKey]?.entrySource;
+                          const entryIsBot = src === "AUTO" && !!bn;
+                          return <>
+                            <span className={`pill ${entryIsBot ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                              <i className={`fa-solid ${entryIsBot ? "fa-robot" : "fa-hand"}`} />
+                              {entryIsBot ? `Entrada: ${bn}` : "Entrada Manual"}
+                            </span>
+                            <span className={`pill ${bn ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                              <i className={`fa-solid ${bn ? "fa-robot" : "fa-hand"}`} />
+                              {bn ? `Sortida: ${bn}` : "Sortida Manual"}
+                            </span>
+                          </>;
+                        })()}
                         <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
                           <i className={`fa-solid ${o.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{o.side}
                         </span>
@@ -2025,6 +2097,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
     fetch("/api/orders").then(r => r.json())
       .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); setLastRefreshed(new Date()); onOrdersCount?.(d.length); })
       .catch(e => setErrorO(e.message)).finally(() => setLoadingO(false));
+    fetch("/api/orders/meta").then(r => r.json()).then(d => { if (!d.error) setOrderMeta(d); }).catch(() => {});
   }, []);
 
   const fetchHistory = useCallback(() => {
@@ -2100,7 +2173,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
           {tab === "bot"        && "Bot"}
           {tab === "equalizer"  && "Equalitzador"}
           {tab === "autolab"    && "AutoLab"}
-          {tab === "status"     && "Comando"}
+          {tab === "status"     && "Motors"}
         </span>
         <div className="panel-controls__right">
 
@@ -2195,7 +2268,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
       {tab === "bot"        && <ErrorBoundary label="Bot"><BotTab /></ErrorBoundary>}
       {tab === "equalizer"  && <ErrorBoundary label="Equalitzador"><EqualizerTab /></ErrorBoundary>}
       {tab === "autolab"    && <ErrorBoundary label="AutoLab"><AutoLabTab /></ErrorBoundary>}
-      {tab === "status"     && <ErrorBoundary label="Comando"><StatusTab /></ErrorBoundary>}
+      {tab === "status"     && <ErrorBoundary label="Motors"><StatusTab /></ErrorBoundary>}
 
       <div className="panel-footer">
         <span className="panel-footer__dot" />

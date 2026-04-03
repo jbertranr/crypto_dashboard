@@ -16,21 +16,19 @@ interface AssetRow {
   locked: number;
   total: number;
   price: number | null;
-  change1h:  number | null;
   change4h:  number | null;
   change24h: number | null;
-  change72h: number | null;
   change7d:  number | null;
   change4w:  number | null;
   change6m:  number | null;
+  change1y:  number | null;
   valueUSD: number;
-  pnl1h:  number;
   pnl4h:  number;
   pnl24h: number;
-  pnl72h: number;
   pnl7d:  number;
   pnl4w:  number;
   pnl6m:  number;
+  pnl1y:  number;
   lockedOrders: number;
   ocoCount: number;
   slCount: number;
@@ -67,22 +65,19 @@ function buildRows(
     const isStable = STABLES.has(b.asset);
 
     const price     = coin ? coin.price    : isStable ? 1 : null;
-    const change1h  = coin ? coin.change1h  : null;
     const change4h  = coin ? coin.change4h  : null;
     const change24h = coin ? coin.change24h : null;
-    const change72h = coin ? coin.change72h : null;
     const change7d  = coin ? coin.change7d  : null;
     const change4w  = coin ? coin.change4w  : null;
     const change6m  = coin ? coin.change6m  : null;
+    const change1y  = coin ? coin.change1y  : null;
     const valueUSD  = price != null ? total * price : 0;
     // Correct formula: valueUSD × c/(100+c) = qty × (currentPrice − priceAtWindowStart)
     // Using valueUSD × c/100 overstates gains because it applies % to the already-higher current value
     const pnlW = (c: number | null) =>
       (coin && price && c != null) ? valueUSD * c / (100 + c) : 0;
-    const pnl1h  = pnlW(change1h);
     const pnl4h  = pnlW(change4h);
     const pnl24h = pnlW(change24h);
-    const pnl72h = pnlW(change72h);
     const pnl7d  = pnlW(change7d);
     const pnl4w  = pnlW(change4w);
     const pnl6m  = pnlW(change6m);
@@ -100,7 +95,8 @@ function buildRows(
       ? (price - avgCost) * total
       : null;
 
-    return { asset: b.asset, free, locked, total, price, change1h, change4h, change24h, change72h, change7d, change4w, change6m, valueUSD, pnl1h, pnl4h, pnl24h, pnl72h, pnl7d, pnl4w, pnl6m, lockedOrders, ocoCount, slCount, avgCost, firstBuyTime, unrealizedPnl };
+    const pnl1y = pnlW(change1y);
+    return { asset: b.asset, free, locked, total, price, change4h, change24h, change7d, change4w, change6m, change1y, valueUSD, pnl4h, pnl24h, pnl7d, pnl4w, pnl6m, pnl1y, lockedOrders, ocoCount, slCount, avgCost, firstBuyTime, unrealizedPnl };
   }).sort((a, b) => b.valueUSD - a.valueUSD);
 }
 
@@ -346,13 +342,12 @@ export default function PortfolioTab({
     const pnlUp      = totalPnl >= 0;
 
     const totals = {
-      pnl1h:  baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl1h,  0),
       pnl4h:  baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl4h,  0),
       pnl24h: baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl24h, 0),
-      pnl72h: baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl72h, 0),
       pnl7d:  baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl7d,  0),
       pnl4w:  baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl4w,  0),
       pnl6m:  baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl6m,  0),
+      pnl1y:  baseRows.filter(r => !STABLES.has(r.asset)).reduce((s, r) => s + r.pnl1y,  0),
     };
 
     const chartData = mainBase.map(r => ({
@@ -560,37 +555,22 @@ export default function PortfolioTab({
         chartData.forEach(d => { colorMap[d.name] = d.color; });
 
         const renderTotalCell = (pnl: number) => (
-          <span className={`pf-row__change ${pnl >= 0 ? "pf-row__change--up" : "pf-row__change--dn"}`}>
-            <span className="pf-row__change-usd">{pnl >= 0 ? "+" : ""}{formatCurrency(pnl, 2)}</span>
+          <span className={`pf-pct-cell pf-pct-cell--${pnl >= 0 ? "up" : "dn"}`} style={{ fontSize: "0.7rem" }}>
+            {pnl !== 0 ? `${pnl >= 0 ? "+" : ""}${formatCurrency(pnl, 0)}` : <span style={{ opacity: 0.3 }}>—</span>}
           </span>
         );
 
-        const renderPnlCell = (pnl: number, chg: number | null, valid = true) => (
-          <span className={`pf-row__change ${!valid ? "" : pnl >= 0 ? "pf-row__change--up" : "pf-row__change--dn"}`}>
-            {!valid ? (
-              <span className="pf-row__change-usd" style={{ opacity: 0.25 }}>—</span>
-            ) : pnl !== 0 ? (
-              <>
-                <span className="pf-row__change-usd">{pnl >= 0 ? "+" : ""}{formatCurrency(pnl, 2)}</span>
-                <span className="pf-row__change-pct">{(chg ?? 0) >= 0 ? "+" : ""}{(chg ?? 0).toFixed(2)}%</span>
-              </>
-            ) : <span className="pf-row__change-usd" style={{ opacity: 0.3 }}>—</span>}
-          </span>
-        );
-
-        const renderLockedPnlCell = (pnl: number, chg: number | null) => (
-          <span className={`pf-row__change ${pnl >= 0 ? "pf-row__change--up" : "pf-row__change--dn"}`}>
-            {chg != null && pnl !== 0 ? (
-              <>
-                <span className="pf-row__change-usd">{pnl >= 0 ? "+" : ""}{formatCurrency(pnl, 2)}</span>
-                <span className="pf-row__change-pct">{chg >= 0 ? "+" : ""}{chg.toFixed(2)}%</span>
-              </>
-            ) : <span className="pf-row__change-usd" style={{ opacity: 0.3 }}>—</span>}
-          </span>
-        );
+        const renderPctCell = (chg: number | null, valid = true) => {
+          if (!valid || chg == null) return <span className="pf-pct-cell pf-pct-cell--empty">—</span>;
+          const up = chg >= 0;
+          return (
+            <span className={`pf-pct-cell pf-pct-cell--${up ? "up" : "dn"}`}>
+              {up ? "+" : ""}{chg.toFixed(2)}%
+            </span>
+          );
+        };
 
         const renderRow = (row: typeof rows[0]) => {
-          const up       = (row.change24h ?? 0) >= 0;
           const isStable = STABLES.has(row.asset);
           const pct      = totalValue > 0 ? (row.valueUSD / totalValue) * 100 : 0;
           const color    = colorMap[row.asset] ?? "#94a3b8";
@@ -598,24 +578,19 @@ export default function PortfolioTab({
             ? ((row.price - row.avgCost) / row.avgCost) * 100
             : null;
 
-          const isSelling        = !!selling[row.asset];
-          const isConfirm        = sellConfirm === row.asset;
-          const isCancelConfirm  = cancelSellConfirm === row.asset;
-          const canSell          = !isStable && row.free > 0;
-          const hasOcoBlocking   = !isStable && row.free === 0 && row.locked > 0;
+          const isSelling       = !!selling[row.asset];
+          const isConfirm       = sellConfirm === row.asset;
+          const isCancelConfirm = cancelSellConfirm === row.asset;
+          const canSell         = !isStable && row.free > 0;
+          const hasOcoBlocking  = !isStable && row.free === 0 && row.locked > 0;
 
-          const accentColor = isStable
-            ? "var(--text-3)"
-            : pnlPct == null
-              ? "var(--text-3)"
-              : pnlPct > 0
-                ? "var(--green)"
-                : "var(--red)";
+          const accentColor = isStable ? "var(--text-3)"
+            : pnlPct == null ? "var(--text-3)"
+            : pnlPct > 0    ? "var(--green)"
+            :                  "var(--red)";
 
           const now = Date.now();
           const heldMs = row.firstBuyTime > 0 ? now - row.firstBuyTime : 0;
-          // validWindow: user must have held >= minMs AND (if we have avgCost) must have bought
-          // BEFORE the window started — avgCost > priceAtWindowStart means bought during the window.
           const validWindow = (change: number | null, minMs: number) => {
             if (!row.price || change == null) return false;
             if (heldMs < minMs) return false;
@@ -625,29 +600,9 @@ export default function PortfolioTab({
             }
             return true;
           };
-          const v1h  = validWindow(row.change1h,  1   * 3600_000);
-          const v4h  = validWindow(row.change4h,  4   * 3600_000);
-          const v24h = validWindow(row.change24h, 24  * 3600_000);
-          const v3d  = validWindow(row.change72h, 3   * 86_400_000);
-          const v7d  = validWindow(row.change7d,  7   * 86_400_000);
-          const v4w  = validWindow(row.change4w,  30  * 86_400_000);
-          const v6m  = validWindow(row.change6m,  180 * 86_400_000);
-
-          // Orders sub-row (only for non-stable with locked qty)
-          const hasLockedOrders = !isStable && row.locked > 0;
-          const lockedValue     = hasLockedOrders && row.price != null ? row.locked * row.price : 0;
-          const lockedPnlW = (c: number | null) =>
-            (hasLockedOrders && row.price && c != null) ? lockedValue * c / (100 + c) : 0;
-          const lockedSempre = (row.avgCost != null && row.price != null && hasLockedOrders)
-            ? row.locked * (row.price - row.avgCost)
-            : null;
-          const lockedSemprePct = (lockedSempre != null && row.avgCost != null && row.avgCost > 0)
-            ? ((row.price! - row.avgCost) / row.avgCost) * 100
-            : null;
 
           return (
-            <React.Fragment key={row.asset}>
-            <div
+            <div key={row.asset}
               className={`pf-row${isStable ? " pf-row--stable" : ""}`}
               style={{ "--pf-color": color, "--pf-accent": accentColor } as React.CSSProperties}
             >
@@ -677,34 +632,35 @@ export default function PortfolioTab({
 
               <div className="pf-row__value">
                 <span className="pf-row__usd mono">{row.valueUSD > 0 ? formatCurrency(row.valueUSD) : "—"}</span>
-                <span className="pf-row__qty">{row.total.toFixed(row.total < 1 ? 5 : 4)} {row.asset}</span>
-                {!isStable && row.free > 0 && (row.ocoCount > 0 || row.slCount > 0) && (
-                  <span className="pf-row__unprotected" title="Quantitat lliure sense ordre de protecció">
-                    <i className="fa-solid fa-triangle-exclamation" />
-                    {row.free.toFixed(row.free < 1 ? 4 : 3)} {row.asset} lliure
-                  </span>
-                )}
+                <span className="pf-row__qty">
+                  {row.total.toFixed(row.total < 1 ? 5 : 4)} {row.asset}
+                  {row.locked > 0 && (
+                    <span className="pf-row__locked" title={`${row.locked.toFixed(4)} bloquejat en ordres`}>
+                      {" "}<i className="fa-solid fa-lock" style={{ fontSize: "0.55rem", opacity: 0.6 }} />
+                    </span>
+                  )}
+                </span>
               </div>
 
-              {!isStable ? renderPnlCell(row.pnl1h,  row.change1h,  v1h)  : null}
-              {!isStable ? renderPnlCell(row.pnl4h,  row.change4h,  v4h)  : null}
-              {!isStable ? renderPnlCell(row.pnl24h, row.change24h, v24h) : null}
-              {!isStable ? renderPnlCell(row.pnl72h, row.change72h, v3d)  : null}
-              {!isStable ? renderPnlCell(row.pnl7d,  row.change7d,  v7d)  : null}
-              {!isStable ? renderPnlCell(row.pnl4w,  row.change4w,  v4w)  : null}
-              {!isStable ? renderPnlCell(row.pnl6m,  row.change6m,  v6m)  : null}
+                  {!isStable ? renderPctCell(row.change4h)  : <span />}
+              {!isStable ? renderPctCell(row.change24h) : <span />}
+              {!isStable ? renderPctCell(row.change7d)  : <span />}
+              {!isStable ? renderPctCell(row.change4w)  : <span />}
+              {!isStable ? renderPctCell(row.change6m)  : <span />}
+              {!isStable ? renderPctCell(row.change1y)  : <span />}
 
               <div className="pf-row__pnl-block">
-                {row.unrealizedPnl != null && pnlPct != null ? (
-                  <>
-                    <span className={`pf-row__pnl-val ${row.unrealizedPnl >= 0 ? "pf-row--up" : "pf-row--dn"}`}>
-                      {row.unrealizedPnl >= 0 ? "+" : ""}{formatCurrency(row.unrealizedPnl)}
-                    </span>
-                    <span className={`pf-row__pnl-pct ${pnlPct >= 0 ? "pf-row--up" : "pf-row--dn"}`}>
-                      {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(1)}%
-                    </span>
-                  </>
-                ) : null}
+                {pnlPct != null ? (
+                  <div className={`pf-pct-cell pf-pct-cell--${pnlPct >= 0 ? "up" : "dn"} pf-pct-cell--sempre`}
+                    title={`vs cost basis ${row.avgCost ? formatCurrency(row.avgCost) : ""}`}>
+                    <span>{pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%</span>
+                    {row.unrealizedPnl != null && (
+                      <span className="pf-pct-cell__sub">
+                        {row.unrealizedPnl >= 0 ? "+" : ""}{formatCurrency(row.unrealizedPnl, 0)}
+                      </span>
+                    )}
+                  </div>
+                ) : <span className="pf-pct-cell pf-pct-cell--empty">—</span>}
               </div>
 
               <span className="pf-row__price mono">
@@ -722,12 +678,10 @@ export default function PortfolioTab({
                       <span className="pf-row__sell-confirm-label">
                         Vendre {row.free.toFixed(4)} {row.asset}?
                       </span>
-                      <button className="pf-row__sell-yes"
-                        onClick={() => sellToUsdt(row.asset, row.free)}>
+                      <button className="pf-row__sell-yes" onClick={() => sellToUsdt(row.asset, row.free)}>
                         <i className="fa-solid fa-check" /> Sí
                       </button>
-                      <button className="pf-row__sell-no"
-                        onClick={() => setSellConfirm(null)}>
+                      <button className="pf-row__sell-no" onClick={() => setSellConfirm(null)}>
                         <i className="fa-solid fa-xmark" />
                       </button>
                     </div>
@@ -740,78 +694,23 @@ export default function PortfolioTab({
                   ) : hasOcoBlocking && isCancelConfirm ? (
                     <div className="pf-row__sell-confirm">
                       <span className="pf-row__sell-confirm-label">Cancel·lar OCO i vendre?</span>
-                      <button className="pf-row__sell-yes"
-                        onClick={() => cancelOcoAndSell(row.asset)}>
+                      <button className="pf-row__sell-yes" onClick={() => cancelOcoAndSell(row.asset)}>
                         <i className="fa-solid fa-check" /> Sí
                       </button>
-                      <button className="pf-row__sell-no"
-                        onClick={() => setCancelSellConfirm(null)}>
+                      <button className="pf-row__sell-no" onClick={() => setCancelSellConfirm(null)}>
                         <i className="fa-solid fa-xmark" />
                       </button>
                     </div>
                   ) : hasOcoBlocking ? (
                     <button className="pf-row__sell-btn pf-row__sell-btn--oco"
                       onClick={() => setCancelSellConfirm(row.asset)}
-                      title="Tot el saldo està bloquejat en un OCO. Cal cancel·lar-lo per vendre.">
+                      title="Tot el saldo bloquejat en OCO. Cal cancel·lar per vendre.">
                       <i className="fa-solid fa-triangle-exclamation" /> Cancel OCO
                     </button>
                   ) : null
                 )}
               </div>
             </div>
-
-            {/* Orders sub-row */}
-            {hasLockedOrders && (
-              <div className="pf-orders-row"
-                style={{ "--pf-color": color } as React.CSSProperties}>
-                <span className="pf-orders-row__accent" />
-                <div className="pf-orders-row__identity">
-                  <i className="fa-solid fa-lock pf-orders-row__icon" />
-                  <span className="pf-orders-row__qty">{row.locked.toFixed(row.locked < 1 ? 5 : 4)}</span>
-                  <span style={{ color: "var(--text-3)" }}>{row.asset} bloquejat</span>
-                </div>
-                <div className="pf-orders-row__value">
-                  {formatCurrency(lockedValue)}
-                </div>
-                {renderLockedPnlCell(lockedPnlW(row.change1h),  row.change1h)}
-                {renderLockedPnlCell(lockedPnlW(row.change4h),  row.change4h)}
-                {renderLockedPnlCell(lockedPnlW(row.change24h), row.change24h)}
-                {renderLockedPnlCell(lockedPnlW(row.change72h), row.change72h)}
-                {renderLockedPnlCell(lockedPnlW(row.change7d),  row.change7d)}
-                {renderLockedPnlCell(lockedPnlW(row.change4w),  row.change4w)}
-                {renderLockedPnlCell(lockedPnlW(row.change6m),  row.change6m)}
-                <div className="pf-orders-row__semprepnl">
-                  {lockedSempre != null ? (
-                    <>
-                      <span className={`pf-row__pnl-val ${lockedSempre >= 0 ? "pf-row--up" : "pf-row--dn"}`}>
-                        {lockedSempre >= 0 ? "+" : ""}{formatCurrency(lockedSempre)}
-                      </span>
-                      {lockedSemprePct != null && (
-                        <span className={`pf-row__pnl-pct ${lockedSemprePct >= 0 ? "pf-row--up" : "pf-row--dn"}`}>
-                          {lockedSemprePct >= 0 ? "+" : ""}{lockedSemprePct.toFixed(1)}%
-                        </span>
-                      )}
-                    </>
-                  ) : <span style={{ opacity: 0.3, fontSize: "0.7rem" }}>—</span>}
-                </div>
-                <div />
-                <div className="pf-orders-row__badges">
-                  {row.ocoCount > 0 && (
-                    <span className="pf-order-badge pf-order-badge--oco"
-                      title={`${row.ocoCount} OCO obert${row.ocoCount > 1 ? "s" : ""}`}>
-                      <span className="pf-order-badge__count">{row.ocoCount}×</span>OCO
-                    </span>
-                  )}
-                  {row.slCount > 0 && (
-                    <span className="pf-order-badge pf-order-badge--sl"
-                      title={`${row.slCount} Stop-Loss standalone`}>
-                      <span className="pf-order-badge__count">{row.slCount}×</span>SL
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            </React.Fragment>
           );
         };
 
@@ -820,13 +719,12 @@ export default function PortfolioTab({
             <div />
             <span>Asset</span>
             <span className="r">Valor</span>
-            <span className="r">1h</span>
             <span className="r">4h</span>
             <span className="r">1d</span>
-            <span className="r">3d</span>
             <span className="r">7d</span>
-            <span className="r">1m</span>
-            <span className="r">6m</span>
+            <span className="r">1M</span>
+            <span className="r">6M</span>
+            <span className="r">1A</span>
             <span className="r">Sempre</span>
             <span className="r">Preu</span>
             <span className="r">Ordres</span>
@@ -864,13 +762,12 @@ export default function PortfolioTab({
                   <div className="pf-row__value">
                     <span className="pf-row__usd mono">{formatCurrency(nonStableRows.reduce((s, r) => s + r.valueUSD, 0))}</span>
                   </div>
-                  {renderTotalCell(totals.pnl1h)}
                   {renderTotalCell(totals.pnl4h)}
                   {renderTotalCell(totals.pnl24h)}
-                  {renderTotalCell(totals.pnl72h)}
                   {renderTotalCell(totals.pnl7d)}
                   {renderTotalCell(totals.pnl4w)}
                   {renderTotalCell(totals.pnl6m)}
+                  {renderTotalCell(totals.pnl1y)}
                   <div className="pf-row__pnl-block">
                     {totalUnrealizedPnl !== 0 && (() => {
                       const up = totalUnrealizedPnl >= 0;
@@ -887,35 +784,35 @@ export default function PortfolioTab({
               </div>
             )}
 
-            {/* Gràfic de distribució crypto / stables */}
-            {nonStableRows.length > 0 && stableRows.length > 0 && splitTotal > 0 && (
-              <div className="pf-split-col">
-                <div className="section-title pf-split-col__title"><i className="fa-solid fa-chart-pie" /> Distribució</div>
-                <PieChart width={100} height={100}>
-                  <Pie data={splitData} cx={50} cy={50}
-                    innerRadius={30} outerRadius={46}
-                    paddingAngle={4} dataKey="value" startAngle={90} endAngle={-270}>
-                    {splitData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                  </Pie>
-                </PieChart>
-                <div className="pf-split-col__legend">
-                  {splitData.map(d => (
-                    <div key={d.name} className="pf-split-col__item">
-                      <span className="pf-split-col__dot" style={{ background: d.color }} />
-                      <div className="pf-split-col__info">
-                        <span className="pf-split-col__name">{d.name}</span>
-                        <span className="pf-split-col__pct" style={{ color: d.color }}>
-                          {((d.value / splitTotal) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {stableRows.length > 0 && (
               <div className="pf-list pf-list--stables">
+                {nonStableRows.length > 0 && splitTotal > 0 && (
+                  <div className="pf-split-col">
+                    <div className="section-title pf-split-col__title"><i className="fa-solid fa-chart-pie" /> Distribució</div>
+                    <div className="pf-split-col__body">
+                      <PieChart width={110} height={110}>
+                        <Pie data={splitData} cx={55} cy={55}
+                          innerRadius={32} outerRadius={50}
+                          paddingAngle={4} dataKey="value" startAngle={90} endAngle={-270}>
+                          {splitData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                        </Pie>
+                      </PieChart>
+                      <div className="pf-split-col__legend">
+                        {splitData.map(d => (
+                          <div key={d.name} className="pf-split-col__item">
+                            <span className="pf-split-col__dot" style={{ background: d.color }} />
+                            <div className="pf-split-col__info">
+                              <span className="pf-split-col__name">{d.name}</span>
+                              <span className="pf-split-col__pct" style={{ color: d.color }}>
+                                {((d.value / splitTotal) * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <StableHeader />
                 {stableRows.map(renderRow)}
               </div>

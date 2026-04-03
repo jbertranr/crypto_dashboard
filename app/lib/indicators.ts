@@ -461,11 +461,11 @@ function buildStrategies(c: StratCtx): StrategyProposal[] {
       rationale: r, blockers: b, active, whyNot,
       tp: price + atr * m, sl: price - atr * sm, slLimit: price - atr * (sm + 0.05),
       trailing: {
-        activateAt: price,
-        activateAtr: 0,
+        activateAt: price + atr * 2.0,
+        activateAtr: 2.0,
         distance: atr * 1.5,
         distanceAtr: 1.5,
-        logic: "S'activa automàticament des del preu d'entrada. Segueix el màxim assolit amb una cua de 1.5×ATR per sota — protegeix beneficis sense tancar massa aviat.",
+        logic: "S'activa quan el preu supera 2.0×ATR per sobre de l'entrada (guany mínim garantit). Llavors segueix el màxim assolit amb una cua de 1.5×ATR per sota — protegeix beneficis sense tancar massa aviat.",
       },
       risk,
     });

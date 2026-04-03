@@ -16,11 +16,12 @@ export async function GET() {
 
     const now   = Date.now();
     const since = (days: number) => now - days * 86_400_000;
+    const startOfToday = (): number => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
     const sum   = (minTime: number) =>
       exits.filter(e => e.executedAt >= minTime).reduce((s, e) => s + (e.pnlUsdt ?? 0), 0);
 
     const result = {
-      d1:   sum(since(1)),
+      d1:   sum(startOfToday()),
       d7:   sum(since(7)),
       d30:  sum(since(30)),
       d365: sum(since(365)),

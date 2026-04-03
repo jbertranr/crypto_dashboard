@@ -5,6 +5,9 @@ import { type NextRequest } from "next/server";
 import { eventBus, type AppEvent } from "../../lib/event-bus";
 import { getRecentErrors } from "../../lib/error-store";
 import { todayFile } from "../../lib/logger";
+import { ensureActivityLogger } from "../../lib/activity-logger";
+
+ensureActivityLogger();
 import fs from "fs";
 
 declare global {

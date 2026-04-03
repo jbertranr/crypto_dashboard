@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Motors · CryptDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="loading-overlay" class="loading-overlay">Carregant…</div>
+  <div id="login-screen" style="display:none">
+    <div class="login-box">
+      <h1><i class="fa-solid fa-robot"></i> CryptDesk</h1>
+      <p>Accés mòbil al sistema de trading</p>
+      <form id="login-form">
+        <input id="user-input" type="text" placeholder="Usuari" autocomplete="username" />
+        <input id="pw-input" type="password" placeholder="Contrasenya" autocomplete="current-password" />
+        <button id="login-btn" type="submit">Entrar</button>
+      </form>
+      <div id="login-err" class="login-error"></div>
+    </div>
+  </div>
+  <div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
+    <header class="app-header">
+      <button id="hamburger-btn" class="hamburger-btn"><span></span><span></span><span></span></button>
+      <div class="app-logo"><i class="fa-solid fa-robot"></i>CryptDesk</div>
+      <div style="flex:1"></div>
+      <div class="header-status">
+        <span id="sse-dot" class="sse-dot"></span>
+        <span id="countdown" class="countdown">30s</span>
+      </div>
+      <button id="refresh-btn" class="refresh-btn"><i class="fa-solid fa-rotate"></i></button>
+    </header>
+    <div class="app-content">
+    <div class="page-title"><i class="fa-solid fa-gear"></i> Motors</div>
+
+    <div class="portfolio-total">
+      <div class="pt-label">Estat general dels motors</div>
+      <div class="pt-hero-row">
+        <i class="fa-solid fa-robot pt-hero-icon" id="motors-hero-icon"></i>
+        <div class="pt-value" id="motors-hero-value">—</div>
+      </div>
+      <div class="pt-change">
+        <span id="motors-hero-sub" class="pt-sub"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-gear"></i>Estat dels motors</span>
+      </div>
+      <div class="card-desc">Components del bot en temps real: si estan actius, quan van executar-se per últim cop i el resultat.</div>
+      <div id="motors-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-bolt"></i>Últimes operacions</span>
+      </div>
+      <div class="card-desc">Les 20 accions més recents dels motors: compres, escaneigs, trailing i alertes. Les repetides s'acumulen.</div>
+      <div id="ops-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div id="updated-at" class="updated-bar"></div>
+    </div><!-- /.app-content -->
+  </div>
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="motors.js"></script>
+  <script>document.addEventListener("DOMContentLoaded",()=>initHamburger("motors"));</script>
+</body>
+</html>

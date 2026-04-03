@@ -44,6 +44,9 @@ db.exec(`
     notes            TEXT    DEFAULT NULL,
     source           TEXT    NOT NULL DEFAULT 'AUTO',   -- AUTO | MANUAL
     trade_code       TEXT    DEFAULT NULL,              -- T-0001 — codi de trade inicial
+    tp_price         REAL    DEFAULT NULL,              -- preu objectiu Take Profit (quan es col·loca OCO)
+    sl_price         REAL    DEFAULT NULL,              -- preu Stop Loss (quan es col·loca OCO)
+    trailing_activate_at REAL DEFAULT NULL,            -- preu d'activació del trailing stop
     executed_at      INTEGER NOT NULL,
     created_at       INTEGER NOT NULL
   );
@@ -51,6 +54,9 @@ db.exec(`
 
 /* Migrate: add trade_code if not yet present */
 try { db.exec("ALTER TABLE trade_journal ADD COLUMN trade_code TEXT DEFAULT NULL"); } catch { /* ja existeix */ }
+try { db.exec("ALTER TABLE trade_journal ADD COLUMN tp_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
+try { db.exec("ALTER TABLE trade_journal ADD COLUMN sl_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
+try { db.exec("ALTER TABLE trade_journal ADD COLUMN trailing_activate_at REAL DEFAULT NULL"); } catch { /* ja existeix */ }
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -87,12 +93,19 @@ export interface JournalEntry {
   capitalMode:     string | null;
   notes:           string | null;
   tradeCode:       string | null;
+  tpPrice:            number | null;
+  slPrice:            number | null;
+  trailingActivateAt: number | null;
   source:          "AUTO" | "MANUAL";
   executedAt:      number;
   createdAt:       number;
 }
 
-export type NewJournalEntry = Omit<JournalEntry, "id" | "createdAt">;
+export type NewJournalEntry = Omit<JournalEntry, "id" | "createdAt" | "tpPrice" | "slPrice" | "trailingActivateAt"> & {
+  tpPrice?: number | null;
+  slPrice?: number | null;
+  trailingActivateAt?: number | null;
+};
 
 /* ── Row mapper ─────────────────────────────────────────────────────── */
 
@@ -121,6 +134,9 @@ function rowToEntry(r: Record<string, unknown>): JournalEntry {
     capitalMode:     (r.capital_mode   as string | null) ?? null,
     notes:           (r.notes          as string | null) ?? null,
     tradeCode:       (r.trade_code     as string | null) ?? null,
+    tpPrice:            (r.tp_price            as number | null) ?? null,
+    slPrice:            (r.sl_price            as number | null) ?? null,
+    trailingActivateAt: (r.trailing_activate_at as number | null) ?? null,
     source:          r.source          as "AUTO" | "MANUAL",
     executedAt:      r.executed_at     as number,
     createdAt:       r.created_at      as number,
@@ -135,8 +151,8 @@ export function journalAdd(entry: NewJournalEntry): number {
       (type, symbol, side, qty, price, quote_qty, commission, commission_asset,
        entry_price, pnl_usdt, pnl_pct, order_id, order_list_id, strategy, interval,
        entry_type, trailing_mode, exit_reason, capital_usdt, capital_mode,
-       notes, source, trade_code, executed_at, created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       notes, source, trade_code, tp_price, sl_price, trailing_activate_at, executed_at, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(
     entry.type, entry.symbol, entry.side, entry.qty, entry.price,
     entry.quoteQty, entry.commission, entry.commissionAsset,
@@ -145,13 +161,23 @@ export function journalAdd(entry: NewJournalEntry): number {
     entry.entryType, entry.trailingMode, entry.exitReason,
     entry.capitalUsdt, entry.capitalMode, entry.notes, entry.source,
     entry.tradeCode ?? null,
+    entry.tpPrice ?? null, entry.slPrice ?? null,
+    entry.trailingActivateAt ?? null,
     entry.executedAt, Date.now(),
   );
   return r.lastInsertRowid as number;
 }
 
+export function journalPatchTpSl(id: number, tpPrice: number, slPrice: number): void {
+  db.prepare("UPDATE trade_journal SET tp_price = ?, sl_price = ? WHERE id = ?").run(tpPrice, slPrice, id);
+}
+
 export function journalPatchNotes(id: number, notes: string): void {
   db.prepare("UPDATE trade_journal SET notes = ? WHERE id = ?").run(notes, id);
+}
+
+export function journalPatchOco(id: number, orderListId: number, tradeCode: string): void {
+  db.prepare("UPDATE trade_journal SET order_list_id = ?, trade_code = ? WHERE id = ?").run(orderListId, tradeCode, id);
 }
 
 export function journalPatchStrategy(id: number, strategy: string | null): void {
@@ -287,6 +313,48 @@ export function journalGetRelated(id: number): JournalEntry[] {
     .prepare("SELECT * FROM trade_journal WHERE id = ? ORDER BY executed_at ASC")
     .all(id) as Record<string, unknown>[];
   return single.map(rowToEntry);
+}
+
+/**
+ * Returns the entry price and qty from the most recent ENTRY_BUY for the given symbol.
+ * Prefers matching by tradeCode when available, falls back to most recent within 48h.
+ */
+export function journalGetLastEntryMeta(symbol: string): {
+  price: number; qty: number;
+  orderId: number | null; orderListId: number | null; tradeCode: string | null;
+} | null {
+  const since = Date.now() - 48 * 3600 * 1000;
+  const row = db.prepare(
+    `SELECT price, qty, order_id, order_list_id, trade_code
+     FROM trade_journal
+     WHERE symbol = ? AND type IN ('ENTRY_BUY','ENTRY_OCO') AND executed_at >= ?
+     ORDER BY executed_at DESC LIMIT 1`
+  ).get(symbol, since) as { price: string; qty: string; order_id: number | null; order_list_id: number | null; trade_code: string | null } | undefined;
+  if (!row) return null;
+  return {
+    price:       parseFloat(row.price),
+    qty:         parseFloat(row.qty),
+    orderId:     row.order_id     ?? null,
+    orderListId: row.order_list_id ?? null,
+    tradeCode:   row.trade_code   ?? null,
+  };
+}
+
+export function journalGetLastEntryPrice(
+  symbol: string,
+  tradeCode: string | null,
+): { price: number; qty: number } | null {
+  if (tradeCode) {
+    const row = db.prepare(
+      "SELECT price, qty FROM trade_journal WHERE trade_code = ? AND type = 'ENTRY_BUY' ORDER BY executed_at ASC LIMIT 1"
+    ).get(tradeCode) as { price: string; qty: string } | undefined;
+    if (row) return { price: parseFloat(row.price), qty: parseFloat(row.qty) };
+  }
+  const since = Date.now() - 48 * 3600 * 1000;
+  const row = db.prepare(
+    "SELECT price, qty FROM trade_journal WHERE symbol = ? AND type = 'ENTRY_BUY' AND executed_at >= ? ORDER BY executed_at DESC LIMIT 1"
+  ).get(symbol, since) as { price: string; qty: string } | undefined;
+  return row ? { price: parseFloat(row.price), qty: parseFloat(row.qty) } : null;
 }
 
 /**

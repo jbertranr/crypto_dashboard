@@ -6,11 +6,16 @@ import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
 import { settingGetBool, settingGet } from "../../../lib/settings-store";
 import { notifyNewOrder } from "../../../lib/telegram";
-import { journalAdd } from "../../../lib/journal-store";
+import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, side, quantity, tpPrice, slStopPrice, slLimitPrice, trailing, interval } = await req.json();
+    const { symbol, side, quantity, tpPrice, slStopPrice, slLimitPrice, trailing, interval, botName } = await req.json();
+
+    if (!Number.isFinite(Number(tpPrice))    || Number(tpPrice)    <= 0) throw new Error(`tpPrice invàlid: ${tpPrice}`);
+    if (!Number.isFinite(Number(slStopPrice)) || Number(slStopPrice) <= 0) throw new Error(`slStopPrice invàlid: ${slStopPrice}`);
+    if (!Number.isFinite(Number(slLimitPrice)) || Number(slLimitPrice) <= 0) throw new Error(`slLimitPrice invàlid: ${slLimitPrice}`);
+    if (Number(slLimitPrice) > Number(slStopPrice)) throw new Error(`slLimitPrice (${slLimitPrice}) ha de ser ≤ slStopPrice (${slStopPrice})`);
 
     // Arrodonir la quantitat al stepSize del symbol per evitar "Invalid quantity" de Binance
     const exInfo   = cacheGet<{ stepSize: string }>(`exchange-info:${symbol}`);
@@ -24,7 +29,7 @@ export async function POST(req: NextRequest) {
     let tradeCode: string | null = null;
     if (typeof result.orderListId === "number" && result.orderListId > 0) {
       tradeCode = nextTradeCode();
-      orderMetaSet(`oco:${result.orderListId}`, { interval: interval ?? null, tradeCode });
+      orderMetaSet(`oco:${result.orderListId}`, { interval: interval ?? null, tradeCode, botName: botName ?? null, entrySource: "MANUAL" });
     }
 
     if (settingGetBool("tg_on_new_order")) {
@@ -39,31 +44,33 @@ export async function POST(req: NextRequest) {
     // --- Journal: record OCO entry ---
     try {
       const entryPx = await getTickerPrice(symbol).catch(() => 0);
-      journalAdd({
+      const jId = journalAdd({
         type: "ENTRY_OCO",
         symbol, side,
-        qty:            roundedQty,
-        price:          String(tpPrice),
-        quoteQty:       String(parseFloat(roundedQty) * (entryPx || tpPrice)),
-        commission:     "0",
+        qty:             roundedQty,
+        price:           String(tpPrice),
+        quoteQty:        String(parseFloat(roundedQty) * (entryPx || tpPrice)),
+        commission:      "0",
         commissionAsset: "BNB",
-        entryPrice:     entryPx ? String(entryPx) : null,
-        pnlUsdt:        null,
-        pnlPct:         null,
-        orderId:        null,
-        orderListId:    typeof result.orderListId === "number" ? result.orderListId : null,
-        strategy:       null,
-        interval:       null,
-        entryType:      settingGet("entry_type"),
-        trailingMode:   trailing ? settingGet("trailing_sl_mode") : null,
-        exitReason:     null,
-        capitalUsdt:    parseFloat(settingGet("capital_fixed_usdt") || "100"),
-        capitalMode:    settingGet("capital_mode"),
-        notes:          null,
+        entryPrice:      entryPx ? String(entryPx) : null,
+        pnlUsdt:         null,
+        pnlPct:          null,
+        orderId:         null,
+        orderListId:     typeof result.orderListId === "number" ? result.orderListId : null,
+        strategy:        null,
+        interval:        null,
+        entryType:       settingGet("entry_type"),
+        trailingMode:    trailing ? settingGet("trailing_sl_mode") : null,
+        exitReason:      null,
+        capitalUsdt:     parseFloat(settingGet("capital_fixed_usdt") || "100"),
+        capitalMode:     settingGet("capital_mode"),
+        notes:           null,
         tradeCode,
-        source:         "AUTO",
-        executedAt:     Date.now(),
+        source:          "AUTO",
+        trailingActivateAt: trailing?.activateAt ?? null,
+        executedAt:      Date.now(),
       });
+      journalPatchTpSl(jId, parseFloat(String(tpPrice)), parseFloat(String(slStopPrice)));
     } catch (je) {
       log.orders.warn({ err: (je as Error).message }, "journal entry fallida");
     }

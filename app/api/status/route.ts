@@ -8,6 +8,7 @@ import { getTrailingEngineStatus } from "../../lib/trailing-engine";
 import { getCrashMonitorStatus }   from "../../lib/crash-monitor";
 import { getSchedulerStatus }      from "../../lib/scheduler";
 import { countErrorsSince }        from "../../lib/error-store";
+import { checkMotorWatchdog }      from "../../lib/motor-watchdog";
 
 export type EngineStatus = {
   autoTrader:   ReturnType<typeof getAutoTraderStatus>;
@@ -29,5 +30,8 @@ export async function GET() {
     errorCount:   countErrorsSince(Date.now() - 86_400_000),
     serverTime:   Date.now(),
   };
+  // Watchdog: comprova anomalies i envia Telegram si cal (fire-and-forget)
+  checkMotorWatchdog(payload).catch(() => { /* silent */ });
+
   return NextResponse.json(payload);
 }

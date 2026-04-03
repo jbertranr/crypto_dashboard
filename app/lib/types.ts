@@ -19,6 +19,7 @@ export interface CoinRow {
   change7d:  number;
   change4w:  number;
   change6m:  number;
+  change1y:  number;
   high24h: number;
   low24h: number;
   volumeUSDT: number;

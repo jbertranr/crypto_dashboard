@@ -81,14 +81,13 @@ export async function getMarketData(): Promise<{
   coins: CoinRow[];
   summary: MarketSummary;
 }> {
-  const [tickers, w1h, w4h, w3d, w7d, w4w, pastPrices6m] = await Promise.all([
+  const [tickers, w4h, w7d, w4w, pastPrices6m, pastPrices1y] = await Promise.all([
     fetchTickers(),
-    fetchWindowedChanges("1h"),
     fetchWindowedChanges("4h"),
-    fetchWindowedChanges("3d"),
     fetchWindowedChanges("7d"),
     fetchWindowedChanges("4w"),
     fetchKlineChange(TOP_PAIRS, 180),
+    fetchKlineChange(TOP_PAIRS, 365),
   ]);
 
   // Sort by our preferred order
@@ -111,13 +110,16 @@ export async function getMarketData(): Promise<{
       symbol: t.symbol.replace("USDT", ""),
       pair: t.symbol,
       price: currentPrice,
-      change1h:  w1h[t.symbol]  ?? 0,
+      change1h:  0,
       change4h:  w4h[t.symbol]  ?? 0,
       change24h: parseFloat(t.priceChangePercent),
-      change72h: w3d[t.symbol]  ?? 0,
+      change72h: 0,
       change7d:  w7d[t.symbol]  ?? 0,
       change4w:  w4w[t.symbol]  ?? 0,
       change6m,
+      change1y: pastPrices1y[t.symbol] > 0
+        ? ((currentPrice - pastPrices1y[t.symbol]) / pastPrices1y[t.symbol]) * 100
+        : 0,
       high24h: parseFloat(t.highPrice),
       low24h: parseFloat(t.lowPrice),
       volumeUSDT: parseFloat(t.quoteVolume),

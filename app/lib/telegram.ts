@@ -517,6 +517,112 @@ export async function notifyOrderCancel(data: {
   );
 }
 
+// ── Notificació: posició detectada sense stop-loss ────────────────────────────
+
+export async function notifyOrphanDetected(data: {
+  symbol:      string;
+  valueUsd:    number;
+  qty:         string;
+  entryPrice:  number | null;
+  fixIn:       number;
+  orderId:     number | null;
+  orderListId: number | null;
+  tradeCode:   string | null;
+}): Promise<void> {
+  const base = data.symbol.replace(/USDT$/, "");
+  await sendCard(
+    `🚨 POSICIÓ SENSE SL  ·  ${base}/USDT`,
+    [`Aplicant correcció en ${data.fixIn} min`],
+    "orange",
+    [
+      kv("Símbol",     `${base}/USDT`),
+      kv("Valor",      fmtUSD(data.valueUsd)),
+      kv("Quantitat",  `${data.qty} ${base}`),
+      ...(data.entryPrice  ? [kv("Entrada est.",  fmtUSD(data.entryPrice))]        : []),
+      ...(data.tradeCode   ? [kv("Codi trade",    data.tradeCode)]                 : []),
+      ...(data.orderListId != null && data.orderListId > 0
+                           ? [kv("OCO #",         String(data.orderListId))]       : []),
+      ...(data.orderId     != null && data.orderId > 0
+                           ? [kv("Ordre #",       String(data.orderId))]           : []),
+      kv("Correcció",  `en ${data.fixIn} min (lògica bot actiu)`),
+      kv("Hora",       ts()),
+    ],
+  );
+}
+
+// ── Notificació: posició òrfena venuda a mercat (sense bot) ──────────────────
+
+export async function notifyOrphanNoBot(data: {
+  symbol:      string;
+  qty:         string;
+  fillPrice:   number;
+  receivedUsd: number;
+  entryPrice:  number | null;
+  orderId:     number | null;
+  orderListId: number | null;
+  tradeCode:   string | null;
+}): Promise<void> {
+  const base   = data.symbol.replace(/USDT$/, "");
+  const qty    = parseFloat(data.qty);
+  const qtyStr = `${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`;
+
+  const pnlUsd = data.entryPrice ? (data.fillPrice - data.entryPrice) * qty : null;
+  const pnlPct = data.entryPrice ? ((data.fillPrice - data.entryPrice) / data.entryPrice) * 100 : null;
+  const pnlSign = pnlUsd != null ? (pnlUsd >= 0 ? "+" : "") : "";
+
+  await sendCard(
+    `🚨 VENDA AUTOMÀTICA — POSICIÓ ÒRFENA  ·  ${base}/USDT`,
+    ["Cap bot actiu — posició tancada a mercat per seguretat"],
+    "red",
+    [
+      kv("Símbol",      `${base}/USDT`),
+      kv("Quantitat",   qtyStr),
+      kv("Preu exec.",  fmtUSD(data.fillPrice)),
+      kv("Rebut",       fmtUSD(data.receivedUsd)),
+      ...(data.entryPrice  ? [kv("Entrada est.", fmtUSD(data.entryPrice))]  : []),
+      ...(pnlUsd != null   ? [kv("PnL", `${pnlSign}${fmtUSD(pnlUsd)} (${pnlSign}${pnlPct!.toFixed(2)}%)`)] : []),
+      ...(data.tradeCode   ? [kv("Codi trade",  data.tradeCode)]            : []),
+      ...(data.orderListId != null && data.orderListId > 0
+                           ? [kv("OCO #",       String(data.orderListId))]  : []),
+      ...(data.orderId     != null && data.orderId > 0
+                           ? [kv("Ordre #",     String(data.orderId))]      : []),
+      kv("Motiu",       "Sense OCO/SL i cap bot configurat per al símbol"),
+      kv("Hora",        ts()),
+    ],
+  );
+}
+
+// ── Notificació: OCO no col·locada (reintent pendent) ────────────────────────
+
+export async function notifyOcoFailed(data: {
+  symbol:    string;
+  fillPrice: number;
+  quoteQty:  number;
+  ocoQty:    string;
+  tpPrice:   string;
+  slPrice:   string;
+  error:     string;
+  journalId: number;
+}): Promise<void> {
+  const base = data.symbol.replace(/USDT$/, "");
+  await sendCard(
+    `⚠️ COMPRA SENSE OCO  ·  ${base}/USDT`,
+    [`Posició sense SL/TP — reintent en curs`],
+    "orange",
+    [
+      kv("Símbol",    `${base}/USDT`),
+      kv("Compra a",  fmtUSD(data.fillPrice)),
+      kv("Invertit",  fmtUSD(data.quoteQty)),
+      kv("Quantitat", `${data.ocoQty} ${base}`),
+      kv("TP previst", fmtUSD(parseFloat(data.tpPrice))),
+      kv("SL previst", fmtUSD(parseFloat(data.slPrice))),
+      kv("Error",     data.error.slice(0, 60)),
+      kv("Journal",   `#${data.journalId}`),
+      kv("Hora",      ts()),
+    ],
+  );
+}
+
 // ── Notificació: trailing stop activat ───────────────────────────────────────
 
 export async function notifyTrailingActivated(data: {

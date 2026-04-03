@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const sp     = req.nextUrl.searchParams;
   const limit  = Math.min(parseInt(sp.get("limit")  ?? "200", 10), 500);
   const level  = sp.get("level")  ?? "debug";  // min level a retornar
-  const module = sp.get("module") ?? "";        // filtre de mòdul
+  const modFilter = sp.get("module") ?? "";      // filtre de mòdul
 
   const minLevel = LEVEL_NUM[level] ?? 20;
 
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     try {
       const obj = JSON.parse(line) as LogEntry;
       if (obj.level < minLevel) continue;
-      if (module && obj.module !== module) continue;
+      if (modFilter && obj.module !== modFilter) continue;
       // Pino usa "time" com a timestamp; normalitzem a "ts"
       if (!obj.ts && (obj as Record<string, unknown>).time) {
         obj.ts = (obj as Record<string, unknown>).time as number;

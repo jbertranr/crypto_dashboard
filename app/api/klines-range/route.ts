@@ -25,9 +25,12 @@ export async function GET(req: NextRequest) {
   if (window) {
     // Fixed lookback window ending now
     const cfg: Record<string, { interval: string; ms: number }> = {
-      "1h": { interval: "1m",  ms:      H },
-      "4h": { interval: "5m",  ms:  4 * H },
-      "1d": { interval: "15m", ms: 24 * H },
+      "1h": { interval: "1m",  ms:       H },
+      "4h": { interval: "5m",  ms:   4 * H },
+      "1d": { interval: "15m", ms:  24 * H },
+      "1w": { interval: "4h",  ms:  7 * 24 * H },
+      "1M": { interval: "4h",  ms: 30 * 24 * H },
+      "3m": { interval: "1d",  ms: 90 * 24 * H },
     };
     const c = cfg[window] ?? cfg["1d"];
     interval   = c.interval;

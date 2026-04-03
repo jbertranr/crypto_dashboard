@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Riscos · CryptDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="loading-overlay" class="loading-overlay">Carregant…</div>
+  <div id="login-screen" style="display:none">
+    <div class="login-box">
+      <h1><i class="fa-solid fa-robot"></i> CryptDesk</h1>
+      <p>Accés mòbil al sistema de trading</p>
+      <form id="login-form">
+        <input id="user-input" type="text" placeholder="Usuari" autocomplete="username" />
+        <input id="pw-input" type="password" placeholder="Contrasenya" autocomplete="current-password" />
+        <button id="login-btn" type="submit">Entrar</button>
+      </form>
+      <div id="login-err" class="login-error"></div>
+    </div>
+  </div>
+  <div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
+    <header class="app-header">
+      <button id="hamburger-btn" class="hamburger-btn"><span></span><span></span><span></span></button>
+      <div class="app-logo"><i class="fa-solid fa-robot"></i>CryptDesk</div>
+      <div style="flex:1"></div>
+      <div class="header-status">
+        <span id="sse-dot" class="sse-dot"></span>
+        <span id="countdown" class="countdown">60s</span>
+      </div>
+      <button id="refresh-btn" class="refresh-btn"><i class="fa-solid fa-rotate"></i></button>
+    </header>
+    <div class="app-content">
+    <div class="page-title"><i class="fa-solid fa-shield-halved"></i> Riscos</div>
+
+    <div class="portfolio-total">
+      <div class="pt-label">Si s'arriba als stop loss</div>
+      <div class="pt-hero-row">
+        <i class="fa-solid fa-triangle-exclamation pt-hero-icon"></i>
+        <div class="pt-value" id="risk-total">—</div>
+      </div>
+      <div class="pt-label" style="margin-top:0.5rem;opacity:0.8">Si es surt de totes les ordres ara</div>
+      <div class="pt-hero-row">
+        <i class="fa-solid fa-right-from-bracket pt-hero-icon"></i>
+        <div class="pt-value" id="risk-now" style="font-size:1.5rem;margin-bottom:0">—</div>
+      </div>
+      <div class="pt-change">
+        <span id="risk-positions" class="pt-sub"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-shield-halved"></i>Trailing stops</span>
+        <span id="trailing-count" class="card-count">0</span>
+      </div>
+      <div class="card-desc">Per cada posició: pèrdua des d'entrada si el stop s'activa, i resultat si se surt ara al preu de mercat.</div>
+      <div id="trailing-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-triangle-exclamation"></i>Ordres stop</span>
+        <span id="stops-count" class="card-count">0</span>
+      </div>
+      <div class="card-desc">Ordres stop-loss fixes obertes a Binance sense trailing associat.</div>
+      <div id="stops-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-chart-pie"></i>Concentració</span>
+      </div>
+      <div class="card-desc">Pes de cada actiu sobre el total del portfolio. Vermell si supera el 50%, ambre si supera el 30%.</div>
+      <div id="conc-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div id="updated-at" class="updated-bar"></div>
+    </div><!-- /.app-content -->
+  </div>
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="risks.js"></script>
+  <script>document.addEventListener("DOMContentLoaded",()=>initHamburger("risks"));</script>
+</body>
+</html>

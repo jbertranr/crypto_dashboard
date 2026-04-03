@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Portfolio · CryptDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.54.0/dist/apexcharts.min.js"></script>
+</head>
+<body>
+  <div id="loading-overlay" class="loading-overlay">Carregant…</div>
+  <div id="login-screen" style="display:none">
+    <div class="login-box">
+      <h1><i class="fa-solid fa-robot"></i> CryptDesk</h1>
+      <p>Accés mòbil al sistema de trading</p>
+      <form id="login-form">
+        <input id="user-input" type="text" placeholder="Usuari" autocomplete="username" />
+        <input id="pw-input" type="password" placeholder="Contrasenya" autocomplete="current-password" />
+        <button id="login-btn" type="submit">Entrar</button>
+      </form>
+      <div id="login-err" class="login-error"></div>
+    </div>
+  </div>
+  <div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
+    <header class="app-header">
+      <button id="hamburger-btn" class="hamburger-btn"><span></span><span></span><span></span></button>
+      <div class="app-logo"><i class="fa-solid fa-robot"></i>CryptDesk</div>
+      <div style="flex:1"></div>
+      <div class="header-status">
+        <span id="sse-dot" class="sse-dot"></span>
+        <span id="countdown" class="countdown">60s</span>
+      </div>
+      <button id="refresh-btn" class="refresh-btn"><i class="fa-solid fa-rotate"></i></button>
+    </header>
+    <div class="app-content">
+    <div class="page-title"><i class="fa-solid fa-chart-pie"></i> Portfolio</div>
+    <div id="portfolio-total" class="portfolio-total">
+      <div class="pt-label">Valor total</div>
+      <div class="pt-value" id="pt-value">—</div>
+      <div class="pt-change">
+        <span id="pt-chip" class="pt-chip">—</span>
+        <span id="pt-sub" class="pt-sub"></span>
+      </div>
+    </div>
+    <!-- Chart -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-chart-line"></i>Evolució del portfolio</span>
+      </div>
+      <div class="card-desc">Valor total del portfolio en dòlars al llarg del temps. Selecciona el període amb els botons.</div>
+      <div class="chart-toolbar">
+        <div id="chart-delta" class="chart-delta">—</div>
+        <div class="chart-timeframes">
+          <button class="tf-btn" data-tf="24h">24h</button>
+          <button class="tf-btn active" data-tf="7d">7d</button>
+          <button class="tf-btn" data-tf="30d">30d</button>
+          <button class="tf-btn" data-tf="all">Tot</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div id="portfolio-chart"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-coins"></i>Actius</span>
+        <span id="assets-count" class="card-count">0</span>
+      </div>
+      <div class="card-desc">Criptomonedes en cartera ordenades per valor. S'indica el canvi en 24h i el P&amp;L no realitzat respecte al cost mitjà.</div>
+      <div id="assets-body"><div class="empty">Carregant…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-dollar-sign"></i>Efectiu / Stables</span>
+      </div>
+      <div class="card-desc">Saldo en stablecoins disponible per operar (USDT, USDC, BUSD…).</div>
+      <div id="stables-body"><div class="empty">Carregant…</div></div>
+    </div>
+    <div id="updated-at" class="updated-bar"></div>
+    </div><!-- /.app-content -->
+  </div>
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="portfolio.js"></script>
+  <script>document.addEventListener("DOMContentLoaded",()=>initHamburger("portfolio"));</script>
+</body>
+</html>

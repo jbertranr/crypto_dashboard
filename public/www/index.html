@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>CryptDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="loading-overlay" class="loading-overlay">Carregant…</div>
+
+  <div id="login-screen" style="display:none">
+    <div class="login-box">
+      <h1><i class="fa-solid fa-robot"></i> CryptDesk</h1>
+      <p>Accés mòbil al sistema de trading</p>
+      <form id="login-form">
+        <input id="user-input" type="text" placeholder="Usuari" autocomplete="username" />
+        <input id="pw-input" type="password" placeholder="Contrasenya" autocomplete="current-password" />
+        <button id="login-btn" type="submit">Entrar</button>
+      </form>
+      <div id="login-err" class="login-error"></div>
+    </div>
+  </div>
+
+  <div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
+
+    <header class="app-header">
+      <button id="hamburger-btn" class="hamburger-btn"><span></span><span></span><span></span></button>
+      <div class="app-logo"><i class="fa-solid fa-robot"></i>CryptDesk</div>
+      <div style="flex:1"></div>
+      <div class="header-status">
+        <span id="sse-dot" class="sse-dot"></span>
+        <span id="countdown" class="countdown">30s</span>
+      </div>
+      <button id="refresh-btn" class="refresh-btn"><i class="fa-solid fa-rotate"></i></button>
+    </header>
+    <div class="app-content">
+    <div class="page-title"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+    <div id="pnl-hero" class="portfolio-total">
+      <div class="ph-top">
+        <span class="ph-label">P&L del bot</span>
+      </div>
+      <div class="ph-value neu">—</div>
+      <div class="ph-row"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-coins"></i>Balanç</span>
+      </div>
+      <div class="card-desc">Actius amb valor superior a $10 ordenats per import. Les stablecoins apareixen al final.</div>
+      <div id="balance-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-list-check"></i>Ordres obertes</span>
+        <span id="orders-count" class="card-count">0</span>
+      </div>
+      <div class="card-desc">Ordres actives agrupades per símbol. L'import indicat és el valor al preu de mercat actual que s'obtindria si s'executa el stop loss.</div>
+      <div id="orders-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-circle-exclamation"></i>Errors (24h)</span>
+        <span id="errors-count" class="card-count">0</span>
+      </div>
+      <div class="card-desc">Errors registrats pel bot en les últimes 24 hores. Els missatges idèntics s'acumulen.</div>
+      <div id="errors-body"><div class="empty">Carregant…</div></div>
+    </div>
+
+    <div id="updated-at" class="updated-bar"></div>
+    </div><!-- /.app-content -->
+  </div>
+
+  <script src="config.js"></script>
+  <script src="common.js"></script>
+  <script src="app.js"></script>
+  <script>document.addEventListener("DOMContentLoaded",()=>initHamburger("dashboard"));</script>
+</body>
+</html>

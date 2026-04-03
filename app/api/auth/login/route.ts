@@ -4,9 +4,10 @@ import { cookies } from "next/headers";
 import { SessionData, getSessionOptions } from "../../../lib/session";
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json() as { password: string };
+  const { username, password } = await req.json() as { username: string; password: string };
 
-  if (!password || password !== process.env.DASHBOARD_PASSWORD) {
+  const validUser = process.env.DASHBOARD_USERNAME ?? "admin";
+  if (!username || !password || username !== validUser || password !== process.env.DASHBOARD_PASSWORD) {
     // Delay amb jitter per dificultar brute-force (1–3 s)
     await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
     return NextResponse.json({ error: "Contrasenya incorrecta" }, { status: 401 });
