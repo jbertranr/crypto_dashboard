@@ -802,3 +802,133 @@
 {"level":30,"time":1775174399422,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":30,"time":1775177999841,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":30,"time":1775181599134,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775185198559,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775188799051,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775190347826,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775192400184,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775195998629,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775197797710,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe diari enviat"}
+{"level":30,"time":1775199598421,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775203198556,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775206797965,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775210398949,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775213999315,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775217598960,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775221199044,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775224836000,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775228398676,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775231998835,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775235599212,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775239198532,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775242798719,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775246400623,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775249998813,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775253598471,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775257197364,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775260796675,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775264397758,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775266615971,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775267996656,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775271596550,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775275196580,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775278796696,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775282396748,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775284195269,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe diari enviat"}
+{"level":30,"time":1775285997055,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775289597554,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775293197127,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775296796625,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775300396705,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775303997126,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775307597070,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775311197137,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775314797794,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775318396683,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775321997320,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775325596896,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775329197071,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775332797030,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775336397139,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775339997749,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775343598847,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775347196726,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775350797684,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775354397892,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775357997191,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775361599198,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775365148510,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775365197475,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775368797643,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775370596177,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe diari enviat"}
+{"level":30,"time":1775372397553,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775375997491,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775376400378,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775376414085,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775376437801,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775376497833,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775376497887,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775376528272,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":86,"msg":"trades"}
+{"level":30,"time":1775376528641,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":86,"msg":"trades"}
+{"level":30,"time":1775376528810,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":50,"msg":"order history"}
+{"level":30,"time":1775376533540,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BTCUSDT","interval":"1h","verdict":"WAIT","score":44,"price":66876.47,"msg":"scanner"}
+{"level":30,"time":1775376533590,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETHUSDT","interval":"1h","verdict":"WAIT","score":41,"price":2037.99,"msg":"scanner"}
+{"level":30,"time":1775376533598,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BNBUSDT","interval":"1h","verdict":"WAIT","score":47,"price":591.23,"msg":"scanner"}
+{"level":30,"time":1775376533826,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"SOLUSDT","interval":"1h","verdict":"WAIT","score":41,"price":79.62,"msg":"scanner"}
+{"level":30,"time":1775376533848,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"XRPUSDT","interval":"1h","verdict":"WAIT","score":47,"price":1.2985,"msg":"scanner"}
+{"level":30,"time":1775376533862,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BTCUSDT","interval":"5m","verdict":"WAIT","score":47,"price":66876.47,"msg":"scanner"}
+{"level":30,"time":1775376533902,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BTCUSDT","interval":"4h","verdict":"AVOID","score":34,"price":66876.47,"msg":"scanner"}
+{"level":30,"time":1775376550953,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETHUSDT","interval":"4h","verdict":"AVOID","score":34,"price":2038.23,"msg":"scanner"}
+{"level":30,"time":1775376550980,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETHUSDT","interval":"5m","verdict":"WAIT","score":47,"price":2038.23,"msg":"scanner"}
+{"level":30,"time":1775376552336,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BNBUSDT","interval":"4h","verdict":"WAIT","score":38,"price":591.45,"msg":"scanner"}
+{"level":30,"time":1775376552354,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"SOLUSDT","interval":"4h","verdict":"AVOID","score":31,"price":79.63,"msg":"scanner"}
+{"level":30,"time":1775376552390,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"XRPUSDT","interval":"4h","verdict":"WAIT","score":38,"price":1.2984,"msg":"scanner"}
+{"level":30,"time":1775376565841,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BTCUSDT","interval":"5m","verdict":"WAIT","score":47,"price":66878.32,"msg":"scanner"}
+{"level":30,"time":1775376565857,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BNBUSDT","interval":"5m","verdict":"WAIT","score":47,"price":591.27,"msg":"scanner"}
+{"level":30,"time":1775376565877,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"SOLUSDT","interval":"5m","verdict":"WAIT","score":44,"price":79.61,"msg":"scanner"}
+{"level":30,"time":1775376565934,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"XRPUSDT","interval":"5m","verdict":"WAIT","score":50,"price":1.2985,"msg":"scanner"}
+{"level":30,"time":1775376584070,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETHUSDT","interval":"5m","verdict":"WAIT","score":47,"price":2037.87,"msg":"scanner"}
+{"level":30,"time":1775376584464,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"DOGEUSDT","interval":"5m","verdict":"WAIT","score":50,"price":0.09017,"msg":"scanner"}
+{"level":30,"time":1775376584640,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"DOGEUSDT","interval":"4h","verdict":"AVOID","score":34,"price":0.09017,"msg":"scanner"}
+{"level":30,"time":1775376584673,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"DOGEUSDT","interval":"1h","verdict":"WAIT","score":41,"price":0.09017,"msg":"scanner"}
+{"level":30,"time":1775376584698,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ADAUSDT","interval":"5m","verdict":"WAIT","score":53,"price":0.2421,"msg":"scanner"}
+{"level":30,"time":1775376584816,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ADAUSDT","interval":"1h","verdict":"AVOID","score":34,"price":0.2421,"msg":"scanner"}
+{"level":30,"time":1775376584992,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ADAUSDT","interval":"4h","verdict":"AVOID","score":31,"price":0.2421,"msg":"scanner"}
+{"level":30,"time":1775376585052,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"AVAXUSDT","interval":"5m","verdict":"WAIT","score":47,"price":8.81,"msg":"scanner"}
+{"level":30,"time":1775376585084,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"AVAXUSDT","interval":"1h","verdict":"AVOID","score":34,"price":8.81,"msg":"scanner"}
+{"level":30,"time":1775376585176,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"AVAXUSDT","interval":"4h","verdict":"AVOID","score":31,"price":8.81,"msg":"scanner"}
+{"level":30,"time":1775376585491,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"TRXUSDT","interval":"5m","verdict":"WAIT","score":59,"price":0.318,"msg":"scanner"}
+{"level":30,"time":1775376585541,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"TRXUSDT","interval":"1h","verdict":"WAIT","score":53,"price":0.318,"msg":"scanner"}
+{"level":30,"time":1775376585580,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"TRXUSDT","interval":"4h","verdict":"WAIT","score":53,"price":0.318,"msg":"scanner"}
+{"level":30,"time":1775376585661,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"DOTUSDT","interval":"5m","verdict":"WAIT","score":50,"price":1.227,"msg":"scanner"}
+{"level":30,"time":1775376585805,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"DOTUSDT","interval":"1h","verdict":"AVOID","score":34,"price":1.227,"msg":"scanner"}
+{"level":30,"time":1775376586045,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"DOTUSDT","interval":"4h","verdict":"AVOID","score":31,"price":1.227,"msg":"scanner"}
+{"level":30,"time":1775376586072,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"LINKUSDT","interval":"5m","verdict":"WAIT","score":47,"price":8.53,"msg":"scanner"}
+{"level":30,"time":1775376586124,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"LINKUSDT","interval":"1h","verdict":"AVOID","score":34,"price":8.53,"msg":"scanner"}
+{"level":30,"time":1775376586446,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"LINKUSDT","interval":"4h","verdict":"WAIT","score":38,"price":8.53,"msg":"scanner"}
+{"level":30,"time":1775376586624,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"MATICUSDT","interval":"5m","verdict":"WAIT","score":59,"price":0.3794,"msg":"scanner"}
+{"level":30,"time":1775376586666,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"MATICUSDT","interval":"1h","verdict":"WAIT","score":47,"price":0.3794,"msg":"scanner"}
+{"level":30,"time":1775376586688,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"MATICUSDT","interval":"4h","verdict":"WAIT","score":41,"price":0.3794,"msg":"scanner"}
+{"level":30,"time":1775376587054,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"LTCUSDT","interval":"5m","verdict":"WAIT","score":50,"price":52.73,"msg":"scanner"}
+{"level":30,"time":1775376587267,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"LTCUSDT","interval":"4h","verdict":"WAIT","score":38,"price":52.73,"msg":"scanner"}
+{"level":30,"time":1775376587288,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"LTCUSDT","interval":"1h","verdict":"WAIT","score":41,"price":52.73,"msg":"scanner"}
+{"level":30,"time":1775376587362,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"SHIBUSDT","interval":"5m","verdict":"WAIT","score":53,"price":0.00000582,"msg":"scanner"}
+{"level":30,"time":1775376587779,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"SHIBUSDT","interval":"1h","verdict":"AVOID","score":34,"price":0.00000582,"msg":"scanner"}
+{"level":30,"time":1775376587925,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"SHIBUSDT","interval":"4h","verdict":"WAIT","score":41,"price":0.00000582,"msg":"scanner"}
+{"level":30,"time":1775376588031,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"UNIUSDT","interval":"5m","verdict":"WAIT","score":38,"price":3.076,"msg":"scanner"}
+{"level":30,"time":1775376588144,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"UNIUSDT","interval":"1h","verdict":"AVOID","score":31,"price":3.076,"msg":"scanner"}
+{"level":30,"time":1775376588372,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"UNIUSDT","interval":"4h","verdict":"WAIT","score":44,"price":3.076,"msg":"scanner"}
+{"level":30,"time":1775376588504,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ATOMUSDT","interval":"5m","verdict":"WAIT","score":53,"price":1.69,"msg":"scanner"}
+{"level":30,"time":1775376588571,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ATOMUSDT","interval":"1h","verdict":"WAIT","score":38,"price":1.69,"msg":"scanner"}
+{"level":30,"time":1775376588664,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ATOMUSDT","interval":"4h","verdict":"WAIT","score":53,"price":1.69,"msg":"scanner"}
+{"level":30,"time":1775376588888,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETCUSDT","interval":"5m","verdict":"WAIT","score":59,"price":8.46,"msg":"scanner"}
+{"level":30,"time":1775376589084,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETCUSDT","interval":"1h","verdict":"WAIT","score":53,"price":8.46,"msg":"scanner"}
+{"level":30,"time":1775376589216,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"ETCUSDT","interval":"4h","verdict":"WAIT","score":59,"price":8.46,"msg":"scanner"}
+{"level":30,"time":1775376589515,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"XLMUSDT","interval":"5m","verdict":"WAIT","score":47,"price":0.1589,"msg":"scanner"}
+{"level":30,"time":1775376589913,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"XLMUSDT","interval":"1h","verdict":"WAIT","score":38,"price":0.1589,"msg":"scanner"}
+{"level":30,"time":1775376589957,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"XLMUSDT","interval":"4h","verdict":"WAIT","score":38,"price":0.1589,"msg":"scanner"}
+{"level":30,"time":1775376590028,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"APTUSDT","interval":"5m","verdict":"WAIT","score":44,"price":0.832,"msg":"scanner"}
+{"level":30,"time":1775376590425,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"APTUSDT","interval":"1h","verdict":"WAIT","score":38,"price":0.832,"msg":"scanner"}
+{"level":30,"time":1775376590612,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"NEARUSDT","interval":"5m","verdict":"WAIT","score":50,"price":1.241,"msg":"scanner"}
+{"level":30,"time":1775376590641,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"APTUSDT","interval":"4h","verdict":"WAIT","score":47,"price":0.832,"msg":"scanner"}
+{"level":30,"time":1775376590662,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"NEARUSDT","interval":"1h","verdict":"WAIT","score":63,"price":1.241,"msg":"scanner"}
+{"level":30,"time":1775376590878,"pid":46420,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"NEARUSDT","interval":"4h","verdict":"WAIT","score":59,"price":1.241,"msg":"scanner"}

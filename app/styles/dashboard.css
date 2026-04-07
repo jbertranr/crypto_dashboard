@@ -261,6 +261,17 @@
 }
 .nav--collapsed .nav__item { position: relative; }
 
+.nav__user {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0 0.5rem 0.25rem; padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+}
+.nav__user-icon { font-size: 0.9rem; color: var(--accent); }
+.nav__user-name {
+  font-size: 0.72rem; font-weight: 600; color: var(--text-2);
+  text-transform: capitalize;
+}
+
 .nav__logout {
   display: flex; align-items: center; gap: 0.625rem;
   margin: 0 0.5rem 0.25rem; padding: 0.5rem 0.75rem;
@@ -4153,6 +4164,11 @@
 .order-card__trailing-level {
   display: flex; align-items: baseline; gap: 4px;
   font-size: 0.65rem; color: var(--text-2);
+}
+.order-card__trailing-level--next-sl {
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px dashed var(--border);
 }
 .order-card__trailing-lbl { color: var(--text-3); flex-shrink: 0; }
 .order-card__trailing-level .mono { font-weight: 600; color: var(--text-1); }
@@ -8175,7 +8191,7 @@
 
 .jtrade-group__prices {
   display: flex;
-  gap: 0;
+  gap: 0.75rem;
   flex-shrink: 0;
 }
 .jtrade-price {
@@ -8184,7 +8200,6 @@
   align-items: flex-end;
   font-size: 0.7rem;
   font-family: var(--mono);
-  width: 80px;
   text-align: right;
   color: var(--text-3);
 }
@@ -8192,9 +8207,9 @@
   font-size: 0.6rem;
   opacity: 0.6;
 }
-.jtrade-price--sl    { color: var(--red); }
-.jtrade-price--tp    { color: var(--green); }
-.jtrade-price--trail { color: #f59e0b; }
+.jtrade-price--sl    { width: 75px; color: var(--red); }
+.jtrade-price--tp    { width: 75px; color: var(--green); }
+.jtrade-price--trail { width: 80px; color: #f59e0b; }
 
 /* Sub-rows inside a group */
 .jtrade-group__rows {
@@ -8248,16 +8263,42 @@
 
 .sim-root {
   display:               grid;
-  grid-template-columns: 1fr 2fr;
-  gap:                   1.5rem;
+  grid-template-columns: 25em 24% 1fr;
+  gap:                   0;
   align-items:           start;
   width:                 100%;
 }
 .sim-col {
   display:        flex;
   flex-direction: column;
-  gap:            1.5rem;
+  gap:            0;
   min-width:      0;
+  border-right:   1px solid var(--border);
+}
+.sim-col--saved {
+  position:   sticky;
+  top:        0;
+  height:     calc(100vh - 22rem);
+  overflow:   hidden;
+  display:    flex;
+  flex-direction: column;
+}
+.sim-col--config {
+  position:   sticky;
+  top:        0;
+  height:     calc(100vh - 22rem);
+  overflow:   hidden;
+}
+.sim-col--config .sim-config-panel {
+  height:     100%;
+  overflow-y: scroll;
+}
+.sim-col--results {
+  border-right: none;
+  position:     sticky;
+  top:          0;
+  height:       calc(100vh - 22rem);
+  overflow-y:   auto;
 }
 
 /* ── Config panel ───────────────────────────────────────────── */
@@ -8458,7 +8499,7 @@
 .sim-results {
   display:        flex;
   flex-direction: column;
-  gap:            1.25rem;
+  gap:            0;
 }
 .sim-results .portfolio__section-title { color: var(--accent); }
 .sim-results__bar {
@@ -8513,7 +8554,7 @@
 
 /* ── Equity chart ───────────────────────────────────────────── */
 .sim-chart-inner {
-  padding: 0.75rem 0.5rem 0.5rem;
+  padding: 0.5rem 0.75rem;
 }
 .sim-chart-legend {
   display:     flex;
@@ -8885,14 +8926,19 @@
   align-self:      stretch;
 }
 .sim-trades-sidebar__equity {
-  padding:       0.75rem 0.75rem 0;
+  padding:       0;
   border-bottom: 1px solid var(--border);
-  background:    #fff;
+  background:    var(--bg-card);
+}
+.sim-trades-sidebar__equity .portfolio__section-title {
+  padding: 0 0.75rem;
+  height: 32px;
+  border-bottom: 1px solid var(--border);
 }
 .sim-symbol-chart {
   flex:       1;
   padding:    1rem 0.75rem;
-  background: #fff;
+  background: var(--bg-card);
 }
 .sim-symbol-chart__title {
   font-size:      0.65rem;
@@ -8965,7 +9011,8 @@
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  margin-bottom:   1rem;
+  padding:         0.5rem 0.75rem;
+  border-bottom:   1px solid var(--border);
 }
 .sim-export-msg {
   font-size:  0.65rem;
@@ -9278,7 +9325,9 @@
 .sim-saved-list {
   display:        flex;
   flex-direction: column;
+  overflow-y:     auto;
   flex:           1;
+  min-height:     0;
 }
 .sim-saved-item {
   display:       grid;
@@ -9297,9 +9346,9 @@
 .sim-saved-item__name {
   font-weight: 600;
   color:       var(--text-1);
-  overflow:    hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break:  break-word;
+  line-height: 1.3;
 }
 .sim-saved-item__date {
   color:       var(--text-3);
@@ -10302,10 +10351,12 @@
 
 /* Simulation card list */
 .eq-sim-list {
-  flex: 1;
+  height: 450px;
+  max-height: 450px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 .eq-sim-card {
   background: var(--bg);
@@ -10329,9 +10380,9 @@
   font-weight: 700;
   font-size: 0.82rem;
   color: var(--text-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .eq-sim-card--active .eq-sim-card__name { color: var(--accent); }
 
@@ -10745,6 +10796,8 @@
 .eq-results-table-wrap {
   overflow-x: auto;
   overflow-y: auto;
+  height: 450px;
+  max-height: 450px;
 }
 .eq-results-table {
   width: 100%;

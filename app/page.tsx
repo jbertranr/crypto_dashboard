@@ -1,11 +1,16 @@
 import { getMarketData } from "./lib/api";
 import DashboardShell from "./components/DashboardShell";
 import TopbarTicker from "./components/TopbarTicker";
+import { getIronSession } from "iron-session";
+import { cookies } from "next/headers";
+import { SessionData, getSessionOptions } from "./lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const { coins, summary } = await getMarketData();
+  const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
+  const username = session.username ?? process.env.DASHBOARD_USERNAME ?? "";
 
   return (
     <div className="app">
@@ -51,7 +56,7 @@ export default async function Home() {
         </div>
       </header>
 
-      <DashboardShell coins={coins} />
+      <DashboardShell coins={coins} username={username} />
       {/* Bottom navigation — mobile only */}
       <nav className="mobile-nav">
         <div className="mobile-nav__list">

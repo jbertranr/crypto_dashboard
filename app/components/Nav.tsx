@@ -34,8 +34,8 @@ const GROUPS: { label: string; tabs: NavItem[] }[] = [
   { label: "Automatització", tabs: AUTOMATITZACIO },
 ];
 
-export default function Nav({ tab, onTab, openOrdersCount }: {
-  tab: Tab; onTab: (t: Tab) => void; openOrdersCount?: number;
+export default function Nav({ tab, onTab, openOrdersCount, username }: {
+  tab: Tab; onTab: (t: Tab) => void; openOrdersCount?: number; username?: string;
 }) {
   const router = useRouter();
   const [errorCount, setErrorCount] = useState(0);
@@ -142,6 +142,12 @@ export default function Nav({ tab, onTab, openOrdersCount }: {
         {!c && "Tancar sessió"}
       </button>
 
+      {!c && username && (
+        <div className="nav__user">
+          <i className="fa-solid fa-circle-user nav__user-icon" />
+          <span className="nav__user-name">{username}</span>
+        </div>
+      )}
       {!c && (
         <div className="nav__live">
           <div className="nav__live-dot" />

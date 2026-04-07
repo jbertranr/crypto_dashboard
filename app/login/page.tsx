@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router   = useRouter();
-  const [pw, setPw]           = useState("");
-  const [error, setError]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw]   = useState(false);
+  const [user, setUser]        = useState("");
+  const [pw, setPw]            = useState("");
+  const [error, setError]      = useState("");
+  const [loading, setLoading]  = useState(false);
+  const [showPw, setShowPw]    = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -17,7 +18,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pw }),
+        body: JSON.stringify({ username: user, password: pw }),
       });
       if (res.ok) {
         router.push("/");
@@ -58,6 +59,22 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="login-form__field">
+            <label className="login-form__label">Usuari</label>
+            <div className="login-form__input-wrap">
+              <i className="fa-solid fa-user login-form__icon" />
+              <input
+                type="text"
+                className={`login-form__input${error ? " login-form__input--err" : ""}`}
+                value={user}
+                onChange={e => { setUser(e.target.value); setError(""); }}
+                placeholder="usuari"
+                autoFocus
+                autoComplete="username"
+              />
+            </div>
+          </div>
+
+          <div className="login-form__field">
             <label className="login-form__label">Contrasenya</label>
             <div className="login-form__input-wrap">
               <i className="fa-solid fa-lock login-form__icon" />
@@ -83,7 +100,7 @@ export default function LoginPage() {
             )}
           </div>
 
-          <button type="submit" className="login-form__submit" disabled={loading || !pw}>
+          <button type="submit" className="login-form__submit" disabled={loading || !pw || !user}>
             {loading
               ? <><i className="fa-solid fa-spinner fa-spin" /> Verificant…</>
               : <><i className="fa-solid fa-arrow-right-to-bracket" /> Accedir</>

@@ -731,7 +731,7 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                         ) : e.slPrice != null ? (
                           <>
                             <span className="jcell__main mono" style={{ color: "var(--red)", fontWeight: 700 }}>${(parseFloat(e.qty) * e.slPrice).toFixed(2)}</span>
-                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{e.slPrice.toFixed(2)}</span>
+                            <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{e.slPrice.toFixed(2)}{e.type === "TRAIL_ACTIVE" ? <span style={{ color: "var(--text-3)", marginLeft: 2 }}>SL₀</span> : null}</span>
                           </>
                         ) : (
                           <span className="jcell__main" style={{ color: "var(--text-3)" }}>—</span>
@@ -757,11 +757,13 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
 
                       {/* Trailing */}
                       <div className="jcell jcell--right">
-                        {(e.type === "EXIT_TRAILING" || e.type === "TRAIL_ACTIVE") ? (
+                        {e.type === "EXIT_TRAILING" ? (
                           <>
                             <span className="jcell__main mono" style={{ color: "#f59e0b", fontWeight: 700 }}>${(parseFloat(e.qty) * parseFloat(e.price)).toFixed(2)}</span>
                             <span className="jcell__sub mono" style={{ fontSize: "0.58rem" }}>{parseFloat(e.price).toFixed(2)}</span>
                           </>
+                        ) : e.type === "TRAIL_ACTIVE" ? (
+                          <span className="jcell__main" style={{ color: "var(--text-3)" }}>—</span>
                         ) : e.trailingActivateAt != null ? (
                           <>
                             <span className="jcell__main mono" style={{ color: "#f59e0b", fontWeight: 700 }}>${(parseFloat(e.qty) * e.trailingActivateAt).toFixed(2)}</span>

@@ -2,6 +2,7 @@ import type { SessionOptions } from "iron-session";
 
 export interface SessionData {
   isLoggedIn: boolean;
+  username?: string;
 }
 
 // Funció en lloc de constant per garantir que llegeix l'env

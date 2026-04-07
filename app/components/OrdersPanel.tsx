@@ -674,6 +674,9 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                             ? ((activeTs.currentSl - activeTs.entryPrice) / activeTs.entryPrice * 100) : null;
                           const peakFromEntryPct = activeTs.entryPrice > 0 && activeTs.peakPrice > 0
                             ? ((activeTs.peakPrice - activeTs.entryPrice) / activeTs.entryPrice * 100) : null;
+                          const abovePeak = currentPrice > 0 && currentPrice > activeTs.peakPrice;
+                          const projectedSl = abovePeak ? currentPrice - activeTs.trailDist : null;
+                          const gapToPeak   = currentPrice > 0 && !abovePeak ? activeTs.peakPrice - currentPrice : null;
                           return (
                             <>
                               <div className="order-card__trailing-header">
@@ -708,6 +711,19 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                                   <span className="order-card__trailing-lbl">Ajustos SL</span>
                                   <span className="mono">{activeTs.slUpdateCount}</span>
                                 </div>
+                                {abovePeak && projectedSl !== null ? (
+                                  <div className="order-card__trailing-level order-card__trailing-level--next-sl">
+                                    <span className="order-card__trailing-lbl">Nou SL ↑</span>
+                                    <span className="mono" style={{ color: "var(--accent)" }}>{formatCurrency(projectedSl)}</span>
+                                    <span className="order-card__trailing-atr order-card__trailing-atr--up">ara!</span>
+                                  </div>
+                                ) : gapToPeak !== null ? (
+                                  <div className="order-card__trailing-level order-card__trailing-level--next-sl">
+                                    <span className="order-card__trailing-lbl">SL puja si</span>
+                                    <span className="mono" style={{ color: "var(--text-2)" }}>+{formatCurrency(gapToPeak)}</span>
+                                    <span className="order-card__trailing-atr" style={{ color: "var(--text-3)" }}>al pic</span>
+                                  </div>
+                                ) : null}
                               </div>
                             </>
                           );
@@ -967,9 +983,38 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                       </div>
                       <div className="order-card__trailing-levels">
                         <div className="order-card__trailing-level">
+                          <span className="order-card__trailing-lbl">SL actual</span>
+                          <span className="mono">{formatCurrency(slP)}</span>
+                          {slFromEntry !== null && (
+                            <span className={`order-card__trailing-atr ${slFromEntry >= 0 ? "order-card__trailing-atr--up" : "order-card__trailing-atr--down"}`}>
+                              {slFromEntry >= 0 ? "+" : ""}{slFromEntry.toFixed(2)}%
+                            </span>
+                          )}
+                        </div>
+                        <div className="order-card__trailing-level">
+                          <span className="order-card__trailing-lbl">Pic</span>
+                          <span className="mono">{formatCurrency(peakP)}</span>
+                          {peakFromEntry !== null && (
+                            <span className="order-card__trailing-atr order-card__trailing-atr--up">+{peakFromEntry.toFixed(2)}%</span>
+                          )}
+                        </div>
+                        <div className="order-card__trailing-level">
                           <span className="order-card__trailing-lbl">Distància</span>
                           <span className="mono">{formatCurrency(activeTs.trailDist)}</span>
                         </div>
+                        {currentPrice > 0 && currentPrice > peakP ? (
+                          <div className="order-card__trailing-level order-card__trailing-level--next-sl">
+                            <span className="order-card__trailing-lbl">Nou SL ↑</span>
+                            <span className="mono" style={{ color: "var(--accent)" }}>{formatCurrency(currentPrice - activeTs.trailDist)}</span>
+                            <span className="order-card__trailing-atr order-card__trailing-atr--up">ara!</span>
+                          </div>
+                        ) : currentPrice > 0 ? (
+                          <div className="order-card__trailing-level order-card__trailing-level--next-sl">
+                            <span className="order-card__trailing-lbl">SL puja si</span>
+                            <span className="mono" style={{ color: "var(--text-2)" }}>+{formatCurrency(peakP - currentPrice)}</span>
+                            <span className="order-card__trailing-atr" style={{ color: "var(--text-3)" }}>al pic</span>
+                          </div>
+                        ) : null}
                       </div>
                       <div className="order-card__trailing-logic" style={{ color: "#059669", fontSize: "0.6rem" }}>
                         Actualitzat {new Date(activeTs.updatedAt).toLocaleTimeString("ca-ES")}

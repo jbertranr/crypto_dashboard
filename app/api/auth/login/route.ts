@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
 
   const session = await getIronSession<SessionData>(await cookies(), getSessionOptions());
   session.isLoggedIn = true;
+  session.username = username;
   await session.save();
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, username });
 }

@@ -7,7 +7,7 @@ import { getOpenOrders, getOrder, placeMarketSell, getAccount } from "./binance-
 import { notifyOrderFill } from "./telegram";
 import { journalAdd, journalGetLastEntryPrice, type JournalType, type JournalExitReason } from "./journal-store";
 import { settingGetBool, settingGet } from "./settings-store";
-import { cacheGet, cacheDelete, orderMetaGet } from "./cache-store";
+import { cacheGet, cacheDelete, orderMetaGet, trailingActiveGetAll, trailingActiveGetAllIncludingDone } from "./cache-store";
 import { log } from "./logger";
 
 const POLL_MS = 35_000; // lleugerament desfasat del trailing engine (30s)
@@ -156,7 +156,12 @@ async function checkFillsInner(): Promise<void> {
                                                 : isEntry ? null
                                                 : meta.side === "SELL" ? "MARKET_SELL"
                                                 : null;
-        try {
+        // Skip journaling if this SL fill belongs to a trailing — trailing-engine journals it
+        // Use IncludingDone because trailing-engine may have already marked it "filled"
+        if (isSl && trailingActiveGetAllIncludingDone().some(t => t.slOrderId === orderId)) {
+          log.orders.info({ orderId, symbol: meta.symbol }, "fill SL trailing — journal delegat al trailing engine");
+          if (meta.orderListId > 0) filledOcoLists.add(meta.orderListId);
+        } else try {
           const isExit = isTp || isSl || (!isEntry && meta.side === "SELL");
           const pnl = isExit ? calcPnl(meta.symbol, tradeCode, execPrice, execQty) : { entryPrice: null, pnlUsdt: null, pnlPct: null };
           journalAdd({
@@ -331,7 +336,9 @@ async function checkFillsInner(): Promise<void> {
         !filledOcoLists.has(meta.orderListId) &&
         !trailingReplacedSls.has(orderId) &&
         // Journalitzem només el LIMIT_MAKER (TP) per evitar doble entrada per OCO
-        (meta.type === "LIMIT_MAKER" || meta.type === "TAKE_PROFIT_LIMIT")
+        (meta.type === "LIMIT_MAKER" || meta.type === "TAKE_PROFIT_LIMIT") &&
+        // Omet OCOs cancel·lades per activació trailing — el trailing engine ja ho ha journalitzat
+        !trailingActiveGetAllIncludingDone().some(t => t.originOcoListId === meta.orderListId)
       ) {
         // OCO cancel·lada manualment (ex: sell-all, cancel manual a Binance)
         const tradeCode = meta.orderListId > 0

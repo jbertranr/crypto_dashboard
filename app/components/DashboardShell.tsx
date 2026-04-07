@@ -8,7 +8,7 @@ import { Tab } from "./OrdersPanel";
 
 const MARKET_REFRESH_MS = 30_000;
 
-export default function DashboardShell({ coins: initialCoins }: { coins: CoinRow[] }) {
+export default function DashboardShell({ coins: initialCoins, username }: { coins: CoinRow[]; username?: string }) {
   const [tab, setTab] = useState<Tab>("portfolio");
   const [openOrdersCount, setOpenOrdersCount] = useState(0);
   const [coins, setCoins] = useState<CoinRow[]>(initialCoins);
@@ -26,7 +26,7 @@ export default function DashboardShell({ coins: initialCoins }: { coins: CoinRow
 
   return (
     <div className="app__body">
-      <Nav tab={tab} onTab={setTab} openOrdersCount={openOrdersCount} />
+      <Nav tab={tab} onTab={setTab} openOrdersCount={openOrdersCount} username={username} />
       <div className="content">
         <div className="orders-area">
           <OrdersPanel coins={coins} tab={tab} onTab={setTab} onOrdersCount={setOpenOrdersCount} />

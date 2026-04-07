@@ -186,12 +186,41 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
   // Remove from suggestions so it doesn't trigger again
   trailingDelete(s.orderListId);
 
-  // --- Journal: record trailing activation ---
+  // --- Journal: 1) OCO cancel·lada, 2) Trailing actiu (timestamps consecutius per ordre correcte) ---
   try {
     const tradeCode = s.orderListId != null
       ? (orderMetaGet(`oco:${s.orderListId}`)?.tradeCode ?? null)
       : null;
     const ePx = s.entryPrice ?? price;
+    const cancelTs = Date.now();
+    // 1) CANCELED — l'OCO original ha estat cancel·lada per activar el trailing
+    journalAdd({
+      type:            "CANCELED",
+      symbol:          s.symbol,
+      side:            s.side,
+      qty:             s.quantity,
+      price:           "0",
+      quoteQty:        "0",
+      commission:      "0",
+      commissionAsset: "BNB",
+      entryPrice:      null,
+      pnlUsdt:         null,
+      pnlPct:          null,
+      orderId:         null,
+      orderListId:     s.orderListId,
+      strategy:        null,
+      interval:        null,
+      entryType:       null,
+      trailingMode:    null,
+      exitReason:      "CANCELED",
+      capitalUsdt:     null,
+      capitalMode:     null,
+      notes:           "OCO cancel·lada — activació trailing",
+      tradeCode,
+      source:          "AUTO",
+      executedAt:      cancelTs,
+    });
+    // 2) TRAIL_ACTIVE — 1ms després per garantir ordre correcte
     journalAdd({
       type:            "TRAIL_ACTIVE",
       symbol:          s.symbol,
@@ -213,10 +242,11 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
       exitReason:      null,
       capitalUsdt:     null,
       capitalMode:     null,
-      notes:           `SL inicial: ${stopStr} · distància: ${s.distance.toFixed(2)}`,
+      slPrice:         parseFloat(stopStr),
+      notes:           `distància: ${s.distance.toFixed(2)}`,
       tradeCode,
       source:          "AUTO",
-      executedAt:      Date.now(),
+      executedAt:      cancelTs + 1,
     });
   } catch (je) {
     log.trailing.warn({ err: (je as Error).message }, "journal trail-active fallida");

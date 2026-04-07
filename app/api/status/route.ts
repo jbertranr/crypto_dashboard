@@ -4,11 +4,12 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getAutoTraderStatus }     from "../../lib/auto-trader";
 import { getOrderMonitorStatus }   from "../../lib/order-monitor";
-import { getTrailingEngineStatus } from "../../lib/trailing-engine";
+import { getTrailingEngineStatus, ensureTrailingEngine } from "../../lib/trailing-engine";
 import { getCrashMonitorStatus }   from "../../lib/crash-monitor";
 import { getSchedulerStatus }      from "../../lib/scheduler";
 import { countErrorsSince }        from "../../lib/error-store";
 import { checkMotorWatchdog }      from "../../lib/motor-watchdog";
+import { trailingGetAll }          from "../../lib/cache-store";
 
 export type EngineStatus = {
   autoTrader:   ReturnType<typeof getAutoTraderStatus>;
@@ -21,6 +22,9 @@ export type EngineStatus = {
 };
 
 export async function GET() {
+  // Auto-arrenca el trailing engine si hi ha suggeriments pendents a la DB
+  if (trailingGetAll().length > 0) ensureTrailingEngine();
+
   const payload: EngineStatus = {
     autoTrader:   getAutoTraderStatus(),
     orderMonitor: getOrderMonitorStatus(),

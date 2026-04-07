@@ -213,7 +213,7 @@ export function journalGetAll(filter: JournalFilter = {}): JournalEntry[] {
   const offset = filter.offset ?? 0;
 
   const rows = db
-    .prepare(`SELECT * FROM trade_journal ${where} ORDER BY executed_at DESC LIMIT ? OFFSET ?`)
+    .prepare(`SELECT * FROM trade_journal ${where} ORDER BY executed_at DESC, id DESC LIMIT ? OFFSET ?`)
     .all(...params, limit, offset) as Record<string, unknown>[];
 
   return rows.map(rowToEntry);

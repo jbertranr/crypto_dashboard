@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { SimTrade, SimStats, SlMove, LayerScores, ExitMode, EntryMode, CapitalMode } from "../api/simulation/run/route";
+import type { SimTrade, SimStats, SlMove, ExitMode, EntryMode, CapitalMode } from "../api/simulation/run/route";
 import { ALL_CANDLE_PATTERNS } from "../lib/candle-patterns";
 import CoinIcon from "./CoinIcon";
 
@@ -953,7 +953,6 @@ export default function SimulationTab() {
   const [exportMsg,    setExportMsg   ] = useState<string | null>(null);
   const [savedConfigs,    setSavedConfigs   ] = useState<SavedConfig[]>([]);
   const [selectedConfig,  setSelectedConfig ] = useState<SavedConfig | null>(null);
-  const [detailOpen,      setDetailOpen     ] = useState(false);
   const [saveModalOpen,   setSaveModalOpen  ] = useState(false);
   const [saveConfigName,  setSaveConfigName ] = useState("");
   const [savingConfig,    setSavingConfig   ] = useState(false);
@@ -1038,8 +1037,7 @@ export default function SimulationTab() {
   const loadConfig = useCallback((sc: SavedConfig) => {
     setConfig({ ...CONFIG_DEFAULTS, ...MOON_DEFAULTS, ...sc.config });
     setSelectedConfig(prev => {
-      if (prev?.id === sc.id) { setDetailOpen(o => !o); return prev; }
-      setDetailOpen(true);
+      if (prev?.id === sc.id) return prev;
       return sc;
     });
     setSaveMsg(`Carregat: ${sc.name}`);
@@ -1371,6 +1369,74 @@ export default function SimulationTab() {
       </div>
     )}
     <div className="sim-root">
+
+      {/* ── Col 1: Configuracions desades ────────────────────────────── */}
+      <div className="sim-col sim-col--saved">
+        <div className="sim-config-panel" style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <div className="sim-section-label">
+            <i className="fa-solid fa-bookmark" /> Configuracions desades
+            {saveMsg && <span className="sim-save-msg sim-save-msg--inline"><i className="fa-solid fa-circle-check" /> {saveMsg}</span>}
+          </div>
+          {savedConfigs.length > 0 ? (
+            <div className="sim-saved-list">
+              {savedConfigs.map(sc => {
+                const syms  = (sc.config.symbols ?? []).map(tickerLabel);
+                const shown = syms.slice(0, 4);
+                const extra = syms.length - shown.length;
+                const active = selectedConfig?.id === sc.id;
+                return (
+                  <div key={sc.id}
+                    className={`eq-sim-card${active ? " eq-sim-card--active" : ""}`}
+                    onClick={() => loadConfig(sc)}>
+                    <div className="eq-sim-card__name">{sc.name}</div>
+                    <div className="eq-sim-card__desc">
+                      <span className="eq-sim-tag eq-sim-tag--exit">{sc.config.exitMode ?? "—"}</span>
+                      <span className="eq-sim-tag eq-sim-tag--entry">{sc.config.entryMode ?? "—"}</span>
+                      <span className="eq-sim-tag eq-sim-tag--tf">{sc.config.interval ?? "—"}</span>
+                      {shown.length > 0 && <span className="eq-sim-syms dim">{shown.join(" · ")}{extra > 0 ? ` +${extra}` : ""}</span>}
+                    </div>
+                    <div className="eq-sim-card__stats">
+                      <div className="eq-sim-kv">
+                        <span className="eq-sim-kv__l">P&amp;L</span>
+                        <span className="eq-sim-kv__v mono" style={{ color: (sc.pnlPct ?? 0) >= 0 ? "var(--green)" : "var(--red)" }}>
+                          {sc.pnlPct !== undefined ? `${sc.pnlPct >= 0 ? "+" : ""}${sc.pnlPct.toFixed(1)}%` : "—"}
+                        </span>
+                      </div>
+                      <div className="eq-sim-kv">
+                        <span className="eq-sim-kv__l">Capital</span>
+                        <span className="eq-sim-kv__v mono dim">{sc.config.initialCapital ?? "—"} USDT</span>
+                      </div>
+                    </div>
+                    <div className="eq-sim-card__actions">
+                      <button className="btn-primary btn-sm" onClick={e => { e.stopPropagation(); loadConfig(sc); }} title="Carregar">
+                        <i className="fa-solid fa-upload" /> Carregar
+                      </button>
+                      <button className="btn btn-ghost btn-xs" title="Aplicar com a mètode automàtic" onClick={e => { e.stopPropagation(); setApplyConfirmSc(sc); }}>
+                        <i className="fa-solid fa-robot" />
+                      </button>
+                      <button className="btn btn-ghost btn-xs" onClick={e => { e.stopPropagation(); deleteConfig(sc.id); }}>
+                        <i className="fa-solid fa-trash" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="sim-saved-empty">Encara no hi ha configuracions desades</div>
+          )}
+          {applyConfirmSc && (
+            <div className="sim-apply-confirm">
+              <i className="fa-solid fa-triangle-exclamation" />
+              <span>Aplicar <strong>{applyConfirmSc.name}</strong> com a mètode automàtic?</span>
+              <button className="btn-primary sim-apply-confirm__ok" onClick={() => applyToAutoTrade(applyConfirmSc)}>Aplicar</button>
+              <button className="btn-secondary sim-apply-confirm__cancel" onClick={() => setApplyConfirmSc(null)}>Cancel·lar</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Col 2: Configuració ────────────────────────────────────── */}
       <div className="sim-col sim-col--config">
 
       {/* ── Config panel ──────────────────────────────────────────────── */}
@@ -1399,101 +1465,6 @@ export default function SimulationTab() {
               </span>
             )}
           </div>
-        </div>
-
-        {/* Configuracions desades */}
-        <div className="sim-box-section">
-          <div className="sim-section-label">
-            <i className="fa-solid fa-bookmark" /> Configuracions desades
-            {saveMsg && <span className="sim-save-msg sim-save-msg--inline"><i className="fa-solid fa-circle-check" /> {saveMsg}</span>}
-          </div>
-          {savedConfigs.length > 0 ? (
-            <div className="sim-saved-list">
-              {savedConfigs.map(sc => (
-                <div
-                  key={sc.id}
-                  className={`sim-saved-item${selectedConfig?.id === sc.id ? " sim-saved-item--active" : ""}`}
-                  onClick={() => loadConfig(sc)}
-                >
-                  <span className="sim-saved-item__name">{sc.name}</span>
-                  <span className="sim-saved-item__range">{sc.config.from} → {sc.config.to}</span>
-                  <span className="sim-saved-item__meta">
-                    {(sc.config.symbols ?? []).map(tickerLabel).join(", ")} · {sc.config.interval}
-                  </span>
-                  {sc.pnlPct !== undefined ? (
-                    <span className="sim-saved-item__pnl mono" style={{ color: sc.pnlPct >= 0 ? "var(--green)" : "var(--red)" }}>
-                      {sc.pnlPct >= 0 ? "+" : ""}{sc.pnlPct.toFixed(1)}%
-                    </span>
-                  ) : (
-                    <span className="sim-saved-item__pnl" style={{ color: "var(--text-3)" }}>—</span>
-                  )}
-                  <button
-                    className="sim-saved-item__apply"
-                    title="Aplicar com a mètode automàtic"
-                    onClick={e => { e.stopPropagation(); setApplyConfirmSc(sc); }}
-                  >
-                    <i className="fa-solid fa-robot" />
-                  </button>
-                  <button className="sim-saved-item__del" onClick={e => { e.stopPropagation(); deleteConfig(sc.id); }}>
-                    <i className="fa-solid fa-trash" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="sim-saved-empty">Encara no hi ha configuracions desades</div>
-          )}
-
-          {applyConfirmSc && (
-            <div className="sim-apply-confirm">
-              <i className="fa-solid fa-triangle-exclamation" />
-              <span>Aplicar <strong>{applyConfirmSc.name}</strong> com a mètode automàtic? Sobreescriurà els paràmetres ATR, capital i parells actius.</span>
-              <button className="btn-primary sim-apply-confirm__ok"
-                onClick={() => applyToAutoTrade(applyConfirmSc)}>
-                Aplicar
-              </button>
-              <button className="btn-secondary sim-apply-confirm__cancel"
-                onClick={() => setApplyConfirmSc(null)}>
-                Cancel·lar
-              </button>
-            </div>
-          )}
-
-          {/* Accordion de detall */}
-          {selectedConfig && (
-            <div className="sim-saved-accordion">
-              <button className="sim-saved-accordion__toggle" onClick={() => setDetailOpen(o => !o)}>
-                <i className="fa-solid fa-circle-info" />
-                <span>{selectedConfig.name}</span>
-                {selectedConfig.pnlPct !== undefined && (
-                  <span className="mono sim-saved-accordion__pnl" style={{ color: selectedConfig.pnlPct >= 0 ? "var(--green)" : "var(--red)" }}>
-                    {selectedConfig.pnlPct >= 0 ? "+" : ""}{selectedConfig.pnlPct.toFixed(1)}%
-                  </span>
-                )}
-                <i className={`fa-solid fa-chevron-${detailOpen ? "up" : "down"} sim-saved-accordion__chevron`} />
-              </button>
-              {detailOpen && (
-                <div className="sim-saved-detail__table">
-                  {[
-                    ["Parells",      (selectedConfig.config.symbols ?? []).map(tickerLabel).join(", ")],
-                    ["Interval",     selectedConfig.config.interval],
-                    ["Període",      `${selectedConfig.config.from} → ${selectedConfig.config.to}`],
-                    ["Capital",      `$${fmtNum(selectedConfig.config.initialCapital ?? 0, 0)}`],
-                    ["Mode capital", selectedConfig.config.capitalMode],
-                    ["Sortida",      selectedConfig.config.exitMode],
-                    ["TP",           `${selectedConfig.config.tpAtr}× ATR`],
-                    ["SL",           `${selectedConfig.config.slAtr}× ATR`],
-                    ["Filtre EMA",   selectedConfig.config.useMarketFilter ? "Activat" : "Desactivat"],
-                  ].map(([label, val]) => (
-                    <div key={label} className="sim-saved-detail__row">
-                      <span className="sim-saved-detail__lbl">{label}</span>
-                      <span className="sim-saved-detail__val">{val}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Univers */}
@@ -1905,24 +1876,21 @@ export default function SimulationTab() {
         <div className="sim-results" ref={resultRef}>
 
           {/* Capçalera resultats + botó exportació */}
-          <div className="sim-results-header">
-            <div className="portfolio__section-title" style={{ margin: 0 }}>
-              <i className="fa-solid fa-chart-mixed" /> Resultats de la simulació
-            </div>
-            <button className="btn-ghost btn-sm" onClick={exportSimulation}>
-              <i className="fa-solid fa-file-export" /> Exportar per a IA
-            </button>
-            {exportMsg && (
-              <span className="sim-export-msg">
-                <i className="fa-solid fa-circle-check" /> {exportMsg}
-              </span>
-            )}
+          <div className="section-title">
+            <i className="fa-solid fa-chart-mixed" /> Resultats de la simulació
+            <span className="section-title__right">
+              <button className="btn-ghost btn-sm" onClick={exportSimulation} style={{ height: "24px", padding: "0 0.5rem" }}>
+                <i className="fa-solid fa-file-export" /> Exportar per a IA
+              </button>
+              {exportMsg && (
+                <span className="sim-export-msg">
+                  <i className="fa-solid fa-circle-check" /> {exportMsg}
+                </span>
+              )}
+            </span>
           </div>
 
           {/* 5 KPIs */}
-          <div className="section-title">
-            <i className="fa-solid fa-flask-vial" /> Resultats de la simulació
-          </div>
           <div className="portfolio__cards">
             <div className="portfolio__card portfolio__card--blue">
               <span className="portfolio__card-label">
@@ -1974,11 +1942,11 @@ export default function SimulationTab() {
           </div>
 
           {/* Capital allocation chart */}
-          <div className="analysis-section">
+          <div className="analysis-section analysis-section--flush">
             <div className="portfolio__section-title">
               <i className="fa-solid fa-gauge-high" /> Indicadors de rendiment
             </div>
-            <div className="sim-chart-inner" style={{ padding: "0.5rem 0 0" }}>
+            <div className="sim-chart-inner">
               <CapitalChart
                 trades={result.trades}
                 equityCurve={result.equityCurve}
@@ -1989,8 +1957,7 @@ export default function SimulationTab() {
           </div>
 
           {/* Detail metrics */}
-          <div className="analysis-section">
-            <div className="portfolio__section-title" style={{ display: "none" }} />
+          <div className="analysis-section analysis-section--flush">
             <div className="sim-metrics-row">
               <div className="metric-col">
                 <span className="metric-col__label"><i className="fa-solid fa-bullseye" /> Win Rate</span>
@@ -2060,10 +2027,10 @@ export default function SimulationTab() {
               <div className="sim-trades-sidebar">
                 {result.equityCurve.length > 1 && (
                   <div className="sim-trades-sidebar__equity">
-                    <div className="sim-symbol-chart__title">
+                    <div className="portfolio__section-title">
                       <i className="fa-solid fa-chart-line" /> Corba de capital
                     </div>
-                    <div className="sim-chart-inner" style={{ padding: "0.5rem 0 0.25rem" }}>
+                    <div className="sim-chart-inner">
                       <EquityChart
                         curve={result.equityCurve}
                         btcCurve={result.btcCurve ?? []}
