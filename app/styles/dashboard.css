@@ -4313,12 +4313,59 @@
 
 /* 5. Meta (badges + actions) — kept for non-OCO cards */
 .order-card__col-meta { gap: 5px; }
+
+/* Single order card layout */
+.order-card__header {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px 8px;
+}
+.order-card__hero {
+  display: flex; align-items: center; gap: 10px;
+  flex: 0 0 auto;
+}
+.order-card__header-right {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; gap: 4px;
+  align-items: flex-end;
+}
 .order-card__header-top {
   display: flex; align-items: center; gap: 5px;
+  flex-wrap: wrap; justify-content: flex-end;
 }
 .order-card__header-bottom {
   display: flex; align-items: center; gap: 4px;
   flex-wrap: wrap; justify-content: flex-end;
+}
+
+.order-card__level--single {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--border);
+}
+.order-card__level-label {
+  font-size: 0.65rem; color: var(--text-3); text-transform: uppercase;
+  letter-spacing: 0.04em; flex: 0 0 auto;
+}
+.order-card__level-price {
+  font-size: 0.95rem; font-weight: 700; color: var(--text-1);
+}
+.order-card__dist { font-size: 0.75rem; font-weight: 600; }
+.order-card__dist--up   { color: var(--green); }
+.order-card__dist--down { color: var(--red); }
+.order-card__sublabel {
+  font-size: 0.68rem; color: var(--text-3); margin-left: auto;
+}
+
+.order-card__meta {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 4px 14px 8px;
+  font-size: 0.72rem; color: var(--text-3);
+}
+.order-card__qty { color: var(--text-2); }
+.order-card__current { margin-left: auto; }
+
+.order-card__actions {
+  display: flex; gap: 8px; padding: 6px 14px 10px;
 }
 .order-card__actions-row {
   display: flex; align-items: center; gap: 5px; margin-top: 2px;

@@ -1017,7 +1017,7 @@ export default function SettingsTab() {
                   <span><i className="fa-solid fa-coins" /> {sc.config.symbols.map(s => s.replace("USDT","")).join(", ")}</span>
                   <span>TP {sc.config.tpAtr}× · SL {sc.config.slAtr}×</span>
                   <span>Trail {sc.config.trailActivateAtr}×/{sc.config.trailDistanceAtr}×</span>
-                  <span>Score ≥ {bot.minProbability ?? sc.effectiveConfig?.minProbability ?? 80}%</span>
+                  <span>Score ≥ {sc.effectiveConfig?.minProbability ?? 80}%</span>
                   <span>
                     {sc.config.capitalMode === "FIXED"
                       ? `${sc.config.capitalFixed ?? 100} USDT/op`
