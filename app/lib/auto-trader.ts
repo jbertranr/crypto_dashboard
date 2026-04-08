@@ -24,7 +24,7 @@ import {
 } from "./cache-store";
 import { ensureTrailingEngine } from "./trailing-engine";
 import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta } from "./journal-store";
-import { notifyNewOrder, notifyOcoFailed, notifyOrphanDetected, notifyOrphanNoBot } from "./telegram";
+import { notifyNewOrder, notifyOcoFailed, notifyOrphanDetected, notifyOrphanNoBot, notifyMarketScan, type ScanSymbolResult } from "./telegram";
 import { log } from "./logger";
 import path from "path";
 import fs from "fs";
@@ -363,17 +363,20 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const trailDst   = config.trailDistanceAtr  ?? 1.0;
   const trailMode  = settingGet("trailing_sl_mode") || "ATR";
   const minScore   = effectiveConfig?.minProbability ?? 80;
+  const tgScan     = settingGetBool("tg_on_market_scan");
 
   // Finestra horària (UTC)
   const nowHour = new Date().getUTCHours();
   if (nowHour < bot.hoursFrom || nowHour >= bot.hoursTo) {
     log.auto.debug({ bot: bot.name, nowHour, from: bot.hoursFrom, to: bot.hoursTo }, "bot fora de finestra horària");
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: "fora de finestra horària", results: [] }).catch(() => {});
     return;
   }
 
   // Màxim diari per-bot
   if (getBotTodayCount(bot.id) >= bot.maxDaily) {
     log.auto.debug({ bot: bot.name, count: getBotTodayCount(bot.id), max: bot.maxDaily }, "bot: màxim diari assolit");
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màxim diari assolit (${bot.maxDaily})`, results: [] }).catch(() => {});
     return;
   }
 
@@ -397,10 +400,13 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const committed = (openOcoCount + trailingCount) * usdtPer;
   if (committed + usdtPer > bot.budgetUsdt) {
     log.auto.debug({ bot: bot.name, committed, openOcoCount, trailingCount, budget: bot.budgetUsdt }, "bot: pressupost exhaurit");
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `pressupost exhaurit (${openOcoCount} OCO + ${trailingCount} trailing actius)`, results: [] }).catch(() => {});
     return;
   }
 
   log.auto.info({ bot: bot.name, interval, symbols: symbols.length, minScore }, "iniciant scan de bot");
+
+  const scanResults: ScanSymbolResult[] = [];
 
   for (const symbol of symbols) {
     // Re-comprova límit diari
@@ -411,6 +417,7 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
 
       if (analysis.score < minScore || analysis.verdict !== "BUY") {
         log.auto.debug({ bot: bot.name, symbol, score: analysis.score, verdict: analysis.verdict }, "sense senyal");
+        scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "NO_SIGNAL" });
         continue;
       }
 
@@ -423,6 +430,7 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
           const confirm = await fetchAndAnalyze(symbol, confirmTf);
           if (confirm.score < minScore || confirm.verdict !== "BUY") {
             log.auto.debug({ bot: bot.name, symbol, interval, confirmTf }, "multi-TF no confirmat");
+            scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "MULTI_TF_FAIL" });
             continue;
           }
         }
@@ -431,10 +439,12 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
       // No comprar si ja tenim un trailing SL actiu per aquest símbol
       if (hasActiveTrailing(symbol)) {
         log.auto.info({ bot: bot.name, symbol }, "bot: trailing SL actiu — ometent senyal");
+        scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "TRAILING_ACTIVE" });
         continue;
       }
 
       log.auto.info({ bot: bot.name, symbol, interval, score: analysis.score }, "senyal → comprant");
+      scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "BUY_EXECUTED" });
 
       await executeBuy({
         symbol, quoteQty: usdtPer, score: analysis.score, interval,
@@ -450,6 +460,11 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     } catch (err) {
       log.auto.error({ bot: bot.name, symbol, interval, err: (err as Error).message }, "error en bot scan");
     }
+  }
+
+  if (tgScan && scanResults.length > 0) {
+    notifyMarketScan({ botName: bot.name, interval, minScore, results: scanResults })
+      .catch(err => log.auto.warn({ err: (err as Error).message }, "notifyMarketScan fallida"));
   }
 }
 

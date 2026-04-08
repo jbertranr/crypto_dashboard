@@ -623,6 +623,63 @@ export async function notifyOcoFailed(data: {
   );
 }
 
+// ── Notificació: escaneig de mercat (decisió d'entrada) ──────────────────────
+
+export type ScanDecision =
+  | "BUY_EXECUTED"
+  | "NO_SIGNAL"
+  | "MULTI_TF_FAIL"
+  | "TRAILING_ACTIVE";
+
+export interface ScanSymbolResult {
+  symbol:   string;
+  price:    number;
+  score:    number;
+  verdict:  string;
+  decision: ScanDecision;
+}
+
+export async function notifyMarketScan(data: {
+  botName:     string;
+  interval:    string;
+  minScore:    number;
+  skipReason?: string;
+  results:     ScanSymbolResult[];
+}): Promise<void> {
+  const DECISION_ICON: Record<ScanDecision, string> = {
+    BUY_EXECUTED:   "✅ COMPRA",
+    NO_SIGNAL:      "⏸ sense senyal",
+    MULTI_TF_FAIL:  "🔀 multi-TF no confirmat",
+    TRAILING_ACTIVE:"🔵 trailing actiu",
+  };
+
+  const header = `🔍 ESCANEIG · ${data.botName}`;
+
+  if (data.skipReason) {
+    await sendTelegram(`<b>${header}</b>\n⏭ Omès: ${data.skipReason}\n<i>${ts()}</i>`);
+    return;
+  }
+
+  const scoreBar = (s: number) => {
+    const filled = Math.round(s / 10);
+    return "█".repeat(filled) + "░".repeat(10 - filled);
+  };
+
+  const rows = data.results.map(r => {
+    const base  = r.symbol.replace(/USDT$/, "").padEnd(6);
+    const price = fmtUSD(r.price).padStart(10);
+    const score = `${r.score}`.padStart(3);
+    const bar   = scoreBar(r.score);
+    const dec   = DECISION_ICON[r.decision];
+    return `${base} ${price}  ${score}/100  ${bar}\n       → ${dec}`;
+  });
+
+  const infoLine = `Interval: ${data.interval}  ·  Mínim: ${data.minScore}  ·  ${ts()}`;
+  const body     = rows.length > 0 ? pre([infoLine, "─".repeat(38), ...rows]) : pre([infoLine, "(cap símbol analitzat)"]);
+
+  await sendTelegram(`<b>${header}</b>\n${body}`);
+}
+
 // ── Notificació: trailing stop activat ───────────────────────────────────────
 
 export async function notifyTrailingActivated(data: {

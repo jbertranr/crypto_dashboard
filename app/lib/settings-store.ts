@@ -53,6 +53,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   // Auto-trading (master switch only — per-bot config is in the bots table)
   auto_trade_enabled: "0",             // master switch: para TOTS els bots (0 = off, 1 = on)
   // Motor watchdog
+  tg_on_market_scan:       "0",        // Telegram report each time a bot evaluates the market
   tg_on_motor_anomaly:     "1",        // Telegram alert when a motor behaves anomalously
   motor_anomaly_multiplier: "3",       // alert if motor hasn't run for N × its poll interval
 };

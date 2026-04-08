@@ -6,6 +6,7 @@ interface Settings {
   tg_on_order_close:        string;
   tg_on_sl_modify:          string;
   tg_on_trailing_activate:  string;
+  tg_on_market_scan:        string;
   tg_on_motor_anomaly:      string;
   motor_anomaly_multiplier: string;
   entry_type:               string;
@@ -62,7 +63,7 @@ interface Bot {
 }
 
 type TgSettings = Pick<Settings,
-  "tg_on_new_order" | "tg_on_order_close" | "tg_on_sl_modify" | "tg_on_trailing_activate" | "tg_on_motor_anomaly"
+  "tg_on_new_order" | "tg_on_order_close" | "tg_on_sl_modify" | "tg_on_trailing_activate" | "tg_on_market_scan" | "tg_on_motor_anomaly"
 >;
 
 const CFG_INTERVALS = ["5m", "1h", "4h"] as const;
@@ -106,6 +107,7 @@ function presetKey(param: string, type: CfgOrderType, tf: CfgInterval): string {
 const DEFAULTS = {
   tg_on_new_order: "1", tg_on_order_close: "1",
   tg_on_sl_modify: "1", tg_on_trailing_activate: "1",
+  tg_on_market_scan: "0",
   entry_type: "LIMIT",
   trailing_sl_mode: "ATR",
   trailing_pivot_tf: "1h",
@@ -159,6 +161,12 @@ const NOTIFICATIONS: {
     icon:  "fa-route",
     title: "Trailing Stop activat",
     desc:  "Notifica quan un trailing stop s'activa (el preu supera el nivell d'activaci\u00f3 i l'OCO es converteix en trailing SL).",
+  },
+  {
+    key:   "tg_on_market_scan" as keyof TgSettings,
+    icon:  "fa-magnifying-glass-chart",
+    title: "Escaneig de mercat",
+    desc:  "Envia un resum a Telegram cada vegada que un bot avalua el mercat: s\u00edmbol, puntuaci\u00f3, veredicte i decisi\u00f3 (compra executada, sense senyal, multi-TF no confirmat, trailing actiu o om\u00e8s per pressupost/horari).",
   },
   {
     key:   "tg_on_motor_anomaly" as keyof TgSettings,

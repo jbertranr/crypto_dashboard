@@ -31,7 +31,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const origin = req.headers.get("origin");
 
