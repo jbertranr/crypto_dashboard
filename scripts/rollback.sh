@@ -158,8 +158,12 @@ else
 fi
 
 if pm2 describe "$PM2_APP2" &>/dev/null; then
-  pm2 restart "$PM2_APP2" 2>&1 | grep -E "restarted|online|error" | sed 's/^/   /' || true
+  pm2 restart "$PM2_APP2" --update-env 2>&1 | grep -E "restarted|online|error" | sed 's/^/   /' || true
   ok "$PM2_APP2 reiniciat"
+else
+  info "Arrencant $PM2_APP2..."
+  pm2 start node --name "$PM2_APP2" -- "$APP_DIR/server-public.mjs"
+  ok "$PM2_APP2 engegat"
 fi
 
 pm2 save --force &>/dev/null || true
