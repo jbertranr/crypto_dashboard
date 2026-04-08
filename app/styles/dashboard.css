@@ -4039,7 +4039,7 @@
   text-align: center;
 }
 
-.oco-chart__canvas { height: 210px; }
+.oco-chart__canvas { height: 210px; width: 100%; min-width: 0; }
 
 .data-table__row--chart { background: var(--bg-card-2); }
 
@@ -4616,7 +4616,9 @@
 /* Chart column — inside the horizontal row */
 .order-card__col-chart {
   flex: 1 1 220px;
+  min-width: 120px;
   min-height: 90px;
+  overflow: hidden;
   border-right: none;
   padding: 0;
   overflow: hidden;

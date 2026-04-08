@@ -16,7 +16,9 @@ export function getSessionOptions(): SessionOptions {
     password,
     cookieName: "cd_session",
     cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
+      // SECURE_COOKIE=1 només si l'accés és via HTTPS (Cloudflare, nginx TLS…)
+      // Amb IP directa http:// cal que sigui false o el navegador no envia la cookie
+      secure: process.env.SECURE_COOKIE === "1",
       httpOnly: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, // 7 dies
