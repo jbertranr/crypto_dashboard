@@ -4022,3 +4022,7 @@
 {"level":30,"time":1775660406959,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":30,"time":1775664006791,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":30,"time":1775664704217,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775667607862,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775671207403,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775672088917,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775674807812,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}

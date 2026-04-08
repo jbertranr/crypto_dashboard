@@ -118,6 +118,17 @@ fi
 
 pm2 save --force &>/dev/null || true
 
+# ── Reload nginx (si existeix) ────────────────────────────────────────────────
+
+if sudo systemctl is-active --quiet nginx 2>/dev/null; then
+  if sudo nginx -t 2>/dev/null; then
+    sudo systemctl reload nginx
+    ok "nginx recarregat"
+  else
+    warn "Config nginx invàlida — reload omès"
+  fi
+fi
+
 # ── Neteja backups antics ─────────────────────────────────────────────────────
 
 step "Neteja backups"
