@@ -20,16 +20,16 @@ ok()   { echo -e "${GREEN}   ✅ $*${NC}"; }
 info() { echo -e "${CYAN}   ℹ  $*${NC}"; }
 step() { echo -e "\n${BOLD}── $* ──${NC}"; }
 
-step "Instal·lant nginx, certbot i iptables-persistent"
-sudo apt-get update -q
-sudo apt-get install -y nginx certbot python3-certbot-nginx iptables-persistent
+step "Instal·lant nginx i certbot (Oracle Linux / dnf)"
+sudo dnf install -y epel-release
+sudo dnf install -y nginx certbot python3-certbot-nginx
 ok "Paquets instal·lats"
 
-step "Obrint ports 80 i 443 al firewall local (iptables)"
-sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
-sudo netfilter-persistent save
-ok "Ports oberts i persistits"
+step "Obrint ports 80 i 443 al firewall (firewalld)"
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+ok "Ports oberts"
 
 step "Activant nginx"
 sudo systemctl enable nginx
