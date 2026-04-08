@@ -21,7 +21,7 @@ DEPLOY_ENV="$SCRIPT_DIR/.deploy.env"
 PROD_HOST=""
 PROD_USER="opc"
 PROD_KEY=""           # buit = usa l'agent SSH o la clau per defecte
-PROD_DIR="/home/opc/crypto_dashboard"
+PROD_DIR="/var/oled/cryptdesk/crypto_dashboard"
 SSH_ALIAS=""          # si existeix, s'usa en lloc de PROD_HOST
 
 # Carrega configuració local si existeix

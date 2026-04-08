@@ -43,7 +43,7 @@ function pruneJobs() {
 // ── SSH helper ────────────────────────────────────────────────────────────────
 
 const SSH_ALIAS = "cryptdesk-prod";
-const PROD_DIR  = "/home/opc/crypto_dashboard";
+const PROD_DIR  = "/var/oled/cryptdesk/crypto_dashboard";
 
 function runSsh(remoteCmd: string, job: DeployJob): void {
   const proc = spawn("ssh", [SSH_ALIAS, remoteCmd], { shell: false });
