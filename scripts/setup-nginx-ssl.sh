@@ -20,10 +20,20 @@ ok()   { echo -e "${GREEN}   ✅ $*${NC}"; }
 info() { echo -e "${CYAN}   ℹ  $*${NC}"; }
 step() { echo -e "\n${BOLD}── $* ──${NC}"; }
 
-step "Instal·lant nginx i certbot (Oracle Linux / dnf)"
+step "Instal·lant nginx (Oracle Linux / dnf)"
 sudo dnf install -y epel-release
-sudo dnf install -y nginx certbot python3-certbot-nginx
-ok "Paquets instal·lats"
+sudo dnf install -y nginx
+ok "nginx instal·lat"
+
+step "Instal·lant certbot via snap"
+sudo dnf install -y snapd
+sudo systemctl enable --now snapd.socket
+sudo ln -sf /var/lib/snapd/snap /snap
+# Snap necessita un moment per estar llest
+sleep 5
+sudo snap install --classic certbot
+sudo ln -sf /snap/bin/certbot /usr/bin/certbot
+ok "certbot instal·lat"
 
 step "Obrint ports 80 i 443 al firewall (firewalld)"
 sudo firewall-cmd --permanent --add-service=http
