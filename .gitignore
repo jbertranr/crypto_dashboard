@@ -42,3 +42,7 @@ next-env.d.ts
 
 # SQLite persistent cache
 /data/
+
+# Desplegament
+.deploy.env
+/releases/

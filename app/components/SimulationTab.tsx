@@ -36,6 +36,8 @@ interface SimConfig {
   trailDistanceAtr: number;
   breakEvenAtr:     number;
   maxHoldingBars:   number;
+  minProbability:   number;  // Probabilitat mínima d'entrada (ANALYSIS mode)
+  maxOpen:          number;  // Màx. posicions simultànies
   // MOON mode
   moonSlPct:        number;
   moonPartialAt:    number;
@@ -79,7 +81,7 @@ interface SavedConfig {
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const CONFIG_DEFAULTS = { maxHoldingBars: 8, pumpVolMin: 3.0 } as const;
+const CONFIG_DEFAULTS = { maxHoldingBars: 8, pumpVolMin: 3.0, minProbability: 70, maxOpen: 3 } as const;
 
 const MOON_DEFAULTS = {
   moonSlPct:      25,
@@ -625,7 +627,7 @@ function EffectiveConfigPanel({ cfg, simConfig }: { cfg: EffectiveConfig; simCon
             <CfgCard label="2 SL"   value={`×0.5 → ${(cfg.amBasePct / 2).toFixed(0)}%`}     src="fix" />
             <CfgCard label="3+ SL"  value={`×0.25 → ${(cfg.amBasePct / 4).toFixed(0)}%`}    src="fix" />
           </>}
-          <CfgCard label="Màx. posicions" value={`${cfg.maxOpen} simultànies`}                src="cfg" />
+          <CfgCard label="Màx. posicions" value={`${cfg.maxOpen} simultànies`}                src="sim" />
         </CfgGroup>
 
         <CfgGroup title="Filtre de mercat">
@@ -645,7 +647,7 @@ function EffectiveConfigPanel({ cfg, simConfig }: { cfg: EffectiveConfig; simCon
         </CfgGroup>
 
         <CfgGroup title="Filtre d'entrada">
-          {cfg.entryMode === "ANALYSIS" && <CfgCard label="Prob. mínima" value={`${cfg.minProbability}%`} src="cfg" />}
+          {cfg.entryMode === "ANALYSIS" && <CfgCard label="Prob. mínima" value={`${cfg.minProbability}%`} src="sim" />}
           <CfgCard label="Warm-up indicadors" value={`${cfg.warmupBars} veles`}      src="fix" />
         </CfgGroup>
 
@@ -935,6 +937,8 @@ export default function SimulationTab() {
       capitalPct:       10,
       riskPct:          1.5,
       maxHoldingBars:   300,
+      minProbability:   70,
+      maxOpen:          3,
       entryMode:        "ANALYSIS" as EntryMode,
       pumpVolMin:       3.0,
       exitMode:         "LET_RUN",
@@ -1666,6 +1670,20 @@ export default function SimulationTab() {
                 onChange={e => set("pumpVolMin", parseFloat(e.target.value) || 3)} />
             </label>
           )}
+          {config.entryMode === "ANALYSIS" && (
+            <label className="sim-field">
+              <span className="sim-field__label">Probabilitat mínima d'entrada (%)</span>
+              <input type="number" className="sim-field__input" min="50" max="95" step="5"
+                value={config.minProbability}
+                onChange={e => set("minProbability", parseFloat(e.target.value) || 70)} />
+            </label>
+          )}
+          <label className="sim-field">
+            <span className="sim-field__label">Màx. posicions simultànies</span>
+            <input type="number" className="sim-field__input" min="1" max="10" step="1"
+              value={config.maxOpen}
+              onChange={e => set("maxOpen", parseInt(e.target.value) || 3)} />
+          </label>
           {config.entryMode === "CANDLES" && (
             <div className="sim-candles-block">
               <label className="sim-field">

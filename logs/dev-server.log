@@ -34162,3 +34162,1583 @@ Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
  GET /api/orders 200 in 526ms (compile: 4ms, proxy.ts: 14ms, render: 508ms)
  GET /api/activity 200 in 49ms (compile: 8ms, proxy.ts: 27ms, render: 14ms)
  GET /api/errors 200 in 59ms (compile: 27ms, proxy.ts: 24ms, render: 8ms)
+ GET /api/orders/meta 200 in 47ms (compile: 9ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/orders 200 in 339ms (compile: 25ms, proxy.ts: 22ms, render: 291ms)
+ GET /api/market 200 in 831ms (compile: 9ms, proxy.ts: 25ms, render: 796ms)
+ GET /api/activity 200 in 62ms (compile: 19ms, proxy.ts: 31ms, render: 13ms)
+ GET /api/errors 200 in 78ms (compile: 35ms, proxy.ts: 30ms, render: 13ms)
+[11:00:06.875] [32mINFO[39m: [36mtelegram › informe horari enviat[39m
+    [35mmodule[39m: "telegram"
+ GET /api/orders/meta 200 in 83ms (compile: 17ms, proxy.ts: 34ms, render: 32ms)
+ GET /api/market 200 in 483ms (compile: 22ms, proxy.ts: 65ms, render: 396ms)
+ GET /api/orders 200 in 1355ms (compile: 11ms, proxy.ts: 35ms, render: 1309ms)
+ GET /api/activity 200 in 48ms (compile: 9ms, proxy.ts: 25ms, render: 15ms)
+ GET /api/errors 200 in 61ms (compile: 26ms, proxy.ts: 24ms, render: 11ms)
+ GET /api/orders/meta 200 in 84ms (compile: 14ms, proxy.ts: 53ms, render: 16ms)
+ GET /api/orders 200 in 291ms (compile: 20ms, proxy.ts: 26ms, render: 245ms)
+ GET /api/market 200 in 480ms (compile: 35ms, proxy.ts: 56ms, render: 389ms)
+ GET /api/activity 200 in 54ms (compile: 9ms, proxy.ts: 30ms, render: 15ms)
+ GET /api/errors 200 in 77ms (compile: 27ms, proxy.ts: 28ms, render: 22ms)
+ GET /api/activity 200 in 51ms (compile: 15ms, proxy.ts: 23ms, render: 13ms)
+ GET /api/errors 200 in 64ms (compile: 8ms, proxy.ts: 40ms, render: 16ms)
+ GET /api/orders/meta 200 in 82ms (compile: 20ms, proxy.ts: 37ms, render: 24ms)
+ GET /api/orders 200 in 290ms (compile: 13ms, proxy.ts: 39ms, render: 239ms)
+ GET /api/market 200 in 495ms (compile: 14ms, proxy.ts: 65ms, render: 416ms)
+ GET /api/activity 200 in 50ms (compile: 9ms, proxy.ts: 28ms, render: 13ms)
+ GET /api/errors 200 in 63ms (compile: 29ms, proxy.ts: 25ms, render: 9ms)
+ GET /api/activity 200 in 43ms (compile: 5ms, proxy.ts: 17ms, render: 21ms)
+ GET /api/errors 200 in 32ms (compile: 9ms, proxy.ts: 13ms, render: 10ms)
+ GET /api/orders/meta 200 in 85ms (compile: 23ms, proxy.ts: 41ms, render: 21ms)
+ GET /api/market 200 in 475ms (compile: 49ms, proxy.ts: 40ms, render: 386ms)
+ GET /api/orders 200 in 567ms (compile: 12ms, proxy.ts: 42ms, render: 513ms)
+ GET /api/activity 200 in 55ms (compile: 13ms, proxy.ts: 27ms, render: 14ms)
+ GET /api/errors 200 in 75ms (compile: 34ms, proxy.ts: 26ms, render: 15ms)
+ GET /api/orders/meta 200 in 81ms (compile: 20ms, proxy.ts: 41ms, render: 20ms)
+ GET /api/orders 200 in 415ms (compile: 12ms, proxy.ts: 41ms, render: 362ms)
+ GET /api/market 200 in 613ms (compile: 40ms, proxy.ts: 40ms, render: 533ms)
+ GET /api/errors 200 in 45ms (compile: 12ms, proxy.ts: 22ms, render: 11ms)
+ GET /api/activity 200 in 65ms (compile: 28ms, proxy.ts: 21ms, render: 16ms)
+ GET /api/activity 200 in 53ms (compile: 12ms, proxy.ts: 26ms, render: 15ms)
+ GET /api/errors 200 in 65ms (compile: 29ms, proxy.ts: 25ms, render: 11ms)
+[11:05:21.445] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:05:31.464] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 116ms (compile: 40ms, proxy.ts: 58ms, render: 18ms)
+ GET /api/market 200 in 1621ms (compile: 59ms, proxy.ts: 52ms, render: 1510ms)
+ GET /api/orders 200 in 2.3s (compile: 14ms, proxy.ts: 59ms, render: 2.3s)
+ GET /api/activity 200 in 32ms (compile: 5ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/errors 200 in 37ms (compile: 8ms, proxy.ts: 16ms, render: 14ms)
+ GET /api/orders/meta 200 in 42ms (compile: 8ms, proxy.ts: 23ms, render: 11ms)
+ GET /api/market 200 in 356ms (compile: 21ms, proxy.ts: 22ms, render: 312ms)
+ GET /api/orders 200 in 547ms (compile: 6ms, proxy.ts: 13ms, render: 528ms)
+ GET /api/orders/meta 200 in 61ms (compile: 24ms, proxy.ts: 22ms, render: 15ms)
+ GET /api/orders 200 in 871ms (compile: 8ms, proxy.ts: 22ms, render: 841ms)
+ POST /api/simulation/run 200 in 24.9s (compile: 3.8s, proxy.ts: 17ms, render: 21.1s)
+[11:06:25.133] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 126ms (compile: 21ms, proxy.ts: 86ms, render: 19ms)
+ GET /api/activity 200 in 190ms (compile: 83ms, proxy.ts: 84ms, render: 24ms)
+ GET /api/errors 200 in 224ms (compile: 127ms, proxy.ts: 81ms, render: 16ms)
+ GET /api/orders/meta 200 in 90ms (compile: 12ms, proxy.ts: 59ms, render: 19ms)
+ GET /api/market 200 in 584ms (compile: 43ms, proxy.ts: 85ms, render: 456ms)
+ GET /api/orders 200 in 955ms (compile: 117ms, proxy.ts: 86ms, render: 751ms)
+ GET /api/orders 200 in 252ms (compile: 6ms, proxy.ts: 13ms, render: 234ms)
+ GET /api/orders/meta 200 in 42ms (compile: 8ms, proxy.ts: 22ms, render: 13ms)
+ GET /api/orders 200 in 758ms (compile: 22ms, proxy.ts: 21ms, render: 714ms)
+ GET /api/market 200 in 302ms (compile: 6ms, proxy.ts: 12ms, render: 284ms)
+ GET /api/activity 200 in 60ms (compile: 7ms, proxy.ts: 23ms, render: 30ms)
+ GET /api/errors 200 in 71ms (compile: 39ms, proxy.ts: 23ms, render: 9ms)
+ GET /api/orders/meta 200 in 39ms (compile: 4ms, proxy.ts: 25ms, render: 10ms)
+ GET /api/orders 200 in 820ms (compile: 10ms, proxy.ts: 12ms, render: 798ms)
+ GET /api/orders/meta 200 in 54ms (compile: 12ms, proxy.ts: 32ms, render: 10ms)
+ GET /api/market 200 in 432ms (compile: 15ms, proxy.ts: 12ms, render: 405ms)
+ GET /api/orders 200 in 1930ms (compile: 23ms, proxy.ts: 31ms, render: 1876ms)
+ GET /api/orders/meta 200 in 110ms (compile: 32ms, proxy.ts: 24ms, render: 54ms)
+ GET /api/orders 200 in 749ms (compile: 15ms, proxy.ts: 23ms, render: 711ms)
+ GET /api/orders/meta 200 in 44ms (compile: 6ms, proxy.ts: 24ms, render: 15ms)
+ GET /api/orders 200 in 371ms (compile: 23ms, proxy.ts: 20ms, render: 328ms)
+ GET /api/market 200 in 401ms (compile: 27ms, proxy.ts: 14ms, render: 360ms)
+ GET /api/activity 200 in 44ms (compile: 8ms, proxy.ts: 23ms, render: 13ms)
+ GET /api/errors 200 in 56ms (compile: 26ms, proxy.ts: 22ms, render: 7ms)
+ GET /api/orders/meta 200 in 44ms (compile: 7ms, proxy.ts: 23ms, render: 13ms)
+[11:08:08.108] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 15.0s (compile: 22ms, proxy.ts: 21ms, render: 15.0s)
+ GET /api/orders/meta 200 in 128ms (compile: 65ms, proxy.ts: 43ms, render: 19ms)
+ GET /api/orders 200 in 8.1s (compile: 78ms, proxy.ts: 39ms, render: 8.0s)
+ GET /api/market 500 in 10.1s (compile: 15ms, proxy.ts: 47ms, render: 10.0s)
+ GET /api/activity 200 in 54ms (compile: 11ms, proxy.ts: 27ms, render: 16ms)
+ GET /api/errors 200 in 67ms (compile: 29ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/orders/meta 200 in 62ms (compile: 22ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/orders 200 in 766ms (compile: 7ms, proxy.ts: 24ms, render: 735ms)
+ GET /api/orders/meta 200 in 50ms (compile: 13ms, proxy.ts: 23ms, render: 14ms)
+ GET /api/orders 200 in 817ms (compile: 29ms, proxy.ts: 22ms, render: 766ms)
+ GET /api/market 200 in 494ms (compile: 8ms, proxy.ts: 14ms, render: 473ms)
+ GET /api/activity 200 in 61ms (compile: 11ms, proxy.ts: 32ms, render: 18ms)
+ GET /api/errors 200 in 77ms (compile: 34ms, proxy.ts: 31ms, render: 12ms)
+ GET /api/orders/meta 200 in 80ms (compile: 25ms, proxy.ts: 43ms, render: 13ms)
+ GET /api/orders 200 in 857ms (compile: 6ms, proxy.ts: 43ms, render: 808ms)
+ GET /api/orders/meta 200 in 78ms (compile: 14ms, proxy.ts: 38ms, render: 26ms)
+ GET /api/orders 200 in 793ms (compile: 42ms, proxy.ts: 37ms, render: 714ms)
+ GET /api/market 200 in 396ms (compile: 7ms, proxy.ts: 15ms, render: 375ms)
+ GET /api/activity 200 in 69ms (compile: 12ms, proxy.ts: 34ms, render: 22ms)
+ GET /api/errors 200 in 72ms (compile: 34ms, proxy.ts: 21ms, render: 18ms)
+ GET /api/orders/meta 200 in 63ms (compile: 24ms, proxy.ts: 26ms, render: 14ms)
+ GET /api/orders 200 in 311ms (compile: 30ms, proxy.ts: 34ms, render: 247ms)
+ GET /api/orders/meta 200 in 60ms (compile: 9ms, proxy.ts: 39ms, render: 12ms)
+ GET /api/orders 200 in 741ms (compile: 27ms, proxy.ts: 25ms, render: 689ms)
+ GET /api/market 200 in 347ms (compile: 9ms, proxy.ts: 17ms, render: 321ms)
+ GET /api/orders/meta 200 in 54ms (compile: 10ms, proxy.ts: 27ms, render: 17ms)
+ GET /api/orders 200 in 858ms (compile: 31ms, proxy.ts: 26ms, render: 801ms)
+ GET /api/activity 200 in 48ms (compile: 9ms, proxy.ts: 23ms, render: 16ms)
+ GET /api/errors 200 in 59ms (compile: 27ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/orders/meta 200 in 69ms (compile: 22ms, proxy.ts: 30ms, render: 17ms)
+ GET /api/orders 200 in 942ms (compile: 7ms, proxy.ts: 29ms, render: 907ms)
+ GET /api/market 200 in 374ms (compile: 7ms, proxy.ts: 14ms, render: 353ms)
+ GET /api/orders/meta 200 in 50ms (compile: 9ms, proxy.ts: 28ms, render: 13ms)
+ GET /api/orders 200 in 754ms (compile: 27ms, proxy.ts: 24ms, render: 704ms)
+ GET /api/activity 200 in 49ms (compile: 7ms, proxy.ts: 28ms, render: 14ms)
+ GET /api/errors 200 in 53ms (compile: 8ms, proxy.ts: 36ms, render: 9ms)
+ GET /api/orders/meta 200 in 162ms (compile: 119ms, proxy.ts: 26ms, render: 17ms)
+ GET /api/orders 200 in 838ms (compile: 102ms, proxy.ts: 25ms, render: 711ms)
+ GET /api/market 200 in 412ms (compile: 12ms, proxy.ts: 17ms, render: 384ms)
+ GET /api/orders/meta 200 in 41ms (compile: 9ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/orders 200 in 748ms (compile: 23ms, proxy.ts: 22ms, render: 703ms)
+ GET /api/activity 200 in 55ms (compile: 11ms, proxy.ts: 24ms, render: 21ms)
+ GET /api/errors 200 in 71ms (compile: 36ms, proxy.ts: 23ms, render: 12ms)
+ GET /api/orders/meta 200 in 61ms (compile: 23ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/orders 200 in 288ms (compile: 9ms, proxy.ts: 23ms, render: 256ms)
+ GET /api/market 200 in 381ms (compile: 6ms, proxy.ts: 13ms, render: 362ms)
+ GET /api/orders/meta 200 in 68ms (compile: 27ms, proxy.ts: 24ms, render: 17ms)
+ GET /api/orders 200 in 745ms (compile: 11ms, proxy.ts: 23ms, render: 711ms)
+ GET /api/orders/meta 200 in 51ms (compile: 7ms, proxy.ts: 29ms, render: 14ms)
+ GET /api/orders 200 in 786ms (compile: 24ms, proxy.ts: 28ms, render: 734ms)
+ GET /api/market 200 in 373ms (compile: 9ms, proxy.ts: 13ms, render: 351ms)
+ GET /api/activity 200 in 49ms (compile: 7ms, proxy.ts: 29ms, render: 13ms)
+ GET /api/errors 200 in 66ms (compile: 22ms, proxy.ts: 24ms, render: 20ms)
+ GET /api/orders/meta 200 in 64ms (compile: 27ms, proxy.ts: 22ms, render: 15ms)
+ GET /api/orders 200 in 749ms (compile: 12ms, proxy.ts: 21ms, render: 716ms)
+ GET /api/orders/meta 200 in 49ms (compile: 10ms, proxy.ts: 25ms, render: 14ms)
+ GET /api/orders 200 in 281ms (compile: 26ms, proxy.ts: 24ms, render: 231ms)
+ GET /api/market 200 in 809ms (compile: 6ms, proxy.ts: 12ms, render: 790ms)
+ GET /api/activity 200 in 53ms (compile: 9ms, proxy.ts: 26ms, render: 17ms)
+ GET /api/errors 200 in 66ms (compile: 28ms, proxy.ts: 26ms, render: 12ms)
+ GET /api/orders/meta 200 in 65ms (compile: 26ms, proxy.ts: 25ms, render: 14ms)
+ GET /api/orders 200 in 1475ms (compile: 8ms, proxy.ts: 25ms, render: 1442ms)
+ GET /api/orders/meta 200 in 48ms (compile: 8ms, proxy.ts: 26ms, render: 14ms)
+ GET /api/orders 200 in 296ms (compile: 22ms, proxy.ts: 26ms, render: 248ms)
+ GET /api/market 200 in 390ms (compile: 8ms, proxy.ts: 11ms, render: 370ms)
+ GET /api/orders/meta 200 in 48ms (compile: 8ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/orders 200 in 298ms (compile: 24ms, proxy.ts: 26ms, render: 248ms)
+ GET /api/activity 200 in 36ms (compile: 6ms, proxy.ts: 16ms, render: 14ms)
+ GET /api/errors 200 in 61ms (compile: 32ms, proxy.ts: 16ms, render: 13ms)
+ GET /api/orders/meta 200 in 81ms (compile: 28ms, proxy.ts: 37ms, render: 16ms)
+ GET /api/market 200 in 491ms (compile: 46ms, proxy.ts: 36ms, render: 409ms)
+ GET /api/orders 200 in 1531ms (compile: 12ms, proxy.ts: 36ms, render: 1483ms)
+ GET /api/orders/meta 200 in 72ms (compile: 27ms, proxy.ts: 32ms, render: 14ms)
+ GET /api/orders 200 in 776ms (compile: 45ms, proxy.ts: 32ms, render: 699ms)
+ GET /api/errors 200 in 41ms (compile: 8ms, proxy.ts: 23ms, render: 10ms)
+ GET /api/activity 200 in 64ms (compile: 22ms, proxy.ts: 27ms, render: 16ms)
+ GET /api/orders 200 in 254ms (compile: 5ms, proxy.ts: 11ms, render: 238ms)
+ GET /api/orders/meta 200 in 173ms (compile: 131ms, proxy.ts: 27ms, render: 16ms)
+ GET /api/market 200 in 499ms (compile: 51ms, proxy.ts: 28ms, render: 420ms)
+ GET /api/orders/meta 200 in 67ms (compile: 28ms, proxy.ts: 24ms, render: 14ms)
+ GET /api/orders 200 in 925ms (compile: 8ms, proxy.ts: 24ms, render: 894ms)
+ GET /api/activity 200 in 57ms (compile: 11ms, proxy.ts: 31ms, render: 16ms)
+ GET /api/errors 200 in 68ms (compile: 27ms, proxy.ts: 25ms, render: 15ms)
+ GET /api/orders/meta 200 in 131ms (compile: 66ms, proxy.ts: 34ms, render: 30ms)
+ GET /api/market 200 in 1551ms (compile: 97ms, proxy.ts: 34ms, render: 1420ms)
+[11:14:29.795] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 10.1s (compile: 45ms, proxy.ts: 35ms, render: 10.0s)
+ GET /api/orders/meta 200 in 90ms (compile: 29ms, proxy.ts: 38ms, render: 23ms)
+ GET /api/orders 200 in 1075ms (compile: 13ms, proxy.ts: 41ms, render: 1020ms)
+ GET /api/market 200 in 1897ms (compile: 57ms, proxy.ts: 37ms, render: 1803ms)
+ GET /api/activity 200 in 30ms (compile: 5ms, proxy.ts: 12ms, render: 14ms)
+ GET /api/errors 200 in 41ms (compile: 7ms, proxy.ts: 12ms, render: 22ms)
+ GET /api/activity 200 in 28ms (compile: 5ms, proxy.ts: 11ms, render: 11ms)
+ GET /api/errors 200 in 32ms (compile: 7ms, proxy.ts: 17ms, render: 8ms)
+ GET /api/orders/meta 200 in 58ms (compile: 12ms, proxy.ts: 33ms, render: 12ms)
+ GET /api/orders 200 in 319ms (compile: 28ms, proxy.ts: 33ms, render: 258ms)
+ GET /api/market 200 in 1505ms (compile: 40ms, proxy.ts: 33ms, render: 1433ms)
+ GET /api/errors 200 in 39ms (compile: 8ms, proxy.ts: 21ms, render: 10ms)
+ GET /api/activity 200 in 57ms (compile: 24ms, proxy.ts: 21ms, render: 12ms)
+ GET /api/activity 200 in 55ms (compile: 9ms, proxy.ts: 33ms, render: 13ms)
+ GET /api/errors 200 in 62ms (compile: 21ms, proxy.ts: 31ms, render: 10ms)
+ GET /api/orders/meta 200 in 67ms (compile: 9ms, proxy.ts: 38ms, render: 20ms)
+ GET /api/orders 200 in 318ms (compile: 31ms, proxy.ts: 14ms, render: 273ms)
+ GET /api/market 200 in 424ms (compile: 29ms, proxy.ts: 32ms, render: 363ms)
+ GET /api/errors 200 in 41ms (compile: 9ms, proxy.ts: 23ms, render: 9ms)
+ GET /api/activity 200 in 52ms (compile: 19ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/activity 200 in 44ms (compile: 7ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/errors 200 in 54ms (compile: 22ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/orders/meta 200 in 108ms (compile: 57ms, proxy.ts: 34ms, render: 16ms)
+ GET /api/orders 200 in 611ms (compile: 10ms, proxy.ts: 36ms, render: 565ms)
+ GET /api/market 200 in 887ms (compile: 21ms, proxy.ts: 33ms, render: 833ms)
+ GET /api/activity 200 in 43ms (compile: 9ms, proxy.ts: 20ms, render: 13ms)
+ GET /api/errors 200 in 54ms (compile: 25ms, proxy.ts: 19ms, render: 9ms)
+ GET /api/activity 200 in 39ms (compile: 12ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/errors 200 in 46ms (compile: 6ms, proxy.ts: 33ms, render: 8ms)
+ GET /api/orders/meta 200 in 59ms (compile: 12ms, proxy.ts: 35ms, render: 12ms)
+ GET /api/orders 200 in 301ms (compile: 29ms, proxy.ts: 36ms, render: 237ms)
+ GET /api/market 200 in 449ms (compile: 34ms, proxy.ts: 34ms, render: 381ms)
+ GET /api/activity 200 in 37ms (compile: 13ms, proxy.ts: 11ms, render: 13ms)
+ GET /api/errors 200 in 44ms (compile: 7ms, proxy.ts: 29ms, render: 8ms)
+ GET /api/activity 200 in 50ms (compile: 11ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/errors 200 in 65ms (compile: 29ms, proxy.ts: 25ms, render: 11ms)
+ GET /api/orders/meta 200 in 102ms (compile: 26ms, proxy.ts: 38ms, render: 38ms)
+ GET /api/orders 200 in 290ms (compile: 11ms, proxy.ts: 40ms, render: 239ms)
+ GET /api/market 200 in 516ms (compile: 67ms, proxy.ts: 37ms, render: 412ms)
+ GET /api/activity 200 in 46ms (compile: 7ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 57ms (compile: 25ms, proxy.ts: 23ms, render: 10ms)
+ GET /api/orders/meta 200 in 55ms (compile: 10ms, proxy.ts: 33ms, render: 12ms)
+ GET /api/market 200 in 586ms (compile: 26ms, proxy.ts: 32ms, render: 528ms)
+ GET /api/orders 200 in 600ms (compile: 74ms, proxy.ts: 33ms, render: 493ms)
+ GET /api/activity 200 in 58ms (compile: 13ms, proxy.ts: 32ms, render: 13ms)
+ GET /api/errors 200 in 72ms (compile: 27ms, proxy.ts: 30ms, render: 14ms)
+ GET /api/activity 200 in 56ms (compile: 9ms, proxy.ts: 31ms, render: 17ms)
+ GET /api/errors 200 in 68ms (compile: 31ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/orders/meta 200 in 69ms (compile: 13ms, proxy.ts: 36ms, render: 20ms)
+ GET /api/orders 200 in 309ms (compile: 38ms, proxy.ts: 37ms, render: 234ms)
+ GET /api/market 200 in 463ms (compile: 49ms, proxy.ts: 34ms, render: 380ms)
+ GET /api/activity 200 in 48ms (compile: 9ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 62ms (compile: 25ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/activity 200 in 32ms (compile: 6ms, proxy.ts: 13ms, render: 13ms)
+ GET /api/errors 200 in 29ms (compile: 7ms, proxy.ts: 11ms, render: 10ms)
+ GET /api/orders/meta 200 in 74ms (compile: 24ms, proxy.ts: 37ms, render: 13ms)
+ GET /api/orders 200 in 408ms (compile: 13ms, proxy.ts: 37ms, render: 358ms)
+ GET /api/market 200 in 1203ms (compile: 37ms, proxy.ts: 29ms, render: 1137ms)
+ GET /api/activity 200 in 47ms (compile: 10ms, proxy.ts: 26ms, render: 12ms)
+ GET /api/errors 200 in 63ms (compile: 26ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/activity 200 in 47ms (compile: 9ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/errors 200 in 54ms (compile: 24ms, proxy.ts: 22ms, render: 8ms)
+ GET /api/orders/meta 200 in 121ms (compile: 72ms, proxy.ts: 35ms, render: 14ms)
+ GET /api/market 200 in 462ms (compile: 18ms, proxy.ts: 34ms, render: 410ms)
+ GET /api/orders 200 in 539ms (compile: 12ms, proxy.ts: 36ms, render: 491ms)
+ GET /api/activity 200 in 48ms (compile: 8ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 57ms (compile: 24ms, proxy.ts: 23ms, render: 10ms)
+ GET /api/activity 200 in 44ms (compile: 7ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/errors 200 in 53ms (compile: 22ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/orders/meta 200 in 72ms (compile: 21ms, proxy.ts: 34ms, render: 17ms)
+ GET /api/orders 200 in 388ms (compile: 13ms, proxy.ts: 35ms, render: 339ms)
+ GET /api/market 200 in 656ms (compile: 75ms, proxy.ts: 34ms, render: 548ms)
+ GET /api/activity 200 in 31ms (compile: 6ms, proxy.ts: 14ms, render: 12ms)
+ GET /api/errors 200 in 27ms (compile: 8ms, proxy.ts: 12ms, render: 8ms)
+✓ Compiled in 15.5s
+ GET /api/orders 200 in 248ms (compile: 5ms, proxy.ts: 12ms, render: 231ms)
+ GET /api/orders/meta 200 in 35ms (compile: 8ms, proxy.ts: 13ms, render: 14ms)
+ GET /api/market 200 in 461ms (compile: 4ms, proxy.ts: 14ms, render: 443ms)
+✓ Compiled in 1325ms
+ GET /api/errors 200 in 52ms (compile: 7ms, proxy.ts: 31ms, render: 14ms)
+ GET /api/activity 200 in 77ms (compile: 28ms, proxy.ts: 32ms, render: 17ms)
+✓ Compiled in 498ms
+✓ Compiled in 355ms
+✓ Compiled in 359ms
+ GET /api/simulation/configs 200 in 87ms (compile: 56ms, proxy.ts: 11ms, render: 19ms)
+ GET /api/orders/meta 200 in 32ms (compile: 6ms, proxy.ts: 12ms, render: 13ms)
+ GET /api/market 200 in 404ms (compile: 8ms, proxy.ts: 13ms, render: 383ms)
+ GET /api/orders 200 in 1147ms (compile: 5ms, proxy.ts: 12ms, render: 1129ms)
+✓ Compiled in 798ms
+ GET /api/activity 200 in 45ms (compile: 8ms, proxy.ts: 23ms, render: 13ms)
+ GET /api/errors 200 in 57ms (compile: 24ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/activity 200 in 32ms (compile: 10ms, proxy.ts: 11ms, render: 11ms)
+ GET /api/errors 200 in 32ms (compile: 7ms, proxy.ts: 18ms, render: 8ms)
+ GET /api/orders/meta 200 in 71ms (compile: 13ms, proxy.ts: 41ms, render: 17ms)
+ GET /api/orders 200 in 398ms (compile: 32ms, proxy.ts: 40ms, render: 326ms)
+ GET /api/market 200 in 542ms (compile: 39ms, proxy.ts: 37ms, render: 466ms)
+ GET /api/activity 200 in 47ms (compile: 11ms, proxy.ts: 23ms, render: 13ms)
+ GET /api/errors 200 in 66ms (compile: 26ms, proxy.ts: 22ms, render: 18ms)
+ GET /api/orders/meta 200 in 80ms (compile: 15ms, proxy.ts: 46ms, render: 20ms)
+ GET /api/activity 200 in 53ms (compile: 13ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 66ms (compile: 32ms, proxy.ts: 19ms, render: 15ms)
+ GET /api/market 200 in 985ms (compile: 62ms, proxy.ts: 45ms, render: 878ms)
+ GET /api/orders 200 in 1615ms (compile: 42ms, proxy.ts: 43ms, render: 1529ms)
+ GET /api/activity 200 in 36ms (compile: 8ms, proxy.ts: 13ms, render: 15ms)
+ GET /api/errors 200 in 30ms (compile: 5ms, proxy.ts: 14ms, render: 11ms)
+ GET /api/orders/meta 200 in 126ms (compile: 13ms, proxy.ts: 39ms, render: 75ms)
+ GET /api/market 200 in 1432ms (compile: 189ms, proxy.ts: 36ms, render: 1207ms)
+ GET /api/orders 200 in 3.8s (compile: 89ms, proxy.ts: 38ms, render: 3.7s)
+ GET /api/orders/meta 200 in 45ms (compile: 9ms, proxy.ts: 18ms, render: 18ms)
+ GET /api/orders 200 in 344ms (compile: 5ms, proxy.ts: 16ms, render: 323ms)
+ GET /api/orders/meta 200 in 78ms (compile: 21ms, proxy.ts: 39ms, render: 19ms)
+ GET /api/orders 200 in 369ms (compile: 12ms, proxy.ts: 40ms, render: 317ms)
+ GET /api/market 200 in 764ms (compile: 15ms, proxy.ts: 60ms, render: 688ms)
+ GET /api/activity 200 in 41ms (compile: 6ms, proxy.ts: 15ms, render: 20ms)
+ GET /api/errors 200 in 37ms (compile: 14ms, proxy.ts: 13ms, render: 9ms)
+ GET /api/orders/meta 200 in 65ms (compile: 19ms, proxy.ts: 25ms, render: 21ms)
+ GET /api/orders 200 in 914ms (compile: 7ms, proxy.ts: 25ms, render: 881ms)
+ GET /api/orders/meta 200 in 71ms (compile: 14ms, proxy.ts: 43ms, render: 14ms)
+ GET /api/orders 200 in 363ms (compile: 21ms, proxy.ts: 32ms, render: 311ms)
+ GET /api/market 200 in 788ms (compile: 28ms, proxy.ts: 41ms, render: 718ms)
+ GET /api/activity 200 in 33ms (compile: 5ms, proxy.ts: 15ms, render: 13ms)
+ GET /api/errors 200 in 28ms (compile: 8ms, proxy.ts: 11ms, render: 9ms)
+ GET /api/orders/meta 200 in 57ms (compile: 20ms, proxy.ts: 24ms, render: 12ms)
+ GET /api/orders 200 in 4.3s (compile: 9ms, proxy.ts: 24ms, render: 4.3s)
+ GET /api/activity 200 in 54ms (compile: 9ms, proxy.ts: 30ms, render: 15ms)
+ GET /api/errors 200 in 63ms (compile: 26ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/orders/meta 200 in 138ms (compile: 48ms, proxy.ts: 65ms, render: 26ms)
+ GET /api/orders/meta 200 in 40ms (compile: 10ms, proxy.ts: 16ms, render: 14ms)
+ GET /api/orders 200 in 396ms (compile: 82ms, proxy.ts: 64ms, render: 250ms)
+ GET /api/orders 200 in 263ms (compile: 10ms, proxy.ts: 16ms, render: 238ms)
+ GET /api/market 200 in 1779ms (compile: 116ms, proxy.ts: 62ms, render: 1601ms)
+ GET /api/orders/meta 200 in 89ms (compile: 25ms, proxy.ts: 32ms, render: 32ms)
+ GET /api/orders 200 in 1852ms (compile: 6ms, proxy.ts: 31ms, render: 1814ms)
+ GET /api/stream 200 in 722.8min (compile: 22ms, proxy.ts: 11ms, render: 722.8min)
+ GET /api/errors 200 in 126ms (compile: 30ms, proxy.ts: 71ms, render: 26ms)
+ GET /api/activity 200 in 147ms (compile: 61ms, proxy.ts: 69ms, render: 16ms)
+ GET / 200 in 4.4s (compile: 946ms, proxy.ts: 18ms, render: 3.4s)
+ GET /api/orders/meta 200 in 649ms (compile: 464ms, proxy.ts: 147ms, render: 38ms)
+ GET /api/errors?since=1774648235861 200 in 742ms (compile: 431ms, proxy.ts: 220ms, render: 91ms)
+ GET /api/pnl 200 in 909ms (compile: 640ms, proxy.ts: 150ms, render: 120ms)
+ GET /api/orders 200 in 1016ms (compile: 266ms, proxy.ts: 148ms, render: 602ms)
+ GET /api/orders/meta 200 in 95ms (compile: 7ms, proxy.ts: 62ms, render: 27ms)
+ GET /api/strategies 200 in 1300ms (compile: 693ms, proxy.ts: 551ms, render: 55ms)
+[11:31:28.419] [32mINFO[39m: [36mbinance › balance[39m
+    [35mmodule[39m: "binance"
+    [35massets[39m: 23
+ GET /api/balance 200 in 1566ms (compile: 967ms, proxy.ts: 20ms, render: 580ms)
+ GET /api/simulation/configs 200 in 100ms (compile: 40ms, proxy.ts: 12ms, render: 49ms)
+ GET /api/simulation/configs 200 in 71ms (compile: 26ms, proxy.ts: 31ms, render: 14ms)
+ GET /api/cost-basis 200 in 10.8s (compile: 318ms, proxy.ts: 88ms, render: 10.4s)
+ GET /api/orders/meta 200 in 51ms (compile: 5ms, proxy.ts: 12ms, render: 34ms)
+ GET /api/orders 200 in 285ms (compile: 5ms, proxy.ts: 16ms, render: 264ms)
+ GET /api/errors 200 in 38ms (compile: 7ms, proxy.ts: 22ms, render: 9ms)
+ GET /api/activity 200 in 51ms (compile: 19ms, proxy.ts: 21ms, render: 12ms)
+ GET /api/orders/meta 200 in 59ms (compile: 20ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/market 200 in 404ms (compile: 12ms, proxy.ts: 18ms, render: 373ms)
+ POST /api/simulation/run 200 in 17.6s (compile: 1730ms, proxy.ts: 13ms, render: 15.9s)
+ GET /api/orders 200 in 16.7s (compile: 35ms, proxy.ts: 28ms, render: 16.7s)
+ GET /api/orders/meta 200 in 75ms (compile: 12ms, proxy.ts: 42ms, render: 21ms)
+ GET /api/orders 200 in 340ms (compile: 19ms, proxy.ts: 50ms, render: 271ms)
+ GET /api/orders/meta 200 in 36ms (compile: 4ms, proxy.ts: 19ms, render: 12ms)
+ GET /api/orders 200 in 709ms (compile: 9ms, proxy.ts: 13ms, render: 687ms)
+ GET /api/market 200 in 348ms (compile: 5ms, proxy.ts: 12ms, render: 332ms)
+ GET /api/activity 200 in 28ms (compile: 5ms, proxy.ts: 11ms, render: 12ms)
+ GET /api/errors 200 in 36ms (compile: 10ms, proxy.ts: 17ms, render: 9ms)
+ GET /api/orders/meta 200 in 64ms (compile: 30ms, proxy.ts: 23ms, render: 11ms)
+ GET /api/orders 200 in 297ms (compile: 43ms, proxy.ts: 21ms, render: 233ms)
+ POST /api/simulation/run 200 in 15.1s (compile: 12ms, proxy.ts: 12ms, render: 15.1s)
+ GET /api/orders/meta 200 in 71ms (compile: 18ms, proxy.ts: 35ms, render: 17ms)
+ GET /api/orders 200 in 311ms (compile: 38ms, proxy.ts: 35ms, render: 238ms)
+ GET /api/market 200 in 529ms (compile: 51ms, proxy.ts: 34ms, render: 444ms)
+ GET /api/activity 200 in 29ms (compile: 5ms, proxy.ts: 11ms, render: 12ms)
+ GET /api/errors 200 in 41ms (compile: 14ms, proxy.ts: 17ms, render: 10ms)
+ GET /api/orders/meta 200 in 135ms (compile: 13ms, proxy.ts: 34ms, render: 89ms)
+ GET /api/orders 200 in 876ms (compile: 105ms, proxy.ts: 32ms, render: 738ms)
+ GET /api/orders/meta 200 in 54ms (compile: 12ms, proxy.ts: 28ms, render: 15ms)
+ GET /api/market 200 in 344ms (compile: 8ms, proxy.ts: 12ms, render: 324ms)
+ GET /api/orders 200 in 1501ms (compile: 31ms, proxy.ts: 24ms, render: 1447ms)
+ GET /api/activity 200 in 50ms (compile: 10ms, proxy.ts: 21ms, render: 19ms)
+ GET /api/errors 200 in 28ms (compile: 6ms, proxy.ts: 13ms, render: 9ms)
+ GET /api/orders/meta 200 in 57ms (compile: 10ms, proxy.ts: 29ms, render: 18ms)
+ GET /api/orders 200 in 334ms (compile: 34ms, proxy.ts: 29ms, render: 271ms)
+ GET /api/orders/meta 200 in 80ms (compile: 40ms, proxy.ts: 10ms, render: 30ms)
+ GET /api/market 200 in 592ms (compile: 84ms, proxy.ts: 35ms, render: 473ms)
+ GET /api/orders 200 in 886ms (compile: 65ms, proxy.ts: 34ms, render: 787ms)
+ GET /api/orders/meta 200 in 35ms (compile: 5ms, proxy.ts: 14ms, render: 15ms)
+ GET /api/orders 200 in 281ms (compile: 5ms, proxy.ts: 12ms, render: 264ms)
+ GET /api/activity 200 in 34ms (compile: 6ms, proxy.ts: 15ms, render: 13ms)
+ GET /api/errors 200 in 31ms (compile: 5ms, proxy.ts: 14ms, render: 11ms)
+ GET /api/orders/meta 200 in 36ms (compile: 5ms, proxy.ts: 16ms, render: 14ms)
+ GET /api/orders 200 in 698ms (compile: 5ms, proxy.ts: 12ms, render: 681ms)
+ GET /api/market 200 in 339ms (compile: 6ms, proxy.ts: 17ms, render: 317ms)
+ GET /api/orders/meta 200 in 48ms (compile: 12ms, proxy.ts: 18ms, render: 18ms)
+ GET /api/orders 200 in 310ms (compile: 11ms, proxy.ts: 52ms, render: 247ms)
+ GET /api/activity 200 in 49ms (compile: 9ms, proxy.ts: 25ms, render: 15ms)
+ GET /api/errors 200 in 68ms (compile: 27ms, proxy.ts: 24ms, render: 17ms)
+ GET /api/orders/meta 200 in 50ms (compile: 7ms, proxy.ts: 28ms, render: 14ms)
+ GET /api/market 200 in 412ms (compile: 6ms, proxy.ts: 14ms, render: 392ms)
+ GET /api/orders 200 in 730ms (compile: 23ms, proxy.ts: 26ms, render: 681ms)
+ GET /api/simulation/configs 200 in 32ms (compile: 7ms, proxy.ts: 11ms, render: 14ms)
+ GET /api/simulation/configs 200 in 38ms (compile: 5ms, proxy.ts: 18ms, render: 15ms)
+ POST /api/simulation/run 200 in 12.7s (compile: 5ms, proxy.ts: 15ms, render: 12.7s)
+ POST /api/simulation/run 200 in 10.5s (compile: 120ms, proxy.ts: 214ms, render: 10.1s)
+ GET /api/orders/meta 200 in 10.4s (compile: 10.3s, proxy.ts: 129ms, render: 30ms)
+ POST /api/simulation/run 200 in 11.1s (compile: 22ms, proxy.ts: 100ms, render: 11.0s)
+ GET /api/errors 200 in 11.1s (compile: 11.0s, proxy.ts: 91ms, render: 13ms)
+ GET /api/activity 200 in 11.2s (compile: 11.1s, proxy.ts: 91ms, render: 19ms)
+ GET /api/orders/meta 200 in 11.3s (compile: 11.2s, proxy.ts: 98ms, render: 24ms)
+ POST /api/simulation/run 200 in 11.9s (compile: 50ms, proxy.ts: 58ms, render: 11.8s)
+ GET /api/market 500 in 23.2s (compile: 11.1s, proxy.ts: 96ms, render: 12.1s)
+ GET /api/orders/meta 200 in 12.0s (compile: 11.9s, proxy.ts: 58ms, render: 11ms)
+[11:35:57.919] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/orders 503 in 33.9s (compile: 10.3s, proxy.ts: 127ms, render: 23.4s)
+[11:35:57.927] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:35:57.938] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 166ms (compile: 42ms, proxy.ts: 98ms, render: 26ms)
+ POST /api/simulation/run 200 in 13.1s (compile: 148ms, proxy.ts: 229ms, render: 12.8s)
+ GET /api/market 500 in 13.0s (compile: 74ms, proxy.ts: 98ms, render: 12.9s)
+[11:36:11.063] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 10.5s (compile: 57ms, proxy.ts: 43ms, render: 10.4s)
+[11:36:21.551] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 23.7s (compile: 100ms, proxy.ts: 226ms, render: 23.4s)
+ POST /api/simulation/run 200 in 12.2s (compile: 16ms, proxy.ts: 162ms, render: 12.0s)
+ GET /api/orders/meta 200 in 12.2s (compile: 12.1s, proxy.ts: 123ms, render: 18ms)
+[11:36:33.838] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 2
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders 503 in 22.9s (compile: 30ms, proxy.ts: 65ms, render: 22.8s)
+[11:36:33.864] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/activity 200 in 275ms (compile: 103ms, proxy.ts: 147ms, render: 26ms)
+ GET /api/errors 200 in 294ms (compile: 135ms, proxy.ts: 146ms, render: 13ms)
+ GET /api/orders/meta 200 in 220ms (compile: 9ms, proxy.ts: 186ms, render: 25ms)
+ POST /api/simulation/run 200 in 13.6s (compile: 170ms, proxy.ts: 96ms, render: 13.4s)
+ GET /api/market 500 in 13.7s (compile: 64ms, proxy.ts: 148ms, render: 13.5s)
+ GET /api/orders/meta 200 in 106ms (compile: 40ms, proxy.ts: 42ms, render: 24ms)
+ POST /api/simulation/run 200 in 10.3s (compile: 10ms, proxy.ts: 18ms, render: 10.3s)
+[11:36:58.124] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 24.3s (compile: 43ms, proxy.ts: 176ms, render: 24.1s)
+ GET /api/orders/meta 200 in 180ms (compile: 50ms, proxy.ts: 111ms, render: 19ms)
+ POST /api/simulation/run 200 in 11.6s (compile: 75ms, proxy.ts: 59ms, render: 11.5s)
+ GET /api/market 500 in 11.7s (compile: 15ms, proxy.ts: 112ms, render: 11.6s)
+[11:37:09.841] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 48s (compile: 12.1s, proxy.ts: 162ms, render: 36.1s)
+ GET /api/orders 503 in 22.3s (compile: 78ms, proxy.ts: 41ms, render: 22.1s)
+[11:37:09.859] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 2
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:37:09.862] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+[11:37:09.867] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 11.9s (compile: 32ms, proxy.ts: 97ms, render: 11.7s)
+[11:37:21.756] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 3
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:37:21.757] [33mWARN[39m: [36mtrailing-engine › pausat per errors consecutius[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 3
+    [35mpauseSecs[39m: 60
+ GET /api/activity 200 in 129ms (compile: 24ms, proxy.ts: 91ms, render: 14ms)
+ GET /api/errors 200 in 157ms (compile: 45ms, proxy.ts: 95ms, render: 17ms)
+ GET /api/orders/meta 200 in 188ms (compile: 82ms, proxy.ts: 89ms, render: 17ms)
+ POST /api/simulation/run 200 in 10.2s (compile: 110ms, proxy.ts: 89ms, render: 10.0s)
+ GET /api/orders 200 in 22.1s (compile: 11.8s, proxy.ts: 56ms, render: 10.3s)
+[11:37:31.990] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 3
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders 503 in 22.1s (compile: 103ms, proxy.ts: 11.8s, render: 10.2s)
+[11:37:31.991] [33mWARN[39m: [36mtrailing-engine › pausat per errors consecutius[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 3
+    [35mpauseSecs[39m: 60
+[11:37:31.995] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 10.7s (compile: 104ms, proxy.ts: 55ms, render: 10.6s)
+ GET /api/market 500 in 10.8s (compile: 65ms, proxy.ts: 61ms, render: 10.6s)
+ GET /api/orders/meta 200 in 10.8s (compile: 10.6s, proxy.ts: 132ms, render: 15ms)
+[11:37:42.803] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 10.8s (compile: 29ms, proxy.ts: 72ms, render: 10.7s)
+ POST /api/simulation/run 200 in 10.9s (compile: 16ms, proxy.ts: 72ms, render: 10.8s)
+ GET /api/orders/meta 200 in 10.9s (compile: 10.8s, proxy.ts: 46ms, render: 15ms)
+[11:37:53.738] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 4
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:37:53.743] [33mWARN[39m: [36mtrailing-engine › pausat per errors consecutius[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 4
+    [35mpauseSecs[39m: 120
+ POST /api/simulation/run 200 in 9.8s (compile: 7ms, proxy.ts: 26ms, render: 9.7s)
+ GET /api/orders 200 in 20.7s (compile: 10.8s, proxy.ts: 72ms, render: 9.9s)
+ GET /api/orders/meta 200 in 170ms (compile: 76ms, proxy.ts: 53ms, render: 42ms)
+[11:38:03.763] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 11.5s (compile: 16ms, proxy.ts: 82ms, render: 11.4s)
+ GET /api/market 500 in 11.8s (compile: 20ms, proxy.ts: 54ms, render: 11.7s)
+[11:38:15.359] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 11.9s (compile: 54ms, proxy.ts: 52ms, render: 11.7s)
+ GET /api/orders/meta 200 in 159ms (compile: 49ms, proxy.ts: 85ms, render: 24ms)
+ POST /api/simulation/run 200 in 10.7s (compile: 74ms, proxy.ts: 77ms, render: 10.5s)
+ GET /api/activity 200 in 10.7s (compile: 10.6s, proxy.ts: 82ms, render: 15ms)
+ GET /api/errors 200 in 10.7s (compile: 10.6s, proxy.ts: 97ms, render: 11ms)
+[11:38:26.117] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 22.4s (compile: 11.5s, proxy.ts: 72ms, render: 10.8s)
+ POST /api/simulation/run 200 in 10.7s (compile: 16ms, proxy.ts: 36ms, render: 10.7s)
+ GET /api/orders/meta 200 in 124ms (compile: 10ms, proxy.ts: 89ms, render: 25ms)
+ POST /api/simulation/run 200 in 11.1s (compile: 79ms, proxy.ts: 62ms, render: 11.0s)
+ GET /api/market 500 in 11.2s (compile: 37ms, proxy.ts: 82ms, render: 11.0s)
+[11:38:48.034] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders 200 in 21.9s (compile: 39ms, proxy.ts: 10.7s, render: 11.1s)
+ GET /api/activity 200 in 192ms (compile: 46ms, proxy.ts: 118ms, render: 28ms)
+ GET /api/orders/meta 200 in 226ms (compile: 76ms, proxy.ts: 126ms, render: 23ms)
+ GET /api/errors 200 in 231ms (compile: 101ms, proxy.ts: 120ms, render: 9ms)
+ POST /api/simulation/run 200 in 11.1s (compile: 182ms, proxy.ts: 97ms, render: 10.9s)
+[11:38:59.263] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 11.2s (compile: 115ms, proxy.ts: 120ms, render: 11.0s)
+ GET /api/orders 200 in 11.2s (compile: 12ms, proxy.ts: 207ms, render: 11.0s)
+ POST /api/simulation/run 200 in 10.6s (compile: 18ms, proxy.ts: 83ms, render: 10.5s)
+ GET /api/orders/meta 200 in 10.7s (compile: 10.6s, proxy.ts: 57ms, render: 15ms)
+ POST /api/simulation/run 200 in 9.9s (compile: 55ms, proxy.ts: 110ms, render: 9.7s)
+ GET /api/market 200 in 20.6s (compile: 10.6s, proxy.ts: 85ms, render: 10.0s)
+ POST /api/simulation/run 200 in 11.3s (compile: 12ms, proxy.ts: 42ms, render: 11.3s)
+ GET /api/orders/meta 200 in 11.3s (compile: 11.3s, proxy.ts: 42ms, render: 12ms)
+[11:39:31.350] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/errors 200 in 516ms (compile: 53ms, proxy.ts: 448ms, render: 14ms)
+ GET /api/activity 200 in 539ms (compile: 74ms, proxy.ts: 451ms, render: 13ms)
+ POST /api/simulation/run 200 in 10.8s (compile: 88ms, proxy.ts: 448ms, render: 10.2s)
+ GET /api/market 500 in 10.8s (compile: 46ms, proxy.ts: 452ms, render: 10.3s)
+[11:39:42.117] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 2
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders 503 in 43s (compile: 10.7s, proxy.ts: 50ms, render: 32.1s)
+[11:39:42.122] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 10.4s (compile: 54ms, proxy.ts: 10.4s, render: 12ms)
+ POST /api/simulation/run 200 in 6.3s (compile: 45ms, proxy.ts: 119ms, render: 6.2s)
+ POST /api/simulation/run 200 in 17.5s (compile: 6.3s, proxy.ts: 86ms, render: 11.2s)
+ GET /api/orders/meta 200 in 17.6s (compile: 73ms, proxy.ts: 17.5s, render: 16ms)
+ GET /api/errors 200 in 140ms (compile: 40ms, proxy.ts: 90ms, render: 10ms)
+ POST /api/simulation/run 200 in 6.9s (compile: 57ms, proxy.ts: 96ms, render: 6.7s)
+ GET /api/activity 200 in 6.9s (compile: 6.8s, proxy.ts: 94ms, render: 14ms)
+ POST /api/simulation/run 200 in 11.2s (compile: 484ms, proxy.ts: 54ms, render: 10.6s)
+ GET /api/market 500 in 18.0s (compile: 14ms, proxy.ts: 6.9s, render: 11.1s)
+ GET /api/orders/meta 200 in 11.2s (compile: 10.7s, proxy.ts: 480ms, render: 12ms)
+ POST /api/simulation/run 200 in 5.8s (compile: 42ms, proxy.ts: 97ms, render: 5.7s)
+ GET /api/orders 200 in 42s (compile: 44ms, proxy.ts: 115ms, render: 42s)
+ POST /api/simulation/run 200 in 10.5s (compile: 9ms, proxy.ts: 37ms, render: 10.5s)
+[11:40:34.430] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 52s (compile: 11.3s, proxy.ts: 6.3s, render: 34.7s)
+ GET /api/orders/meta 200 in 10.6s (compile: 10.5s, proxy.ts: 27ms, render: 15ms)
+[11:40:34.440] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:40:34.444] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 2
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/activity 200 in 145ms (compile: 20ms, proxy.ts: 109ms, render: 15ms)
+ GET /api/errors 200 in 231ms (compile: 97ms, proxy.ts: 108ms, render: 26ms)
+ GET /api/orders 200 in 16.7s (compile: 5.7s, proxy.ts: 99ms, render: 10.9s)
+ GET /api/orders 200 in 16.7s (compile: 5.7s, proxy.ts: 106ms, render: 10.9s)
+ POST /api/simulation/run 200 in 10.9s (compile: 174ms, proxy.ts: 56ms, render: 10.6s)
+ GET /api/market 500 in 11.0s (compile: 43ms, proxy.ts: 110ms, render: 10.8s)
+ GET /api/orders 200 in 11.4s (compile: 10.8s, proxy.ts: 57ms, render: 529ms)
+ POST /api/simulation/run 200 in 6.3s (compile: 269ms, proxy.ts: 121ms, render: 5.9s)
+ POST /api/simulation/run 200 in 16.8s (compile: 6.1s, proxy.ts: 184ms, render: 10.5s)
+ GET /api/orders 200 in 27.6s (compile: 81ms, proxy.ts: 10.9s, render: 16.7s)
+ GET /api/orders/meta 200 in 16.5s (compile: 21ms, proxy.ts: 16.5s, render: 17ms)
+ POST /api/simulation/run 200 in 10.4s (compile: 55ms, proxy.ts: 61ms, render: 10.3s)
+ GET /api/orders/meta 200 in 10.4s (compile: 10.4s, proxy.ts: 63ms, render: 14ms)
+ GET /api/orders/meta 200 in 122ms (compile: 43ms, proxy.ts: 64ms, render: 14ms)
+ GET /api/activity 200 in 132ms (compile: 55ms, proxy.ts: 63ms, render: 14ms)
+ GET /api/errors 200 in 167ms (compile: 73ms, proxy.ts: 62ms, render: 32ms)
+ GET /api/orders/meta 200 in 98ms (compile: 25ms, proxy.ts: 59ms, render: 14ms)
+ GET /api/orders 200 in 10.7s (compile: 39ms, proxy.ts: 10.4s, render: 270ms)
+ GET /api/market 200 in 654ms (compile: 122ms, proxy.ts: 61ms, render: 472ms)
+ GET /api/orders 200 in 305ms (compile: 8ms, proxy.ts: 27ms, render: 270ms)
+ GET /api/orders 200 in 11.4s (compile: 10.3s, proxy.ts: 83ms, render: 1058ms)
+ POST /api/simulation/run 200 in 5.6s (compile: 6ms, proxy.ts: 13ms, render: 5.6s)
+ GET /api/orders/meta 200 in 84ms (compile: 27ms, proxy.ts: 40ms, render: 16ms)
+ GET /api/market 200 in 380ms (compile: 45ms, proxy.ts: 40ms, render: 295ms)
+ GET /api/orders 200 in 784ms (compile: 13ms, proxy.ts: 43ms, render: 728ms)
+ GET /api/activity 200 in 30ms (compile: 5ms, proxy.ts: 14ms, render: 11ms)
+ GET /api/errors 200 in 27ms (compile: 6ms, proxy.ts: 12ms, render: 9ms)
+ GET /api/orders/meta 200 in 40ms (compile: 9ms, proxy.ts: 21ms, render: 11ms)
+ GET /api/orders 200 in 284ms (compile: 25ms, proxy.ts: 20ms, render: 239ms)
+ GET /api/orders/meta 200 in 44ms (compile: 7ms, proxy.ts: 26ms, render: 10ms)
+ GET /api/market 200 in 425ms (compile: 6ms, proxy.ts: 30ms, render: 390ms)
+ GET /api/orders 200 in 727ms (compile: 19ms, proxy.ts: 20ms, render: 688ms)
+ GET /api/orders/meta 200 in 33ms (compile: 6ms, proxy.ts: 13ms, render: 14ms)
+ GET /api/orders 200 in 271ms (compile: 5ms, proxy.ts: 16ms, render: 250ms)
+ GET /api/orders/meta 200 in 77ms (compile: 14ms, proxy.ts: 37ms, render: 26ms)
+ GET /api/market 200 in 503ms (compile: 63ms, proxy.ts: 35ms, render: 406ms)
+ GET /api/orders 200 in 1059ms (compile: 46ms, proxy.ts: 36ms, render: 977ms)
+ GET /api/activity 200 in 32ms (compile: 7ms, proxy.ts: 14ms, render: 11ms)
+ GET /api/errors 200 in 32ms (compile: 6ms, proxy.ts: 15ms, render: 12ms)
+ GET /api/orders/meta 200 in 50ms (compile: 7ms, proxy.ts: 29ms, render: 14ms)
+ GET /api/orders 200 in 1411ms (compile: 25ms, proxy.ts: 28ms, render: 1358ms)
+ GET /api/orders/meta 200 in 54ms (compile: 13ms, proxy.ts: 27ms, render: 14ms)
+ GET /api/orders 200 in 784ms (compile: 26ms, proxy.ts: 31ms, render: 727ms)
+ GET /api/market 200 in 1387ms (compile: 7ms, proxy.ts: 17ms, render: 1364ms)
+ GET /api/activity 200 in 51ms (compile: 14ms, proxy.ts: 16ms, render: 21ms)
+ GET /api/errors 200 in 42ms (compile: 5ms, proxy.ts: 22ms, render: 15ms)
+ GET /api/orders/meta 200 in 32ms (compile: 4ms, proxy.ts: 14ms, render: 14ms)
+ GET /api/orders 200 in 324ms (compile: 7ms, proxy.ts: 12ms, render: 305ms)
+ GET /api/orders/meta 200 in 65ms (compile: 14ms, proxy.ts: 33ms, render: 18ms)
+ GET /api/orders 200 in 334ms (compile: 35ms, proxy.ts: 32ms, render: 267ms)
+ GET /api/market 200 in 420ms (compile: 47ms, proxy.ts: 32ms, render: 342ms)
+ GET /api/activity 200 in 51ms (compile: 10ms, proxy.ts: 25ms, render: 15ms)
+ GET /api/errors 200 in 73ms (compile: 27ms, proxy.ts: 25ms, render: 21ms)
+ GET /api/orders/meta 200 in 51ms (compile: 9ms, proxy.ts: 27ms, render: 16ms)
+ GET /api/orders 200 in 738ms (compile: 27ms, proxy.ts: 26ms, render: 685ms)
+ POST /api/simulation/run 200 in 10.9s (compile: 5ms, proxy.ts: 17ms, render: 10.8s)
+ POST /api/simulation/run 200 in 10.6s (compile: 177ms, proxy.ts: 312ms, render: 10.1s)
+ GET /api/orders/meta 200 in 10.7s (compile: 10.3s, proxy.ts: 307ms, render: 16ms)
+ POST /api/simulation/run 200 in 10.9s (compile: 34ms, proxy.ts: 92ms, render: 10.7s)
+ GET /api/market 500 in 21.6s (compile: 10.3s, proxy.ts: 303ms, render: 10.9s)
+ GET /api/activity 200 in 10.9s (compile: 10.8s, proxy.ts: 71ms, render: 18ms)
+ GET /api/errors 200 in 10.9s (compile: 10.8s, proxy.ts: 74ms, render: 8ms)
+[11:44:22.806] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/orders 503 in 21.7s (compile: 10.3s, proxy.ts: 305ms, render: 11.1s)
+[11:44:22.827] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 83ms (compile: 25ms, proxy.ts: 40ms, render: 18ms)
+ POST /api/simulation/run 200 in 11.3s (compile: 49ms, proxy.ts: 73ms, render: 11.2s)
+ POST /api/simulation/run 200 in 9.8s (compile: 25ms, proxy.ts: 79ms, render: 9.7s)
+ GET /api/orders/meta 200 in 9.8s (compile: 9.8s, proxy.ts: 68ms, render: 14ms)
+[11:44:44.138] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 10.7s (compile: 27ms, proxy.ts: 93ms, render: 10.6s)
+ GET /api/market 500 in 20.7s (compile: 9.8s, proxy.ts: 79ms, render: 10.8s)
+ GET /api/orders/meta 200 in 10.8s (compile: 10.7s, proxy.ts: 70ms, render: 21ms)
+[11:44:54.892] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 32.0s (compile: 22ms, proxy.ts: 11.3s, render: 20.7s)
+[11:44:54.906] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 10.9s (compile: 32ms, proxy.ts: 120ms, render: 10.8s)
+ GET /api/activity 200 in 11.0s (compile: 10.8s, proxy.ts: 117ms, render: 23ms)
+ GET /api/errors 200 in 11.0s (compile: 10.9s, proxy.ts: 117ms, render: 9ms)
+[11:45:06.001] [33mWARN[39m: [36mtelegram › error en prendre snapshot[39m
+    [35mmodule[39m: "telegram"
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 10.8s (compile: 65ms, proxy.ts: 159ms, render: 10.6s)
+[11:45:16.819] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 2
+    [35mmax[39m: 3
+    err: "fetch failed"
+ POST /api/simulation/run 200 in 10.6s (compile: 16ms, proxy.ts: 71ms, render: 10.5s)
+ GET /api/orders/meta 200 in 10.7s (compile: 10.6s, proxy.ts: 63ms, render: 19ms)
+[11:45:27.556] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/orders 503 in 32.6s (compile: 11.0s, proxy.ts: 73ms, render: 21.5s)
+[11:45:27.566] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 2
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:45:27.569] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/activity 200 in 265ms (compile: 48ms, proxy.ts: 201ms, render: 16ms)
+ POST /api/simulation/run 200 in 10.2s (compile: 50ms, proxy.ts: 136ms, render: 10.0s)
+ GET /api/errors 200 in 10.3s (compile: 10.1s, proxy.ts: 191ms, render: 12ms)
+ GET /api/market 500 in 21.0s (compile: 10.6s, proxy.ts: 66ms, render: 10.4s)
+ GET /api/orders/meta 200 in 10.2s (compile: 10.1s, proxy.ts: 92ms, render: 20ms)
+[11:45:37.916] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 43s (compile: 10.8s, proxy.ts: 118ms, render: 32.1s)
+ POST /api/simulation/run 200 in 11.3s (compile: 17ms, proxy.ts: 126ms, render: 11.2s)
+ GET /api/orders/meta 200 in 11.3s (compile: 11.2s, proxy.ts: 90ms, render: 20ms)
+[11:45:49.301] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 3
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders 200 in 21.8s (compile: 10.1s, proxy.ts: 189ms, render: 11.5s)
+[11:45:49.302] [33mWARN[39m: [36mtrailing-engine › pausat per errors consecutius[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "XLMUSDT"
+    [35mcount[39m: 3
+    [35mpauseSecs[39m: 60
+ POST /api/simulation/run 200 in 10.8s (compile: 16ms, proxy.ts: 125ms, render: 10.7s)
+ GET /api/market 500 in 22.2s (compile: 11.2s, proxy.ts: 71ms, render: 10.9s)
+ GET /api/orders/meta 200 in 10.9s (compile: 10.8s, proxy.ts: 88ms, render: 11ms)
+[11:46:00.210] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 22.3s (compile: 11.2s, proxy.ts: 126ms, render: 11.0s)
+ POST /api/simulation/run 200 in 6.6s (compile: 34ms, proxy.ts: 124ms, render: 6.5s)
+ POST /api/simulation/run 200 in 18.6s (compile: 6.5s, proxy.ts: 129ms, render: 11.9s)
+[11:46:18.876] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 29.6s (compile: 10.7s, proxy.ts: 126ms, render: 18.8s)
+[11:46:18.901] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 3
+    [35mmax[39m: 3
+    err: "fetch failed"
+[11:46:18.901] [33mWARN[39m: [36mtrailing-engine › pausat per errors consecutius[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 3
+    [35mpauseSecs[39m: 60
+ GET /api/orders/meta 200 in 18.7s (compile: 50ms, proxy.ts: 18.6s, render: 36ms)
+ GET /api/errors 200 in 280ms (compile: 62ms, proxy.ts: 185ms, render: 33ms)
+ POST /api/simulation/run 200 in 10.9s (compile: 70ms, proxy.ts: 165ms, render: 10.7s)
+ GET /api/activity 200 in 11.0s (compile: 10.8s, proxy.ts: 174ms, render: 20ms)
+ GET /api/market 500 in 29.6s (compile: 18.5s, proxy.ts: 91ms, render: 11.1s)
+[11:46:29.923] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 10.9s (compile: 50ms, proxy.ts: 10.9s, render: 16ms)
+ POST /api/simulation/run 200 in 10.8s (compile: 46ms, proxy.ts: 90ms, render: 10.6s)
+ GET /api/orders 200 in 21.9s (compile: 10.8s, proxy.ts: 174ms, render: 10.9s)
+[11:46:40.761] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 21.7s (compile: 10.8s, proxy.ts: 86ms, render: 10.8s)
+ POST /api/simulation/run 200 in 10.8s (compile: 54ms, proxy.ts: 53ms, render: 10.7s)
+ GET /api/market 500 in 21.7s (compile: 10.7s, proxy.ts: 63ms, render: 10.9s)
+ GET /api/orders/meta 200 in 10.9s (compile: 10.8s, proxy.ts: 43ms, render: 13ms)
+ GET /api/orders 200 in 10.9s (compile: 32ms, proxy.ts: 79ms, render: 10.8s)
+ GET /api/orders/meta 200 in 77ms (compile: 14ms, proxy.ts: 39ms, render: 23ms)
+ POST /api/simulation/run 200 in 10.8s (compile: 85ms, proxy.ts: 89ms, render: 10.6s)
+[11:47:02.476] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 10.8s (compile: 53ms, proxy.ts: 86ms, render: 10.7s)
+ GET /api/activity 200 in 110ms (compile: 26ms, proxy.ts: 64ms, render: 21ms)
+ GET /api/errors 200 in 134ms (compile: 53ms, proxy.ts: 56ms, render: 25ms)
+ POST /api/simulation/run 200 in 10.7s (compile: 32ms, proxy.ts: 33ms, render: 10.6s)
+ GET /api/market 500 in 11.0s (compile: 63ms, proxy.ts: 111ms, render: 10.8s)
+ GET /api/orders/meta 200 in 10.8s (compile: 10.7s, proxy.ts: 33ms, render: 20ms)
+[11:47:13.543] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders 503 in 10.8s (compile: 15ms, proxy.ts: 32ms, render: 10.7s)
+ GET /api/orders 200 in 11.1s (compile: 81ms, proxy.ts: 56ms, render: 11.0s)
+ POST /api/simulation/run 200 in 11.2s (compile: 79ms, proxy.ts: 68ms, render: 11.1s)
+ GET /api/orders/meta 200 in 11.2s (compile: 11.2s, proxy.ts: 60ms, render: 12ms)
+ POST /api/simulation/run 200 in 10.4s (compile: 6ms, proxy.ts: 16ms, render: 10.4s)
+[11:47:35.317] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/orders 503 in 21.8s (compile: 11.2s, proxy.ts: 64ms, render: 10.5s)
+[11:47:35.323] [31mERROR[39m: [36mapi › error de ruta[39m
+    [35mmodule[39m: "api"
+    [35msource[39m: "orders"
+    [35mcode[39m: "NETWORK"
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 143ms (compile: 66ms, proxy.ts: 59ms, render: 17ms)
+ POST /api/simulation/run 200 in 10.3s (compile: 5ms, proxy.ts: 14ms, render: 10.3s)
+ GET /api/market 500 in 11.6s (compile: 25ms, proxy.ts: 60ms, render: 11.5s)
+ GET /api/orders/meta 200 in 96ms (compile: 17ms, proxy.ts: 60ms, render: 20ms)
+ GET /api/activity 200 in 114ms (compile: 39ms, proxy.ts: 59ms, render: 16ms)
+ GET /api/errors 200 in 124ms (compile: 57ms, proxy.ts: 54ms, render: 13ms)
+ GET /api/orders 200 in 11.8s (compile: 9ms, proxy.ts: 106ms, render: 11.7s)
+ POST /api/simulation/run 200 in 10.0s (compile: 5ms, proxy.ts: 13ms, render: 10.0s)
+ GET /api/orders 200 in 10.1s (compile: 5ms, proxy.ts: 13ms, render: 10.1s)
+ GET /api/orders/meta 200 in 27ms (compile: 4ms, proxy.ts: 12ms, render: 11ms)
+ GET /api/market 200 in 458ms (compile: 4ms, proxy.ts: 12ms, render: 441ms)
+ GET /api/orders 200 in 1109ms (compile: 6ms, proxy.ts: 12ms, render: 1092ms)
+ POST /api/simulation/run 200 in 10.3s (compile: 6ms, proxy.ts: 13ms, render: 10.3s)
+ POST /api/simulation/run 200 in 10.4s (compile: 5ms, proxy.ts: 12ms, render: 10.3s)
+ GET /api/orders/meta 200 in 69ms (compile: 21ms, proxy.ts: 34ms, render: 15ms)
+ GET /api/orders 200 in 324ms (compile: 11ms, proxy.ts: 43ms, render: 271ms)
+ POST /api/simulation/run 200 in 11.6s (compile: 6ms, proxy.ts: 12ms, render: 11.6s)
+ GET /api/activity 200 in 56ms (compile: 13ms, proxy.ts: 25ms, render: 18ms)
+ GET /api/errors 200 in 70ms (compile: 35ms, proxy.ts: 25ms, render: 10ms)
+ POST /api/simulation/run 200 in 10.7s (compile: 5ms, proxy.ts: 14ms, render: 10.7s)
+[11:48:42.798] [33mWARN[39m: [36mauto-trader › checkOrphanPositions: error obtenint dades[39m
+    [35mmodule[39m: "auto-trader"
+    err: "fetch failed"
+ GET /api/orders/meta 200 in 119ms (compile: 25ms, proxy.ts: 77ms, render: 17ms)
+ POST /api/simulation/run 200 in 10.6s (compile: 76ms, proxy.ts: 51ms, render: 10.4s)
+ GET /api/market 500 in 10.6s (compile: 43ms, proxy.ts: 77ms, render: 10.5s)
+[11:48:53.404] [31mERROR[39m: [36mtrailing-engine › error al cicle[39m
+    [35mmodule[39m: "trailing-engine"
+    [35msymbol[39m: "ETHUSDT"
+    [35mcount[39m: 1
+    [35mmax[39m: 3
+    err: "fetch failed"
+ GET /api/orders 200 in 10.6s (compile: 19ms, proxy.ts: 75ms, render: 10.5s)
+ POST /api/simulation/run 200 in 10.0s (compile: 6ms, proxy.ts: 13ms, render: 10.0s)
+ POST /api/simulation/run 200 in 9.4s (compile: 7ms, proxy.ts: 12ms, render: 9.3s)
+ GET /api/activity 200 in 53ms (compile: 11ms, proxy.ts: 32ms, render: 11ms)
+ GET /api/errors 200 in 61ms (compile: 21ms, proxy.ts: 32ms, render: 8ms)
+ POST /api/simulation/run 200 in 10.1s (compile: 4ms, proxy.ts: 13ms, render: 10.1s)
+ GET /api/orders/meta 200 in 39ms (compile: 11ms, proxy.ts: 18ms, render: 10ms)
+ GET /api/orders 200 in 512ms (compile: 4ms, proxy.ts: 10ms, render: 498ms)
+ GET /api/market 200 in 790ms (compile: 5ms, proxy.ts: 49ms, render: 737ms)
+ GET /api/activity 200 in 51ms (compile: 8ms, proxy.ts: 29ms, render: 14ms)
+ GET /api/errors 200 in 63ms (compile: 27ms, proxy.ts: 25ms, render: 11ms)
+ GET /api/errors 200 in 43ms (compile: 9ms, proxy.ts: 24ms, render: 10ms)
+ GET /api/activity 200 in 62ms (compile: 25ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/orders/meta 200 in 116ms (compile: 62ms, proxy.ts: 36ms, render: 18ms)
+ GET /api/orders 200 in 289ms (compile: 14ms, proxy.ts: 37ms, render: 239ms)
+ GET /api/market 200 in 468ms (compile: 23ms, proxy.ts: 35ms, render: 409ms)
+ GET /api/activity 200 in 51ms (compile: 8ms, proxy.ts: 24ms, render: 19ms)
+ GET /api/errors 200 in 61ms (compile: 31ms, proxy.ts: 23ms, render: 8ms)
+ GET /api/activity 200 in 46ms (compile: 8ms, proxy.ts: 25ms, render: 14ms)
+ GET /api/errors 200 in 57ms (compile: 24ms, proxy.ts: 24ms, render: 9ms)
+ GET /api/orders/meta 200 in 63ms (compile: 16ms, proxy.ts: 34ms, render: 13ms)
+ GET /api/orders 200 in 274ms (compile: 10ms, proxy.ts: 33ms, render: 230ms)
+ GET /api/market 200 in 426ms (compile: 31ms, proxy.ts: 31ms, render: 364ms)
+ GET /api/activity 200 in 48ms (compile: 10ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/errors 200 in 58ms (compile: 25ms, proxy.ts: 21ms, render: 11ms)
+ GET /api/activity 200 in 31ms (compile: 7ms, proxy.ts: 11ms, render: 13ms)
+ GET /api/errors 200 in 27ms (compile: 5ms, proxy.ts: 14ms, render: 8ms)
+ GET /api/orders/meta 200 in 71ms (compile: 19ms, proxy.ts: 34ms, render: 17ms)
+ GET /api/market 200 in 435ms (compile: 39ms, proxy.ts: 33ms, render: 362ms)
+ GET /api/orders 200 in 537ms (compile: 10ms, proxy.ts: 36ms, render: 491ms)
+ GET /api/activity 200 in 54ms (compile: 14ms, proxy.ts: 24ms, render: 16ms)
+ GET /api/errors 200 in 72ms (compile: 33ms, proxy.ts: 24ms, render: 15ms)
+ GET /api/activity 200 in 39ms (compile: 6ms, proxy.ts: 21ms, render: 12ms)
+ GET /api/errors 200 in 57ms (compile: 28ms, proxy.ts: 21ms, render: 9ms)
+ GET /api/orders/meta 200 in 46ms (compile: 8ms, proxy.ts: 23ms, render: 15ms)
+ GET /api/orders 200 in 284ms (compile: 6ms, proxy.ts: 23ms, render: 256ms)
+ GET /api/market 200 in 604ms (compile: 24ms, proxy.ts: 22ms, render: 558ms)
+ GET /api/activity 200 in 46ms (compile: 9ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/errors 200 in 56ms (compile: 24ms, proxy.ts: 22ms, render: 10ms)
+ GET /api/errors 200 in 84ms (compile: 24ms, proxy.ts: 51ms, render: 8ms)
+ GET /api/activity 200 in 107ms (compile: 37ms, proxy.ts: 52ms, render: 17ms)
+ GET /api/orders/meta 200 in 113ms (compile: 21ms, proxy.ts: 77ms, render: 14ms)
+ GET /api/orders 200 in 390ms (compile: 76ms, proxy.ts: 77ms, render: 237ms)
+ GET /api/market 200 in 491ms (compile: 37ms, proxy.ts: 77ms, render: 378ms)
+ GET /api/activity 200 in 45ms (compile: 9ms, proxy.ts: 25ms, render: 11ms)
+ GET /api/errors 200 in 57ms (compile: 27ms, proxy.ts: 21ms, render: 8ms)
+ GET /api/orders/meta 200 in 54ms (compile: 8ms, proxy.ts: 33ms, render: 13ms)
+ GET /api/market 200 in 409ms (compile: 7ms, proxy.ts: 33ms, render: 369ms)
+ GET /api/orders 200 in 546ms (compile: 13ms, proxy.ts: 12ms, render: 521ms)
+ GET /api/activity 200 in 30ms (compile: 5ms, proxy.ts: 13ms, render: 12ms)
+ GET /api/errors 200 in 34ms (compile: 14ms, proxy.ts: 11ms, render: 8ms)
+ GET /api/activity 200 in 48ms (compile: 11ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/errors 200 in 60ms (compile: 26ms, proxy.ts: 23ms, render: 11ms)
+ GET /api/orders/meta 200 in 74ms (compile: 20ms, proxy.ts: 36ms, render: 19ms)
+ GET /api/orders 200 in 510ms (compile: 12ms, proxy.ts: 36ms, render: 461ms)
+ GET /api/market 200 in 515ms (compile: 41ms, proxy.ts: 33ms, render: 441ms)
+ GET /api/activity 200 in 46ms (compile: 9ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/errors 200 in 55ms (compile: 25ms, proxy.ts: 22ms, render: 8ms)
+ GET /api/activity 200 in 53ms (compile: 14ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 66ms (compile: 32ms, proxy.ts: 22ms, render: 11ms)
+ GET /api/orders/meta 200 in 75ms (compile: 19ms, proxy.ts: 37ms, render: 18ms)
+ GET /api/orders 200 in 289ms (compile: 11ms, proxy.ts: 38ms, render: 240ms)
+ GET /api/market 200 in 1646ms (compile: 39ms, proxy.ts: 37ms, render: 1570ms)
+ GET /api/activity 200 in 27ms (compile: 6ms, proxy.ts: 11ms, render: 11ms)
+ GET /api/errors 200 in 28ms (compile: 5ms, proxy.ts: 13ms, render: 10ms)
+ GET /api/activity 200 in 42ms (compile: 9ms, proxy.ts: 20ms, render: 13ms)
+ GET /api/errors 200 in 47ms (compile: 6ms, proxy.ts: 32ms, render: 9ms)
+ GET /api/orders/meta 200 in 77ms (compile: 23ms, proxy.ts: 38ms, render: 15ms)
+ GET /api/market 200 in 447ms (compile: 40ms, proxy.ts: 37ms, render: 369ms)
+ GET /api/orders 200 in 592ms (compile: 11ms, proxy.ts: 39ms, render: 543ms)
+ GET /api/activity 200 in 33ms (compile: 9ms, proxy.ts: 12ms, render: 13ms)
+ GET /api/errors 200 in 26ms (compile: 5ms, proxy.ts: 13ms, render: 8ms)
+ GET /api/activity 200 in 34ms (compile: 8ms, proxy.ts: 13ms, render: 13ms)
+ GET /api/errors 200 in 32ms (compile: 5ms, proxy.ts: 16ms, render: 10ms)
+ GET /api/orders/meta 200 in 76ms (compile: 25ms, proxy.ts: 36ms, render: 15ms)
+ GET /api/orders 200 in 315ms (compile: 16ms, proxy.ts: 39ms, render: 261ms)
+ GET /api/market 200 in 422ms (compile: 41ms, proxy.ts: 36ms, render: 345ms)
+ GET /api/activity 200 in 48ms (compile: 9ms, proxy.ts: 27ms, render: 12ms)
+ GET /api/errors 200 in 56ms (compile: 25ms, proxy.ts: 22ms, render: 9ms)
+[12:00:07.348] [32mINFO[39m: [36mtelegram › informe horari enviat[39m
+    [35mmodule[39m: "telegram"
+ GET /api/activity 200 in 42ms (compile: 8ms, proxy.ts: 22ms, render: 13ms)
+ GET /api/errors 200 in 53ms (compile: 24ms, proxy.ts: 21ms, render: 7ms)
+ GET /api/orders/meta 200 in 50ms (compile: 9ms, proxy.ts: 22ms, render: 19ms)
+ GET /api/orders 200 in 263ms (compile: 10ms, proxy.ts: 12ms, render: 241ms)
+ GET /api/market 200 in 432ms (compile: 30ms, proxy.ts: 19ms, render: 382ms)
+ GET /api/activity 200 in 46ms (compile: 9ms, proxy.ts: 24ms, render: 12ms)
+ GET /api/errors 200 in 61ms (compile: 28ms, proxy.ts: 24ms, render: 9ms)
+ GET /api/activity 200 in 52ms (compile: 12ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 65ms (compile: 27ms, proxy.ts: 27ms, render: 10ms)
+ GET /api/orders/meta 200 in 77ms (compile: 39ms, proxy.ts: 26ms, render: 12ms)
+ GET /api/orders 200 in 489ms (compile: 12ms, proxy.ts: 11ms, render: 466ms)
+ GET /api/market 200 in 1390ms (compile: 9ms, proxy.ts: 27ms, render: 1355ms)
+ GET /api/activity 200 in 48ms (compile: 7ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 60ms (compile: 29ms, proxy.ts: 23ms, render: 8ms)
+ GET /api/activity 200 in 50ms (compile: 8ms, proxy.ts: 27ms, render: 15ms)
+ GET /api/errors 200 in 78ms (compile: 27ms, proxy.ts: 28ms, render: 22ms)
+ GET /api/orders/meta 200 in 74ms (compile: 24ms, proxy.ts: 34ms, render: 16ms)
+ GET /api/orders 200 in 308ms (compile: 11ms, proxy.ts: 35ms, render: 261ms)
+ GET /api/market 200 in 509ms (compile: 43ms, proxy.ts: 34ms, render: 433ms)
+ GET /api/activity 200 in 44ms (compile: 6ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 64ms (compile: 27ms, proxy.ts: 26ms, render: 12ms)
+ GET /api/activity 200 in 46ms (compile: 7ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 57ms (compile: 23ms, proxy.ts: 24ms, render: 10ms)
+ GET /api/orders/meta 200 in 66ms (compile: 22ms, proxy.ts: 34ms, render: 10ms)
+ GET /api/orders 200 in 355ms (compile: 89ms, proxy.ts: 35ms, render: 231ms)
+ GET /api/market 200 in 450ms (compile: 38ms, proxy.ts: 32ms, render: 380ms)
+ GET /api/activity 200 in 34ms (compile: 5ms, proxy.ts: 15ms, render: 13ms)
+ GET /api/errors 200 in 35ms (compile: 8ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/orders/meta 200 in 67ms (compile: 14ms, proxy.ts: 38ms, render: 15ms)
+ GET /api/market 200 in 454ms (compile: 30ms, proxy.ts: 39ms, render: 386ms)
+ GET /api/activity 200 in 46ms (compile: 9ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/errors 200 in 95ms (compile: 24ms, proxy.ts: 19ms, render: 52ms)
+ GET /api/orders 200 in 22.2s (compile: 20.1s, proxy.ts: 39ms, render: 2.1s)
+ GET /api/errors 200 in 48ms (compile: 12ms, proxy.ts: 25ms, render: 11ms)
+ GET /api/activity 200 in 66ms (compile: 26ms, proxy.ts: 25ms, render: 16ms)
+ GET /api/orders/meta 200 in 65ms (compile: 11ms, proxy.ts: 38ms, render: 17ms)
+ GET /api/market 200 in 580ms (compile: 29ms, proxy.ts: 37ms, render: 514ms)
+ GET /api/orders 200 in 1003ms (compile: 479ms, proxy.ts: 38ms, render: 486ms)
+ GET /api/activity 200 in 57ms (compile: 22ms, proxy.ts: 22ms, render: 13ms)
+ GET /api/errors 200 in 66ms (compile: 37ms, proxy.ts: 21ms, render: 9ms)
+ GET /api/orders/meta 200 in 52ms (compile: 9ms, proxy.ts: 33ms, render: 10ms)
+ GET /api/market 200 in 730ms (compile: 6ms, proxy.ts: 41ms, render: 683ms)
+ GET /api/orders 200 in 913ms (compile: 350ms, proxy.ts: 33ms, render: 530ms)
+ GET /api/activity 200 in 46ms (compile: 9ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/errors 200 in 59ms (compile: 23ms, proxy.ts: 24ms, render: 12ms)
+✓ Compiled in 10.3s
+✓ Compiled in 1505ms
+ GET /api/activity 200 in 47ms (compile: 12ms, proxy.ts: 20ms, render: 14ms)
+ GET /api/errors 200 in 51ms (compile: 8ms, proxy.ts: 33ms, render: 9ms)
+✓ Compiled in 562ms
+ GET /api/orders/meta 200 in 76ms (compile: 20ms, proxy.ts: 39ms, render: 18ms)
+ GET /api/orders 200 in 348ms (compile: 10ms, proxy.ts: 41ms, render: 297ms)
+ GET /api/market 200 in 450ms (compile: 41ms, proxy.ts: 38ms, render: 371ms)
+✓ Compiled in 410ms
+ GET /api/activity 200 in 47ms (compile: 14ms, proxy.ts: 18ms, render: 15ms)
+ GET /api/errors 200 in 56ms (compile: 5ms, proxy.ts: 39ms, render: 12ms)
+✓ Compiled in 7.9s
+ GET /api/activity 200 in 34ms (compile: 8ms, proxy.ts: 12ms, render: 14ms)
+ GET /api/errors 200 in 29ms (compile: 5ms, proxy.ts: 13ms, render: 10ms)
+ GET /api/orders/meta 200 in 174ms (compile: 112ms, proxy.ts: 33ms, render: 29ms)
+ GET /api/market 200 in 514ms (compile: 51ms, proxy.ts: 34ms, render: 429ms)
+ GET /api/orders 200 in 547ms (compile: 9ms, proxy.ts: 35ms, render: 503ms)
+ GET /api/orders/meta 200 in 56ms (compile: 14ms, proxy.ts: 28ms, render: 14ms)
+ GET /api/orders 200 in 328ms (compile: 31ms, proxy.ts: 26ms, render: 270ms)
+ GET /api/market 200 in 465ms (compile: 72ms, proxy.ts: 27ms, render: 365ms)
+[12:09:03.412] [32mINFO[39m: [36mbinance › balance[39m
+    [35mmodule[39m: "binance"
+    [35massets[39m: 23
+ GET /api/balance 200 in 305ms (compile: 28ms, proxy.ts: 14ms, render: 263ms)
+ GET /api/activity 200 in 44ms (compile: 15ms, proxy.ts: 15ms, render: 14ms)
+ GET /api/activity 200 in 36ms (compile: 13ms, proxy.ts: 12ms, render: 11ms)
+ GET /api/status 200 in 1411ms (compile: 1329ms, proxy.ts: 11ms, render: 71ms)
+ GET /api/status 200 in 64ms (compile: 35ms, proxy.ts: 17ms, render: 11ms)
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 243ms (compile: 197ms, proxy.ts: 14ms, render: 31ms)
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 26ms (compile: 5ms, proxy.ts: 12ms, render: 9ms)
+ GET /api/orders/meta 200 in 27ms (compile: 4ms, proxy.ts: 11ms, render: 12ms)
+ GET /api/bots 200 in 3.3s (compile: 3.2s, proxy.ts: 13ms, render: 70ms)
+ GET /api/bots 200 in 81ms (compile: 50ms, proxy.ts: 13ms, render: 18ms)
+ GET /api/orders 200 in 984ms (compile: 12ms, proxy.ts: 12ms, render: 960ms)
+ GET /api/activity 200 in 40ms (compile: 17ms, proxy.ts: 11ms, render: 12ms)
+ GET /api/errors 200 in 26ms (compile: 4ms, proxy.ts: 13ms, render: 9ms)
+ GET /api/journal?limit=500 200 in 428ms (compile: 112ms, proxy.ts: 12ms, render: 304ms)
+ GET /api/journal?limit=500 200 in 276ms (compile: 7ms, proxy.ts: 20ms, render: 248ms)
+ GET /api/activity 200 in 33ms (compile: 4ms, proxy.ts: 14ms, render: 14ms)
+ GET /api/status 200 in 100ms (compile: 44ms, proxy.ts: 15ms, render: 42ms)
+ GET /api/status 200 in 70ms (compile: 32ms, proxy.ts: 28ms, render: 11ms)
+ GET /api/activity 200 in 97ms (compile: 50ms, proxy.ts: 30ms, render: 17ms)
+ GET /api/orders/meta 200 in 45ms (compile: 10ms, proxy.ts: 22ms, render: 12ms)
+ GET /api/orders 200 in 432ms (compile: 4ms, proxy.ts: 32ms, render: 396ms)
+ GET /api/market 200 in 455ms (compile: 8ms, proxy.ts: 24ms, render: 423ms)
+ GET /api/settings/status 200 in 2.9s (compile: 2.9s, proxy.ts: 23ms, render: 29ms)
+ GET /api/settings 200 in 3.1s (compile: 3.1s, proxy.ts: 24ms, render: 27ms)
+ GET /api/bots 200 in 78ms (compile: 45ms, proxy.ts: 18ms, render: 16ms)
+ GET /api/simulation/configs 200 in 357ms (compile: 308ms, proxy.ts: 36ms, render: 13ms)
+ GET /api/orders/meta 200 in 55ms (compile: 6ms, proxy.ts: 14ms, render: 34ms)
+ GET /api/orders 200 in 308ms (compile: 8ms, proxy.ts: 15ms, render: 285ms)
+ GET /api/activity 200 in 49ms (compile: 9ms, proxy.ts: 25ms, render: 16ms)
+ GET /api/errors 200 in 81ms (compile: 27ms, proxy.ts: 24ms, render: 31ms)
+ GET /api/orders/meta 200 in 38ms (compile: 5ms, proxy.ts: 16ms, render: 16ms)
+ GET /api/orders 200 in 300ms (compile: 13ms, proxy.ts: 14ms, render: 273ms)
+ GET /api/market 200 in 373ms (compile: 10ms, proxy.ts: 14ms, render: 349ms)
+ GET /api/orders/meta 200 in 54ms (compile: 7ms, proxy.ts: 28ms, render: 18ms)
+ GET /api/orders 200 in 746ms (compile: 32ms, proxy.ts: 28ms, render: 686ms)
+ GET /api/activity 200 in 53ms (compile: 11ms, proxy.ts: 25ms, render: 18ms)
+ GET /api/errors 200 in 87ms (compile: 33ms, proxy.ts: 24ms, render: 30ms)
+ GET /api/orders/meta 200 in 73ms (compile: 25ms, proxy.ts: 30ms, render: 18ms)
+ GET /api/orders 200 in 282ms (compile: 10ms, proxy.ts: 29ms, render: 243ms)
+ GET /api/market 200 in 429ms (compile: 10ms, proxy.ts: 20ms, render: 399ms)
+ GET /api/simulation/configs 200 in 37ms (compile: 6ms, proxy.ts: 16ms, render: 15ms)
+ GET /api/simulation/configs 200 in 31ms (compile: 7ms, proxy.ts: 13ms, render: 11ms)
+ GET /api/simulation/configs 200 in 36ms (compile: 9ms, proxy.ts: 13ms, render: 14ms)
+ GET /api/simulation/configs 200 in 45ms (compile: 22ms, proxy.ts: 13ms, render: 11ms)
+ GET /api/orders/meta 200 in 45ms (compile: 8ms, proxy.ts: 22ms, render: 15ms)
+ GET /api/orders 200 in 541ms (compile: 27ms, proxy.ts: 21ms, render: 493ms)
+ GET /api/orders/meta 200 in 54ms (compile: 16ms, proxy.ts: 18ms, render: 19ms)
+ GET /api/orders 200 in 391ms (compile: 9ms, proxy.ts: 19ms, render: 364ms)
+ GET /api/activity 200 in 32ms (compile: 7ms, proxy.ts: 14ms, render: 11ms)
+ GET /api/errors 200 in 27ms (compile: 6ms, proxy.ts: 12ms, render: 9ms)
+ GET /api/market 200 in 614ms (compile: 5ms, proxy.ts: 13ms, render: 596ms)
+ GET /api/orders/meta 200 in 43ms (compile: 11ms, proxy.ts: 20ms, render: 12ms)
+ GET /api/orders 200 in 805ms (compile: 28ms, proxy.ts: 21ms, render: 757ms)
+ GET /api/orders/meta 200 in 55ms (compile: 14ms, proxy.ts: 29ms, render: 12ms)
+ GET /api/orders 200 in 309ms (compile: 34ms, proxy.ts: 34ms, render: 241ms)
+ GET /api/market 200 in 390ms (compile: 7ms, proxy.ts: 57ms, render: 325ms)
+ GET /api/activity 200 in 49ms (compile: 7ms, proxy.ts: 25ms, render: 17ms)
+ GET /api/errors 200 in 63ms (compile: 29ms, proxy.ts: 23ms, render: 11ms)
+ GET /api/orders/meta 200 in 53ms (compile: 22ms, proxy.ts: 21ms, render: 10ms)
+ GET /api/orders 200 in 721ms (compile: 7ms, proxy.ts: 22ms, render: 692ms)
+ GET /api/activity 200 in 52ms (compile: 9ms, proxy.ts: 29ms, render: 14ms)
+ GET /api/errors 200 in 63ms (compile: 26ms, proxy.ts: 26ms, render: 11ms)
+ GET /api/orders/meta 200 in 73ms (compile: 29ms, proxy.ts: 25ms, render: 18ms)
+ GET /api/orders 200 in 784ms (compile: 8ms, proxy.ts: 28ms, render: 747ms)
+ GET /api/market 200 in 845ms (compile: 8ms, proxy.ts: 15ms, render: 821ms)
+ GET /api/orders/meta 200 in 98ms (compile: 41ms, proxy.ts: 38ms, render: 18ms)
+ GET /api/orders 200 in 280ms (compile: 22ms, proxy.ts: 14ms, render: 244ms)
+ GET /api/market 200 in 411ms (compile: 22ms, proxy.ts: 42ms, render: 347ms)
+ GET /api/activity 200 in 48ms (compile: 9ms, proxy.ts: 18ms, render: 21ms)
+ GET /api/errors 200 in 26ms (compile: 6ms, proxy.ts: 13ms, render: 8ms)
+ GET /api/orders/meta 200 in 48ms (compile: 15ms, proxy.ts: 22ms, render: 12ms)
+ GET /api/orders 200 in 996ms (compile: 10ms, proxy.ts: 22ms, render: 964ms)
+ GET /api/orders/meta 200 in 77ms (compile: 22ms, proxy.ts: 34ms, render: 21ms)
+ GET /api/orders 200 in 283ms (compile: 15ms, proxy.ts: 35ms, render: 233ms)
+ GET /api/market 200 in 436ms (compile: 45ms, proxy.ts: 33ms, render: 358ms)
+ GET /api/activity 200 in 49ms (compile: 11ms, proxy.ts: 22ms, render: 16ms)
+ GET /api/errors 200 in 63ms (compile: 30ms, proxy.ts: 22ms, render: 12ms)
+ GET /api/orders/meta 200 in 54ms (compile: 17ms, proxy.ts: 23ms, render: 14ms)
+ GET /api/orders 200 in 265ms (compile: 7ms, proxy.ts: 23ms, render: 236ms)
+ GET /api/orders/meta 200 in 78ms (compile: 24ms, proxy.ts: 34ms, render: 19ms)
+ GET /api/orders 200 in 320ms (compile: 12ms, proxy.ts: 35ms, render: 273ms)
+ GET /api/market 200 in 458ms (compile: 45ms, proxy.ts: 33ms, render: 379ms)
+ GET /api/activity 200 in 46ms (compile: 8ms, proxy.ts: 27ms, render: 11ms)
+ GET /api/errors 200 in 55ms (compile: 26ms, proxy.ts: 20ms, render: 9ms)
+ GET /api/activity 200 in 41ms (compile: 10ms, proxy.ts: 16ms, render: 16ms)
+ GET /api/errors 200 in 54ms (compile: 11ms, proxy.ts: 13ms, render: 30ms)
+ GET /api/orders/meta 200 in 68ms (compile: 21ms, proxy.ts: 35ms, render: 11ms)
+ GET /api/orders 200 in 288ms (compile: 10ms, proxy.ts: 38ms, render: 241ms)
+ GET /api/market 200 in 531ms (compile: 34ms, proxy.ts: 34ms, render: 462ms)
+ GET /api/activity 200 in 46ms (compile: 9ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/errors 200 in 56ms (compile: 25ms, proxy.ts: 24ms, render: 7ms)
+ GET /api/activity 200 in 47ms (compile: 8ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/errors 200 in 55ms (compile: 25ms, proxy.ts: 22ms, render: 8ms)
+ GET /api/orders/meta 200 in 67ms (compile: 18ms, proxy.ts: 33ms, render: 16ms)
+ GET /api/market 200 in 474ms (compile: 37ms, proxy.ts: 32ms, render: 405ms)
+ GET /api/orders 200 in 501ms (compile: 11ms, proxy.ts: 34ms, render: 457ms)
+ GET /api/activity 200 in 47ms (compile: 8ms, proxy.ts: 25ms, render: 14ms)
+ GET /api/errors 200 in 52ms (compile: 23ms, proxy.ts: 19ms, render: 11ms)
+ GET /api/errors 200 in 44ms (compile: 7ms, proxy.ts: 28ms, render: 10ms)
+ GET /api/activity 200 in 57ms (compile: 19ms, proxy.ts: 26ms, render: 13ms)
+ GET /api/orders/meta 200 in 68ms (compile: 8ms, proxy.ts: 39ms, render: 21ms)
+ GET /api/orders 200 in 297ms (compile: 14ms, proxy.ts: 21ms, render: 262ms)
+ GET /api/market 200 in 485ms (compile: 5ms, proxy.ts: 44ms, render: 436ms)
+ GET /api/activity 200 in 34ms (compile: 6ms, proxy.ts: 16ms, render: 12ms)
+ GET /api/errors 200 in 46ms (compile: 23ms, proxy.ts: 15ms, render: 8ms)
+ GET /api/orders/meta 200 in 97ms (compile: 52ms, proxy.ts: 24ms, render: 21ms)
+ GET /api/orders 200 in 262ms (compile: 10ms, proxy.ts: 12ms, render: 239ms)
+ GET /api/market 200 in 496ms (compile: 10ms, proxy.ts: 23ms, render: 462ms)
+ GET /api/activity 200 in 90ms (compile: 54ms, proxy.ts: 24ms, render: 12ms)
+ GET /api/errors 200 in 123ms (compile: 48ms, proxy.ts: 66ms, render: 9ms)
+ GET /api/activity 200 in 57ms (compile: 17ms, proxy.ts: 22ms, render: 18ms)
+ GET /api/errors 200 in 72ms (compile: 8ms, proxy.ts: 51ms, render: 13ms)
+ GET /api/orders/meta 200 in 93ms (compile: 26ms, proxy.ts: 45ms, render: 21ms)
+ GET /api/orders 200 in 549ms (compile: 15ms, proxy.ts: 45ms, render: 489ms)
+ GET /api/market 200 in 561ms (compile: 49ms, proxy.ts: 38ms, render: 474ms)
+ GET /api/errors 200 in 39ms (compile: 10ms, proxy.ts: 18ms, render: 11ms)
+ GET /api/activity 200 in 63ms (compile: 27ms, proxy.ts: 22ms, render: 15ms)
+ GET /api/activity 200 in 57ms (compile: 11ms, proxy.ts: 24ms, render: 21ms)
+ GET /api/errors 200 in 79ms (compile: 41ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/orders/meta 200 in 72ms (compile: 22ms, proxy.ts: 38ms, render: 12ms)
+ GET /api/orders 200 in 294ms (compile: 10ms, proxy.ts: 39ms, render: 244ms)
+ GET /api/market 200 in 428ms (compile: 35ms, proxy.ts: 36ms, render: 356ms)
+ GET /api/activity 200 in 30ms (compile: 5ms, proxy.ts: 11ms, render: 13ms)
+ GET /api/errors 200 in 27ms (compile: 6ms, proxy.ts: 12ms, render: 9ms)
+ GET /api/activity 200 in 50ms (compile: 9ms, proxy.ts: 27ms, render: 14ms)
+ GET /api/errors 200 in 63ms (compile: 28ms, proxy.ts: 26ms, render: 8ms)
+ GET /api/orders/meta 200 in 66ms (compile: 21ms, proxy.ts: 33ms, render: 12ms)
+ GET /api/orders 200 in 357ms (compile: 14ms, proxy.ts: 34ms, render: 309ms)
+ GET /api/market 200 in 653ms (compile: 35ms, proxy.ts: 31ms, render: 588ms)
+ GET /api/activity 200 in 49ms (compile: 8ms, proxy.ts: 24ms, render: 17ms)
+ GET /api/errors 200 in 60ms (compile: 28ms, proxy.ts: 24ms, render: 9ms)
+ GET /api/activity 200 in 44ms (compile: 10ms, proxy.ts: 22ms, render: 13ms)
+ GET /api/errors 200 in 55ms (compile: 26ms, proxy.ts: 21ms, render: 8ms)
+ GET /api/orders/meta 200 in 63ms (compile: 7ms, proxy.ts: 40ms, render: 16ms)
+ GET /api/market 200 in 445ms (compile: 25ms, proxy.ts: 37ms, render: 383ms)
+ GET /api/orders 200 in 586ms (compile: 19ms, proxy.ts: 24ms, render: 543ms)
+ GET /api/activity 200 in 48ms (compile: 11ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 65ms (compile: 28ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/activity 200 in 46ms (compile: 8ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 57ms (compile: 23ms, proxy.ts: 24ms, render: 10ms)
+ GET /api/orders/meta 200 in 68ms (compile: 11ms, proxy.ts: 38ms, render: 20ms)
+ GET /api/orders 200 in 313ms (compile: 41ms, proxy.ts: 36ms, render: 237ms)
+ GET /api/market 200 in 448ms (compile: 47ms, proxy.ts: 25ms, render: 376ms)
+ GET /api/activity 200 in 41ms (compile: 6ms, proxy.ts: 20ms, render: 15ms)
+ GET /api/errors 200 in 51ms (compile: 23ms, proxy.ts: 19ms, render: 9ms)
+ GET /api/activity 200 in 53ms (compile: 7ms, proxy.ts: 26ms, render: 21ms)
+ GET /api/errors 200 in 68ms (compile: 33ms, proxy.ts: 25ms, render: 10ms)
+ GET /api/orders/meta 200 in 67ms (compile: 8ms, proxy.ts: 42ms, render: 17ms)
+ GET /api/orders 200 in 281ms (compile: 14ms, proxy.ts: 29ms, render: 237ms)
+ GET /api/market 200 in 438ms (compile: 26ms, proxy.ts: 40ms, render: 372ms)
+ GET /api/errors 200 in 46ms (compile: 18ms, proxy.ts: 19ms, render: 9ms)
+ GET /api/activity 200 in 67ms (compile: 32ms, proxy.ts: 20ms, render: 14ms)
+ GET /api/orders/meta 200 in 81ms (compile: 25ms, proxy.ts: 38ms, render: 18ms)
+ GET /api/market 200 in 462ms (compile: 6ms, proxy.ts: 61ms, render: 396ms)
+ GET /api/orders 200 in 540ms (compile: 15ms, proxy.ts: 35ms, render: 489ms)
+ GET /api/activity 200 in 27ms (compile: 5ms, proxy.ts: 11ms, render: 11ms)
+ GET /api/errors 200 in 26ms (compile: 6ms, proxy.ts: 12ms, render: 8ms)
+ GET /api/activity 200 in 34ms (compile: 5ms, proxy.ts: 15ms, render: 14ms)
+ GET /api/errors 200 in 28ms (compile: 6ms, proxy.ts: 13ms, render: 10ms)
+ GET /api/orders/meta 200 in 271ms (compile: 24ms, proxy.ts: 226ms, render: 21ms)
+ GET /api/orders 200 in 400ms (compile: 47ms, proxy.ts: 92ms, render: 262ms)
+ GET /api/market 200 in 737ms (compile: 51ms, proxy.ts: 222ms, render: 464ms)
+ GET /api/activity 200 in 47ms (compile: 12ms, proxy.ts: 23ms, render: 11ms)
+ GET /api/errors 200 in 60ms (compile: 27ms, proxy.ts: 22ms, render: 11ms)
+ GET /api/activity 200 in 46ms (compile: 8ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 56ms (compile: 23ms, proxy.ts: 24ms, render: 9ms)
+ GET /api/orders/meta 200 in 62ms (compile: 19ms, proxy.ts: 31ms, render: 13ms)
+ GET /api/orders 200 in 281ms (compile: 9ms, proxy.ts: 32ms, render: 240ms)
+ GET /api/market 200 in 433ms (compile: 36ms, proxy.ts: 30ms, render: 368ms)
+ GET /api/activity 200 in 28ms (compile: 5ms, proxy.ts: 11ms, render: 11ms)
+ GET /api/errors 200 in 28ms (compile: 8ms, proxy.ts: 12ms, render: 8ms)
+ GET /api/activity 200 in 42ms (compile: 9ms, proxy.ts: 22ms, render: 11ms)
+ GET /api/errors 200 in 53ms (compile: 23ms, proxy.ts: 21ms, render: 9ms)
+ GET /api/orders/meta 200 in 62ms (compile: 16ms, proxy.ts: 31ms, render: 15ms)
+ GET /api/market 200 in 536ms (compile: 34ms, proxy.ts: 30ms, render: 471ms)
+ GET /api/orders 200 in 546ms (compile: 9ms, proxy.ts: 32ms, render: 506ms)
+ GET /api/activity 200 in 49ms (compile: 8ms, proxy.ts: 28ms, render: 14ms)
+ GET /api/errors 200 in 60ms (compile: 24ms, proxy.ts: 22ms, render: 14ms)
+ GET /api/orders/meta 200 in 68ms (compile: 19ms, proxy.ts: 34ms, render: 16ms)
+ GET /api/orders 200 in 278ms (compile: 10ms, proxy.ts: 35ms, render: 234ms)
+ GET /api/market 200 in 405ms (compile: 38ms, proxy.ts: 33ms, render: 334ms)
+ GET /api/errors 200 in 44ms (compile: 19ms, proxy.ts: 14ms, render: 11ms)
+ GET /api/activity 200 in 150ms (compile: 55ms, proxy.ts: 48ms, render: 47ms)
+ GET /api/activity 200 in 50ms (compile: 9ms, proxy.ts: 25ms, render: 16ms)
+ GET /api/errors 200 in 63ms (compile: 27ms, proxy.ts: 24ms, render: 12ms)
+ GET /api/orders/meta 200 in 80ms (compile: 19ms, proxy.ts: 35ms, render: 26ms)
+ GET /api/orders 200 in 278ms (compile: 10ms, proxy.ts: 37ms, render: 231ms)
+ GET /api/market 200 in 1508ms (compile: 44ms, proxy.ts: 38ms, render: 1426ms)
+ GET /api/activity 200 in 28ms (compile: 5ms, proxy.ts: 12ms, render: 11ms)
+ GET /api/errors 200 in 24ms (compile: 7ms, proxy.ts: 10ms, render: 7ms)
+ GET /api/activity 200 in 48ms (compile: 11ms, proxy.ts: 25ms, render: 13ms)
+ GET /api/errors 200 in 60ms (compile: 24ms, proxy.ts: 25ms, render: 11ms)
+ GET /api/orders/meta 200 in 69ms (compile: 18ms, proxy.ts: 35ms, render: 16ms)
+ GET /api/orders 200 in 799ms (compile: 10ms, proxy.ts: 36ms, render: 752ms)
+ GET /api/market 200 in 810ms (compile: 36ms, proxy.ts: 34ms, render: 740ms)
+ GET /api/activity 200 in 42ms (compile: 8ms, proxy.ts: 22ms, render: 12ms)
+ GET /api/errors 200 in 55ms (compile: 21ms, proxy.ts: 21ms, render: 12ms)
+ GET /api/activity 200 in 43ms (compile: 11ms, proxy.ts: 18ms, render: 14ms)
+ GET /api/errors 200 in 68ms (compile: 5ms, proxy.ts: 35ms, render: 28ms)
+ GET /api/orders/meta 200 in 56ms (compile: 11ms, proxy.ts: 35ms, render: 10ms)
+ GET /api/orders 200 in 291ms (compile: 23ms, proxy.ts: 34ms, render: 234ms)
+ GET /api/market 200 in 436ms (compile: 34ms, proxy.ts: 33ms, render: 369ms)
+ GET /api/activity 200 in 47ms (compile: 7ms, proxy.ts: 27ms, render: 13ms)
+ GET /api/errors 200 in 58ms (compile: 24ms, proxy.ts: 20ms, render: 13ms)
+ GET /api/activity 200 in 44ms (compile: 10ms, proxy.ts: 21ms, render: 13ms)
+ GET /api/errors 200 in 52ms (compile: 6ms, proxy.ts: 38ms, render: 8ms)
+ GET /api/orders/meta 200 in 162ms (compile: 64ms, proxy.ts: 77ms, render: 21ms)
+ GET /api/orders 200 in 453ms (compile: 94ms, proxy.ts: 73ms, render: 286ms)
+ GET /api/market 200 in 736ms (compile: 81ms, proxy.ts: 115ms, render: 540ms)
+ GET /api/activity 200 in 45ms (compile: 16ms, proxy.ts: 15ms, render: 13ms)
+ GET /api/errors 200 in 59ms (compile: 26ms, proxy.ts: 19ms, render: 14ms)
+ GET / 200 in 4.6s (compile: 3.8s, proxy.ts: 153ms, render: 604ms)
+ GET / 200 in 445ms (compile: 9ms, proxy.ts: 27ms, render: 409ms)
+ GET / 200 in 929ms (compile: 45ms, proxy.ts: 24ms, render: 860ms)
+ GET / 200 in 884ms (compile: 93ms, proxy.ts: 43ms, render: 748ms)
+ GET / 200 in 562ms (compile: 16ms, proxy.ts: 41ms, render: 506ms)
+ GET / 200 in 776ms (compile: 51ms, proxy.ts: 73ms, render: 652ms)
+ GET / 200 in 669ms (compile: 21ms, proxy.ts: 22ms, render: 626ms)
+ GET / 200 in 682ms (compile: 11ms, proxy.ts: 22ms, render: 649ms)
+ GET / 200 in 570ms (compile: 22ms, proxy.ts: 53ms, render: 495ms)
+ GET / 200 in 626ms (compile: 14ms, proxy.ts: 51ms, render: 560ms)
+ GET / 200 in 817ms (compile: 35ms, proxy.ts: 69ms, render: 713ms)
+ GET / 200 in 771ms (compile: 50ms, proxy.ts: 23ms, render: 699ms)
+ GET / 200 in 695ms (compile: 13ms, proxy.ts: 18ms, render: 664ms)
+ GET / 200 in 747ms (compile: 14ms, proxy.ts: 47ms, render: 686ms)
+ GET / 200 in 704ms (compile: 26ms, proxy.ts: 71ms, render: 606ms)
+ GET / 200 in 540ms (compile: 39ms, proxy.ts: 25ms, render: 477ms)
+ GET / 200 in 780ms (compile: 30ms, proxy.ts: 42ms, render: 707ms)
+ GET / 200 in 731ms (compile: 20ms, proxy.ts: 47ms, render: 664ms)
+ GET / 200 in 576ms (compile: 21ms, proxy.ts: 26ms, render: 529ms)
+ GET / 200 in 431ms (compile: 11ms, proxy.ts: 41ms, render: 380ms)
+ GET / 200 in 554ms (compile: 38ms, proxy.ts: 39ms, render: 477ms)
+ GET / 200 in 727ms (compile: 35ms, proxy.ts: 63ms, render: 629ms)
+ GET / 200 in 558ms (compile: 24ms, proxy.ts: 50ms, render: 485ms)
+ GET / 200 in 389ms (compile: 10ms, proxy.ts: 14ms, render: 365ms)
+ GET / 200 in 717ms (compile: 16ms, proxy.ts: 41ms, render: 660ms)
+ GET / 200 in 703ms (compile: 25ms, proxy.ts: 64ms, render: 614ms)
+ GET / 200 in 540ms (compile: 24ms, proxy.ts: 16ms, render: 500ms)
+ GET / 200 in 526ms (compile: 10ms, proxy.ts: 32ms, render: 485ms)
+ GET / 200 in 954ms (compile: 26ms, proxy.ts: 81ms, render: 848ms)
+ GET / 200 in 742ms (compile: 15ms, proxy.ts: 37ms, render: 690ms)
+ GET / 200 in 1127ms (compile: 265ms, proxy.ts: 104ms, render: 758ms)
+ GET / 200 in 740ms (compile: 24ms, proxy.ts: 10ms, render: 705ms)
+ GET / 200 in 744ms (compile: 39ms, proxy.ts: 60ms, render: 645ms)
+ GET / 200 in 537ms (compile: 14ms, proxy.ts: 30ms, render: 493ms)
+ GET / 200 in 639ms (compile: 23ms, proxy.ts: 56ms, render: 560ms)
+ GET / 200 in 600ms (compile: 9ms, proxy.ts: 78ms, render: 513ms)
+ GET / 200 in 844ms (compile: 54ms, proxy.ts: 49ms, render: 741ms)
+ GET / 200 in 637ms (compile: 13ms, proxy.ts: 70ms, render: 555ms)
+ GET / 200 in 575ms (compile: 24ms, proxy.ts: 21ms, render: 530ms)
+ GET / 200 in 836ms (compile: 30ms, proxy.ts: 93ms, render: 712ms)
+ GET / 200 in 572ms (compile: 18ms, proxy.ts: 39ms, render: 515ms)
+ GET / 200 in 502ms (compile: 34ms, proxy.ts: 12ms, render: 456ms)
+ GET / 200 in 439ms (compile: 35ms, proxy.ts: 42ms, render: 361ms)
+ GET / 200 in 580ms (compile: 34ms, proxy.ts: 73ms, render: 474ms)
+ GET / 200 in 650ms (compile: 17ms, proxy.ts: 41ms, render: 592ms)
+ GET / 200 in 411ms (compile: 12ms, proxy.ts: 27ms, render: 373ms)
+ GET / 200 in 589ms (compile: 39ms, proxy.ts: 20ms, render: 529ms)
+ GET / 200 in 815ms (compile: 29ms, proxy.ts: 71ms, render: 715ms)
+ GET / 200 in 592ms (compile: 20ms, proxy.ts: 33ms, render: 539ms)
+ GET / 200 in 449ms (compile: 9ms, proxy.ts: 20ms, render: 420ms)
+ GET / 200 in 429ms (compile: 52ms, proxy.ts: 33ms, render: 343ms)
+ GET / 200 in 438ms (compile: 7ms, proxy.ts: 12ms, render: 419ms)
+ GET / 200 in 605ms (compile: 12ms, proxy.ts: 14ms, render: 578ms)
+ GET / 200 in 762ms (compile: 22ms, proxy.ts: 64ms, render: 676ms)
+ GET / 200 in 784ms (compile: 11ms, proxy.ts: 27ms, render: 746ms)
+ GET / 200 in 655ms (compile: 13ms, proxy.ts: 22ms, render: 619ms)
+ GET / 200 in 521ms (compile: 17ms, proxy.ts: 36ms, render: 468ms)
+ GET / 200 in 476ms (compile: 17ms, proxy.ts: 109ms, render: 350ms)
+ GET / 200 in 369ms (compile: 7ms, proxy.ts: 11ms, render: 351ms)
+ GET / 200 in 374ms (compile: 7ms, proxy.ts: 12ms, render: 355ms)
+ GET / 200 in 1299ms (compile: 215ms, proxy.ts: 125ms, render: 960ms)
+ GET / 200 in 690ms (compile: 82ms, proxy.ts: 25ms, render: 582ms)
+ GET / 200 in 512ms (compile: 10ms, proxy.ts: 49ms, render: 453ms)
+ GET / 200 in 341ms (compile: 8ms, proxy.ts: 11ms, render: 321ms)
+ GET / 200 in 360ms (compile: 10ms, proxy.ts: 22ms, render: 328ms)
+ GET / 200 in 412ms (compile: 6ms, proxy.ts: 13ms, render: 393ms)
+ GET / 200 in 485ms (compile: 11ms, proxy.ts: 19ms, render: 454ms)
+ GET / 200 in 389ms (compile: 25ms, proxy.ts: 13ms, render: 351ms)
+ GET / 200 in 394ms (compile: 10ms, proxy.ts: 55ms, render: 329ms)
+ GET / 200 in 362ms (compile: 6ms, proxy.ts: 13ms, render: 343ms)
+ GET / 200 in 354ms (compile: 6ms, proxy.ts: 12ms, render: 336ms)
+ GET / 200 in 487ms (compile: 10ms, proxy.ts: 13ms, render: 464ms)
+ GET / 200 in 388ms (compile: 6ms, proxy.ts: 12ms, render: 370ms)
+ GET / 200 in 371ms (compile: 6ms, proxy.ts: 40ms, render: 324ms)
+ GET / 200 in 355ms (compile: 7ms, proxy.ts: 15ms, render: 333ms)
+ GET / 200 in 344ms (compile: 11ms, proxy.ts: 12ms, render: 321ms)
+ GET / 200 in 342ms (compile: 6ms, proxy.ts: 12ms, render: 324ms)
+ GET / 200 in 396ms (compile: 13ms, proxy.ts: 16ms, render: 367ms)
+ GET / 200 in 336ms (compile: 6ms, proxy.ts: 12ms, render: 318ms)
+ GET / 200 in 649ms (compile: 6ms, proxy.ts: 12ms, render: 631ms)
+ GET / 200 in 657ms (compile: 12ms, proxy.ts: 20ms, render: 625ms)
+ GET / 200 in 622ms (compile: 10ms, proxy.ts: 41ms, render: 570ms)
+ GET / 200 in 618ms (compile: 37ms, proxy.ts: 20ms, render: 561ms)
+ GET / 200 in 588ms (compile: 9ms, proxy.ts: 32ms, render: 547ms)
+ GET / 200 in 802ms (compile: 20ms, proxy.ts: 85ms, render: 697ms)
+ GET / 200 in 761ms (compile: 11ms, proxy.ts: 42ms, render: 708ms)
+ GET / 200 in 707ms (compile: 7ms, proxy.ts: 12ms, render: 689ms)
+ GET / 200 in 648ms (compile: 13ms, proxy.ts: 38ms, render: 598ms)
+ GET / 200 in 688ms (compile: 13ms, proxy.ts: 79ms, render: 596ms)
+ GET / 200 in 756ms (compile: 19ms, proxy.ts: 46ms, render: 691ms)
+ GET / 200 in 777ms (compile: 20ms, proxy.ts: 74ms, render: 683ms)
+ GET / 200 in 798ms (compile: 14ms, proxy.ts: 90ms, render: 694ms)
+ GET / 200 in 860ms (compile: 31ms, proxy.ts: 59ms, render: 770ms)
+ GET / 200 in 838ms (compile: 39ms, proxy.ts: 23ms, render: 776ms)
+ GET / 200 in 704ms (compile: 19ms, proxy.ts: 25ms, render: 660ms)
+ GET / 200 in 739ms (compile: 30ms, proxy.ts: 76ms, render: 633ms)
+ GET / 200 in 727ms (compile: 10ms, proxy.ts: 71ms, render: 645ms)
+ GET / 200 in 819ms (compile: 13ms, proxy.ts: 55ms, render: 751ms)
+ GET / 200 in 948ms (compile: 43ms, proxy.ts: 57ms, render: 848ms)
+ GET / 200 in 808ms (compile: 52ms, proxy.ts: 18ms, render: 737ms)
+ GET / 200 in 683ms (compile: 12ms, proxy.ts: 25ms, render: 646ms)
+ GET / 200 in 601ms (compile: 15ms, proxy.ts: 85ms, render: 501ms)
+ GET / 200 in 922ms (compile: 18ms, proxy.ts: 51ms, render: 852ms)
+ GET / 200 in 905ms (compile: 16ms, proxy.ts: 48ms, render: 842ms)
+ GET / 200 in 842ms (compile: 28ms, proxy.ts: 23ms, render: 792ms)
+ GET / 200 in 714ms (compile: 29ms, proxy.ts: 46ms, render: 638ms)
+ GET / 200 in 707ms (compile: 12ms, proxy.ts: 95ms, render: 599ms)
+ GET / 200 in 673ms (compile: 14ms, proxy.ts: 44ms, render: 615ms)
+ GET / 200 in 451ms (compile: 14ms, proxy.ts: 33ms, render: 405ms)
+ GET / 200 in 606ms (compile: 21ms, proxy.ts: 48ms, render: 538ms)
+ GET / 200 in 833ms (compile: 21ms, proxy.ts: 61ms, render: 752ms)
+ GET / 200 in 770ms (compile: 14ms, proxy.ts: 59ms, render: 698ms)
+ GET / 200 in 743ms (compile: 29ms, proxy.ts: 23ms, render: 691ms)
+ GET / 200 in 745ms (compile: 30ms, proxy.ts: 80ms, render: 635ms)
+ GET / 200 in 869ms (compile: 11ms, proxy.ts: 82ms, render: 775ms)
+ GET / 200 in 739ms (compile: 29ms, proxy.ts: 49ms, render: 661ms)
+ GET / 200 in 572ms (compile: 11ms, proxy.ts: 22ms, render: 539ms)
+ GET / 200 in 537ms (compile: 14ms, proxy.ts: 46ms, render: 477ms)
+ GET / 200 in 734ms (compile: 14ms, proxy.ts: 67ms, render: 654ms)
+ GET / 200 in 701ms (compile: 21ms, proxy.ts: 38ms, render: 642ms)
+ GET / 200 in 589ms (compile: 10ms, proxy.ts: 17ms, render: 562ms)
+ GET / 200 in 568ms (compile: 11ms, proxy.ts: 56ms, render: 501ms)
+ GET / 200 in 837ms (compile: 18ms, proxy.ts: 99ms, render: 720ms)
+ GET / 200 in 757ms (compile: 12ms, proxy.ts: 42ms, render: 703ms)
+ GET / 200 in 637ms (compile: 11ms, proxy.ts: 16ms, render: 610ms)
+ GET / 200 in 606ms (compile: 11ms, proxy.ts: 30ms, render: 565ms)
+ GET / 200 in 775ms (compile: 25ms, proxy.ts: 66ms, render: 685ms)
+ GET / 200 in 1112ms (compile: 10ms, proxy.ts: 59ms, render: 1043ms)
+ GET / 200 in 972ms (compile: 9ms, proxy.ts: 18ms, render: 945ms)
+ GET / 200 in 857ms (compile: 12ms, proxy.ts: 33ms, render: 811ms)
+ GET / 200 in 1072ms (compile: 87ms, proxy.ts: 144ms, render: 841ms)
+ GET / 200 in 656ms (compile: 11ms, proxy.ts: 39ms, render: 606ms)
+ GET / 200 in 621ms (compile: 14ms, proxy.ts: 14ms, render: 593ms)
+ GET / 200 in 734ms (compile: 10ms, proxy.ts: 41ms, render: 682ms)
+ GET / 200 in 893ms (compile: 25ms, proxy.ts: 69ms, render: 799ms)
+ GET /api/orders/meta 200 in 406ms (compile: 86ms, proxy.ts: 300ms, render: 19ms)
+ GET / 200 in 829ms (compile: 37ms, proxy.ts: 14ms, render: 777ms)
+ GET / 200 in 700ms (compile: 11ms, proxy.ts: 35ms, render: 654ms)
+ GET /api/market 200 in 558ms (compile: 162ms, proxy.ts: 114ms, render: 282ms)
+ GET / 200 in 664ms (compile: 10ms, proxy.ts: 20ms, render: 634ms)
+ GET / 200 in 487ms (compile: 10ms, proxy.ts: 17ms, render: 460ms)
+ GET / 200 in 696ms (compile: 8ms, proxy.ts: 21ms, render: 667ms)
+ GET / 200 in 600ms (compile: 42ms, proxy.ts: 32ms, render: 526ms)
+ GET / 200 in 519ms (compile: 8ms, proxy.ts: 17ms, render: 494ms)
+ GET /api/activity 200 in 137ms (compile: 81ms, proxy.ts: 42ms, render: 13ms)
+ GET /api/errors 200 in 216ms (compile: 72ms, proxy.ts: 134ms, render: 10ms)
+ GET /api/orders 200 in 2.3s (compile: 221ms, proxy.ts: 68ms, render: 2.0s)
+ GET / 200 in 819ms (compile: 11ms, proxy.ts: 82ms, render: 726ms)
+ GET / 200 in 664ms (compile: 8ms, proxy.ts: 34ms, render: 623ms)
+ GET / 200 in 629ms (compile: 8ms, proxy.ts: 12ms, render: 608ms)
+ GET / 200 in 1123ms (compile: 40ms, proxy.ts: 38ms, render: 1045ms)
+ GET / 200 in 614ms (compile: 15ms, proxy.ts: 25ms, render: 574ms)
+ GET / 200 in 734ms (compile: 14ms, proxy.ts: 19ms, render: 701ms)
+ GET / 200 in 635ms (compile: 9ms, proxy.ts: 18ms, render: 608ms)
+ GET / 200 in 520ms (compile: 14ms, proxy.ts: 44ms, render: 463ms)
+ GET / 200 in 766ms (compile: 31ms, proxy.ts: 67ms, render: 667ms)
+ GET / 200 in 627ms (compile: 22ms, proxy.ts: 57ms, render: 549ms)
+ GET / 200 in 615ms (compile: 13ms, proxy.ts: 17ms, render: 586ms)
+ GET / 200 in 654ms (compile: 10ms, proxy.ts: 40ms, render: 605ms)
+ GET / 200 in 785ms (compile: 20ms, proxy.ts: 55ms, render: 710ms)
+ GET / 200 in 645ms (compile: 8ms, proxy.ts: 23ms, render: 614ms)
+ GET / 200 in 641ms (compile: 9ms, proxy.ts: 45ms, render: 587ms)
+ GET / 200 in 651ms (compile: 36ms, proxy.ts: 37ms, render: 577ms)
+ GET / 200 in 805ms (compile: 27ms, proxy.ts: 59ms, render: 719ms)
+ GET / 200 in 665ms (compile: 13ms, proxy.ts: 19ms, render: 634ms)
+ GET / 200 in 695ms (compile: 10ms, proxy.ts: 47ms, render: 638ms)
+ GET / 200 in 685ms (compile: 43ms, proxy.ts: 65ms, render: 577ms)
+ GET / 200 in 613ms (compile: 40ms, proxy.ts: 23ms, render: 551ms)
+ GET / 200 in 665ms (compile: 10ms, proxy.ts: 37ms, render: 618ms)
+ GET / 200 in 615ms (compile: 8ms, proxy.ts: 24ms, render: 583ms)
+ GET / 200 in 1159ms (compile: 36ms, proxy.ts: 45ms, render: 1078ms)
+ GET / 200 in 677ms (compile: 11ms, proxy.ts: 34ms, render: 632ms)
+ GET / 200 in 726ms (compile: 13ms, proxy.ts: 89ms, render: 624ms)
+ GET / 200 in 781ms (compile: 11ms, proxy.ts: 37ms, render: 732ms)
+ GET / 200 in 664ms (compile: 16ms, proxy.ts: 19ms, render: 629ms)
+ GET / 200 in 534ms (compile: 10ms, proxy.ts: 35ms, render: 489ms)
+ GET / 200 in 836ms (compile: 40ms, proxy.ts: 75ms, render: 722ms)
+ GET / 200 in 704ms (compile: 21ms, proxy.ts: 35ms, render: 648ms)
+ GET / 200 in 654ms (compile: 12ms, proxy.ts: 20ms, render: 622ms)
+ GET / 200 in 646ms (compile: 10ms, proxy.ts: 31ms, render: 605ms)
+ GET / 200 in 813ms (compile: 23ms, proxy.ts: 69ms, render: 722ms)
+ GET / 200 in 841ms (compile: 13ms, proxy.ts: 59ms, render: 769ms)
+ GET / 200 in 750ms (compile: 9ms, proxy.ts: 18ms, render: 723ms)
+ GET / 200 in 632ms (compile: 10ms, proxy.ts: 37ms, render: 585ms)
+ GET / 200 in 587ms (compile: 47ms, proxy.ts: 33ms, render: 507ms)
+ GET / 200 in 789ms (compile: 21ms, proxy.ts: 45ms, render: 724ms)
+ GET / 200 in 783ms (compile: 13ms, proxy.ts: 71ms, render: 699ms)
+ GET / 200 in 737ms (compile: 48ms, proxy.ts: 17ms, render: 672ms)
+ GET / 200 in 615ms (compile: 11ms, proxy.ts: 33ms, render: 571ms)
+ GET / 200 in 723ms (compile: 28ms, proxy.ts: 93ms, render: 601ms)
+ GET / 200 in 785ms (compile: 17ms, proxy.ts: 38ms, render: 730ms)
+ GET / 200 in 778ms (compile: 26ms, proxy.ts: 42ms, render: 710ms)
+ GET / 200 in 643ms (compile: 9ms, proxy.ts: 18ms, render: 617ms)
+ GET / 200 in 665ms (compile: 7ms, proxy.ts: 67ms, render: 590ms)
+ GET / 200 in 665ms (compile: 26ms, proxy.ts: 67ms, render: 572ms)
+ GET / 200 in 480ms (compile: 10ms, proxy.ts: 21ms, render: 450ms)
+ GET / 200 in 694ms (compile: 11ms, proxy.ts: 45ms, render: 638ms)
+ GET / 200 in 1145ms (compile: 27ms, proxy.ts: 42ms, render: 1076ms)
+ GET / 200 in 689ms (compile: 35ms, proxy.ts: 14ms, render: 639ms)
+ GET / 200 in 651ms (compile: 11ms, proxy.ts: 37ms, render: 602ms)
+ GET / 200 in 902ms (compile: 10ms, proxy.ts: 15ms, render: 877ms)
+ GET / 200 in 693ms (compile: 9ms, proxy.ts: 24ms, render: 661ms)
+ GET / 200 in 680ms (compile: 8ms, proxy.ts: 48ms, render: 625ms)
+ GET / 200 in 773ms (compile: 10ms, proxy.ts: 47ms, render: 716ms)
+ GET / 200 in 711ms (compile: 41ms, proxy.ts: 16ms, render: 653ms)
+ GET / 200 in 724ms (compile: 9ms, proxy.ts: 17ms, render: 699ms)
+ GET / 200 in 592ms (compile: 13ms, proxy.ts: 40ms, render: 539ms)
+ GET / 200 in 433ms (compile: 11ms, proxy.ts: 49ms, render: 373ms)
+ GET / 200 in 501ms (compile: 12ms, proxy.ts: 77ms, render: 412ms)
+ GET / 200 in 551ms (compile: 24ms, proxy.ts: 61ms, render: 466ms)
+ GET / 200 in 390ms (compile: 9ms, proxy.ts: 15ms, render: 366ms)
+ GET /api/orders/meta 200 in 69ms (compile: 27ms, proxy.ts: 30ms, render: 12ms)
+ GET /api/orders 200 in 255ms (compile: 13ms, proxy.ts: 11ms, render: 231ms)
+ GET /api/market 200 in 359ms (compile: 41ms, proxy.ts: 30ms, render: 289ms)
+ GET /api/activity 200 in 27ms (compile: 4ms, proxy.ts: 11ms, render: 12ms)
+ GET /api/errors 200 in 46ms (compile: 5ms, proxy.ts: 11ms, render: 29ms)
+ GET /api/orders/meta 200 in 46ms (compile: 15ms, proxy.ts: 20ms, render: 11ms)
+ GET /api/orders 200 in 334ms (compile: 28ms, proxy.ts: 19ms, render: 287ms)
+ GET /api/market 200 in 394ms (compile: 13ms, proxy.ts: 19ms, render: 362ms)
+✓ Compiled in 360ms
+ GET /api/orders/meta 200 in 49ms (compile: 6ms, proxy.ts: 31ms, render: 12ms)
+ GET /api/orders 200 in 700ms (compile: 5ms, proxy.ts: 12ms, render: 683ms)
+ GET /api/activity 200 in 736ms (compile: 707ms, proxy.ts: 15ms, render: 13ms)
+ GET /api/errors 200 in 1538ms (compile: 1514ms, proxy.ts: 13ms, render: 10ms)
+ GET /api/orders/meta 200 in 451ms (compile: 420ms, proxy.ts: 16ms, render: 15ms)
+ GET /api/orders 200 in 1299ms (compile: 418ms, proxy.ts: 11ms, render: 870ms)
+✓ Compiled in 29.9s
+ GET /api/orders/meta 200 in 49ms (compile: 8ms, proxy.ts: 25ms, render: 16ms)
+ GET /api/orders 200 in 294ms (compile: 30ms, proxy.ts: 26ms, render: 237ms)
+ GET /api/orders/meta 200 in 54ms (compile: 18ms, proxy.ts: 25ms, render: 12ms)
+ GET /api/orders 200 in 269ms (compile: 9ms, proxy.ts: 26ms, render: 235ms)
+ GET /api/market 200 in 363ms (compile: 6ms, proxy.ts: 13ms, render: 345ms)
+ GET /api/activity 200 in 29ms (compile: 5ms, proxy.ts: 13ms, render: 12ms)
+ GET /api/errors 200 in 28ms (compile: 8ms, proxy.ts: 11ms, render: 9ms)
+ GET /api/orders/meta 200 in 71ms (compile: 26ms, proxy.ts: 27ms, render: 18ms)
+ GET /api/orders 200 in 1007ms (compile: 9ms, proxy.ts: 24ms, render: 974ms)
+ GET /api/orders/meta 200 in 52ms (compile: 16ms, proxy.ts: 23ms, render: 13ms)
+ GET /api/orders 200 in 1157ms (compile: 8ms, proxy.ts: 24ms, render: 1125ms)
+ GET /api/orders/meta 200 in 58ms (compile: 21ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/orders 200 in 777ms (compile: 8ms, proxy.ts: 24ms, render: 745ms)
+ GET /api/activity 200 in 47ms (compile: 13ms, proxy.ts: 21ms, render: 14ms)
+ GET /api/errors 200 in 51ms (compile: 5ms, proxy.ts: 34ms, render: 11ms)
+ GET /api/orders/meta 200 in 57ms (compile: 18ms, proxy.ts: 21ms, render: 17ms)
+ GET /api/orders 200 in 259ms (compile: 8ms, proxy.ts: 21ms, render: 231ms)
+ GET /api/market 200 in 371ms (compile: 9ms, proxy.ts: 12ms, render: 350ms)
+ GET /api/orders/meta 200 in 62ms (compile: 23ms, proxy.ts: 24ms, render: 16ms)
+ GET /api/orders 200 in 835ms (compile: 8ms, proxy.ts: 24ms, render: 803ms)
+ GET /api/activity 200 in 33ms (compile: 7ms, proxy.ts: 13ms, render: 13ms)
+ GET /api/errors 200 in 27ms (compile: 6ms, proxy.ts: 13ms, render: 8ms)
+ GET /api/orders/meta 200 in 54ms (compile: 17ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/orders 200 in 280ms (compile: 8ms, proxy.ts: 25ms, render: 248ms)
+✓ Compiled in 635ms
+ GET /api/orders/meta 200 in 63ms (compile: 12ms, proxy.ts: 37ms, render: 15ms)
+ GET /api/market 200 in 482ms (compile: 29ms, proxy.ts: 36ms, render: 417ms)
+ GET /api/orders 200 in 870ms (compile: 102ms, proxy.ts: 35ms, render: 733ms)
+ GET /api/activity 200 in 37ms (compile: 5ms, proxy.ts: 16ms, render: 16ms)
+ GET /api/errors 200 in 33ms (compile: 7ms, proxy.ts: 17ms, render: 9ms)
+ GET /api/market 200 in 269ms (compile: 5ms, proxy.ts: 14ms, render: 250ms)
+ GET /api/orders/meta 200 in 62ms (compile: 8ms, proxy.ts: 32ms, render: 23ms)
+ GET /api/orders 200 in 513ms (compile: 89ms, proxy.ts: 29ms, render: 396ms)
+ GET /api/deploy 200 in 3.5s (compile: 2.1s, proxy.ts: 19ms, render: 1391ms)
+ GET /api/deploy 200 in 1009ms (compile: 8ms, proxy.ts: 14ms, render: 987ms)
+ GET /api/orders/meta 200 in 50ms (compile: 10ms, proxy.ts: 22ms, render: 18ms)
+ GET /api/orders 200 in 757ms (compile: 30ms, proxy.ts: 21ms, render: 706ms)
+ GET /api/deploy 200 in 1285ms (compile: 5ms, proxy.ts: 16ms, render: 1264ms)
+ POST /api/deploy 200 in 37ms (compile: 5ms, proxy.ts: 14ms, render: 18ms)
+ GET /api/market 200 in 1341ms (compile: 4ms, proxy.ts: 13ms, render: 1324ms)
+ GET /api/deploy/stream?jobId=166805d05366 200 in 1656ms (compile: 1632ms, proxy.ts: 14ms, render: 10ms)
+ GET /api/errors 200 in 49ms (compile: 6ms, proxy.ts: 28ms, render: 15ms)
+ GET /api/activity 200 in 70ms (compile: 31ms, proxy.ts: 28ms, render: 11ms)
+ GET /api/orders/meta 200 in 56ms (compile: 21ms, proxy.ts: 25ms, render: 11ms)
+ GET /api/orders 200 in 262ms (compile: 8ms, proxy.ts: 22ms, render: 233ms)
+ GET /api/deploy 200 in 1198ms (compile: 8ms, proxy.ts: 16ms, render: 1173ms)
+ GET /api/orders/meta 200 in 41ms (compile: 8ms, proxy.ts: 21ms, render: 12ms)
+ GET /api/orders 200 in 954ms (compile: 22ms, proxy.ts: 20ms, render: 911ms)
+ GET /api/market 200 in 297ms (compile: 7ms, proxy.ts: 23ms, render: 268ms)
+ GET /api/activity 200 in 56ms (compile: 8ms, proxy.ts: 24ms, render: 24ms)
+ GET /api/errors 200 in 76ms (compile: 37ms, proxy.ts: 23ms, render: 16ms)
+ GET /api/orders 200 in 266ms (compile: 5ms, proxy.ts: 16ms, render: 246ms)
+ GET /api/orders/meta 200 in 33ms (compile: 7ms, proxy.ts: 13ms, render: 13ms)
+ GET /api/orders/meta 200 in 33ms (compile: 5ms, proxy.ts: 14ms, render: 14ms)
+ GET /api/orders 200 in 726ms (compile: 7ms, proxy.ts: 16ms, render: 703ms)
+ GET /api/market 200 in 386ms (compile: 13ms, proxy.ts: 15ms, render: 358ms)
+ GET /api/errors 200 in 44ms (compile: 6ms, proxy.ts: 27ms, render: 11ms)
+ GET /api/activity 200 in 73ms (compile: 27ms, proxy.ts: 27ms, render: 18ms)
+ GET /api/orders/meta 200 in 34ms (compile: 7ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/orders 200 in 278ms (compile: 7ms, proxy.ts: 13ms, render: 258ms)
+ GET /api/orders/meta 200 in 47ms (compile: 4ms, proxy.ts: 14ms, render: 28ms)
+ GET /api/orders 200 in 704ms (compile: 7ms, proxy.ts: 14ms, render: 683ms)
+ GET /api/market 200 in 313ms (compile: 5ms, proxy.ts: 15ms, render: 294ms)
+ GET /api/orders/meta 200 in 31ms (compile: 5ms, proxy.ts: 13ms, render: 13ms)
+ GET /api/orders 200 in 263ms (compile: 5ms, proxy.ts: 16ms, render: 242ms)
+ GET /api/activity 200 in 37ms (compile: 8ms, proxy.ts: 15ms, render: 15ms)
+ GET /api/errors 200 in 28ms (compile: 7ms, proxy.ts: 12ms, render: 9ms)
+ GET /api/orders/meta 200 in 29ms (compile: 5ms, proxy.ts: 13ms, render: 12ms)
+ GET /api/orders 200 in 715ms (compile: 9ms, proxy.ts: 14ms, render: 692ms)
+ GET /api/market 200 in 368ms (compile: 4ms, proxy.ts: 15ms, render: 349ms)
+ GET /api/orders 200 in 256ms (compile: 7ms, proxy.ts: 15ms, render: 234ms)
+ GET /api/orders/meta 200 in 37ms (compile: 10ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/errors 200 in 40ms (compile: 6ms, proxy.ts: 24ms, render: 10ms)
+ GET /api/activity 200 in 60ms (compile: 22ms, proxy.ts: 27ms, render: 11ms)
+ GET /api/orders/meta 200 in 32ms (compile: 5ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/orders 200 in 1109ms (compile: 4ms, proxy.ts: 13ms, render: 1092ms)
+ GET /api/market 200 in 1412ms (compile: 5ms, proxy.ts: 13ms, render: 1394ms)
+ GET /api/orders/meta 200 in 30ms (compile: 6ms, proxy.ts: 11ms, render: 13ms)
+ GET /api/orders 200 in 526ms (compile: 6ms, proxy.ts: 13ms, render: 506ms)
+ GET /api/activity 200 in 41ms (compile: 7ms, proxy.ts: 22ms, render: 13ms)
+ GET /api/errors 200 in 55ms (compile: 22ms, proxy.ts: 21ms, render: 11ms)
+ GET /api/orders/meta 200 in 62ms (compile: 23ms, proxy.ts: 21ms, render: 18ms)
+ GET /api/orders 200 in 992ms (compile: 8ms, proxy.ts: 21ms, render: 962ms)
+ GET /api/activity 200 in 32ms (compile: 5ms, proxy.ts: 14ms, render: 13ms)
+ GET /api/errors 200 in 34ms (compile: 6ms, proxy.ts: 13ms, render: 15ms)
+ GET /api/orders/meta 200 in 54ms (compile: 18ms, proxy.ts: 21ms, render: 15ms)
+ GET /api/market 200 in 449ms (compile: 7ms, proxy.ts: 48ms, render: 394ms)
+ GET /api/orders 200 in 1287ms (compile: 57ms, proxy.ts: 48ms, render: 1181ms)
+ GET /api/orders/meta 200 in 47ms (compile: 20ms, proxy.ts: 14ms, render: 14ms)
+ GET /api/orders 200 in 1021ms (compile: 25ms, proxy.ts: 14ms, render: 982ms)

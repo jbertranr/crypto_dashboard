@@ -35,6 +35,8 @@ interface BotInfo {
   requireMultiTf: boolean;
   entryDesc:      string;
   exitDesc:       string;
+  minProbability: number | null;
+  maxOpen:        number | null;
   simConfig: {
     name?: string;
     pnlPct?: number;
@@ -114,17 +116,21 @@ const EXIT_REASONS: Record<string, string> = {
 // ── Bot detail panel ──────────────────────────────────────────────────────────
 
 function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () => void; onUpdated: (b: BotInfo) => void }) {
-  const [entries,    setEntries]    = useState<TradeEntry[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [entryDesc,  setEntryDesc]  = useState(bot.entryDesc);
-  const [exitDesc,   setExitDesc]   = useState(bot.exitDesc);
-  const [saving,     setSaving]     = useState(false);
-  const [saveOk,     setSaveOk]     = useState(false);
+  const [entries,        setEntries]        = useState<TradeEntry[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [entryDesc,      setEntryDesc]      = useState(bot.entryDesc);
+  const [exitDesc,       setExitDesc]       = useState(bot.exitDesc);
+  const [minProb,        setMinProb]        = useState<string>(bot.minProbability != null ? String(bot.minProbability) : "");
+  const [maxOpenVal,     setMaxOpenVal]     = useState<string>(bot.maxOpen        != null ? String(bot.maxOpen)        : "");
+  const [saving,         setSaving]         = useState(false);
+  const [saveOk,         setSaveOk]         = useState(false);
 
   useEffect(() => {
     setEntryDesc(bot.entryDesc);
     setExitDesc(bot.exitDesc);
-  }, [bot.entryDesc, bot.exitDesc]);
+    setMinProb(bot.minProbability != null ? String(bot.minProbability) : "");
+    setMaxOpenVal(bot.maxOpen     != null ? String(bot.maxOpen)        : "");
+  }, [bot.entryDesc, bot.exitDesc, bot.minProbability, bot.maxOpen]);
 
   useEffect(() => {
     setLoading(true);
@@ -143,10 +149,12 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
   async function saveDescriptions() {
     setSaving(true);
     try {
+      const minProbNum = minProb.trim() !== "" ? parseInt(minProb) : null;
+      const maxOpenNum = maxOpenVal.trim() !== "" ? parseInt(maxOpenVal) : null;
       const r = await fetch("/api/bots", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: bot.id, entryDesc, exitDesc }),
+        body: JSON.stringify({ id: bot.id, entryDesc, exitDesc, minProbability: minProbNum, maxOpen: maxOpenNum }),
       });
       if (r.ok) {
         const d = await r.json() as { bot: BotInfo };
@@ -239,6 +247,34 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
             placeholder="Descriu com gestiona la sortida: TP/SL en ATR, trailing stop, sortida parcial, condicions especials…"
             rows={3}
           />
+        </div>
+        <div className="bc-strategy__params-row">
+          <label className="bc-strategy__param-field">
+            <span className="bc-strategy__param-label">
+              <i className="fa-solid fa-percent" /> Prob. mínima entrada
+              <span className="bc-strategy__param-hint">buit = usa la de la simulació</span>
+            </span>
+            <input
+              type="number" min="50" max="95" step="5"
+              className="bc-strategy__param-input"
+              placeholder={`sim: ${bot.simConfig?.config?.minProbability ?? 70}`}
+              value={minProb}
+              onChange={e => setMinProb(e.target.value)}
+            />
+          </label>
+          <label className="bc-strategy__param-field">
+            <span className="bc-strategy__param-label">
+              <i className="fa-solid fa-layer-group" /> Màx. posicions simultànies
+              <span className="bc-strategy__param-hint">buit = sense límit de posicions</span>
+            </span>
+            <input
+              type="number" min="1" max="20" step="1"
+              className="bc-strategy__param-input"
+              placeholder="cap límit"
+              value={maxOpenVal}
+              onChange={e => setMaxOpenVal(e.target.value)}
+            />
+          </label>
         </div>
         <button
           className={`btn ${saveOk ? "btn-success" : "btn-primary"} btn-sm bc-strategy__save`}
@@ -507,6 +543,16 @@ function BotTable({
               <span className="bc-param-chip">
                 <i className="fa-solid fa-hourglass" />{bot.hoursFrom}:00–{bot.hoursTo}:00 UTC
               </span>
+              {bot.minProbability != null && (
+                <span className="bc-param-chip">
+                  <i className="fa-solid fa-percent" />prob. ≥{bot.minProbability}
+                </span>
+              )}
+              {bot.maxOpen != null && (
+                <span className="bc-param-chip">
+                  <i className="fa-solid fa-layer-group" />màx {bot.maxOpen} pos.
+                </span>
+              )}
               {bot.requireMultiTf && (
                 <span className="bc-param-chip bc-param-chip--accent">
                   <i className="fa-solid fa-layer-group" />Multi-TF

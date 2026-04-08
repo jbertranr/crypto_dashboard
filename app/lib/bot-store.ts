@@ -38,9 +38,11 @@ db.exec(`
 // ── Schema migration — add columns introduced after initial release ────────────
 {
   const cols = (db.prepare("PRAGMA table_info(bots)").all() as { name: string }[]).map(r => r.name);
-  if (!cols.includes("code"))       db.exec("ALTER TABLE bots ADD COLUMN code        TEXT NOT NULL DEFAULT ''");
-  if (!cols.includes("entry_desc")) db.exec("ALTER TABLE bots ADD COLUMN entry_desc  TEXT NOT NULL DEFAULT ''");
-  if (!cols.includes("exit_desc"))  db.exec("ALTER TABLE bots ADD COLUMN exit_desc   TEXT NOT NULL DEFAULT ''");
+  if (!cols.includes("code"))            db.exec("ALTER TABLE bots ADD COLUMN code             TEXT    NOT NULL DEFAULT ''");
+  if (!cols.includes("entry_desc"))      db.exec("ALTER TABLE bots ADD COLUMN entry_desc       TEXT    NOT NULL DEFAULT ''");
+  if (!cols.includes("exit_desc"))       db.exec("ALTER TABLE bots ADD COLUMN exit_desc        TEXT    NOT NULL DEFAULT ''");
+  if (!cols.includes("min_probability")) db.exec("ALTER TABLE bots ADD COLUMN min_probability  INTEGER          DEFAULT NULL");
+  if (!cols.includes("max_open"))        db.exec("ALTER TABLE bots ADD COLUMN max_open          INTEGER          DEFAULT NULL");
 }
 
 /* ── Types ───────────────────────────────────────────────────── */
@@ -58,6 +60,8 @@ export interface Bot {
   requireMultiTf: boolean;
   entryDesc:      string;
   exitDesc:       string;
+  minProbability: number | null;  // null = usa el de la config de simulació
+  maxOpen:        number | null;  // null = usa el de la config de simulació
   createdAt:      number;
 }
 
@@ -74,6 +78,8 @@ interface BotRow {
   require_multi_tf: number;
   entry_desc:       string;
   exit_desc:        string;
+  min_probability:  number | null;
+  max_open:         number | null;
   created_at:       number;
 }
 
@@ -91,6 +97,8 @@ function rowToBot(row: BotRow): Bot {
     requireMultiTf: row.require_multi_tf === 1,
     entryDesc:      row.entry_desc || "",
     exitDesc:       row.exit_desc  || "",
+    minProbability: row.min_probability ?? null,
+    maxOpen:        row.max_open        ?? null,
     createdAt:      row.created_at,
   };
 }
@@ -122,6 +130,8 @@ export function botCreate(data: {
   requireMultiTf?: boolean;
   entryDesc?:      string;
   exitDesc?:       string;
+  minProbability?: number | null;
+  maxOpen?:        number | null;
 }): Bot {
   if (data.budgetUsdt !== undefined && data.budgetUsdt <= 0)
     throw new Error("budgetUsdt ha de ser > 0");
@@ -137,8 +147,8 @@ export function botCreate(data: {
   const now  = Date.now();
   db.prepare(`
     INSERT INTO bots
-      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, created_at)
-    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, created_at)
+    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, code,
     data.name, data.simId,
@@ -147,8 +157,10 @@ export function botCreate(data: {
     data.hoursFrom   ?? 8,
     data.hoursTo     ?? 22,
     data.requireMultiTf ? 1 : 0,
-    data.entryDesc   ?? "",
-    data.exitDesc    ?? "",
+    data.entryDesc      ?? "",
+    data.exitDesc       ?? "",
+    data.minProbability ?? null,
+    data.maxOpen        ?? null,
     now,
   );
   return botGet(id)!;
@@ -171,6 +183,8 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "
   if (patch.requireMultiTf !== undefined) { fields.push("require_multi_tf = ?");   values.push(patch.requireMultiTf ? 1 : 0); }
   if (patch.entryDesc      !== undefined) { fields.push("entry_desc = ?");         values.push(patch.entryDesc); }
   if (patch.exitDesc       !== undefined) { fields.push("exit_desc = ?");          values.push(patch.exitDesc); }
+  if ("minProbability" in patch)          { fields.push("min_probability = ?");    values.push(patch.minProbability ?? null); }
+  if ("maxOpen"        in patch)          { fields.push("max_open = ?");           values.push(patch.maxOpen        ?? null); }
 
   if (fields.length === 0) return existing;
   values.push(id);

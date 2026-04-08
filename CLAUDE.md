@@ -1,5 +1,23 @@
 # CryptDesk — Guia per a Claude
 
+## Desplegament a producció
+
+```bash
+# 1. Configura la connexió (una sola vegada)
+cp .deploy.env.example .deploy.env
+# edita .deploy.env amb la IP/clau SSH del servidor Oracle
+
+# 2. Desplega
+bash deploy.sh
+
+# 3. Rollback (al servidor de producció)
+bash scripts/rollback.sh
+```
+
+**Flux:** `deploy.sh` (local) → git pull al servidor → backup del .next actual a `releases/` → `npm run build` → `pm2 restart`. Conserva els últims 5 builds.
+
+---
+
 ## Arrencada del sistema
 
 ### Script d'inici (recomanat)

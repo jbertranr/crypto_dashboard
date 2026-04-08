@@ -20,8 +20,9 @@ import BotTab from "./BotTab";
 import EqualizerTab from "./EqualizerTab";
 import AutoLabTab from "./AutoLabTab";
 import StatusTab from "./StatusTab";
+import DeployTab from "./DeployTab";
 
-export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab" | "status";
+export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab" | "status" | "deploy";
 
 /* ── Strategies ── */
 export const STRATEGIES = [
@@ -2314,6 +2315,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
       {tab === "equalizer"  && <ErrorBoundary label="Equalitzador"><EqualizerTab /></ErrorBoundary>}
       {tab === "autolab"    && <ErrorBoundary label="AutoLab"><AutoLabTab /></ErrorBoundary>}
       {tab === "status"     && <ErrorBoundary label="Motors"><StatusTab /></ErrorBoundary>}
+      {tab === "deploy"     && <ErrorBoundary label="Desplegament"><DeployTab /></ErrorBoundary>}
 
       <div className="panel-footer">
         <span className="panel-footer__dot" />

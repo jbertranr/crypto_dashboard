@@ -41,6 +41,9 @@ export interface SimConfig {
   breakEvenAtr:     number;
   // Timeout
   maxHoldingBars:   number;   // veles màxim abans del tancament forçós
+  // Filtres d'entrada (ANALYSIS mode)
+  minProbability?:  number;   // Probabilitat mínima d'entrada (0–100)
+  maxOpen?:         number;   // Màx. posicions simultànies
   // Mode MOON
   moonSlPct:        number;   // SL inicial % sota entrada (default 20)
   moonPartialAt:    number;   // Multiplicador preu per parcial (default 2.0)
@@ -339,10 +342,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "'to' ha de ser posterior a 'from'" }, { status: 400 });
     }
 
-    // ── Llegeix configuració real (maxOpen, minProbability) — capital ve del body ──
+    // ── maxOpen i minProbability: primer del body, fallback a settings ──────────
     const settings       = settingGetAll();
-    const maxOpen        = parseInt(settings.capital_max_open       ?? "3")  || 3;
-    const minProbability = parseFloat(settings.auto_trade_min_score ?? "80") || 80;
+    const maxOpen        = config.maxOpen        ?? (parseInt(settings.capital_max_open       ?? "3")  || 3);
+    const minProbability = config.minProbability ?? (parseFloat(settings.auto_trade_min_score ?? "70") || 70);
 
     // ── Descarrega veles ───────────────────────────────────────────────────
     const msPerBar   = INTERVAL_MS[interval] ?? INTERVAL_MS["1h"];

@@ -25,6 +25,7 @@ const AUTOMATITZACIO: NavItem[] = [
   { key: "equalizer",  label: "Equalitzador", icon: "fa-sliders"             },
   { key: "autolab",    label: "AutoLab",      icon: "fa-wand-magic-sparkles" },
   { key: "bot",        label: "Bot",          icon: "fa-robot"               },
+  { key: "deploy",     label: "Deploy",       icon: "fa-rocket"              },
 ];
 
 const GROUPS: { label: string; tabs: NavItem[] }[] = [

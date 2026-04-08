@@ -362,7 +362,8 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const trailAct   = config.trailActivateAtr  ?? 1.5;
   const trailDst   = config.trailDistanceAtr  ?? 1.0;
   const trailMode  = settingGet("trailing_sl_mode") || "ATR";
-  const minScore   = effectiveConfig?.minProbability ?? 80;
+  // Jerarquia: bot (explícit) > effectiveConfig de la sim > default 70
+  const minScore   = bot.minProbability ?? effectiveConfig?.minProbability ?? 70;
   const tgScan     = settingGetBool("tg_on_market_scan");
 
   // Finestra horària (UTC)
@@ -397,7 +398,17 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     openOrders.filter(o => o.orderListId !== -1).map(o => o.orderListId)
   ).size;
   const trailingCount = trailingActiveGetAll().length;
-  const committed = (openOcoCount + trailingCount) * usdtPer;
+  const totalOpen = openOcoCount + trailingCount;
+
+  // Límit de posicions simultànies (bot > effectiveConfig > sense límit)
+  const maxOpen = bot.maxOpen ?? effectiveConfig?.maxOpen ?? null;
+  if (maxOpen !== null && totalOpen >= maxOpen) {
+    log.auto.debug({ bot: bot.name, totalOpen, maxOpen }, "bot: màx. posicions simultànies assolit");
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màx. posicions assolit (${totalOpen}/${maxOpen})`, results: [] }).catch(() => {});
+    return;
+  }
+
+  const committed = totalOpen * usdtPer;
   if (committed + usdtPer > bot.budgetUsdt) {
     log.auto.debug({ bot: bot.name, committed, openOcoCount, trailingCount, budget: bot.budgetUsdt }, "bot: pressupost exhaurit");
     if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `pressupost exhaurit (${openOcoCount} OCO + ${trailingCount} trailing actius)`, results: [] }).catch(() => {});

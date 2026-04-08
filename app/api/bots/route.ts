@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, simId, budgetUsdt, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc } = body as {
+  const { name, simId, budgetUsdt, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc, minProbability, maxOpen } = body as {
     name?: string;
     simId?: string;
     budgetUsdt?: number;
@@ -93,6 +93,8 @@ export async function POST(req: NextRequest) {
     requireMultiTf?: boolean;
     entryDesc?: string;
     exitDesc?: string;
+    minProbability?: number | null;
+    maxOpen?: number | null;
   };
 
   if (!name || !simId) {
@@ -114,7 +116,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Simulation config not found" }, { status: 404 });
   }
 
-  const bot = botCreate({ name, simId, budgetUsdt, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc });
+  const bot = botCreate({ name, simId, budgetUsdt, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc, minProbability, maxOpen });
   return NextResponse.json({ bot, simConfig });
 }
 
@@ -145,6 +147,8 @@ export async function PATCH(req: NextRequest) {
     requireMultiTf: typeof patch.requireMultiTf === "boolean" ? patch.requireMultiTf : undefined,
     entryDesc:      typeof patch.entryDesc      === "string"  ? patch.entryDesc      : undefined,
     exitDesc:       typeof patch.exitDesc       === "string"  ? patch.exitDesc       : undefined,
+    ...("minProbability" in patch ? { minProbability: typeof patch.minProbability === "number" ? patch.minProbability : null } : {}),
+    ...("maxOpen"        in patch ? { maxOpen:        typeof patch.maxOpen        === "number" ? patch.maxOpen        : null } : {}),
   });
 
   return NextResponse.json({ bot: updated });
