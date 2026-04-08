@@ -1069,80 +1069,115 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
               const meta    = orderMeta[ordKey] ?? {};
               const exitCurrent = localExitNotes[ordKey] ?? meta.exitNotes ?? "";
               const hasPlan = !!exitCurrent;
+              const hasChart = stopPrice > 0 && currentPrice > 0;
+              // For chart: use stopPrice as SL reference, currentPrice*1.03 as upper ref
+              const chartTp = currentPrice > 0 ? currentPrice * 1.03 : stopPrice * 1.1;
+              const toStopDist = stopPrice > 0 && currentPrice > 0 ? dist(stopPrice, currentPrice) : null;
+              const bn  = orderMeta[ordKey]?.botName;
+              const src = orderMeta[ordKey]?.entrySource;
+              const entryIsBot = src === "AUTO" && !!bn;
+              const tc = orderMeta[ordKey]?.tradeCode
+                ?? (o.orderListId !== -1 ? orderMeta[stratKey("oco", o.orderListId)]?.tradeCode : null);
+
               return (
-                <div key={o.orderId} className="order-card">
-                  {/* Header */}
-                  <div className="order-card__header">
-                    <div className="order-card__hero">
-                      <CoinIcon symbol={o.symbol.replace("USDT", "")} size={40} />
-                      <div className="order-card__hero-info">
-                        {qty > 0 && <span className="order-card__hero-crypto">{qty} {o.symbol.replace("USDT", "")}</span>}
-                        {qty > 0 && valueUSD > 0 && <span className="order-card__hero-usd">{formatCurrency(valueUSD)}</span>}
-                      </div>
-                    </div>
-                    <div className="order-card__header-right">
-                      <div className="order-card__header-top">
-                        {(() => {
-                          const tc = orderMeta[ordKey]?.tradeCode
-                            ?? (o.orderListId !== -1 ? orderMeta[stratKey("oco", o.orderListId)]?.tradeCode : null);
-                          return tc ? (
-                            <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{tc}</span>
-                          ) : null;
-                        })()}
+                <div key={o.orderId} className="order-card order-card--single">
+
+                  {/* ── Main horizontal row ── */}
+                  <div className="order-card__row">
+
+                    {/* 1. Identity */}
+                    <div className="order-card__col-identity">
+                      <div className="order-card__col-top">
+                        {tc && <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{tc}</span>}
                         <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(o.time)}</span>
                       </div>
-                      <div className="order-card__header-bottom">
-                        {orderMeta[ordKey]?.interval && (
-                          <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ordKey].interval}</span>
-                        )}
-                        {(() => {
-                          const bn = orderMeta[ordKey]?.botName;
-                          const src = orderMeta[ordKey]?.entrySource;
-                          const entryIsBot = src === "AUTO" && !!bn;
-                          return <>
-                            <span className={`pill ${entryIsBot ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
-                              <i className={`fa-solid ${entryIsBot ? "fa-robot" : "fa-hand"}`} />
-                              {entryIsBot ? `Entrada: ${bn}` : "Entrada Manual"}
-                            </span>
-                            <span className={`pill ${bn ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
-                              <i className={`fa-solid ${bn ? "fa-robot" : "fa-hand"}`} />
-                              {bn ? `Sortida: ${bn}` : "Sortida Manual"}
-                            </span>
-                          </>;
-                        })()}
+                      <div className="order-card__col-hero">
+                        <CoinIcon symbol={o.symbol.replace("USDT", "")} size={44} />
+                        <div className="order-card__hero-info">
+                          <span className="order-card__hero-crypto">{qty} {o.symbol.replace("USDT", "")}</span>
+                          {valueUSD > 0 && <span className="order-card__hero-val mono">{formatCurrency(valueUSD)}</span>}
+                          {currentPrice > 0 && <span className="order-card__hero-sub">MERCAT <span className="mono">{formatCurrency(currentPrice)}</span></span>}
+                        </div>
+                      </div>
+                      <div className="order-card__col-bottom">
+                        <StatusPill status={o.status} />
                         <span className={`pill ${o.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
                           <i className={`fa-solid ${o.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{o.side}
                         </span>
                         <span className={`pill ${info.cls}`}>{info.label}</span>
+                        {orderMeta[ordKey]?.interval && (
+                          <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{orderMeta[ordKey].interval}</span>
+                        )}
+                        <span className={`pill ${entryIsBot ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                          <i className={`fa-solid ${entryIsBot ? "fa-robot" : "fa-hand"}`} />
+                          {entryIsBot ? `Bot: ${bn}` : "Entrada Manual"}
+                        </span>
+                        <span className={`pill ${bn ? "order-card__bot-badge" : "order-card__manual-badge"}`}>
+                          <i className={`fa-solid ${bn ? "fa-robot" : "fa-hand"}`} />
+                          {bn ? `Sortida: ${bn}` : "Sortida Manual"}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Price level */}
-                  <div className="order-card__level order-card__level--single">
-                    <div className="order-card__level-label">
-                      <i className="fa-solid fa-tag" style={{ fontSize: "0.65rem" }} />
-                      Preu ordre
-                    </div>
-                    <span className="order-card__level-price mono">
-                      {price > 0 ? formatCurrency(price) : "MARKET"}
-                    </span>
-                    {toDist !== null && (
-                      <span className={`order-card__dist order-card__dist--${toDist >= 0 ? "up" : "down"}`}>
-                        {toDist > 0 ? "+" : ""}{toDist.toFixed(2)}%
+                    {/* 2. Price (limit) */}
+                    <div className="order-card__col-sl">
+                      <span className="order-card__section-label order-card__section-label--sl">PREU ORDRE</span>
+                      <span className="order-card__col-price mono">
+                        {price > 0 ? formatCurrency(price) : "MARKET"}
                       </span>
-                    )}
-                    {stopPrice > 0 && <span className="order-card__sublabel">Trigger: {formatCurrency(stopPrice)}</span>}
-                  </div>
+                      {toDist !== null && (
+                        <span className={`order-card__delta ${toDist >= 0 ? "order-card__delta--up" : "order-card__delta--down"}`}>
+                          {toDist > 0 ? "+" : ""}{toDist.toFixed(2)}%
+                        </span>
+                      )}
+                      {stopPrice > 0 && (
+                        <>
+                          <span className="order-card__section-label order-card__section-label--sl" style={{ marginTop: 8 }}>TRIGGER</span>
+                          <span className="order-card__col-price mono">{formatCurrency(stopPrice)}</span>
+                          {toStopDist !== null && (
+                            <span className={`order-card__delta ${toStopDist >= 0 ? "order-card__delta--up" : "order-card__delta--down"}`}>
+                              {toStopDist > 0 ? "+" : ""}{toStopDist.toFixed(2)}%
+                            </span>
+                          )}
+                        </>
+                      )}
+                      <span className="order-card__section-label" style={{ marginTop: 8 }}>QTY</span>
+                      <span className="order-card__col-price mono" style={{ fontSize: "0.8rem" }}>
+                        {qty} {o.symbol.replace("USDT", "")}
+                        {price > 0 && <span className="dim" style={{ fontSize: "0.7rem" }}> ({formatCurrency(price * qty)})</span>}
+                      </span>
+                    </div>
 
-                  <div className="order-card__meta">
-                    <span className="order-card__qty">
-                      <i className="fa-solid fa-layer-group" />
-                      {" "}{qty} {o.symbol.replace("USDT", "")}
-                      {price > 0 && <span className="dim"> ({formatCurrency(price * qty)})</span>}
-                    </span>
-                    {currentPrice > 0 && <span className="order-card__current dim">Mercat: {formatCurrency(currentPrice)}</span>}
-                    <StatusPill status={o.status} />
+                    {/* 3. Chart */}
+                    {hasChart && (
+                      <div className="order-card__col-chart">
+                        <OcoProgressChart
+                          symbol={o.symbol}
+                          startTime={o.time}
+                          tpPrice={chartTp}
+                          slPrice={stopPrice}
+                          side={o.side as "BUY" | "SELL"}
+                          tpLabel="" slLabel="SL"
+                        />
+                      </div>
+                    )}
+
+                    {/* 4. Actions */}
+                    <div className="order-card__col-trailing">
+                      <div className="order-card__col-trailing-actions">
+                        <button className="order-btn order-btn--secondary"
+                          onClick={() => setEditTarget({ kind: "single", order: o })}>
+                          <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
+                        </button>
+                        <button className="order-btn order-btn--cancel" disabled={isCanceling}
+                          onClick={() => handleCancel(o)}>
+                          {isCanceling
+                            ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
+                            : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
+                        </button>
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* Exit plan */}
@@ -1167,20 +1202,6 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                         />
                       </div>
                     )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="order-card__actions">
-                    <button className="order-btn order-btn--edit"
-                      onClick={() => setEditTarget({ kind: "single", order: o })}>
-                      <i className="fa-solid fa-pen-to-square" /><span> Editar</span>
-                    </button>
-                    <button className="order-btn order-btn--cancel" disabled={isCanceling}
-                      onClick={() => handleCancel(o)}>
-                      {isCanceling
-                        ? <><i className="fa-solid fa-spinner fa-spin" /><span> Cancel·lant</span></>
-                        : <><i className="fa-solid fa-xmark" /><span> Cancel·lar</span></>}
-                    </button>
                   </div>
                 </div>
               );

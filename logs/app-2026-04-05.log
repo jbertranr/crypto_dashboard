@@ -4011,3 +4011,10 @@
 {"level":30,"time":1775646007321,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":50,"time":1775647784712,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
 {"level":30,"time":1775648034674,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775649456436,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775649457824,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775649608482,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775653207253,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775656057063,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775656808609,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775656874227,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
