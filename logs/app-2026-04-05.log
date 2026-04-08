@@ -4008,3 +4008,6 @@
 {"level":50,"time":1775641733404,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
 {"level":30,"time":1775642407348,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":30,"time":1775642943412,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775646007321,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775647784712,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775648034674,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}

@@ -90,6 +90,7 @@ function nextClose(interval: string): string {
 
 function inWindow(hoursFrom: number, hoursTo: number): boolean {
   const h = new Date().getUTCHours();
+  if (hoursTo >= 24) return h >= hoursFrom;
   return h >= hoursFrom && h < hoursTo;
 }
 
@@ -122,6 +123,9 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
   const [exitDesc,       setExitDesc]       = useState(bot.exitDesc);
   const [minProb,        setMinProb]        = useState<string>(bot.minProbability != null ? String(bot.minProbability) : "");
   const [maxOpenVal,     setMaxOpenVal]     = useState<string>(bot.maxOpen        != null ? String(bot.maxOpen)        : "");
+  const [hoursFrom,      setHoursFrom]      = useState<string>(String(bot.hoursFrom));
+  const [hoursTo,        setHoursTo]        = useState<string>(String(bot.hoursTo));
+  const allDay = hoursFrom === "0" && hoursTo === "24";
   const [saving,         setSaving]         = useState(false);
   const [saveOk,         setSaveOk]         = useState(false);
 
@@ -130,7 +134,9 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
     setExitDesc(bot.exitDesc);
     setMinProb(bot.minProbability != null ? String(bot.minProbability) : "");
     setMaxOpenVal(bot.maxOpen     != null ? String(bot.maxOpen)        : "");
-  }, [bot.entryDesc, bot.exitDesc, bot.minProbability, bot.maxOpen]);
+    setHoursFrom(String(bot.hoursFrom));
+    setHoursTo(String(bot.hoursTo));
+  }, [bot.entryDesc, bot.exitDesc, bot.minProbability, bot.maxOpen, bot.hoursFrom, bot.hoursTo]);
 
   useEffect(() => {
     setLoading(true);
@@ -154,7 +160,12 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
       const r = await fetch("/api/bots", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: bot.id, entryDesc, exitDesc, minProbability: minProbNum, maxOpen: maxOpenNum }),
+        body: JSON.stringify({
+          id: bot.id, entryDesc, exitDesc,
+          minProbability: minProbNum, maxOpen: maxOpenNum,
+          hoursFrom: parseInt(hoursFrom) || 0,
+          hoursTo:   parseInt(hoursTo)   || 24,
+        }),
       });
       if (r.ok) {
         const d = await r.json() as { bot: BotInfo };
@@ -275,6 +286,43 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
               onChange={e => setMaxOpenVal(e.target.value)}
             />
           </label>
+        </div>
+        <div className="bc-strategy__params-row">
+          <div className="bc-strategy__param-field bc-strategy__param-field--hours">
+            <span className="bc-strategy__param-label">
+              <i className="fa-solid fa-clock" /> Finestra horària (UTC)
+            </span>
+            <div className="bc-strategy__hours-row">
+              <label className="bc-strategy__allday-check">
+                <input
+                  type="checkbox"
+                  checked={allDay}
+                  onChange={e => {
+                    if (e.target.checked) { setHoursFrom("0"); setHoursTo("24"); }
+                    else { setHoursFrom("8"); setHoursTo("22"); }
+                  }}
+                />
+                Tot el dia (0–24 h)
+              </label>
+              <label className="bc-strategy__param-label" style={{ margin: 0 }}>De</label>
+              <input
+                type="number" min="0" max="23" step="1"
+                className="bc-strategy__param-input bc-strategy__param-input--hour"
+                value={hoursFrom}
+                disabled={allDay}
+                onChange={e => setHoursFrom(e.target.value)}
+              />
+              <label className="bc-strategy__param-label" style={{ margin: 0 }}>a</label>
+              <input
+                type="number" min="1" max="24" step="1"
+                className="bc-strategy__param-input bc-strategy__param-input--hour"
+                value={hoursTo}
+                disabled={allDay}
+                onChange={e => setHoursTo(e.target.value)}
+              />
+              <span className="bc-strategy__param-hint">h UTC</span>
+            </div>
+          </div>
         </div>
         <button
           className={`btn ${saveOk ? "btn-success" : "btn-primary"} btn-sm bc-strategy__save`}
@@ -541,7 +589,10 @@ function BotTable({
                 <i className="fa-solid fa-repeat" />màx {bot.maxDaily}/dia
               </span>
               <span className="bc-param-chip">
-                <i className="fa-solid fa-hourglass" />{bot.hoursFrom}:00–{bot.hoursTo}:00 UTC
+                <i className="fa-solid fa-hourglass" />
+                {bot.hoursFrom === 0 && bot.hoursTo >= 24
+                  ? "Tot el dia"
+                  : `${bot.hoursFrom}:00–${bot.hoursTo}:00 UTC`}
               </span>
               {bot.minProbability != null && (
                 <span className="bc-param-chip">

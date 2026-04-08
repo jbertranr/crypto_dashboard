@@ -10263,6 +10263,26 @@
 }
 .bc-strategy__param-input:focus { border-color: var(--accent); }
 .bc-strategy__param-input::placeholder { color: var(--text-3); font-style: italic; }
+.bc-strategy__param-input:disabled { opacity: 0.4; cursor: not-allowed; }
+.bc-strategy__param-input--hour { width: 56px; }
+
+.bc-strategy__param-field--hours { flex: 1 1 100%; }
+.bc-strategy__hours-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.bc-strategy__allday-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.bc-strategy__allday-check input[type="checkbox"] { cursor: pointer; }
 
 /* Stats row */
 .bc-detail__stats-row {

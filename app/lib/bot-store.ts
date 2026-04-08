@@ -137,10 +137,10 @@ export function botCreate(data: {
     throw new Error("budgetUsdt ha de ser > 0");
   if (data.maxDaily !== undefined && data.maxDaily < 1)
     throw new Error("maxDaily ha de ser ≥ 1");
-  if (data.hoursFrom !== undefined && (data.hoursFrom < 0 || data.hoursFrom >= 24))
+  if (data.hoursFrom !== undefined && (data.hoursFrom < 0 || data.hoursFrom > 23))
     throw new Error("hoursFrom ha d'estar entre 0 i 23");
-  if (data.hoursTo !== undefined && (data.hoursTo < 0 || data.hoursTo >= 24))
-    throw new Error("hoursTo ha d'estar entre 0 i 23");
+  if (data.hoursTo !== undefined && (data.hoursTo < 1 || data.hoursTo > 24))
+    throw new Error("hoursTo ha d'estar entre 1 i 24 (24 = tot el dia)");
 
   const id   = `bot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const code = nextBotCode();

@@ -102,10 +102,10 @@ export async function POST(req: NextRequest) {
   }
 
   // C4: validate operational parameters
-  if (hoursFrom !== undefined && (hoursFrom < 0 || hoursFrom >= 24))
+  if (hoursFrom !== undefined && (hoursFrom < 0 || hoursFrom > 23))
     return NextResponse.json({ error: "hoursFrom ha d'estar entre 0 i 23" }, { status: 400 });
-  if (hoursTo !== undefined && (hoursTo < 0 || hoursTo >= 24))
-    return NextResponse.json({ error: "hoursTo ha d'estar entre 0 i 23" }, { status: 400 });
+  if (hoursTo !== undefined && (hoursTo < 1 || hoursTo > 24))
+    return NextResponse.json({ error: "hoursTo ha d'estar entre 1 i 24 (24 = tot el dia)" }, { status: 400 });
   if (budgetUsdt !== undefined && budgetUsdt <= 0)
     return NextResponse.json({ error: "budgetUsdt ha de ser > 0" }, { status: 400 });
   if (maxDaily !== undefined && maxDaily < 1)

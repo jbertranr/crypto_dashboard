@@ -43,7 +43,7 @@ function pruneJobs() {
 // ── SSH helper ────────────────────────────────────────────────────────────────
 
 const SSH_ALIAS = "cryptdesk-prod";
-const PROD_DIR  = "/var/oled/cryptdesk/crypto_dashboard";
+const PROD_DIR  = "/home/opc/crypto_dashboard";
 
 function runSsh(remoteCmd: string, job: DeployJob): void {
   const proc = spawn("ssh", [SSH_ALIAS, remoteCmd], { shell: false });
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
 
   const remoteCmd = action === "deploy"
     ? `bash ${PROD_DIR}/scripts/remote-deploy.sh ${branch}`
-    : `bash ${PROD_DIR}/scripts/rollback.sh ${release}`;
+    : `bash ${PROD_DIR}/scripts/rollback.sh --yes ${release}`;
 
   // Llança asíncronament
   setImmediate(() => runSsh(remoteCmd, job));

@@ -11,6 +11,14 @@
 
 set -euo pipefail
 
+# --yes salta la confirmació interactiva (usat pel backend web)
+AUTO_YES=false
+ARGS=()
+for arg in "$@"; do
+  [ "$arg" = "--yes" ] && AUTO_YES=true || ARGS+=("$arg")
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+
 APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BACKUP_DIR="$APP_DIR/releases"
 PM2_APP="crypto-app"
@@ -110,8 +118,10 @@ echo ""
 echo -e "   ${YELLOW}${BOLD}Atenció: es reemplaçarà el .next actual per la versió seleccionada.${NC}"
 echo -e "   ${YELLOW}El codi font (app/, lib/, etc.) NO canvia — només el build.${NC}"
 echo ""
-read -r -p "   Confirmar rollback? [s/N] " resp
-[[ "$resp" =~ ^[sS]$ ]] || { info "Cancel·lat."; exit 0; }
+if ! $AUTO_YES; then
+  read -r -p "   Confirmar rollback? [s/N] " resp
+  [[ "$resp" =~ ^[sS]$ ]] || { info "Cancel·lat."; exit 0; }
+fi
 
 # ── Backup del .next actual (per si el rollback falla) ────────────────────────
 

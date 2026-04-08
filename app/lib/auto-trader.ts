@@ -368,7 +368,8 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
 
   // Finestra horària (UTC)
   const nowHour = new Date().getUTCHours();
-  if (nowHour < bot.hoursFrom || nowHour >= bot.hoursTo) {
+  // hoursTo=24 significa "tot el dia" — getUTCHours() mai retorna 24
+  if (nowHour < bot.hoursFrom || (bot.hoursTo < 24 && nowHour >= bot.hoursTo)) {
     log.auto.debug({ bot: bot.name, nowHour, from: bot.hoursFrom, to: bot.hoursTo }, "bot fora de finestra horària");
     if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: "fora de finestra horària", results: [] }).catch(() => {});
     return;

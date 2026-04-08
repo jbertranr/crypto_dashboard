@@ -58,6 +58,8 @@ interface Bot {
   hoursFrom:      number;
   hoursTo:        number;
   requireMultiTf: boolean;
+  minProbability: number | null;
+  maxOpen:        number | null;
   createdAt:      number;
   simConfig:      SavedConfig | null;
 }
@@ -193,9 +195,10 @@ export default function SettingsTab() {
   const [newBotSimId,    setNewBotSimId]    = useState("");
   const [newBotBudget,   setNewBotBudget]   = useState("500");
   const [newBotMaxDaily, setNewBotMaxDaily] = useState("3");
-  const [newBotHoursFrom,setNewBotHoursFrom] = useState("8");
-  const [newBotHoursTo,  setNewBotHoursTo]  = useState("22");
-  const [newBotMultiTf,  setNewBotMultiTf]  = useState(false);
+  const [newBotHoursFrom,   setNewBotHoursFrom]    = useState("8");
+  const [newBotHoursTo,     setNewBotHoursTo]      = useState("22");
+  const [newBotMultiTf,     setNewBotMultiTf]      = useState(false);
+  const [newBotMinProb,     setNewBotMinProb]      = useState("");
   const [savingBot,      setSavingBot]      = useState<string | null>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
@@ -328,6 +331,7 @@ export default function SettingsTab() {
           hoursFrom:      parseInt(newBotHoursFrom) || 8,
           hoursTo:        parseInt(newBotHoursTo)   || 22,
           requireMultiTf: newBotMultiTf,
+          minProbability: newBotMinProb.trim() !== "" ? parseInt(newBotMinProb) : null,
         }),
       });
       setNewBotName(""); setNewBotSimId(""); setNewBotBudget("500");
@@ -1013,7 +1017,7 @@ export default function SettingsTab() {
                   <span><i className="fa-solid fa-coins" /> {sc.config.symbols.map(s => s.replace("USDT","")).join(", ")}</span>
                   <span>TP {sc.config.tpAtr}× · SL {sc.config.slAtr}×</span>
                   <span>Trail {sc.config.trailActivateAtr}×/{sc.config.trailDistanceAtr}×</span>
-                  <span>Score ≥ {sc.effectiveConfig?.minProbability ?? 80}%</span>
+                  <span>Score ≥ {bot.minProbability ?? sc.effectiveConfig?.minProbability ?? 80}%</span>
                   <span>
                     {sc.config.capitalMode === "FIXED"
                       ? `${sc.config.capitalFixed ?? 100} USDT/op`
@@ -1040,10 +1044,15 @@ export default function SettingsTab() {
                 <input type="number" step="1" min="0" max="23" className="cfg-num-input" style={{ width: "52px" }}
                   value={newBotHoursFrom} onChange={e => setNewBotHoursFrom(e.target.value)} />
                 <span className="cfg-auto-hours__sep">–</span>
-                <input type="number" step="1" min="0" max="23" className="cfg-num-input" style={{ width: "52px" }}
+                <input type="number" step="1" min="1" max="24" className="cfg-num-input" style={{ width: "52px" }}
                   value={newBotHoursTo} onChange={e => setNewBotHoursTo(e.target.value)} />
                 <span className="cfg-auto-hours__sep">h</span>
               </div>
+            </div>
+            <div className="bot-form__row">
+              <label className="bot-form__label">Score mínim (%)</label>
+              <input type="number" step="5" min="50" max="95" className="cfg-num-input" style={{ width: "60px" }}
+                placeholder="sim" value={newBotMinProb} onChange={e => setNewBotMinProb(e.target.value)} />
             </div>
             <div className="bot-form__row">
               <label className="bot-form__label">Multi-TF</label>
@@ -1132,7 +1141,7 @@ export default function SettingsTab() {
                         <div className="bot-card__param"><span className="bot-card__param-label">SL</span><span className="bot-card__param-value">{sc.config.slAtr}× ATR</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">Trail act.</span><span className="bot-card__param-value">{sc.config.trailActivateAtr}× ATR</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">Trail dist.</span><span className="bot-card__param-value">{sc.config.trailDistanceAtr}× ATR</span></div>
-                        <div className="bot-card__param"><span className="bot-card__param-label">Score mín.</span><span className="bot-card__param-value">{sc.effectiveConfig?.minProbability ?? 80}%</span></div>
+                        <div className="bot-card__param"><span className="bot-card__param-label">Score mín.</span><span className="bot-card__param-value">{bot.minProbability ?? sc.effectiveConfig?.minProbability ?? 80}%</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">Capital/op.</span><span className="bot-card__param-value">
                           {sc.config.capitalMode === "FIXED"
                             ? `${sc.config.capitalFixed ?? 100} USDT`
@@ -1189,7 +1198,7 @@ export default function SettingsTab() {
                         disabled={savingBot === bot.id}
                       />
                       <span className="cfg-auto-hours__sep">–</span>
-                      <input type="number" step="1" min="0" max="23" className="cfg-num-input" style={{ width: "52px" }}
+                      <input type="number" step="1" min="1" max="24" className="cfg-num-input" style={{ width: "52px" }}
                         defaultValue={bot.hoursTo}
                         onBlur={e => patchBot(bot.id, { hoursTo: parseInt(e.target.value) })}
                         disabled={savingBot === bot.id}
@@ -1212,6 +1221,40 @@ export default function SettingsTab() {
                     >
                       <span className="cfg-switch__thumb" />
                     </button>
+                  </div>
+
+                  <div className="cfg-field-row" style={{ borderBottom: "none" }}>
+                    <i className="fa-solid fa-percent cfg-toggle-row__icon" />
+                    <div className="cfg-toggle-row__body">
+                      <div className="cfg-toggle-row__title">Score mínim (%)</div>
+                      <div className="cfg-toggle-row__desc">Buit = usa el de la simulació ({sc?.effectiveConfig?.minProbability ?? 80}%).</div>
+                    </div>
+                    <input type="number" step="5" min="50" max="95" className="cfg-num-input" style={{ width: "60px" }}
+                      defaultValue={bot.minProbability ?? ""}
+                      placeholder={String(sc?.effectiveConfig?.minProbability ?? 80)}
+                      onBlur={e => {
+                        const v = e.target.value.trim();
+                        patchBot(bot.id, { minProbability: v !== "" ? parseInt(v) : null });
+                      }}
+                      disabled={savingBot === bot.id}
+                    />
+                  </div>
+
+                  <div className="cfg-field-row" style={{ borderBottom: "none" }}>
+                    <i className="fa-solid fa-cubes cfg-toggle-row__icon" />
+                    <div className="cfg-toggle-row__body">
+                      <div className="cfg-toggle-row__title">Màx. posicions simultànies</div>
+                      <div className="cfg-toggle-row__desc">Buit = sense límit de posicions obertes.</div>
+                    </div>
+                    <input type="number" step="1" min="1" max="20" className="cfg-num-input" style={{ width: "60px" }}
+                      defaultValue={bot.maxOpen ?? ""}
+                      placeholder="—"
+                      onBlur={e => {
+                        const v = e.target.value.trim();
+                        patchBot(bot.id, { maxOpen: v !== "" ? parseInt(v) : null });
+                      }}
+                      disabled={savingBot === bot.id}
+                    />
                   </div>
                 </div>
               )}
