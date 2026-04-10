@@ -85,6 +85,7 @@ export interface SimTrade {
   capitalAfter:       number;
   score:              number;
   probability:        number;
+  stratConfidence:    string;
   stratName:          string;
   layerScores:        LayerScores;
   // MOON optional fields
@@ -130,6 +131,7 @@ interface OpenTrade {
   tradeCapital:       number;
   score:              number;
   probability:        number;
+  stratConfidence:    string;
   stratName:          string;
   layerScores:        LayerScores;
   // MOON mode state
@@ -660,6 +662,7 @@ export async function POST(req: NextRequest) {
             capitalAfter:       capital,
             score:              trade.score,
             probability:        trade.probability,
+            stratConfidence:    trade.stratConfidence,
             stratName:          trade.stratName,
             layerScores:        trade.layerScores,
             partialExitPrice,
@@ -705,10 +708,11 @@ export async function POST(req: NextRequest) {
             const analysis = analyzeAll(buf, sym, interval);
 
             // ── Qualificació de l'entrada segons el mode ─────────────────
-            let entryScore:       number;
-            let entryProbability: number;
-            let entryStratName:   string;
-            let entryLayerScores: LayerScores;
+            let entryScore:          number;
+            let entryProbability:    number;
+            let entryStratConfidence: string;
+            let entryStratName:      string;
+            let entryLayerScores:    LayerScores;
 
             if (entryMode === "PUMP") {
               // PUMP: entrada per volum anormal + vela verda + tancament fort.
@@ -726,10 +730,11 @@ export async function POST(req: NextRequest) {
               if (range > 0 && lastBar.close < lastBar.low + range * 0.6) continue;
 
               const volRatio   = analysis.relativeVolume ?? pumpVolMin;
-              entryScore       = Math.min(100, Math.round(volRatio * 15));
-              entryProbability = Math.min(95,  entryScore);
-              entryStratName   = "Pump Entry";
-              entryLayerScores = {
+              entryScore           = Math.min(100, Math.round(volRatio * 15));
+              entryProbability     = Math.min(95,  entryScore);
+              entryStratConfidence = "baixa";
+              entryStratName       = "Pump Entry";
+              entryLayerScores     = {
                 direction: 0,
                 context:   Math.min(100, Math.round(volRatio * 20)),
                 trigger:   entryScore,
@@ -752,10 +757,11 @@ export async function POST(req: NextRequest) {
                 if (ema200 !== null && analysis.price < ema200) continue;
               }
 
-              entryScore       = best.confidence;
-              entryProbability = Math.min(95, best.confidence);
-              entryStratName   = `Candle: ${best.name}`;
-              entryLayerScores = {
+              entryScore           = best.confidence;
+              entryProbability     = Math.min(95, best.confidence);
+              entryStratConfidence = "baixa";
+              entryStratName       = `Candle: ${best.name}`;
+              entryLayerScores     = {
                 direction: analysis.raw.ema200 > 0 && analysis.price > analysis.raw.ema200 ? 60 : 30,
                 context:   analysis.raw.rsi > 30 && analysis.raw.rsi < 70 ? 70 : 40,
                 trigger:   best.confidence,
@@ -775,10 +781,11 @@ export async function POST(req: NextRequest) {
                 if (ema200 !== null && analysis.price < ema200) continue;
               }
 
-              entryScore       = analysis.score;
-              entryProbability = probability;
-              entryStratName   = bestStrategy.name;
-              entryLayerScores = analysis.layerScores;
+              entryScore           = analysis.score;
+              entryProbability     = probability;
+              entryStratConfidence = bestStrategy.confidence;
+              entryStratName       = bestStrategy.name;
+              entryLayerScores     = analysis.layerScores;
             }
 
             // ── Càlcul de mides i creació del trade ──────────────────────
@@ -835,6 +842,7 @@ export async function POST(req: NextRequest) {
               tradeCapital,
               score:              entryScore,
               probability:        entryProbability,
+              stratConfidence:    entryStratConfidence,
               stratName:          entryStratName,
               layerScores:        entryLayerScores,
               moonPartialDone:    false,
@@ -909,6 +917,7 @@ export async function POST(req: NextRequest) {
           capitalAfter:       capital,
           score:              trade.score,
           probability:        trade.probability,
+          stratConfidence:    trade.stratConfidence,
           stratName:          trade.stratName,
           layerScores:        trade.layerScores,
           partialExitPrice,

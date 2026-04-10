@@ -1143,6 +1143,9 @@ export default function SimulationTab() {
     if (!result) return;
     const { stats, effectiveConfig, trades, equityCurve } = result;
 
+    const INTERVAL_BONUS: Record<string, number> = { "1d": 10, "4h": 10, "1h": 5, "30m": 2, "15m": 0 };
+    const CONF_BONUS:     Record<string, number> = { alta: 10, moderada: 5, baixa: 0 };
+
     const doc = {
       _meta: {
         generated:   new Date().toISOString(),
@@ -1262,14 +1265,22 @@ export default function SimulationTab() {
         pnl_usdt:       +t.pnlUsdt.toFixed(2),
         pnl_pct:        +t.pnlPct.toFixed(2),
         capital_after:  +t.capitalAfter.toFixed(2),
-        entry_signal: {
-          global_score:       t.score,
-          probability_pct:    t.probability,
-          strategy_name:      t.stratName,
-          direction_score:    t.layerScores?.direction ?? null,
-          context_score:      t.layerScores?.context   ?? null,
-          trigger_score:      t.layerScores?.trigger   ?? null,
-        },
+        entry_signal: (() => {
+          const ib = INTERVAL_BONUS[config.interval] ?? 0;
+          const cb = CONF_BONUS[t.stratConfidence]   ?? 0;
+          return {
+            global_score:        t.score,
+            strategy_confidence: t.stratConfidence,
+            interval_bonus:      ib,
+            confidence_bonus:    cb,
+            probability_pct:     t.probability,
+            formula:             `min(95, round(${t.score}×0.7 + ${ib} + ${cb})) = ${t.probability}`,
+            strategy_name:       t.stratName,
+            direction_score:     t.layerScores?.direction ?? null,
+            context_score:       t.layerScores?.context   ?? null,
+            trigger_score:       t.layerScores?.trigger   ?? null,
+          };
+        })(),
       })),
     };
 
@@ -1676,6 +1687,10 @@ export default function SimulationTab() {
               <input type="number" className="sim-field__input" min="50" max="95" step="5"
                 value={config.minProbability}
                 onChange={e => set("minProbability", parseFloat(e.target.value) || 70)} />
+              <span className="sim-field__hint">
+                Score (0–100): mitjana de 14 indicadors (RSI, MACD, ADX, EMA, Bollinger, Volum, Price Action) — bullish=+1, neutral=0, bearish=−1. BUY si score≥65.
+                Probabilitat = score×0.7 + bonus interval (4h/1d→+10, 1h→+5) + bonus confiança (alta→+10, moderada→+5). Entra si probabilitat ≥ aquest llindar.
+              </span>
             </label>
           )}
           <label className="sim-field">

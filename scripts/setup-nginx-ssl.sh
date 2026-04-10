@@ -25,14 +25,10 @@ sudo dnf install -y epel-release
 sudo dnf install -y nginx
 ok "nginx instal·lat"
 
-step "Instal·lant certbot via snap"
-sudo dnf install -y snapd
-sudo systemctl enable --now snapd.socket
-sudo ln -sf /var/lib/snapd/snap /snap
-# Snap necessita un moment per estar llest
-sleep 5
-sudo snap install --classic certbot
-sudo ln -sf /snap/bin/certbot /usr/bin/certbot
+step "Instal·lant certbot via pip3"
+sudo dnf install -y python3-pip augeas-libs
+sudo pip3 install --upgrade pip
+sudo pip3 install certbot certbot-nginx
 ok "certbot instal·lat"
 
 step "Obrint ports 80 i 443 al firewall (firewalld)"

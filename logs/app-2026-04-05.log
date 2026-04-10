@@ -4028,3 +4028,47 @@
 {"level":30,"time":1775674807812,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
 {"level":30,"time":1775676468784,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
 {"level":30,"time":1775678407877,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775682007469,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775683369665,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775685611682,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775686344631,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":40,"time":1775686360358,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775686362528,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775686362634,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":2,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775686393483,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":2,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775686393823,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":3,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":40,"time":1775686393825,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":3,"pauseSecs":60,"msg":"pausat per errors consecutius"}
+{"level":40,"time":1775686420225,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775686422537,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":3,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":40,"time":1775686422539,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":3,"pauseSecs":60,"msg":"pausat per errors consecutius"}
+{"level":40,"time":1775686480250,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775686482621,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775686583970,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":30,"time":1775689208525,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775692807959,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775696408331,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775700008306,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775703607358,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775768953492,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775768954099,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe diari enviat"}
+{"level":30,"time":1775770031342,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":50,"time":1775770095150,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775770584630,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775770589990,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775770605365,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775770618957,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775770626326,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775770645042,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775770656488,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775770662430,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775770662435,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":2,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775770673998,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775770724282,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":40,"time":1775770724293,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775770730113,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":2,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775770742469,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":3,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":40,"time":1775770742474,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":3,"pauseSecs":60,"msg":"pausat per errors consecutius"}
+{"level":50,"time":1775770755328,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775771144123,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"XLMUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":50,"time":1775771144133,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","symbol":"ETHUSDT","count":1,"max":3,"err":"fetch failed","msg":"error al cicle"}
+{"level":30,"time":1775800583471,"pid":18332,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}

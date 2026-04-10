@@ -10867,6 +10867,34 @@
   padding: 0.25rem 0.4rem;
 }
 .eq-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+/* ── Prob sweep ── */
+.eq-prob-sweep {
+  display: flex; flex-direction: column; gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 6px;
+}
+.eq-prob-sweep__toggle {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.78rem; color: var(--text-2); cursor: pointer;
+}
+.eq-prob-sweep__toggle input[type="checkbox"] { accent-color: var(--accent); }
+.eq-prob-sweep__values { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.eq-prob-chip {
+  display: flex; align-items: center; gap: 0.2rem;
+  font-size: 0.72rem; color: var(--text-2);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.15rem 0.4rem;
+  cursor: pointer; user-select: none;
+}
+.eq-prob-chip:has(input:checked) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
 .eq-error {
   font-size: 0.78rem;
   color: var(--red);

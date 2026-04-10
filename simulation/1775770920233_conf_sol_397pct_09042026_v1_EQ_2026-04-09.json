@@ -1,0 +1,34 @@
+{
+  "name": "conf_sol_397pct_09042026_v1 [EQ 2026-04-09]",
+  "savedAt": "2026-04-09T21:42:00.233Z",
+  "config": {
+    "maxHoldingBars": 245.2,
+    "pumpVolMin": 3,
+    "minProbability": 30,
+    "maxOpen": 3,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 0.9,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4.89,
+    "breakEvenAtr": 2.49,
+    "entryMode": "ANALYSIS"
+  },
+  "pnlPct": 229.73836409988743
+}

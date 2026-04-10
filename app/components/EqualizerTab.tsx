@@ -14,7 +14,7 @@ interface SavedConfig {
 }
 interface EqPoint    { time: number; value: number; }
 interface RunResult  { stats: SimStats; equityCurve: EqPoint[]; trades?: SimTrade[]; }
-interface IterResult { id: number; params: Partial<SimConfig>; stats: SimStats; equityCurve: EqPoint[]; }
+interface IterResult { id: number; params: Partial<SimConfig>; stats: SimStats; equityCurve: EqPoint[]; minProbability?: number; }
 
 const METRIC_OPTIONS: { key: OptMetric; label: string }[] = [
   { key: "pnlPct",        label: "P&L %"        },
@@ -207,6 +207,8 @@ export default function EqualizerTab() {
 
   const [iterations, setIterations] = useState(30);
   const [metric,     setMetric]     = useState<OptMetric>("pnlPct");
+  const [probSweep,  setProbSweep]  = useState(false);
+  const [probValues, setProbValues] = useState<number[]>([60, 70, 80]);
 
   const [running,  setRunning]  = useState(false);
   const [progress, setProgress] = useState(0);
@@ -324,34 +326,52 @@ export default function EqualizerTab() {
     abortRef.current = false;
 
     const accumulated: IterResult[] = [];
-    const sampler = createAdaptiveSampler(iterations);
 
-    for (let i = 0; i < iterations; i++) {
+    // Sweep mode: executa un bloc d'iteracions per cada valor de probabilitat fixat
+    const probBlocks = (probSweep && entryMode === "ANALYSIS" && probValues.length > 0)
+      ? probValues.slice().sort((a, b) => a - b)
+      : [null];
+
+    const totalIter = iterations * probBlocks.length;
+    let globalIter  = 0;
+
+    for (const prob of probBlocks) {
       if (abortRef.current) break;
-      try {
-        const params = adaptiveSample(allDefs, ranges, sampler, metric);
-        const result = await runWith(params, af, at);
-        const entry: IterResult = {
-          id: Date.now() + i,
-          params,
-          stats: result.stats,
-          equityCurve: result.equityCurve ?? [],
-        };
-        accumulated.push(entry);
-        const sorted = [...accumulated]
-          .sort((a, b) => metricValue(b.stats, metric) - metricValue(a.stats, metric))
-          .slice(0, 200);
-        setResults([...sorted]);
-        setProgress(i + 1);
-        sampler.history   = sorted.map(r => ({ params: r.params, score: metricValue(r.stats, metric) }));
-        sampler.iteration = i + 1;
-      } catch {
-        sampler.iteration = i + 1;
+      const sampler = createAdaptiveSampler(iterations);
+
+      for (let i = 0; i < iterations; i++) {
+        if (abortRef.current) break;
+        try {
+          const params = adaptiveSample(allDefs, ranges, sampler, metric);
+          if (prob !== null) params.minProbability = prob;
+          const result = await runWith(params, af, at);
+          const entry: IterResult = {
+            id: Date.now() + globalIter,
+            params,
+            stats: result.stats,
+            equityCurve:    result.equityCurve ?? [],
+            minProbability: prob ?? undefined,
+          };
+          accumulated.push(entry);
+          const sorted = [...accumulated]
+            .sort((a, b) => metricValue(b.stats, metric) - metricValue(a.stats, metric))
+            .slice(0, 200);
+          setResults([...sorted]);
+          globalIter++;
+          setProgress(Math.round((globalIter / totalIter) * 100));
+          sampler.history   = sorted
+            .filter(r => r.minProbability === (prob ?? undefined))
+            .map(r => ({ params: r.params, score: metricValue(r.stats, metric) }));
+          sampler.iteration = i + 1;
+        } catch {
+          sampler.iteration = i + 1;
+          globalIter++;
+        }
       }
     }
 
     setRunning(false);
-  }, [selected, aFrom, aTo, iterations, metric, ranges]);
+  }, [selected, aFrom, aTo, iterations, metric, ranges, probSweep, probValues]);
 
   const handleAbort = () => { abortRef.current = true; };
 
@@ -957,6 +977,36 @@ export default function EqualizerTab() {
                     </label>
                   </div>
 
+                  {/* Sweep de probabilitat — només ANALYSIS */}
+                  {entryMode === "ANALYSIS" && (
+                    <div className="eq-prob-sweep">
+                      <label className="eq-prob-sweep__toggle">
+                        <input type="checkbox" checked={probSweep}
+                          onChange={e => setProbSweep(e.target.checked)} />
+                        <span>Sweep probabilitat mínima</span>
+                        {probSweep && probValues.length > 1 && (
+                          <span className="dim" style={{ fontSize: "0.65rem" }}>
+                            · {probValues.length} blocs × {iterations} iter = {probValues.length * iterations} total
+                          </span>
+                        )}
+                      </label>
+                      {probSweep && (
+                        <div className="eq-prob-sweep__values">
+                          {[20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90].map(v => (
+                            <label key={v} className="eq-prob-chip">
+                              <input type="checkbox"
+                                checked={probValues.includes(v)}
+                                onChange={e => setProbValues(prev =>
+                                  e.target.checked ? [...prev, v].sort((a, b) => a - b) : prev.filter(x => x !== v)
+                                )} />
+                              {v}%
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="eq-actions">
                     {!running ? (
                       <button className="btn-primary btn-sm" onClick={handleSearch}>
@@ -1043,14 +1093,11 @@ export default function EqualizerTab() {
       {/* ── Progress bar ── */}
       {(running || progress > 0) && (
         <div className="eq-progress-wrap">
-          <div className="eq-progress-bar" style={{ width: `${(progress / iterations) * 100}%` }} />
+          <div className="eq-progress-bar" style={{ width: `${progress}%` }} />
           <span className="eq-progress-label">
             {running
-              ? (() => {
-                  const isExp = progress <= Math.ceil(iterations * 0.30);
-                  return `${isExp ? "Explorant" : "Refinant"}… ${progress} / ${iterations}`;
-                })()
-              : `${progress} iteracions completades`}
+              ? `Executant… ${progress}%${probSweep && probValues.length > 1 ? ` · ${probValues.length} blocs de probabilitat` : ""}`
+              : `Completat`}
           </span>
         </div>
       )}
@@ -1088,6 +1135,7 @@ export default function EqualizerTab() {
                   <thead>
                     <tr>
                       <th>#</th>
+                      {probSweep && entryMode === "ANALYSIS" && <th>Prob</th>}
                       {allDefs.map(d => <th key={String(d.key)}>{d.label}</th>)}
                       <th>P&amp;L%</th>
                       <th>WR%</th>
@@ -1104,6 +1152,11 @@ export default function EqualizerTab() {
                         <tr key={r.id} className={isActive ? "eq-row--active" : ""}
                           onClick={() => setPicked(r)}>
                           <td className="dim">{i + 1}</td>
+                          {probSweep && entryMode === "ANALYSIS" && (
+                            <td className="mono" style={{ color: "var(--accent)" }}>
+                              {r.minProbability !== undefined ? `${r.minProbability}%` : "—"}
+                            </td>
+                          )}
                           {allDefs.map(def => (
                             <td key={String(def.key)} className="mono">
                               {def.fmt((r.params as Record<string, number>)[String(def.key)] ?? 0)}

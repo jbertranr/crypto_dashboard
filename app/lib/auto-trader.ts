@@ -10,6 +10,19 @@
  */
 
 import { analyzeAll, type OHLCV } from "./indicators";
+
+// ── Probabilitat d'entrada (idèntic a simulation/run/route.ts) ────────────────
+const INTERVAL_BONUS: Record<string, number> = {
+  "1d": 10, "4h": 10, "1h": 5, "30m": 2, "15m": 0,
+};
+const CONF_BONUS: Record<string, number> = {
+  alta: 10, moderada: 5, baixa: 0,
+};
+function computeProbability(score: number, interval: string, confidence: string): number {
+  return Math.min(95, Math.round(
+    score * 0.7 + (INTERVAL_BONUS[interval] ?? 0) + (CONF_BONUS[confidence] ?? 0),
+  ));
+}
 import { settingGet, settingGetBool } from "./settings-store";
 import { botGetAll, type Bot } from "./bot-store";
 import {
@@ -427,20 +440,28 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     try {
       const analysis = await fetchAndAnalyze(symbol, interval);
 
-      if (analysis.score < minScore || analysis.verdict !== "BUY") {
-        log.auto.debug({ bot: bot.name, symbol, score: analysis.score, verdict: analysis.verdict }, "sense senyal");
+      const bestStrategy = analysis.strategies.find(s => s.active && s.type !== "bearish");
+      const probability  = bestStrategy
+        ? computeProbability(analysis.score, interval, bestStrategy.confidence)
+        : 0;
+
+      if (analysis.verdict !== "BUY" || !bestStrategy || probability < minScore) {
+        log.auto.debug({ bot: bot.name, symbol, score: analysis.score, probability, verdict: analysis.verdict }, "sense senyal");
         scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "NO_SIGNAL" });
         continue;
       }
 
       // Multi-TF check (opcional)
       if (bot.requireMultiTf) {
-        // Scan en el TF superior com a confirmació
         const higherTf: Record<string, string> = { "5m": "1h", "15m": "1h", "30m": "1h", "1h": "4h", "4h": "1d" };
         const confirmTf = higherTf[interval];
         if (confirmTf) {
           const confirm = await fetchAndAnalyze(symbol, confirmTf);
-          if (confirm.score < minScore || confirm.verdict !== "BUY") {
+          const confirmStrategy = confirm.strategies.find(s => s.active && s.type !== "bearish");
+          const confirmProb     = confirmStrategy
+            ? computeProbability(confirm.score, confirmTf, confirmStrategy.confidence)
+            : 0;
+          if (confirm.verdict !== "BUY" || !confirmStrategy || confirmProb < minScore) {
             log.auto.debug({ bot: bot.name, symbol, interval, confirmTf }, "multi-TF no confirmat");
             scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "MULTI_TF_FAIL" });
             continue;

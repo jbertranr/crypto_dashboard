@@ -1,0 +1,73 @@
+{"level":30,"time":1775802004887,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1775802004910,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":40,"nextDailyIn":1390,"msg":"scheduler iniciat"}
+{"level":30,"time":1775802004918,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1775802004928,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1775802005996,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775802006439,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":7,"msg":"inicialitzat"}
+{"level":30,"time":1775802246085,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":50,"time":1775804091176,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775804401872,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775807460552,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775807670610,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"orders","path":"/openOrders","attempt":0,"msg":"clock drift (-1021): resyncing i reintentant"}
+{"level":30,"time":1775808001883,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775808091862,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775809571024,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775809755362,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775809771230,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775809785866,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775811059254,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775811115259,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775811119710,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775811315352,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775811450946,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775811605449,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775815201863,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775815228646,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"orders","path":"/openOrders","attempt":0,"msg":"clock drift (-1021): resyncing i reintentant"}
+{"level":50,"time":1775815340337,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775815355804,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775815355808,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815387708,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815399079,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815480527,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815505438,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815536693,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815550637,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815561688,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815576965,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815597320,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815611951,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775815670928,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775815688449,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775815702742,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775815929338,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":40,"time":1775815957104,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"checkFills overlapped — cycle skipped"}
+{"level":40,"time":1775815977284,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775815977289,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816003228,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775816037846,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775816066705,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816127199,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816194756,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816214187,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816227264,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816241141,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816267221,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816286056,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816298997,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816314764,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816339534,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816354953,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816370876,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816378876,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816394942,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816410880,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816426722,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775816435164,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775816443922,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775816461015,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","err":"fetch failed","msg":"error en prendre snapshot"}
+{"level":50,"time":1775816875193,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775816900487,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775817049198,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775817450937,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":50,"time":1775817454713,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775818808991,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
