@@ -21,6 +21,7 @@ import EqualizerTab from "./EqualizerTab";
 import AutoLabTab from "./AutoLabTab";
 import StatusTab from "./StatusTab";
 import DeployTab from "./DeployTab";
+import { useTradingMode } from "../contexts/TradingModeContext";
 
 export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab" | "status" | "deploy";
 
@@ -129,6 +130,7 @@ function EditModal({ target, onClose, onSuccess }: {
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { viewMode } = useTradingMode();
   const isOco = target.kind === "oco";
 
   const initPrice = isOco
@@ -159,6 +161,7 @@ function EditModal({ target, onClose, onSuccess }: {
             symbol: t.symbol, orderListId: t.orderListId,
             side: t.side, quantity: t.quantity,
             tpPrice: price, slStopPrice: stopPrice, slLimitPrice,
+            mode: viewMode,
           }),
         });
         const d = await res.json();
@@ -173,6 +176,7 @@ function EditModal({ target, onClose, onSuccess }: {
             side: t.order.side, quantity: t.order.origQty,
             price,
             ...(parseFloat(stopPrice) > 0 ? { stopPrice } : {}),
+            mode: viewMode,
           }),
         });
         const d = await res.json();
@@ -255,6 +259,7 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
   onStrategyChange: (key: string, strategy: string | null) => void;
   orderMeta: Record<string, OrderMeta>;
 }) {
+  const { viewMode } = useTradingMode();
   const [canceling,    setCanceling]    = useState<Record<number, boolean>>({});
   const [editTarget,   setEditTarget]   = useState<EditTarget | null>(null);
   const [cancelError,  setCancelError]  = useState<string | null>(null);
@@ -357,10 +362,10 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
       const body = cc.kind === "single"
         ? { symbol: cc.order.symbol, orderId: cc.order.orderId, orderListId: cc.order.orderListId,
             side: cc.order.side, origQty: cc.order.origQty, price: cc.order.price,
-            type: cc.order.type, sellAtMarket }
+            type: cc.order.type, sellAtMarket, mode: viewMode }
         : { symbol: cc.group.symbol, orderId: -1, orderListId: cc.group.listId,
             side: cc.group.side, origQty: cc.group.tpOrd.origQty, price: cc.group.tpOrd.price,
-            type: "ENTRY_OCO", sellAtMarket };
+            type: "ENTRY_OCO", sellAtMarket, mode: viewMode };
 
       const res = await fetch("/api/orders/cancel", {
         method: "POST",
@@ -2131,6 +2136,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
   onOrdersCount?: (n: number) => void;
 }) {
   const setTab = onTab;
+  const { viewMode } = useTradingMode();
   const [showNewOrder,    setShowNewOrder]    = useState(false);
   const [openOrders,      setOpenOrders]      = useState<BinanceOrder[]>([]);
   const [tgSending,       setTgSending]       = useState(false);
@@ -2161,11 +2167,11 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 
   const fetchOpen = useCallback(() => {
     setLoadingO(true); setErrorO(null);
-    fetch("/api/orders").then(r => r.json())
+    fetch(`/api/orders?mode=${viewMode}`).then(r => r.json())
       .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); setLastRefreshed(new Date()); onOrdersCount?.(d.length); })
       .catch(e => setErrorO(e.message)).finally(() => setLoadingO(false));
     fetch("/api/orders/meta").then(r => r.json()).then(d => { if (!d.error) setOrderMeta(d); }).catch(() => {});
-  }, []);
+  }, [viewMode]);
 
   const fetchHistory = useCallback(() => {
     setLoadingH(true); setErrorH(null);
@@ -2369,7 +2375,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
                   onClick={async () => {
                     setPanicState("running");
                     try {
-                      const r = await fetch("/api/orders/cancel-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellAll: false }) });
+                      const r = await fetch("/api/orders/cancel-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellAll: false, mode: viewMode }) });
                       const d = await r.json() as { canceledOrders?: number };
                       setPanicMsg(`${d.canceledOrders ?? 0} ordres cancel·lades.`);
                       setPanicState("done");
@@ -2383,7 +2389,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
                   onClick={async () => {
                     setPanicState("running");
                     try {
-                      const r = await fetch("/api/orders/cancel-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellAll: true }) });
+                      const r = await fetch("/api/orders/cancel-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sellAll: true, mode: viewMode }) });
                       const d = await r.json() as { canceledOrders?: number; soldPositions?: number };
                       setPanicMsg(`${d.canceledOrders ?? 0} ordres cancel·lades · ${d.soldPositions ?? 0} posicions venudes.`);
                       setPanicState("done");

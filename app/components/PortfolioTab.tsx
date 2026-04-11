@@ -7,6 +7,7 @@ import { formatCurrency } from "../lib/format";
 import CoinIcon, { coinColor } from "./CoinIcon";
 import PortfolioChart, { Period } from "./PortfolioChart";
 import { STABLES } from "../lib/constants";
+import { useTradingMode } from "../contexts/TradingModeContext";
 
 const SNAPSHOT_INTERVAL = 15 * 60 * 1000; // 15 min
 
@@ -203,6 +204,7 @@ export default function PortfolioTab({
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
   const [costBasis, setCostBasis] = useState<Record<string, CostBasisEntry>>({});
+  const { viewMode } = useTradingMode();
   const [selling,   setSelling]   = useState<Record<string, boolean>>({});
   const [sellConfirm, setSellConfirm] = useState<string | null>(null); // asset awaiting confirm
   const [cancelSellConfirm, setCancelSellConfirm] = useState<string | null>(null); // asset awaiting OCO cancel+sell confirm
@@ -221,11 +223,11 @@ export default function PortfolioTab({
 
   const load = useCallback(() => {
     setLoading(true); setError(null);
-    fetch("/api/balance", { cache: "no-store" }).then(r => r.json())
+    fetch(`/api/balance?mode=${viewMode}`, { cache: "no-store" }).then(r => r.json())
       .then(bal => { if (bal.error) throw new Error(bal.error); setBalances(bal); setLastRefreshed(new Date()); })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [viewMode]);
 
   useEffect(() => { load(); }, [load, refreshTrigger]);
 
@@ -286,7 +288,7 @@ export default function PortfolioTab({
       }
       // Wait for Binance to release the locked qty
       await new Promise(res => setTimeout(res, 1500));
-      const balRes = await fetch("/api/balance", { cache: "no-store" });
+      const balRes = await fetch(`/api/balance?mode=${viewMode}`, { cache: "no-store" });
       const bals = await balRes.json();
       const bal = bals.find((b: { asset: string; free: string }) => b.asset === asset);
       const freeQty = bal ? parseFloat(bal.free) : 0;
@@ -307,7 +309,7 @@ export default function PortfolioTab({
       const res = await fetch("/api/orders/sell-to-usdt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ asset, quantity: quantity.toString() }),
+        body: JSON.stringify({ asset, quantity: quantity.toString(), mode: viewMode }),
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);

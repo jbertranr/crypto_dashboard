@@ -12,11 +12,12 @@ import { sendTelegram } from "../../../lib/telegram";
 const NEVER_SELL = new Set(["USDT", "BUSD", "USDC", "FDUSD", "TUSD", "BNB"]);
 
 export async function POST(req: NextRequest) {
-  const { sellAll = false } = await req.json().catch(() => ({})) as { sellAll?: boolean };
+  const { sellAll = false, mode: rawMode } = await req.json().catch(() => ({})) as { sellAll?: boolean; mode?: string };
+  const mode = rawMode === "real" ? "real" : "paper" as const;
 
   try {
     /* ── 1. Cancel all open orders ── */
-    const orders = await getOpenOrders();
+    const orders = await getOpenOrders(mode);
     const canceledOcos = new Set<number>();
     const cancelResults: { type: string; id: number | string; symbol: string }[] = [];
 
@@ -25,11 +26,11 @@ export async function POST(req: NextRequest) {
         if (order.orderListId !== -1) {
           if (!canceledOcos.has(order.orderListId)) {
             canceledOcos.add(order.orderListId);
-            await cancelOcoOrder(order.symbol, order.orderListId);
+            await cancelOcoOrder(order.symbol, order.orderListId, mode);
             cancelResults.push({ type: "oco", id: order.orderListId, symbol: order.symbol });
           }
         } else {
-          await cancelOrder(order.symbol, order.orderId);
+          await cancelOrder(order.symbol, order.orderId, mode);
           cancelResults.push({ type: "order", id: order.orderId, symbol: order.symbol });
         }
       } catch (e) {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       // Wait briefly so cancelled orders release locked balances
       await new Promise(r => setTimeout(r, 1500));
 
-      const account = await getAccount();
+      const account = await getAccount(mode);
       const crypto = account.balances.filter(b => {
         const free = parseFloat(b.free);
         return free > 0 && !NEVER_SELL.has(b.asset);
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
           const qty = roundPriceDown(parseFloat(bal.free), stepSize);
           if (parseFloat(qty) <= 0) continue;
 
-          const result = await placeMarketSell(symbol, qty);
+          const result = await placeMarketSell(symbol, qty, mode);
           sellResults.push({ symbol, qty, quoteQty: result.cummulativeQuoteQty });
           log.orders.warn({ symbol, qty, quoteQty: result.cummulativeQuoteQty }, "⚠️ Venda d'emergència executada");
         } catch (e) {

@@ -26,7 +26,8 @@ async function getStepSize(symbol: string): Promise<{ stepSize: string; minQty: 
 
 export async function POST(req: NextRequest) {
   try {
-    const { asset, quantity } = await req.json() as { asset: string; quantity: string };
+    const { asset, quantity, mode: rawMode } = await req.json() as { asset: string; quantity: string; mode?: string };
+    const mode = rawMode === "real" ? "real" : "paper" as const;
     const symbol = `${asset}USDT`;
 
     const { stepSize, minQty } = await getStepSize(symbol);
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     if (parseFloat(roundedQty) < parseFloat(minQty))
       throw new Error(`Quantitat insuficient per vendre (${roundedQty} ${asset}, mínim ${minQty})`);
 
-    const result = await placeMarketSell(symbol, roundedQty);
+    const result = await placeMarketSell(symbol, roundedQty, mode);
     const fillPrice = parseFloat(result.cummulativeQuoteQty) / parseFloat(result.executedQty);
 
     log.orders.info({ symbol, qty: roundedQty, fillPrice, orderId: result.orderId }, "market sell → USDT");

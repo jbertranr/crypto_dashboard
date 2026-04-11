@@ -8,11 +8,12 @@ import { log } from "../../../lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, orderId, orderListId, side, origQty, price, type, sellAtMarket } = await req.json();
+    const { symbol, orderId, orderListId, side, origQty, price, type, sellAtMarket, mode: rawMode } = await req.json();
+    const mode = rawMode === "real" ? "real" : "paper" as const;
     let result;
     if (orderListId != null && orderListId !== -1) {
       try {
-        result = await cancelOcoOrder(symbol, orderListId);
+        result = await cancelOcoOrder(symbol, orderListId, mode);
         log.orders.info({ symbol, orderListId }, "OCO cancel·lada");
       } catch (e) {
         const msg = (e as Error).message ?? "";
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
       }
     } else {
       try {
-        result = await cancelOrder(symbol, orderId);
+        result = await cancelOrder(symbol, orderId, mode);
         log.orders.info({ symbol, orderId }, "ordre cancel·lada");
       } catch (e) {
         const msg = (e as Error).message ?? "";
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
       // ── Optional: market sell to convert position to USDT ────────────────
       if (sellAtMarket && side === "SELL" && numQty > 0) {
         try {
-          const sellResult = await placeMarketSell(symbol, String(numQty));
+          const sellResult = await placeMarketSell(symbol, String(numQty), mode);
           const execQty    = parseFloat(sellResult.executedQty);
           const execValue  = parseFloat(sellResult.cummulativeQuoteQty);
           const execPrice  = execQty > 0 ? execValue / execQty : 0;

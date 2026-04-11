@@ -8,13 +8,15 @@ import { db, orderMetaGet } from "../../lib/cache-store";
 import { apiError } from "../../lib/api-error";
 import { log } from "../../lib/logger";
 
-export async function GET() {
+export async function GET(request: Request) {
   ensureOrderMonitor();
   ensureScheduler();
   ensureCrashMonitor();
   ensureAutoTrader();
   try {
-    const orders = await getOpenOrders();
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get("mode") === "real" ? "real" : "paper";
+    const orders = await getOpenOrders(mode);
 
     // Trailing actius: sl_order_id → { originOcoListId, slUpdateCount }
     const trailingRows = db.prepare(

@@ -1,4 +1,4 @@
-import { createHmac } from "crypto";
+import { createHmac, sign as cryptoSign, createPrivateKey } from "crypto";
 import { log } from "./logger";
 
 export type TradingMode = "paper" | "real";
@@ -10,21 +10,31 @@ function getBaseUrl(mode: TradingMode = "paper"): string {
   return mode === "real" ? MAINNET : TESTNET;
 }
 
-function getCredentials(mode: TradingMode = "paper"): { apiKey: string; secretKey: string } {
+type KeyType = "hmac" | "ed25519" | "rsa";
+
+interface Credentials {
+  apiKey:   string;
+  secretKey: string;
+  keyType:  KeyType;
+}
+
+function getCredentials(mode: TradingMode = "paper"): Credentials {
   if (mode === "real") {
     const apiKey    = process.env.BINANCE_API_KEY_REAL;
     const secretKey = process.env.BINANCE_SECRET_KEY_REAL;
     if (!apiKey || !secretKey) {
       throw new Error("BINANCE_API_KEY_REAL i BINANCE_SECRET_KEY_REAL no estan configurats a .env.local");
     }
-    return { apiKey, secretKey };
+    const keyType = (process.env.BINANCE_KEY_TYPE_REAL ?? "hmac").toLowerCase() as KeyType;
+    return { apiKey, secretKey, keyType };
   }
-  const apiKey   = process.env.BINANCE_API_KEY;
+  const apiKey    = process.env.BINANCE_API_KEY;
   const secretKey = process.env.BINANCE_SECRET_KEY;
   if (!apiKey || !secretKey) {
     throw new Error("BINANCE_API_KEY i BINANCE_SECRET_KEY són requerits. Afegeix-los a .env.local");
   }
-  return { apiKey, secretKey };
+  const keyType = (process.env.BINANCE_KEY_TYPE ?? "hmac").toLowerCase() as KeyType;
+  return { apiKey, secretKey, keyType };
 }
 
 /* ── Server-time sync ──────────────────────────────────────── */
@@ -49,13 +59,24 @@ async function getSyncedTimestamp(mode: TradingMode = "paper"): Promise<number> 
 }
 
 function sign(params: Record<string, string | number>, mode: TradingMode = "paper"): string {
-  const { secretKey } = getCredentials(mode);
+  const { secretKey, keyType } = getCredentials(mode);
   const query = new URLSearchParams(
     Object.entries(params).map(([k, v]) => [k, String(v)])
   ).toString();
-  const sig = createHmac("sha256", secretKey)
-    .update(query)
-    .digest("hex");
+
+  let sig: string;
+  if (keyType === "ed25519" || keyType === "rsa") {
+    // secretKey conté el PEM de la clau privada.
+    // Les variables d'entorn guarden \n literals — els convertim a salts de línia reals.
+    const pem        = secretKey.replace(/\\n/g, "\n");
+    const privateKey = createPrivateKey(pem);
+    const sigBuf     = cryptoSign(null, Buffer.from(query), privateKey);
+    sig = encodeURIComponent(sigBuf.toString("base64"));
+  } else {
+    // HMAC-SHA256 (per defecte)
+    sig = createHmac("sha256", secretKey).update(query).digest("hex");
+  }
+
   return `${query}&signature=${sig}`;
 }
 

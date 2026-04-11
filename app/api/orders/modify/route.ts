@@ -7,8 +7,9 @@ import { notifySlModified } from "../../../lib/telegram";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, orderId, side, quantity, price, stopPrice } = await req.json();
-    const result = await modifyOrder(symbol, orderId, side, quantity, price, stopPrice);
+    const { symbol, orderId, side, quantity, price, stopPrice, mode: rawMode } = await req.json();
+    const mode = rawMode === "real" ? "real" : "paper" as const;
+    const result = await modifyOrder(symbol, orderId, side, quantity, price, stopPrice, mode);
     log.orders.info({ symbol, orderId, side, price, stopPrice }, "ordre modificada");
 
     if (stopPrice && settingGetBool("tg_on_sl_modify")) {
