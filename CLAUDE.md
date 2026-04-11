@@ -120,3 +120,24 @@ No cal actualitzar cap URL quan canvia el túnel.
 - Els bots de trading s'activen a través de la configuració del dashboard (port 3000)
 - El scheduler comprova cada hora si les ordres de Binance coincideixen amb la DB local; si detecta divergències envia alerta per Telegram
 - Per testejar la consistència d'ordres manualment: `node scripts/test-orders.mjs`
+
+---
+
+## Trading real (Mainnet Binance)
+
+L'aplicació suporta **paper trading** (Testnet, per defecte) i **real trading** (Mainnet) en paral·lel. Cada bot i cada ordre manual tria el mode independentment.
+
+### Activació ràpida
+
+1. Afegeix les claus reals al `.env.local`:
+   ```env
+   BINANCE_API_KEY_REAL=<la_teva_clau_mainnet>
+   BINANCE_SECRET_KEY_REAL=<el_teu_secret_mainnet>
+   ```
+2. Reinicia l'aplicació
+3. A la navegació apareix el toggle **PAPER | REAL** — clica **REAL** per activar-lo
+4. Per crear un bot en mode real: **Configuració → Bots → Nou bot → Mode: REAL**
+
+> Si `BINANCE_API_KEY_REAL` és buit, el botó REAL queda desactivat automàticament.
+
+Documentació completa: [`docs/paper-real-trading.md`](docs/paper-real-trading.md)

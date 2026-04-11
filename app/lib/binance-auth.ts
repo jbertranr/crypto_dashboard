@@ -1,9 +1,24 @@
 import { createHmac } from "crypto";
 import { log } from "./logger";
 
-const TESTNET = "https://demo-api.binance.com/api/v3";
+export type TradingMode = "paper" | "real";
 
-function getCredentials(): { apiKey: string; secretKey: string } {
+const TESTNET = "https://demo-api.binance.com/api/v3";
+const MAINNET = "https://api.binance.com/api/v3";
+
+function getBaseUrl(mode: TradingMode = "paper"): string {
+  return mode === "real" ? MAINNET : TESTNET;
+}
+
+function getCredentials(mode: TradingMode = "paper"): { apiKey: string; secretKey: string } {
+  if (mode === "real") {
+    const apiKey    = process.env.BINANCE_API_KEY_REAL;
+    const secretKey = process.env.BINANCE_SECRET_KEY_REAL;
+    if (!apiKey || !secretKey) {
+      throw new Error("BINANCE_API_KEY_REAL i BINANCE_SECRET_KEY_REAL no estan configurats a .env.local");
+    }
+    return { apiKey, secretKey };
+  }
   const apiKey   = process.env.BINANCE_API_KEY;
   const secretKey = process.env.BINANCE_SECRET_KEY;
   if (!apiKey || !secretKey) {
@@ -16,11 +31,11 @@ function getCredentials(): { apiKey: string; secretKey: string } {
 let _timeOffset = 0;
 let _lastSync   = 0;
 
-async function getSyncedTimestamp(): Promise<number> {
+async function getSyncedTimestamp(mode: TradingMode = "paper"): Promise<number> {
   const now = Date.now();
   if (now - _lastSync > 2 * 60 * 1000) {          // re-sync every 2 min
     try {
-      const r = await fetch(`${TESTNET}/time`, { cache: "no-store" });
+      const r = await fetch(`${getBaseUrl(mode)}/time`, { cache: "no-store" });
       const d = await r.json() as { serverTime: number };
       // Compute offset as server time minus our local time at the moment the
       // response is processed. This intentionally under-corrects by ~½ RTT,
@@ -33,8 +48,8 @@ async function getSyncedTimestamp(): Promise<number> {
   return Date.now() + _timeOffset;
 }
 
-function sign(params: Record<string, string | number>): string {
-  const { secretKey } = getCredentials();
+function sign(params: Record<string, string | number>, mode: TradingMode = "paper"): string {
+  const { secretKey } = getCredentials(mode);
   const query = new URLSearchParams(
     Object.entries(params).map(([k, v]) => [k, String(v)])
   ).toString();
@@ -50,15 +65,17 @@ async function signedRequest<T>(
   method: "GET" | "DELETE" | "POST" | "PUT",
   path: string,
   params: Record<string, string | number> = {},
+  mode: TradingMode = "paper",
   _clockRetried = false,
   _attempt = 0,
 ): Promise<T> {
-  const timestamp = await getSyncedTimestamp();
-  const query = sign({ ...params, timestamp, recvWindow: 30_000 });
-  const isBody = method === "POST" || method === "PUT";
-  const url = isBody ? `${TESTNET}${path}` : `${TESTNET}${path}?${query}`;
+  const BASE      = getBaseUrl(mode);
+  const timestamp = await getSyncedTimestamp(mode);
+  const query     = sign({ ...params, timestamp, recvWindow: 30_000 }, mode);
+  const isBody    = method === "POST" || method === "PUT";
+  const url       = isBody ? `${BASE}${path}` : `${BASE}${path}?${query}`;
 
-  const { apiKey } = getCredentials();
+  const { apiKey } = getCredentials(mode);
   const res = await fetch(url, {
     method,
     headers: {
@@ -79,7 +96,7 @@ async function signedRequest<T>(
     if (!_clockRetried && errMsg.includes("-1021")) {
       _lastSync = 0;
       log.orders.warn({ path, attempt: _attempt }, "clock drift (-1021): resyncing i reintentant");
-      return signedRequest<T>(method, path, params, true, _attempt);
+      return signedRequest<T>(method, path, params, mode, true, _attempt);
     }
 
     // 5xx: transient Binance / gateway error
@@ -96,7 +113,7 @@ async function signedRequest<T>(
         const delay = Math.pow(2, _attempt) * 1000;
         log.orders.info({ path, delay, nextAttempt: _attempt + 1 }, "reintentant GET...");
         await new Promise(r => setTimeout(r, delay));
-        return signedRequest<T>(method, path, params, _clockRetried, _attempt + 1);
+        return signedRequest<T>(method, path, params, mode, _clockRetried, _attempt + 1);
       }
     }
 
@@ -111,8 +128,8 @@ async function signedRequest<T>(
   return res.json();
 }
 
-async function signedGet<T>(path: string, params: Record<string, string | number> = {}): Promise<T> {
-  return signedRequest<T>("GET", path, params);
+async function signedGet<T>(path: string, params: Record<string, string | number> = {}, mode: TradingMode = "paper"): Promise<T> {
+  return signedRequest<T>("GET", path, params, mode);
 }
 
 export interface BinanceOrder {
@@ -156,78 +173,80 @@ export interface BinanceTrade {
   isMaker: boolean;
 }
 
-export async function getMyTrades(symbol: string, limit = 20): Promise<BinanceTrade[]> {
-  return signedGet<BinanceTrade[]>("/myTrades", { symbol, limit });
+export async function getMyTrades(symbol: string, limit = 20, mode: TradingMode = "paper"): Promise<BinanceTrade[]> {
+  return signedGet<BinanceTrade[]>("/myTrades", { symbol, limit }, mode);
 }
 
-export async function getOpenOrders(): Promise<BinanceOrder[]> {
-  return signedGet<BinanceOrder[]>("/openOrders");
+export async function getOpenOrders(mode: TradingMode = "paper"): Promise<BinanceOrder[]> {
+  return signedGet<BinanceOrder[]>("/openOrders", {}, mode);
 }
 
-export async function getOrderHistory(symbol: string, limit = 20): Promise<BinanceOrder[]> {
-  return signedGet<BinanceOrder[]>("/allOrders", { symbol, limit });
+export async function getOrderHistory(symbol: string, limit = 20, mode: TradingMode = "paper"): Promise<BinanceOrder[]> {
+  return signedGet<BinanceOrder[]>("/allOrders", { symbol, limit }, mode);
 }
 
-export async function getAccount(): Promise<BinanceAccount> {
-  return signedGet<BinanceAccount>("/account");
+export async function getAccount(mode: TradingMode = "paper"): Promise<BinanceAccount> {
+  return signedGet<BinanceAccount>("/account", {}, mode);
 }
 
-export async function cancelOrder(symbol: string, orderId: number): Promise<unknown> {
-  return signedRequest("DELETE", "/order", { symbol, orderId });
+export async function cancelOrder(symbol: string, orderId: number, mode: TradingMode = "paper"): Promise<unknown> {
+  return signedRequest("DELETE", "/order", { symbol, orderId }, mode);
 }
 
-export async function cancelOcoOrder(symbol: string, orderListId: number): Promise<unknown> {
-  return signedRequest("DELETE", "/orderList", { symbol, orderListId });
+export async function cancelOcoOrder(symbol: string, orderListId: number, mode: TradingMode = "paper"): Promise<unknown> {
+  return signedRequest("DELETE", "/orderList", { symbol, orderListId }, mode);
 }
 
-export async function getOrder(symbol: string, orderId: number): Promise<{
+export async function getOrder(symbol: string, orderId: number, mode: TradingMode = "paper"): Promise<{
   status: string; price: string; stopPrice: string;
   executedQty: string; cummulativeQuoteQty: string; type: string;
 }> {
-  return signedGet(`/order`, { symbol, orderId });
+  return signedGet(`/order`, { symbol, orderId }, mode);
 }
 
-export async function getTickerPrice(symbol: string): Promise<number> {
-  const res = await fetch(`${TESTNET}/ticker/price?symbol=${symbol}`, { cache: "no-store" });
+export async function getTickerPrice(symbol: string, mode: TradingMode = "paper"): Promise<number> {
+  const base = getBaseUrl(mode);
+  const res = await fetch(`${base}/ticker/price?symbol=${symbol}`, { cache: "no-store" });
   const d = await res.json() as { price: string };
   return parseFloat(d.price);
 }
 
 export async function placeMarketSell(
-  symbol: string, quantity: string
+  symbol: string, quantity: string, mode: TradingMode = "paper"
 ): Promise<{ orderId: number; executedQty: string; cummulativeQuoteQty: string }> {
   return signedRequest("POST", "/order", {
     symbol, side: "SELL", type: "MARKET", quantity,
-  });
+  }, mode);
 }
 
 export async function placeStopLossLimitOrder(params: {
   symbol: string; side: "BUY" | "SELL"; quantity: string;
   stopPrice: string; limitPrice: string;
-}): Promise<{ orderId: number; status: string }> {
+}, mode: TradingMode = "paper"): Promise<{ orderId: number; status: string }> {
   return signedRequest("POST", "/order", {
     symbol: params.symbol, side: params.side, type: "STOP_LOSS_LIMIT",
     quantity: params.quantity, stopPrice: params.stopPrice,
     price: params.limitPrice, timeInForce: "GTC",
-  });
+  }, mode);
 }
 
 export async function placeLimitMakerOrder(params: {
   symbol: string; side: "BUY" | "SELL"; quantity: string; price: string;
-}): Promise<{ orderId: number; status: string }> {
+}, mode: TradingMode = "paper"): Promise<{ orderId: number; status: string }> {
   return signedRequest("POST", "/order", {
     symbol: params.symbol, side: params.side, type: "LIMIT_MAKER",
     quantity: params.quantity, price: params.price,
-  });
+  }, mode);
 }
 
 export async function modifyOrder(
   symbol: string, orderId: number, side: string,
-  quantity: string, price: string, stopPrice?: string
+  quantity: string, price: string, stopPrice?: string,
+  mode: TradingMode = "paper"
 ): Promise<unknown> {
   const params: Record<string, string | number> = { symbol, orderId, side, quantity, price };
   if (stopPrice) params.stopPrice = stopPrice;
-  return signedRequest("PUT", "/order", params);
+  return signedRequest("PUT", "/order", params, mode);
 }
 
 /**
@@ -335,17 +354,18 @@ export interface MarketBuyResult {
 
 export async function placeMarketBuy(
   symbol: string,
-  quoteOrderQty: string
+  quoteOrderQty: string,
+  mode: TradingMode = "paper"
 ): Promise<MarketBuyResult> {
   return signedRequest("POST", "/order", {
     symbol, side: "BUY", type: "MARKET", quoteOrderQty,
-  });
+  }, mode);
 }
 
 export async function placeOcoOrder(params: {
   symbol: string; side: "BUY" | "SELL"; quantity: string;
   tpPrice: string; slStopPrice: string; slLimitPrice: string;
-}): Promise<unknown> {
+}, mode: TradingMode = "paper"): Promise<unknown> {
   const { symbol, side, quantity, tpPrice, slStopPrice, slLimitPrice } = params;
   // New Binance OCO format uses aboveType/belowType.
   // For SELL OCO: TP (LIMIT_MAKER) is the above order, SL (STOP_LOSS_LIMIT) is the below order.
@@ -364,5 +384,5 @@ export async function placeOcoOrder(params: {
           abovePrice: slLimitPrice,     aboveTimeInForce: "GTC",
           belowType: "LIMIT_MAKER",    belowPrice: tpPrice,
         };
-  return signedRequest("POST", "/orderList/oco", body);
+  return signedRequest("POST", "/orderList/oco", body, mode);
 }

@@ -43,6 +43,7 @@ db.exec(`
   if (!cols.includes("exit_desc"))       db.exec("ALTER TABLE bots ADD COLUMN exit_desc        TEXT    NOT NULL DEFAULT ''");
   if (!cols.includes("min_probability")) db.exec("ALTER TABLE bots ADD COLUMN min_probability  INTEGER          DEFAULT NULL");
   if (!cols.includes("max_open"))        db.exec("ALTER TABLE bots ADD COLUMN max_open          INTEGER          DEFAULT NULL");
+  if (!cols.includes("mode"))            db.exec("ALTER TABLE bots ADD COLUMN mode              TEXT    NOT NULL DEFAULT 'paper'");
 }
 
 /* ── Types ───────────────────────────────────────────────────── */
@@ -62,6 +63,7 @@ export interface Bot {
   exitDesc:       string;
   minProbability: number | null;  // null = usa el de la config de simulació
   maxOpen:        number | null;  // null = usa el de la config de simulació
+  mode:           "paper" | "real";
   createdAt:      number;
 }
 
@@ -80,6 +82,7 @@ interface BotRow {
   exit_desc:        string;
   min_probability:  number | null;
   max_open:         number | null;
+  mode:             string;
   created_at:       number;
 }
 
@@ -99,6 +102,7 @@ function rowToBot(row: BotRow): Bot {
     exitDesc:       row.exit_desc  || "",
     minProbability: row.min_probability ?? null,
     maxOpen:        row.max_open        ?? null,
+    mode:           (row.mode === "real" ? "real" : "paper"),
     createdAt:      row.created_at,
   };
 }
@@ -132,6 +136,7 @@ export function botCreate(data: {
   exitDesc?:       string;
   minProbability?: number | null;
   maxOpen?:        number | null;
+  mode?:           "paper" | "real";
 }): Bot {
   if (data.budgetUsdt !== undefined && data.budgetUsdt <= 0)
     throw new Error("budgetUsdt ha de ser > 0");
@@ -147,8 +152,8 @@ export function botCreate(data: {
   const now  = Date.now();
   db.prepare(`
     INSERT INTO bots
-      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, created_at)
-    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, mode, created_at)
+    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, code,
     data.name, data.simId,
@@ -161,6 +166,7 @@ export function botCreate(data: {
     data.exitDesc       ?? "",
     data.minProbability ?? null,
     data.maxOpen        ?? null,
+    data.mode           ?? "paper",
     now,
   );
   return botGet(id)!;
@@ -185,6 +191,7 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "
   if (patch.exitDesc       !== undefined) { fields.push("exit_desc = ?");          values.push(patch.exitDesc); }
   if ("minProbability" in patch)          { fields.push("min_probability = ?");    values.push(patch.minProbability ?? null); }
   if ("maxOpen"        in patch)          { fields.push("max_open = ?");           values.push(patch.maxOpen        ?? null); }
+  if (patch.mode       !== undefined)     { fields.push("mode = ?");               values.push(patch.mode); }
 
   if (fields.length === 0) return existing;
   values.push(id);

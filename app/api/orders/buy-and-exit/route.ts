@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { placeMarketBuy, placeOcoOrder, getTickerPrice, roundPriceUp, roundPriceDown } from "../../../lib/binance-auth";
+import { placeMarketBuy, placeOcoOrder, getTickerPrice, roundPriceUp, roundPriceDown, type TradingMode } from "../../../lib/binance-auth";
 import { trailingSet, cacheGet, nextTradeCode, orderMetaSet } from "../../../lib/cache-store";
 import { ensureTrailingEngine } from "../../../lib/trailing-engine";
 import { apiError } from "../../../lib/api-error";
@@ -10,20 +10,22 @@ import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, quoteOrderQty, tpPrice: tpTarget, slPrice: slTarget, trailing, botName } = await req.json() as {
+    const { symbol, quoteOrderQty, tpPrice: tpTarget, slPrice: slTarget, trailing, botName, mode: rawMode } = await req.json() as {
       symbol: string;
       quoteOrderQty: string;
       tpPrice: number;
       slPrice: number;
       botName?: string | null;
+      mode?: string;
       trailing?: {
         activateAt: number; distance: number;
         activateAtr: number; distanceAtr: number; logic: string;
       };
     };
+    const mode: TradingMode = rawMode === "real" ? "real" : "paper";
 
     // 1. Market buy
-    const buyResult = await placeMarketBuy(symbol, quoteOrderQty);
+    const buyResult = await placeMarketBuy(symbol, quoteOrderQty, mode);
     const executedQty = buyResult.executedQty;
     const fillPrice = parseFloat(buyResult.cummulativeQuoteQty) / parseFloat(executedQty);
 
@@ -68,7 +70,7 @@ export async function POST(req: NextRequest) {
     // 4. Calculate OCO prices
     // Use the exact prices from the analysis. Only adjust if the market has already moved
     // past them (Binance rejects TP below current price or SL above current price).
-    const currentPrice = await getTickerPrice(symbol);
+    const currentPrice = await getTickerPrice(symbol, mode);
     if (!Number.isFinite(currentPrice) || currentPrice <= 0)
       throw new Error(`Preu actual invàlid de Binance: ${currentPrice}`);
 
@@ -95,7 +97,7 @@ export async function POST(req: NextRequest) {
     const ocoResult = await placeOcoOrder({
       symbol, side: "SELL", quantity: ocoQty,
       tpPrice, slStopPrice, slLimitPrice,
-    }) as Record<string, unknown>;
+    }, mode) as Record<string, unknown>;
 
     log.orders.info({ symbol, side: "SELL", fillPrice, quantity: ocoQty, commissionInBase, tpPrice, slStopPrice, buyOrderId: buyResult.orderId, ocoOrderListId: ocoResult.orderListId }, "compra de mercat + OCO");
 
@@ -152,7 +154,8 @@ export async function POST(req: NextRequest) {
         capitalMode:        settingGet("capital_mode"),
         notes:              null,
         tradeCode,
-        source:             "AUTO",
+        source:             "MANUAL",
+        mode,
         trailingActivateAt: trailing?.activateAt ?? null,
         executedAt:         Date.now(),
       });

@@ -318,6 +318,112 @@
   margin-top: 0.1rem;
 }
 
+/* ── Paper / Real mode toggle in nav ─── */
+.nav__mode-toggle {
+  margin: 0.5rem 0.75rem 0.75rem;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.nav__mode-toggle--collapsed {
+  margin: 0.5rem 0.375rem 0.75rem;
+  flex-direction: column;
+}
+
+.nav__mode-btn {
+  flex: 1;
+  padding: 4px 8px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav__mode-btn--active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.nav__mode-btn--real.nav__mode-btn--active {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
+.nav__mode-btn--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── cfg-mode-btn (SettingsTab bot form) ─── */
+.cfg-mode-btn {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cfg-mode-btn--active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.cfg-mode-btn--real.cfg-mode-btn--active {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* ── Bot mode badge (SettingsTab bot list) ─── */
+.bot-card__mode-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  margin-left: 4px;
+}
+
+.bot-card__mode-badge--real {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
+/* ── Journal mode badge ─── */
+.journal-mode-badge {
+  display: inline-block;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.journal-mode-badge--real {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
 /* ----------------------------------------------------------
    BLOCK: topbar — full-width header
    ---------------------------------------------------------- */
@@ -462,6 +568,44 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+}
+
+.topbar__mode-toggle {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--bg-2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.topbar__mode-btn {
+  padding: 3px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.topbar__mode-btn--active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.topbar__mode-btn--real.topbar__mode-btn--active {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+}
+
+.topbar__mode-btn--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .topbar__live {

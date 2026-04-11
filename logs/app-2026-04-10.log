@@ -71,3 +71,47 @@
 {"level":40,"time":1775817450937,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
 {"level":50,"time":1775817454713,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
 {"level":30,"time":1775818808991,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775819867278,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775822407642,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775826008567,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775829165411,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775829608382,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775833208480,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775835282340,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775836808577,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775839309705,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":40,"time":1775840089815,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775840408561,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775840438783,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775842393048,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775844008707,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775846347306,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775847608904,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775849811078,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775851208652,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775851851302,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":40,"time":1775853231521,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775854808595,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775855063637,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775858408596,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775862008642,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775865079021,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775865608612,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775869208597,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775872808619,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":40,"time":1775873093928,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","err":"fetch failed","msg":"checkOrphanPositions: error obtenint dades"}
+{"level":30,"time":1775876408803,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775880008734,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775883608662,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775885408762,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe diari enviat"}
+{"level":30,"time":1775887208775,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775890808507,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1775894408544,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775897078706,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":30,"time":1775898009124,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775898477921,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775898762714,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":50,"time":1775899830183,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
+{"level":40,"time":1775901040742,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","err":"fetch failed","msg":"error en prendre snapshot"}
+{"level":30,"time":1775901612241,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":50,"time":1775904487581,"pid":5212,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}

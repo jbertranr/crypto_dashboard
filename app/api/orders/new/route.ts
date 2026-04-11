@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { placeOcoOrder, getTickerPrice, roundQty } from "../../../lib/binance-auth";
+import { placeOcoOrder, getTickerPrice, roundQty, type TradingMode } from "../../../lib/binance-auth";
 import { trailingSet, cacheGet, orderMetaSet, nextTradeCode } from "../../../lib/cache-store";
 import { ensureTrailingEngine } from "../../../lib/trailing-engine";
 import { apiError } from "../../../lib/api-error";
@@ -10,7 +10,8 @@ import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, side, quantity, tpPrice, slStopPrice, slLimitPrice, trailing, interval, botName } = await req.json();
+    const { symbol, side, quantity, tpPrice, slStopPrice, slLimitPrice, trailing, interval, botName, mode: rawMode } = await req.json();
+    const mode: TradingMode = rawMode === "real" ? "real" : "paper";
 
     if (!Number.isFinite(Number(tpPrice))    || Number(tpPrice)    <= 0) throw new Error(`tpPrice invàlid: ${tpPrice}`);
     if (!Number.isFinite(Number(slStopPrice)) || Number(slStopPrice) <= 0) throw new Error(`slStopPrice invàlid: ${slStopPrice}`);
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     const stepSize = exInfo?.data.stepSize ?? "0.00001";
     const roundedQty = roundQty(parseFloat(String(quantity)), stepSize);
 
-    const result = await placeOcoOrder({ symbol, side, quantity: roundedQty, tpPrice, slStopPrice, slLimitPrice }) as Record<string, unknown>;
+    const result = await placeOcoOrder({ symbol, side, quantity: roundedQty, tpPrice, slStopPrice, slLimitPrice }, mode) as Record<string, unknown>;
     log.orders.info({ symbol, side, quantity: roundedQty, tpPrice, slStopPrice, orderListId: result.orderListId }, "OCO col·locada");
 
     // Desa el timeframe d'entrada i genera el codi de trade
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
     // --- Journal: record OCO entry ---
     try {
-      const entryPx = await getTickerPrice(symbol).catch(() => 0);
+      const entryPx = await getTickerPrice(symbol, mode).catch(() => 0);
       const jId = journalAdd({
         type: "ENTRY_OCO",
         symbol, side,
@@ -66,7 +67,8 @@ export async function POST(req: NextRequest) {
         capitalMode:     settingGet("capital_mode"),
         notes:           null,
         tradeCode,
-        source:          "AUTO",
+        source:          "MANUAL",
+        mode,
         trailingActivateAt: trailing?.activateAt ?? null,
         executedAt:      Date.now(),
       });

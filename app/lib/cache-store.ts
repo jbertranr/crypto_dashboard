@@ -344,6 +344,12 @@ db.exec(`
   );
 `);
 
+// ── Schema migration — add mode column to pending_oco ─────────────────────
+{
+  const cols = (db.prepare("PRAGMA table_info(pending_oco)").all() as { name: string }[]).map(r => r.name);
+  if (!cols.includes("mode")) db.exec("ALTER TABLE pending_oco ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
+}
+
 export interface PendingOco {
   id:           number;
   symbol:       string;
@@ -364,6 +370,7 @@ export interface PendingOco {
   buyOrderId:   number | null;
   journalId:    number;
   tradeCode:    string | null;
+  mode:         string;
   attempts:     number;
   createdAt:    number;
 }
@@ -373,12 +380,13 @@ export function pendingOcoSave(p: Omit<PendingOco, "id" | "attempts" | "createdA
     INSERT INTO pending_oco
       (symbol, oco_qty, tp_price, sl_stop_price, sl_limit_price, fill_price,
        trail_act_at, trail_dist, trail_mode, tick_size, bot_name, interval_tf,
-       score, quote_qty, atr, buy_order_id, journal_id, trade_code, created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       score, quote_qty, atr, buy_order_id, journal_id, trade_code, mode, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(
     p.symbol, p.ocoQty, p.tpPrice, p.slStopPrice, p.slLimitPrice, p.fillPrice,
     p.trailActAt, p.trailDist, p.trailMode, p.tickSize, p.botName, p.intervalTf,
     p.score, p.quoteQty, p.atr, p.buyOrderId ?? null, p.journalId, p.tradeCode ?? null,
+    p.mode ?? "paper",
     Date.now(),
   );
   return r.lastInsertRowid as number;
@@ -405,6 +413,7 @@ export function pendingOcoGetAll(): PendingOco[] {
     buyOrderId:   r.buy_order_id as number | null,
     journalId:    r.journal_id   as number,
     tradeCode:    r.trade_code   as string | null,
+    mode:         (r.mode as string) ?? "paper",
     attempts:     r.attempts     as number,
     createdAt:    r.created_at   as number,
   }));

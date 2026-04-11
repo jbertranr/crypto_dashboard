@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { STRATEGIES } from "./OrdersPanel";
 import CoinIcon from "./CoinIcon";
+import { useTradingMode } from "../contexts/TradingModeContext";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ interface JournalEntry {
   slPrice: number | null;
   trailingActivateAt: number | null;
   source: string;
+  mode: string;
   executedAt: number;
   createdAt: number;
 }
@@ -244,6 +246,7 @@ interface TradeGroup {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) {
+  const { viewMode } = useTradingMode();
   const [entries,   setEntries  ] = useState<JournalEntry[]>([]);
   const [stats,     setStats    ] = useState<JournalStats | null>(null);
   const [loading,   setLoading  ] = useState(true);
@@ -386,6 +389,7 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
       if (fStrategy) params.set("strategy", fStrategy);
       if (fFrom)     params.set("from",     String(new Date(fFrom).getTime()));
       if (fTo)       params.set("to",       String(new Date(fTo).getTime()));
+      params.set("mode",  viewMode);
       params.set("limit", "500");
       const r = await fetch(`/api/journal?${params}`);
       if (!r.ok) throw new Error(await r.text());
@@ -397,7 +401,7 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
     } finally {
       setLoading(false);
     }
-  }, [fSymbol, fSide, fStrategy, fFrom, fTo]);
+  }, [fSymbol, fSide, fStrategy, fFrom, fTo, viewMode]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -701,6 +705,9 @@ export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) 
                         <span className="jcell__main" style={{ color: typeClr, fontSize: "0.72rem", letterSpacing: "0.04em" }}>
                           <span style={{ color: e.side === "BUY" ? "var(--green)" : "var(--red)", fontWeight: 800, marginRight: 4 }}>{e.side}</span>
                           {typeLbl}
+                        </span>
+                        <span className={`journal-mode-badge${e.mode === "real" ? " journal-mode-badge--real" : ""}`}>
+                          {e.mode === "real" ? "REAL" : "PAPER"}
                         </span>
                       </div>
 

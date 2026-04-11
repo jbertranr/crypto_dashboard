@@ -57,6 +57,7 @@ try { db.exec("ALTER TABLE trade_journal ADD COLUMN trade_code TEXT DEFAULT NULL
 try { db.exec("ALTER TABLE trade_journal ADD COLUMN tp_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
 try { db.exec("ALTER TABLE trade_journal ADD COLUMN sl_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
 try { db.exec("ALTER TABLE trade_journal ADD COLUMN trailing_activate_at REAL DEFAULT NULL"); } catch { /* ja existeix */ }
+try { db.exec("ALTER TABLE trade_journal ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'"); } catch { /* ja existeix */ }
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -97,14 +98,16 @@ export interface JournalEntry {
   slPrice:            number | null;
   trailingActivateAt: number | null;
   source:          "AUTO" | "MANUAL";
+  mode:            "paper" | "real";
   executedAt:      number;
   createdAt:       number;
 }
 
-export type NewJournalEntry = Omit<JournalEntry, "id" | "createdAt" | "tpPrice" | "slPrice" | "trailingActivateAt"> & {
+export type NewJournalEntry = Omit<JournalEntry, "id" | "createdAt" | "tpPrice" | "slPrice" | "trailingActivateAt" | "mode"> & {
   tpPrice?: number | null;
   slPrice?: number | null;
   trailingActivateAt?: number | null;
+  mode?: "paper" | "real";
 };
 
 /* ── Row mapper ─────────────────────────────────────────────────────── */
@@ -138,6 +141,7 @@ function rowToEntry(r: Record<string, unknown>): JournalEntry {
     slPrice:            (r.sl_price            as number | null) ?? null,
     trailingActivateAt: (r.trailing_activate_at as number | null) ?? null,
     source:          r.source          as "AUTO" | "MANUAL",
+    mode:            ((r.mode as string) === "real" ? "real" : "paper"),
     executedAt:      r.executed_at     as number,
     createdAt:       r.created_at      as number,
   };
@@ -151,8 +155,8 @@ export function journalAdd(entry: NewJournalEntry): number {
       (type, symbol, side, qty, price, quote_qty, commission, commission_asset,
        entry_price, pnl_usdt, pnl_pct, order_id, order_list_id, strategy, interval,
        entry_type, trailing_mode, exit_reason, capital_usdt, capital_mode,
-       notes, source, trade_code, tp_price, sl_price, trailing_activate_at, executed_at, created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       notes, source, mode, trade_code, tp_price, sl_price, trailing_activate_at, executed_at, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(
     entry.type, entry.symbol, entry.side, entry.qty, entry.price,
     entry.quoteQty, entry.commission, entry.commissionAsset,
@@ -160,6 +164,7 @@ export function journalAdd(entry: NewJournalEntry): number {
     entry.orderId, entry.orderListId, entry.strategy, entry.interval,
     entry.entryType, entry.trailingMode, entry.exitReason,
     entry.capitalUsdt, entry.capitalMode, entry.notes, entry.source,
+    entry.mode ?? "paper",
     entry.tradeCode ?? null,
     entry.tpPrice ?? null, entry.slPrice ?? null,
     entry.trailingActivateAt ?? null,
@@ -196,6 +201,7 @@ export interface JournalFilter {
   to?:       number;
   limit?:    number;
   offset?:   number;
+  mode?:     "paper" | "real";
 }
 
 export function journalGetAll(filter: JournalFilter = {}): JournalEntry[] {
@@ -207,6 +213,7 @@ export function journalGetAll(filter: JournalFilter = {}): JournalEntry[] {
   if (filter.strategy) { conditions.push("strategy = ?");            params.push(filter.strategy); }
   if (filter.from)     { conditions.push("executed_at >= ?");        params.push(filter.from); }
   if (filter.to)       { conditions.push("executed_at <= ?");        params.push(filter.to); }
+  if (filter.mode)     { conditions.push("mode = ?");                params.push(filter.mode); }
 
   const where  = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const limit  = filter.limit  ?? 200;

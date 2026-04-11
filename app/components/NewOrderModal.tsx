@@ -4,6 +4,7 @@ import { useEscapeKey } from "../hooks/useEscapeKey";
 import { CoinRow } from "../lib/types";
 import { formatCurrency } from "../lib/format";
 import CoinIcon from "./CoinIcon";
+import { useTradingMode } from "../contexts/TradingModeContext";
 
 type StratProposal = {
   name: string; type: "bullish" | "bearish" | "neutral";
@@ -61,6 +62,8 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   onSuccess: () => void;
   presetPrices?: { side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string; interval?: "5m" | "1h" | "4h" };
 }) {
+  const { viewMode } = useTradingMode();
+
   const defaultCoin = coin ?? coins[0];
   const [selectedPair, setSelectedPair] = useState(defaultCoin?.pair ?? "");
   const activeCoin = coins.find(c => c.pair === selectedPair) ?? defaultCoin;
@@ -388,6 +391,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           slPrice: slPriceVal,
           trailing,
           botName: selectedBot?.name ?? null,
+          mode: viewMode,
         }),
       });
       const d = await res.json();
@@ -432,6 +436,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           tpPrice, slStopPrice, slLimitPrice, trailing,
           interval: analysisInterval,
           botName: selectedBot?.name ?? null,
+          mode: viewMode,
         }),
       });
       const d = await res.json();

@@ -84,7 +84,8 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
         <i className="fa-solid fa-bars" />
       </button>
 
-      {GROUPS.map(({ label, tabs }, gi) => (
+
+{GROUPS.map(({ label, tabs }, gi) => (
         <div key={label}>
           {gi > 0 && c && <div className="nav__section-divider" />}
           {!c && <span className="nav__section-label">{label}</span>}
@@ -147,15 +148,6 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
         <div className="nav__user">
           <i className="fa-solid fa-circle-user nav__user-icon" />
           <span className="nav__user-name">{username}</span>
-        </div>
-      )}
-      {!c && (
-        <div className="nav__live">
-          <div className="nav__live-dot" />
-          <div>
-            <div className="nav__live-text">Binance Demo</div>
-            <div className="nav__live-sub">Connected · Live data</div>
-          </div>
         </div>
       )}
     </nav>

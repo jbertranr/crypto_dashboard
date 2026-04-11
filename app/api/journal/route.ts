@@ -10,6 +10,7 @@ import { apiError } from "../../lib/api-error";
 export async function GET(req: NextRequest) {
   try {
     const p        = req.nextUrl.searchParams;
+    const modeParam = p.get("mode");
     const entries  = journalGetAll({
       symbol:   p.get("symbol")   ?? undefined,
       side:     p.get("side")     ?? undefined,
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
       to:       p.get("to")       ? parseInt(p.get("to")!)     : undefined,
       limit:    p.get("limit")    ? parseInt(p.get("limit")!)  : 200,
       offset:   p.get("offset")   ? parseInt(p.get("offset")!) : 0,
+      mode:     modeParam === "paper" || modeParam === "real" ? modeParam : undefined,
     });
 
     // Backfill TP/SL per entrades que tenen orderListId però tp_price = null

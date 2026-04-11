@@ -60,6 +60,7 @@ interface Bot {
   requireMultiTf: boolean;
   minProbability: number | null;
   maxOpen:        number | null;
+  mode:           "paper" | "real";
   createdAt:      number;
   simConfig:      SavedConfig | null;
 }
@@ -199,6 +200,7 @@ export default function SettingsTab() {
   const [newBotHoursTo,     setNewBotHoursTo]      = useState("22");
   const [newBotMultiTf,     setNewBotMultiTf]      = useState(false);
   const [newBotMinProb,     setNewBotMinProb]      = useState("");
+  const [newBotMode,        setNewBotMode]         = useState<"paper" | "real">("paper");
   const [savingBot,      setSavingBot]      = useState<string | null>(null);
 
   const load = useCallback(async (signal?: AbortSignal) => {
@@ -332,11 +334,12 @@ export default function SettingsTab() {
           hoursTo:        parseInt(newBotHoursTo)   || 22,
           requireMultiTf: newBotMultiTf,
           minProbability: newBotMinProb.trim() !== "" ? parseInt(newBotMinProb) : null,
+          mode: newBotMode,
         }),
       });
       setNewBotName(""); setNewBotSimId(""); setNewBotBudget("500");
       setNewBotMaxDaily("3"); setNewBotHoursFrom("8"); setNewBotHoursTo("22");
-      setNewBotMultiTf(false); setShowNewBotForm(false);
+      setNewBotMultiTf(false); setNewBotMode("paper"); setShowNewBotForm(false);
       await reloadBots();
     } finally { setSavingBot(null); }
   };
@@ -1064,6 +1067,20 @@ export default function SettingsTab() {
                 <span className="cfg-switch__thumb" />
               </button>
             </div>
+            <div className="bot-form__row">
+              <label className="bot-form__label">Mode</label>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <button
+                  className={`cfg-mode-btn${newBotMode === "paper" ? " cfg-mode-btn--active" : ""}`}
+                  onClick={() => setNewBotMode("paper")}
+                >PAPER</button>
+                <button
+                  className={`cfg-mode-btn cfg-mode-btn--real${newBotMode === "real" ? " cfg-mode-btn--active" : ""}`}
+                  onClick={() => setNewBotMode("real")}
+                  title="Trading real (Binance Mainnet) — assegura't de tenir les claus reals configurades"
+                >REAL</button>
+              </div>
+            </div>
             <div className="bot-form__actions">
               <button
                 className="btn-primary"
@@ -1108,6 +1125,7 @@ export default function SettingsTab() {
                 >
                   {bot.name}
                   {sc && <span className="bot-card__badge">{sc.config.interval} · {sc.config.symbols.length} parells</span>}
+                  <span className={`bot-card__mode-badge${bot.mode === "real" ? " bot-card__mode-badge--real" : ""}`}>{bot.mode === "real" ? "REAL" : "PAPER"}</span>
                 </button>
                 <div className="bot-card__actions">
                   <button
@@ -1255,6 +1273,29 @@ export default function SettingsTab() {
                       }}
                       disabled={savingBot === bot.id}
                     />
+                  </div>
+
+                  <div className="cfg-field-row" style={{ borderBottom: "none" }}>
+                    <i className="fa-solid fa-toggle-on cfg-toggle-row__icon" />
+                    <div className="cfg-toggle-row__body">
+                      <div className="cfg-toggle-row__title">Mode</div>
+                      <div className="cfg-toggle-row__desc">Paper = Testnet · Real = Mainnet Binance.</div>
+                    </div>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <button
+                        className={`cfg-mode-btn${bot.mode !== "real" ? " cfg-mode-btn--active" : ""}`}
+                        onClick={() => patchBot(bot.id, { mode: "paper" })}
+                        disabled={savingBot === bot.id}
+                      >PAPER</button>
+                      <button
+                        className={`cfg-mode-btn cfg-mode-btn--real${bot.mode === "real" ? " cfg-mode-btn--active" : ""}`}
+                        onClick={() => {
+                          if (!confirm(`Canviar el bot "${bot.name}" a mode REAL? Les seves ordres aniran a Binance Mainnet.`)) return;
+                          patchBot(bot.id, { mode: "real" });
+                        }}
+                        disabled={savingBot === bot.id}
+                      >REAL</button>
+                    </div>
                   </div>
                 </div>
               )}

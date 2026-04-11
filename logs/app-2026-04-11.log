@@ -1,0 +1,17 @@
+{"level":30,"time":1775904700721,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1775904700778,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":8,"nextDailyIn":1118,"msg":"scheduler iniciat"}
+{"level":30,"time":1775904700791,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1775904700801,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1775904702447,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":7,"msg":"inicialitzat"}
+{"level":30,"time":1775904702751,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904706524,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904738702,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904739088,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904739412,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","symbol":"BTCUSDT","interval":"1h","verdict":"WAIT","score":63,"price":72814.94,"msg":"scanner"}
+{"level":30,"time":1775904819638,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904820048,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904873386,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904874224,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904980560,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904981071,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}
+{"level":30,"time":1775904981384,"pid":18968,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"msg":"balance"}

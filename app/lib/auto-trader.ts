@@ -28,6 +28,7 @@ import { botGetAll, type Bot } from "./bot-store";
 import {
   placeMarketBuy, placeMarketSell, placeOcoOrder, getTickerPrice,
   roundPriceUp, roundPriceDown, roundQty, getOpenOrders, getAccount,
+  type TradingMode,
 } from "./binance-auth";
 import {
   cacheGet, trailingSet, nextTradeCode, orderMetaSet,
@@ -183,6 +184,7 @@ interface BuyOpts {
   trailDst:  number;
   trailMode: string;
   botName:   string;
+  mode:      TradingMode;
 }
 
 async function applyOcoSuccess(
@@ -241,10 +243,10 @@ async function applyOcoSuccess(
 }
 
 async function executeBuy(opts: BuyOpts): Promise<void> {
-  const { symbol, quoteQty, score, interval, atr, tpAtr, slAtr, trailAct, trailDst, trailMode, botName } = opts;
+  const { symbol, quoteQty, score, interval, atr, tpAtr, slAtr, trailAct, trailDst, trailMode, botName, mode } = opts;
 
   // 1. Compra a mercat
-  const buyResult   = await placeMarketBuy(symbol, String(quoteQty));
+  const buyResult   = await placeMarketBuy(symbol, String(quoteQty), mode);
   const executedQty = buyResult.executedQty;
   const fillPrice   = parseFloat(buyResult.cummulativeQuoteQty) / parseFloat(executedQty);
 
@@ -311,6 +313,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
     notes:              `Auto-trade · Bot: ${botName} · score ${score} · ${interval}`,
     tradeCode,
     source:             "AUTO",
+    mode,
     trailingActivateAt: trailMode && trailAct && atr ? fillPrice + trailAct * atr : null,
     executedAt:         Date.now(),
   });
@@ -322,7 +325,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
       ocoResult = await placeOcoOrder({
         symbol, side: "SELL", quantity: ocoQty,
         tpPrice, slStopPrice, slLimitPrice,
-      }) as Record<string, unknown>;
+      }, mode) as Record<string, unknown>;
       break;
     } catch (err) {
       log.auto.warn({ symbol, attempt, err: (err as Error).message }, "OCO fallida, reintentant…");
@@ -339,7 +342,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
       trailMode, tickSize, botName,
       intervalTf: interval, score, quoteQty, atr,
       buyOrderId: buyResult.orderId ?? null,
-      journalId, tradeCode,
+      journalId, tradeCode, mode,
     });
     log.auto.error({ symbol, journalId }, "OCO no col·locada — guardada per reintent posterior");
     notifyOcoFailed({
@@ -407,7 +410,7 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     usdtPer = config.capitalFixed ?? 100;
   }
 
-  const openOrders = await getOpenOrders();
+  const openOrders = await getOpenOrders(bot.mode);
   const openOcoCount = new Set(
     openOrders.filter(o => o.orderListId !== -1).map(o => o.orderListId)
   ).size;
@@ -483,7 +486,7 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
         symbol, quoteQty: usdtPer, score: analysis.score, interval,
         atr: analysis.atr, fillRef: analysis.price,
         tpAtr, slAtr, trailAct, trailDst, trailMode,
-        botName: bot.name,
+        botName: bot.name, mode: bot.mode,
       });
 
       incBotTodayCount(bot.id);
@@ -527,7 +530,7 @@ async function retryPendingOcos(): Promise<void> {
         tpPrice:      p.tpPrice,
         slStopPrice:  p.slStopPrice,
         slLimitPrice: p.slLimitPrice,
-      }) as Record<string, unknown>;
+      }, (p.mode === "real" ? "real" : "paper")) as Record<string, unknown>;
 
       await applyOcoSuccess(
         ocoResult, p.symbol, p.ocoQty, p.tpPrice, p.slStopPrice,

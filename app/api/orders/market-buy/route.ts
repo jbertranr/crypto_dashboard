@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { placeMarketBuy } from "../../../lib/binance-auth";
+import { placeMarketBuy, type TradingMode } from "../../../lib/binance-auth";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
 import { journalAdd } from "../../../lib/journal-store";
@@ -8,12 +8,14 @@ import { settingGet } from "../../../lib/settings-store";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, quoteOrderQty } = await req.json() as {
+    const { symbol, quoteOrderQty, mode: rawMode } = await req.json() as {
       symbol: string;
       quoteOrderQty: string;
+      mode?: string;
     };
+    const mode: TradingMode = rawMode === "real" ? "real" : "paper";
 
-    const buyResult = await placeMarketBuy(symbol, quoteOrderQty);
+    const buyResult = await placeMarketBuy(symbol, quoteOrderQty, mode);
     const executedQty = buyResult.executedQty;
     const fillPrice   = parseFloat(buyResult.cummulativeQuoteQty) / parseFloat(executedQty);
     const buyUsdt     = parseFloat(quoteOrderQty);
@@ -45,7 +47,8 @@ export async function POST(req: NextRequest) {
         capitalMode:     settingGet("capital_mode"),
         notes:           "Compra manual sense sortida automàtica",
         tradeCode,
-        source:          "AUTO",
+        source:          "MANUAL",
+        mode,
         trailingActivateAt: null,
         executedAt:      Date.now(),
       });

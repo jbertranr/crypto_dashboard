@@ -37,6 +37,7 @@ interface BotInfo {
   exitDesc:       string;
   minProbability: number | null;
   maxOpen:        number | null;
+  mode:           "paper" | "real";
   simConfig: {
     name?: string;
     pnlPct?: number;
