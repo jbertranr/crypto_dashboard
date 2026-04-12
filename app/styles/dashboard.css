@@ -6362,6 +6362,61 @@
 .nav__badge--err  { background: #ef4444; color: #fff; }
 
 /* ----------------------------------------------------------
+   BLOCK: nav — PAPER / REAL mode toggle
+   ---------------------------------------------------------- */
+.nav__mode-toggle {
+  display: flex;
+  margin: 6px 8px 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+.nav__mode-toggle--collapsed {
+  flex-direction: column;
+  margin: 4px 6px 8px;
+}
+.nav__mode-btn {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.nav__mode-btn:hover:not(.nav__mode-btn--locked) {
+  color: rgba(255,255,255,0.75);
+  background: rgba(255,255,255,0.06);
+}
+.nav__mode-btn--active {
+  color: #fff;
+  background: rgba(99,102,241,0.35);
+}
+.nav__mode-btn--real.nav__mode-btn--active {
+  background: rgba(220,38,38,0.45);
+}
+.nav__mode-btn--locked {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+/* Nav accent when real mode is active */
+.nav--real .nav__mode-btn--real.nav__mode-btn--active {
+  background: rgba(220,38,38,0.5);
+}
+
+.nav__item--disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------
    BLOCK: ErrorBoundary fallback
    ---------------------------------------------------------- */
 .eb-fallback {

@@ -43,7 +43,8 @@
       "Bash(for f:*)",
       "Bash(do sed:*)",
       "Bash(chmod +x c:/Users/jbert/claude/crypto_dashboard/start.sh)",
-      "Bash(bash start.sh)"
+      "Bash(bash start.sh)",
+      "Bash(grep -n \"useTradingMode\" c:/Users/jbert/claude/crypto_dashboard/app/components/*.tsx)"
     ]
   }
 }

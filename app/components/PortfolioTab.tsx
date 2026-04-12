@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip as ChartTooltip } from "recharts";
-import { BinanceBalance, BinanceOrder } from "../lib/binance-auth";
+import { BinanceBalance, BinanceOrder, type TradingMode } from "../lib/binance-auth";
 import { CoinRow } from "../lib/types";
 import { formatCurrency } from "../lib/format";
 import CoinIcon, { coinColor } from "./CoinIcon";
@@ -194,17 +194,19 @@ function PnlSummaryPanel({ unrealizedRows }: {
 }
 
 export default function PortfolioTab({
-  coins, openOrders, refreshTrigger,
+  coins, openOrders, refreshTrigger, mode: modeProp,
 }: {
   coins: CoinRow[];
   openOrders: BinanceOrder[];
   refreshTrigger: number;
+  mode?: TradingMode;
 }) {
   const [balances,  setBalances]  = useState<BinanceBalance[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
   const [costBasis, setCostBasis] = useState<Record<string, CostBasisEntry>>({});
-  const { viewMode } = useTradingMode();
+  const { viewMode: ctxMode } = useTradingMode();
+  const viewMode = modeProp ?? ctxMode;
   const [selling,   setSelling]   = useState<Record<string, boolean>>({});
   const [sellConfirm, setSellConfirm] = useState<string | null>(null); // asset awaiting confirm
   const [cancelSellConfirm, setCancelSellConfirm] = useState<string | null>(null); // asset awaiting OCO cancel+sell confirm

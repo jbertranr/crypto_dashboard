@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { STRATEGIES } from "./OrdersPanel";
 import CoinIcon from "./CoinIcon";
 import { useTradingMode } from "../contexts/TradingModeContext";
+import type { TradingMode } from "../lib/binance-auth";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -245,8 +246,9 @@ interface TradeGroup {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function JournalTab({ onNewOrder }: { onNewOrder?: () => void }) {
-  const { viewMode } = useTradingMode();
+export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?: () => void; mode?: TradingMode }) {
+  const { viewMode: ctxMode } = useTradingMode();
+  const viewMode = modeProp ?? ctxMode;
   const [entries,   setEntries  ] = useState<JournalEntry[]>([]);
   const [stats,     setStats    ] = useState<JournalStats | null>(null);
   const [loading,   setLoading  ] = useState(true);

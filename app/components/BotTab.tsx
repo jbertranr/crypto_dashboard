@@ -709,7 +709,7 @@ const SKIP_KINDS: Kind[] = ["skip", "idle"];
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function BotTab() {
+export default function BotTab({ mode }: { mode?: "paper" | "real" }) {
   const [bots,          setBots]          = useState<BotInfo[]>([]);
   const [items,         setItems]         = useState<ChatItem[]>([]);
   const [live,          setLive]          = useState(true);
@@ -796,8 +796,9 @@ export default function BotTab() {
     "snapshot": () => { loadBots(); loadLogs(); },
   });
 
-  const activeBots   = bots.filter(b => b.enabled);
-  const inactiveBots = bots.filter(b => !b.enabled);
+  const visibleBots  = mode ? bots.filter(b => b.mode === mode) : bots;
+  const activeBots   = visibleBots.filter(b => b.enabled);
+  const inactiveBots = visibleBots.filter(b => !b.enabled);
   const allBots      = [...activeBots, ...inactiveBots];
   const selectedBot  = selectedBotId ? bots.find(b => b.id === selectedBotId) ?? null : null;
 

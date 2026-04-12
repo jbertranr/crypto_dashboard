@@ -3,28 +3,53 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Tab } from "./OrdersPanel";
 import { useServerEvents } from "../hooks/useServerEvents";
+import { useTradingMode } from "../contexts/TradingModeContext";
 import type { AppError } from "../lib/error-store";
 
-type NavItem = { key: Tab; label: string; icon: string };
+type NavMode = "paper" | "real";
+
+// Tabs que existeixen en variant paper i real
+const MODE_PAIRS: Record<string, { paper: Tab; real: Tab }> = {
+  portfolio: { paper: "portfolio",  real: "portfolio-real" },
+  open:      { paper: "open",       real: "open-real"      },
+  history:   { paper: "history",    real: "history-real"   },
+  journal:   { paper: "journal",    real: "journal-real"   },
+  bot:       { paper: "bot",        real: "bot-real"       },
+};
+
+// Donat un tab actiu, retorna la clau base (sense -real)
+function baseKey(tab: Tab): string {
+  return tab.endsWith("-real") ? tab.slice(0, -5) : tab;
+}
+
+// Retorna el tab equivalent per al mode donat
+function tabForMode(tab: Tab, mode: NavMode): Tab {
+  const base = baseKey(tab);
+  const pair = MODE_PAIRS[base];
+  if (!pair) return tab; // tab comú, no canvia
+  return mode === "real" ? pair.real : pair.paper;
+}
+
+type NavItem = { key: string; label: string; icon: string; modeDependent?: boolean };
 
 const CARTERA: NavItem[] = [
-  { key: "portfolio", label: "Portfolio", icon: "fa-wallet"            },
-  { key: "balance",   label: "Balance",   icon: "fa-coins"             },
+  { key: "portfolio", label: "Portfolio", icon: "fa-wallet",  modeDependent: true },
+  { key: "balance",   label: "Balance",   icon: "fa-coins" },
 ];
 const ORDRES: NavItem[] = [
-  { key: "open",    label: "Ordres obertes", icon: "fa-list-check"       },
-  { key: "history", label: "Historial",      icon: "fa-clock-rotate-left"},
+  { key: "open",    label: "Ordres",    icon: "fa-list-check",        modeDependent: true },
+  { key: "history", label: "Historial", icon: "fa-clock-rotate-left", modeDependent: true },
 ];
 const ANALISI: NavItem[] = [
-  { key: "analysis", label: "Anàlisi",  icon: "fa-magnifying-glass-chart" },
-  { key: "matrix",   label: "Escàner",  icon: "fa-table-cells"            },
-  { key: "journal",  label: "Diari",    icon: "fa-book-open"              },
+  { key: "analysis", label: "Anàlisi", icon: "fa-magnifying-glass-chart" },
+  { key: "matrix",   label: "Escàner", icon: "fa-table-cells"            },
+  { key: "journal",  label: "Diari",   icon: "fa-book-open", modeDependent: true },
 ];
 const AUTOMATITZACIO: NavItem[] = [
   { key: "simulation", label: "Simulació",    icon: "fa-flask-vial"          },
   { key: "equalizer",  label: "Equalitzador", icon: "fa-sliders"             },
   { key: "autolab",    label: "AutoLab",      icon: "fa-wand-magic-sparkles" },
-  { key: "bot",        label: "Bot",          icon: "fa-robot"               },
+  { key: "bot",        label: "Bot",          icon: "fa-robot", modeDependent: true },
   { key: "deploy",     label: "Deploy",       icon: "fa-rocket"              },
 ];
 
@@ -39,6 +64,13 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
   tab: Tab; onTab: (t: Tab) => void; openOrdersCount?: number; username?: string;
 }) {
   const router = useRouter();
+  const { realConfigured } = useTradingMode();
+
+  // Mode actiu del toggle de nav
+  const [navMode, setNavMode] = useState<NavMode>(() =>
+    tab.endsWith("-real") ? "real" : "paper"
+  );
+
   const [errorCount, setErrorCount] = useState(0);
   const [collapsed,  setCollapsed]  = useState(false);
   const [lastSeen]                  = useState(() => {
@@ -46,7 +78,12 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
     return parseInt(localStorage.getItem("errLastSeen") ?? "0", 10);
   });
 
-  // Càrrega inicial del comptador d'errors no vistos
+  // Sincronitzar navMode quan la tab canvia externament
+  useEffect(() => {
+    const m: NavMode = tab.endsWith("-real") ? "real" : "paper";
+    setNavMode(m);
+  }, [tab]);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -58,14 +95,9 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
     load();
   }, [lastSeen]);
 
-  // Subscripció SSE — substitueix el setInterval(load, 30_000)
   useServerEvents({
-    "error:new": (_err: AppError) => {
-      setErrorCount(prev => prev + 1);
-    },
-    "error:clear": () => {
-      setErrorCount(0);
-    },
+    "error:new": (_err: AppError) => { setErrorCount(prev => prev + 1); },
+    "error:clear": () => { setErrorCount(0); },
   });
 
   const handleErrorsTab = () => {
@@ -74,33 +106,69 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
     setErrorCount(0);
   };
 
+  const handleModeToggle = (m: NavMode) => {
+    if (m === "real" && !realConfigured) return;
+    setNavMode(m);
+    // Canvia la tab activa a l'equivalent del nou mode
+    const newTab = tabForMode(tab, m);
+    if (newTab !== tab) onTab(newTab);
+  };
+
   const c = collapsed;
+  const isReal = navMode === "real";
 
   return (
-    <nav className={`nav${c ? " nav--collapsed" : ""}`}>
+    <nav className={`nav${c ? " nav--collapsed" : ""}${isReal ? " nav--real" : ""}`}>
 
       <button className="nav__collapse-btn" onClick={() => setCollapsed(v => !v)}
         title={c ? "Expandir" : "Col·lapsar"}>
         <i className="fa-solid fa-bars" />
       </button>
 
+      {/* ── Toggle PAPER / REAL ── */}
+      <div className={`nav__mode-toggle${c ? " nav__mode-toggle--collapsed" : ""}`}
+           title={c ? (isReal ? "Mode REAL" : "Mode PAPER") : undefined}>
+        <button
+          className={`nav__mode-btn${!isReal ? " nav__mode-btn--active" : ""}`}
+          onClick={() => handleModeToggle("paper")}
+        >
+          {c ? "P" : "PAPER"}
+        </button>
+        <button
+          className={`nav__mode-btn nav__mode-btn--real${isReal ? " nav__mode-btn--active" : ""}${!realConfigured ? " nav__mode-btn--locked" : ""}`}
+          onClick={() => handleModeToggle("real")}
+          title={!realConfigured ? "Claus de trading real no configurades" : undefined}
+        >
+          {c ? "R" : "REAL"}
+        </button>
+      </div>
 
-{GROUPS.map(({ label, tabs }, gi) => (
+      {GROUPS.map(({ label, tabs }, gi) => (
         <div key={label}>
           {gi > 0 && c && <div className="nav__section-divider" />}
           {!c && <span className="nav__section-label">{label}</span>}
-          {tabs.map(({ key, label: lbl, icon }) => (
-            <button key={key} onClick={() => onTab(key)} title={c ? lbl : undefined}
-              className={`nav__item${tab === key ? " nav__item--active" : ""}`}>
-              <i className={`fa-solid ${icon} nav__item-icon`} />
-              {!c && lbl}
-              {key === "open" && (openOrdersCount ?? 0) > 0 && (
-                <span className={`nav__badge${c ? " nav__badge--dot" : ""}`}>
-                  {c ? "" : openOrdersCount}
-                </span>
-              )}
-            </button>
-          ))}
+          {tabs.map(({ key, label: lbl, icon, modeDependent }) => {
+            const resolvedKey: Tab = modeDependent
+              ? (MODE_PAIRS[key]?.[navMode] ?? key as Tab)
+              : key as Tab;
+            const isActive = tab === resolvedKey;
+            return (
+              <button
+                key={key}
+                onClick={() => onTab(resolvedKey)}
+                title={c ? lbl : undefined}
+                className={`nav__item${isActive ? " nav__item--active" : ""}`}
+              >
+                <i className={`fa-solid ${icon} nav__item-icon`} />
+                {!c && lbl}
+                {resolvedKey === "open" && (openOrdersCount ?? 0) > 0 && (
+                  <span className={`nav__badge${c ? " nav__badge--dot" : ""}`}>
+                    {c ? "" : openOrdersCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       ))}
 

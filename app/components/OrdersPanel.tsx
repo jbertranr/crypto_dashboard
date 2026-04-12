@@ -23,7 +23,15 @@ import StatusTab from "./StatusTab";
 import DeployTab from "./DeployTab";
 import { useTradingMode } from "../contexts/TradingModeContext";
 
-export type Tab = "portfolio" | "open" | "history" | "balance" | "analysis" | "matrix" | "errors" | "logs" | "settings" | "journal" | "simulation" | "bot" | "equalizer" | "autolab" | "status" | "deploy";
+export type Tab = "portfolio" | "portfolio-real"
+               | "open"      | "open-real"
+               | "history"   | "history-real"
+               | "journal"   | "journal-real"
+               | "bot"       | "bot-real"
+               | "balance"
+               | "analysis" | "matrix" | "errors" | "logs"
+               | "settings" | "simulation"
+               | "equalizer" | "autolab" | "status" | "deploy";
 
 /* ── Strategies ── */
 export const STRATEGIES = [
@@ -2137,6 +2145,8 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 }) {
   const setTab = onTab;
   const { viewMode } = useTradingMode();
+  // Mode derived from active tab (takes precedence over global context for open orders / history)
+  const tabMode = (tab === "open-real" || tab === "history-real" || tab === "portfolio-real") ? "real" : "paper";
   const [showNewOrder,    setShowNewOrder]    = useState(false);
   const [openOrders,      setOpenOrders]      = useState<BinanceOrder[]>([]);
   const [tgSending,       setTgSending]       = useState(false);
@@ -2167,11 +2177,11 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 
   const fetchOpen = useCallback(() => {
     setLoadingO(true); setErrorO(null);
-    fetch(`/api/orders?mode=${viewMode}`).then(r => r.json())
+    fetch(`/api/orders?mode=${tabMode}`).then(r => r.json())
       .then(d => { if (d.error) throw new Error(d.error); setOpenOrders(d); setLastRefreshed(new Date()); onOrdersCount?.(d.length); })
       .catch(e => setErrorO(e.message)).finally(() => setLoadingO(false));
     fetch("/api/orders/meta").then(r => r.json()).then(d => { if (!d.error) setOrderMeta(d); }).catch(() => {});
-  }, [viewMode]);
+  }, [tabMode]);
 
   const fetchHistory = useCallback(() => {
     setLoadingH(true); setErrorH(null);
@@ -2327,18 +2337,23 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
         </div>
       </div>
 
-      {tab === "portfolio" && <ErrorBoundary label="Portfolio"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} /></ErrorBoundary>}
-      {tab === "open"      && <ErrorBoundary label="Open Orders"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
-      {tab === "history"   && <ErrorBoundary label="History"><HistoryTable   orders={history}    loading={loadingH} error={errorH} /></ErrorBoundary>}
+      {tab === "portfolio"      && <ErrorBoundary label="Portfolio Paper"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} mode="paper" /></ErrorBoundary>}
+      {tab === "portfolio-real" && <ErrorBoundary label="Portfolio Real"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} mode="real" /></ErrorBoundary>}
+      {tab === "open"           && <ErrorBoundary label="Ordres Paper"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
+      {tab === "open-real"      && <ErrorBoundary label="Ordres Real"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
+      {tab === "history"        && <ErrorBoundary label="Historial Paper"><HistoryTable orders={history} loading={loadingH} error={errorH} /></ErrorBoundary>}
+      {tab === "history-real"   && <ErrorBoundary label="Historial Real"><HistoryTable orders={history} loading={loadingH} error={errorH} /></ErrorBoundary>}
       {tab === "balance"   && <ErrorBoundary label="Balance"><BalanceTable   balances={balances} loading={loadingB} error={errorB} coins={coins} openOrders={openOrders} /></ErrorBoundary>}
       {tab === "analysis"  && <ErrorBoundary label="Anàlisi"><AnalysisTab onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
       {tab === "matrix"    && <ErrorBoundary label="Escàner"><StrategyMatrix coins={coins} onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
       {tab === "errors"    && <ErrorsPanel />}
       {tab === "logs"     && <LogsPanel />}
       {tab === "settings"  && <SettingsTab />}
-      {tab === "journal"   && <ErrorBoundary label="Diari"><JournalTab onNewOrder={() => setShowNewOrder(true)} /></ErrorBoundary>}
+      {tab === "journal"      && <ErrorBoundary label="Diari Paper"><JournalTab onNewOrder={() => setShowNewOrder(true)} mode="paper" /></ErrorBoundary>}
+      {tab === "journal-real" && <ErrorBoundary label="Diari Real"><JournalTab onNewOrder={() => setShowNewOrder(true)} mode="real" /></ErrorBoundary>}
       {tab === "simulation" && <ErrorBoundary label="Simulació"><SimulationTab /></ErrorBoundary>}
-      {tab === "bot"        && <ErrorBoundary label="Bot"><BotTab /></ErrorBoundary>}
+      {tab === "bot"        && <ErrorBoundary label="Bot Paper"><BotTab mode="paper" /></ErrorBoundary>}
+      {tab === "bot-real"   && <ErrorBoundary label="Bot Real"><BotTab mode="real" /></ErrorBoundary>}
       {tab === "equalizer"  && <ErrorBoundary label="Equalitzador"><EqualizerTab /></ErrorBoundary>}
       {tab === "autolab"    && <ErrorBoundary label="AutoLab"><AutoLabTab /></ErrorBoundary>}
       {tab === "status"     && <ErrorBoundary label="Motors"><StatusTab /></ErrorBoundary>}

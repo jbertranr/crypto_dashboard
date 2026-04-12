@@ -4,10 +4,9 @@ import Nav from "./Nav";
 import OrdersPanel from "./OrdersPanel";
 import CoinSidebar from "./CoinSidebar";
 import TopbarTicker from "./TopbarTicker";
-import TradingModeToggle from "./TradingModeToggle";
 import { CoinRow } from "../lib/types";
 import { Tab } from "./OrdersPanel";
-import { TradingModeProvider } from "../contexts/TradingModeContext";
+import { TradingModeProvider, useTradingMode } from "../contexts/TradingModeContext";
 
 const MARKET_REFRESH_MS = 30_000;
 
@@ -18,7 +17,7 @@ interface MarketSummary {
   topLoser:  { symbol: string; pct: number };
 }
 
-export default function DashboardShell({
+function DashboardContent({
   coins: initialCoins, username, summary,
 }: {
   coins: CoinRow[];
@@ -28,6 +27,12 @@ export default function DashboardShell({
   const [tab, setTab] = useState<Tab>("portfolio");
   const [openOrdersCount, setOpenOrdersCount] = useState(0);
   const [coins, setCoins] = useState<CoinRow[]>(initialCoins);
+  const { setViewModeSilent } = useTradingMode();
+
+  // Sync trading mode context when tab changes to a -real variant (no confirmation needed)
+  useEffect(() => {
+    setViewModeSilent(tab.endsWith("-real") ? "real" : "paper");
+  }, [tab, setViewModeSilent]);
 
   useEffect(() => {
     const refresh = () => {
@@ -41,7 +46,7 @@ export default function DashboardShell({
   }, []);
 
   return (
-    <TradingModeProvider>
+    <>
       <header className="topbar">
         {/* Logo */}
         <div className="topbar__brand">
@@ -80,7 +85,6 @@ export default function DashboardShell({
             <span className="topbar__live-dot" />
             <span className="topbar__live-label">Live</span>
           </div>
-          <TradingModeToggle />
         </div>
       </header>
 
@@ -93,6 +97,20 @@ export default function DashboardShell({
           <CoinSidebar coins={coins} />
         </div>
       </div>
+    </>
+  );
+}
+
+export default function DashboardShell({
+  coins, username, summary,
+}: {
+  coins: CoinRow[];
+  username?: string;
+  summary: MarketSummary;
+}) {
+  return (
+    <TradingModeProvider>
+      <DashboardContent coins={coins} username={username} summary={summary} />
     </TradingModeProvider>
   );
 }
