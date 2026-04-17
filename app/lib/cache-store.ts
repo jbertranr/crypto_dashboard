@@ -19,8 +19,10 @@ db.exec(`
     expires_at INTEGER NOT NULL
   );
   CREATE TABLE IF NOT EXISTS snapshots (
-    time  INTEGER PRIMARY KEY,
-    value REAL NOT NULL
+    time  INTEGER NOT NULL,
+    value REAL    NOT NULL,
+    mode  TEXT    NOT NULL DEFAULT 'paper',
+    PRIMARY KEY (time, mode)
   );
   CREATE TABLE IF NOT EXISTS strategies (
     key      TEXT PRIMARY KEY,
@@ -122,18 +124,26 @@ export function cacheDeletePrefix(prefix: string): void {
 
 // ── Snapshots ────────────────────────────────────────────────────────────────
 
+// Migració: afegir columna mode si no existeix (taula antiga sense mode)
+{
+  const cols = (db.prepare("PRAGMA table_info(snapshots)").all() as { name: string }[]).map(r => r.name);
+  if (!cols.includes("mode")) {
+    db.exec("ALTER TABLE snapshots ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
+  }
+}
+
 // 7 dies × 24h × 4 snapshots/h (cada 15 min) = 672
 const MAX_SNAPSHOTS = 672;
 
-export function snapshotAdd(time: number, value: number): void {
-  db.prepare("INSERT OR REPLACE INTO snapshots (time, value) VALUES (?, ?)").run(time, value);
+export function snapshotAdd(time: number, value: number, mode: "paper" | "real" = "paper"): void {
+  db.prepare("INSERT OR REPLACE INTO snapshots (time, value, mode) VALUES (?, ?, ?)").run(time, value, mode);
   db.prepare(
-    "DELETE FROM snapshots WHERE time NOT IN (SELECT time FROM snapshots ORDER BY time DESC LIMIT ?)"
-  ).run(MAX_SNAPSHOTS);
+    "DELETE FROM snapshots WHERE mode = ? AND time NOT IN (SELECT time FROM snapshots WHERE mode = ? ORDER BY time DESC LIMIT ?)"
+  ).run(mode, mode, MAX_SNAPSHOTS);
 }
 
-export function snapshotGetAll(): Array<{ time: number; value: number }> {
-  return db.prepare("SELECT time, value FROM snapshots ORDER BY time ASC").all() as Array<{
+export function snapshotGetAll(mode: "paper" | "real" = "paper"): Array<{ time: number; value: number }> {
+  return db.prepare("SELECT time, value FROM snapshots WHERE mode = ? ORDER BY time ASC").all(mode) as Array<{
     time: number;
     value: number;
   }>;

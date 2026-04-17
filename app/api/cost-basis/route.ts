@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAccount, getMyTrades } from "../../lib/binance-auth";
 import { apiError } from "../../lib/api-error";
 import { STABLES } from "../../lib/constants";
+import { getQuoteAsset } from "../../lib/settings-store";
 
 export interface CostBasisEntry {
   avgCost: number;
@@ -9,9 +10,11 @@ export interface CostBasisEntry {
   firstBuyTime: number;  // ms timestamp of first buy trade
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const account = await getAccount();
+    const modeParam = req.nextUrl.searchParams.get("mode");
+    const mode = modeParam === "real" ? "real" : "paper";
+    const account = await getAccount(mode);
     const assets = account.balances
       .filter(b => {
         const total = parseFloat(b.free) + parseFloat(b.locked);
@@ -20,7 +23,7 @@ export async function GET() {
       .map(b => b.asset);
 
     const results = await Promise.allSettled(
-      assets.map(asset => getMyTrades(`${asset}USDT`, 500))
+      assets.map(asset => getMyTrades(`${asset}${getQuoteAsset()}`, 500, mode))
     );
 
     const costBasis: Record<string, CostBasisEntry> = {};

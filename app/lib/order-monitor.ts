@@ -51,8 +51,8 @@ export function trailingSlLock(orderId: number)   { trailingReplacedSls.add(orde
 /** Unmark after the new SL has been placed. */
 export function trailingSlUnlock(orderId: number) { trailingReplacedSls.delete(orderId); }
 
-function calcPnl(symbol: string, tradeCode: string | null, execPrice: number, execQty: number) {
-  const entry = journalGetLastEntryPrice(symbol, tradeCode);
+function calcPnl(symbol: string, tradeCode: string | null, execPrice: number, execQty: number, mode: "paper" | "real" = "paper") {
+  const entry = journalGetLastEntryPrice(symbol, tradeCode, mode);
   if (!entry || entry.price <= 0) return { entryPrice: null, pnlUsdt: null, pnlPct: null };
   const pnlUsdt = (execPrice - entry.price) * execQty;
   const pnlPct  = ((execPrice - entry.price) / entry.price) * 100;

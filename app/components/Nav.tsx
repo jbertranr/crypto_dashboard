@@ -11,6 +11,7 @@ type NavMode = "paper" | "real";
 // Tabs que existeixen en variant paper i real
 const MODE_PAIRS: Record<string, { paper: Tab; real: Tab }> = {
   portfolio: { paper: "portfolio",  real: "portfolio-real" },
+  balance:   { paper: "balance",    real: "balance-real"   },
   open:      { paper: "open",       real: "open-real"      },
   history:   { paper: "history",    real: "history-real"   },
   journal:   { paper: "journal",    real: "journal-real"   },
@@ -33,17 +34,18 @@ function tabForMode(tab: Tab, mode: NavMode): Tab {
 type NavItem = { key: string; label: string; icon: string; modeDependent?: boolean };
 
 const CARTERA: NavItem[] = [
-  { key: "portfolio", label: "Portfolio", icon: "fa-wallet",  modeDependent: true },
-  { key: "balance",   label: "Balance",   icon: "fa-coins" },
+  { key: "portfolio", label: "Portfolio", icon: "fa-wallet", modeDependent: true },
+  { key: "balance",   label: "Balance",   icon: "fa-coins",  modeDependent: true },
+  { key: "convert",   label: "Convertir", icon: "fa-arrow-right-arrow-left" },
 ];
 const ORDRES: NavItem[] = [
   { key: "open",    label: "Ordres",    icon: "fa-list-check",        modeDependent: true },
   { key: "history", label: "Historial", icon: "fa-clock-rotate-left", modeDependent: true },
+  { key: "journal", label: "Diari",     icon: "fa-book-open",         modeDependent: true },
 ];
 const ANALISI: NavItem[] = [
   { key: "analysis", label: "Anàlisi", icon: "fa-magnifying-glass-chart" },
   { key: "matrix",   label: "Escàner", icon: "fa-table-cells"            },
-  { key: "journal",  label: "Diari",   icon: "fa-book-open", modeDependent: true },
 ];
 const AUTOMATITZACIO: NavItem[] = [
   { key: "simulation", label: "Simulació",    icon: "fa-flask-vial"          },
@@ -78,10 +80,12 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
     return parseInt(localStorage.getItem("errLastSeen") ?? "0", 10);
   });
 
-  // Sincronitzar navMode quan la tab canvia externament
+  // Sincronitzar navMode quan la tab canvia externament.
+  // Tabs comunes (sense sufix de mode) no canvien el mode actiu.
   useEffect(() => {
-    const m: NavMode = tab.endsWith("-real") ? "real" : "paper";
-    setNavMode(m);
+    if (tab.endsWith("-real")) setNavMode("real");
+    else if (Object.values(MODE_PAIRS).some(p => p.paper === tab)) setNavMode("paper");
+    // else: tab comuna — manté el navMode actual
   }, [tab]);
 
   useEffect(() => {
@@ -108,10 +112,10 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
 
   const handleModeToggle = (m: NavMode) => {
     if (m === "real" && !realConfigured) return;
+    if (m === navMode) return; // ja estem en aquest mode
     setNavMode(m);
-    // Canvia la tab activa a l'equivalent del nou mode
-    const newTab = tabForMode(tab, m);
-    if (newTab !== tab) onTab(newTab);
+    // Sempre va al portfolio del nou mode per recarregar tot
+    onTab(m === "real" ? "portfolio-real" : "portfolio");
   };
 
   const c = collapsed;
@@ -121,8 +125,9 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
     <nav className={`nav${c ? " nav--collapsed" : ""}${isReal ? " nav--real" : ""}`}>
 
       <button className="nav__collapse-btn" onClick={() => setCollapsed(v => !v)}
-        title={c ? "Expandir" : "Col·lapsar"}>
+        title={c ? "Expandir menú" : "Col·lapsar menú"}>
         <i className="fa-solid fa-bars" />
+        {!c && <span className="nav__collapse-label">Menú</span>}
       </button>
 
       {/* ── Toggle PAPER / REAL ── */}

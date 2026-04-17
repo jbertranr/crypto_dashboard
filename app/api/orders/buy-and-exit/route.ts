@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { placeMarketBuy, placeOcoOrder, getTickerPrice, roundPriceUp, roundPriceDown, type TradingMode } from "../../../lib/binance-auth";
+import { guardRealFromLocalhost } from "../../../lib/real-guard";
 import { trailingSet, cacheGet, nextTradeCode, orderMetaSet } from "../../../lib/cache-store";
 import { ensureTrailingEngine } from "../../../lib/trailing-engine";
 import { apiError } from "../../../lib/api-error";
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
       };
     };
     const mode: TradingMode = rawMode === "real" ? "real" : "paper";
+    const guard = guardRealFromLocalhost(req, mode); if (guard) return guard;
 
     // 1. Market buy
     const buyResult = await placeMarketBuy(symbol, quoteOrderQty, mode);

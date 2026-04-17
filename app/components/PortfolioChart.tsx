@@ -54,21 +54,22 @@ const PERIOD_OPTIONS: { key: Period; label: string; ms: number | null }[] = [
   { key: "all", label: "Tot",  ms: null },
 ];
 
-export default function PortfolioChart({ refreshTick, period, setPeriod, onStats }: {
+export default function PortfolioChart({ refreshTick, period, setPeriod, onStats, mode = "paper" }: {
   refreshTick: number;
   period: Period;
   setPeriod: (p: Period) => void;
   onStats?: (diff: number, pct: number) => void;
+  mode?: "paper" | "real";
 }) {
   const [allData, setAllData] = useState<Snapshot[]>([]);
   const [btcRaw,  setBtcRaw]  = useState<{ time: number; close: number }[]>([]);
   const [showBtc, setShowBtc] = useState(true);
 
   useEffect(() => {
-    fetch("/api/portfolio-snapshot")
+    fetch(`/api/portfolio-snapshot?mode=${mode}`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setAllData(d); });
-  }, [refreshTick]);
+  }, [refreshTick, mode]);
 
   const btcInterval = period === "24h" ? "15m" : period === "7d" ? "1h" : period === "30d" ? "4h" : "1d";
   const btcLimit    = period === "24h" ? 96    : period === "7d" ? 168 : period === "30d" ? 180 : 200;

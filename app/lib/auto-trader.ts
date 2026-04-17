@@ -23,7 +23,7 @@ function computeProbability(score: number, interval: string, confidence: string)
     score * 0.7 + (INTERVAL_BONUS[interval] ?? 0) + (CONF_BONUS[confidence] ?? 0),
   ));
 }
-import { settingGet, settingGetBool } from "./settings-store";
+import { settingGet, settingGetBool, getQuoteAsset } from "./settings-store";
 import { botGetAll, type Bot } from "./bot-store";
 import {
   placeMarketBuy, placeMarketSell, placeOcoOrder, getTickerPrice,
@@ -39,6 +39,7 @@ import {
 import { ensureTrailingEngine } from "./trailing-engine";
 import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta } from "./journal-store";
 import { notifyNewOrder, notifyOcoFailed, notifyOrphanDetected, notifyOrphanNoBot, notifyMarketScan, type ScanSymbolResult } from "./telegram";
+import { warnBotRealFromDev } from "./real-guard";
 import { log } from "./logger";
 import path from "path";
 import fs from "fs";
@@ -115,13 +116,34 @@ const INTERVAL_MS: Record<string, number> = {
 };
 
 /**
- * Returns true if a candle on `interval` has closed in the last 60 seconds.
- * Based on floor(now / period) vs floor((now - 60s) / period).
+ * Tracks the last candle index that triggered a scan per interval.
+ * This allows the bot to catch up after a server restart.
+ */
+const _lastTriggeredCandle = new Map<string, number>();
+
+/**
+ * Returns true if a new candle has closed since the last time we checked,
+ * but only if the close happened within 25% of the interval ago (to avoid stale signals).
+ *
+ * This is more robust than the strict 60s window: if the server restarts after
+ * a candle close, it will still fire on the next poll as long as it is within
+ * the freshness window (e.g. within 15 min for 1h candles, 1h for 4h candles).
  */
 function candleJustClosed(interval: string): boolean {
   const period = INTERVAL_MS[interval] ?? 60_000;
   const now = Date.now();
-  return Math.floor(now / period) > Math.floor((now - 60_000) / period);
+  const lastClosedIndex = Math.floor(now / period) - 1; // index of the last *closed* candle
+  const lastTriggered   = _lastTriggeredCandle.get(interval) ?? lastClosedIndex; // init: don't fire on startup
+
+  if (lastClosedIndex <= lastTriggered) return false; // no new candle
+
+  // Staleness check: only act if the close happened within 25% of the period
+  const closeTime = (lastClosedIndex + 1) * period; // timestamp when that candle closed
+  const ageMs     = now - closeTime;
+  if (ageMs > period * 0.25) return false; // signal too old
+
+  _lastTriggeredCandle.set(interval, lastClosedIndex);
+  return true;
 }
 
 /* ── Per-bot daily counters (in-memory) ─────────────────────── */
@@ -205,6 +227,7 @@ async function applyOcoSuccess(
   score:      number,
   journalId:  number,
   existingTradeCode: string | null,
+  mode: TradingMode = "paper",
 ): Promise<void> {
   const orderListId = typeof ocoResult.orderListId === "number" ? ocoResult.orderListId : -1;
 
@@ -237,13 +260,16 @@ async function applyOcoSuccess(
     notifyNewOrder({
       symbol, type: "BUY_AND_EXIT",
       quoteQty, fillPrice, tpPrice, slStopPrice,
-      orderListId,
+      orderListId, mode,
     }).catch(err => log.auto.warn({ err: (err as Error).message }, "notifyNewOrder fallida"));
   }
 }
 
 async function executeBuy(opts: BuyOpts): Promise<void> {
   const { symbol, quoteQty, score, interval, atr, tpAtr, slAtr, trailAct, trailDst, trailMode, botName, mode } = opts;
+
+  // Avís si el bot fa una operació real des de l'entorn de desenvolupament
+  if (mode === "real") await warnBotRealFromDev(botName, symbol);
 
   // 1. Compra a mercat
   const buyResult   = await placeMarketBuy(symbol, String(quoteQty), mode);
@@ -349,7 +375,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
       symbol, fillPrice, quoteQty, ocoQty,
       tpPrice, slPrice: slStopPrice,
       error: "Invalid quantity / OCO rebutjada per Binance",
-      journalId,
+      journalId, mode,
     }).catch(err => log.auto.warn({ err: (err as Error).message }, "notifyOcoFailed fallida"));
     return;
   }
@@ -363,7 +389,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
   await applyOcoSuccess(
     ocoResult, symbol, ocoQty, tpPrice, slStopPrice,
     fillPrice, trailAct, trailDst, trailMode, tickSize, atr,
-    interval, botName, quoteQty, score, journalId, tradeCode,
+    interval, botName, quoteQty, score, journalId, tradeCode, mode,
   );
 }
 
@@ -372,7 +398,13 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
 async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const { config, effectiveConfig } = simConfig;
   const interval   = config.interval;
-  const symbols    = config.symbols ?? [];
+  // Reescriu el quote asset dels símbols amb el configurat (USDC, USDT, etc.)
+  const qa = getQuoteAsset();
+  const KNOWN_QUOTES = ["USDT","USDC","BUSD","FDUSD","TUSD","BTC","ETH","BNB"];
+  const symbols = (config.symbols ?? []).map(s => {
+    const found = KNOWN_QUOTES.find(q => s.endsWith(q));
+    return found ? s.slice(0, -found.length) + qa : s;
+  });
   const tpAtr      = config.tpAtr      ?? 2.5;
   const slAtr      = config.slAtr      ?? 1.0;
   const trailAct   = config.trailActivateAtr  ?? 1.5;
@@ -387,14 +419,14 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   // hoursTo=24 significa "tot el dia" — getUTCHours() mai retorna 24
   if (nowHour < bot.hoursFrom || (bot.hoursTo < 24 && nowHour >= bot.hoursTo)) {
     log.auto.debug({ bot: bot.name, nowHour, from: bot.hoursFrom, to: bot.hoursTo }, "bot fora de finestra horària");
-    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: "fora de finestra horària", results: [] }).catch(() => {});
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: "fora de finestra horària", results: [], mode: bot.mode }).catch(() => {});
     return;
   }
 
   // Màxim diari per-bot
   if (getBotTodayCount(bot.id) >= bot.maxDaily) {
     log.auto.debug({ bot: bot.name, count: getBotTodayCount(bot.id), max: bot.maxDaily }, "bot: màxim diari assolit");
-    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màxim diari assolit (${bot.maxDaily})`, results: [] }).catch(() => {});
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màxim diari assolit (${bot.maxDaily})`, results: [], mode: bot.mode }).catch(() => {});
     return;
   }
 
@@ -410,7 +442,13 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     usdtPer = config.capitalFixed ?? 100;
   }
 
-  const openOrders = await getOpenOrders(bot.mode);
+  let openOrders: Awaited<ReturnType<typeof getOpenOrders>>;
+  try {
+    openOrders = await getOpenOrders(bot.mode);
+  } catch (err) {
+    log.auto.error({ bot: bot.name, mode: bot.mode, err: (err as Error).message }, "bot: error obtenint ordres obertes (clau API invàlida?)");
+    return;
+  }
   const openOcoCount = new Set(
     openOrders.filter(o => o.orderListId !== -1).map(o => o.orderListId)
   ).size;
@@ -421,14 +459,14 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const maxOpen = bot.maxOpen ?? effectiveConfig?.maxOpen ?? null;
   if (maxOpen !== null && totalOpen >= maxOpen) {
     log.auto.debug({ bot: bot.name, totalOpen, maxOpen }, "bot: màx. posicions simultànies assolit");
-    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màx. posicions assolit (${totalOpen}/${maxOpen})`, results: [] }).catch(() => {});
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màx. posicions assolit (${totalOpen}/${maxOpen})`, results: [], mode: bot.mode }).catch(() => {});
     return;
   }
 
   const committed = totalOpen * usdtPer;
   if (committed + usdtPer > bot.budgetUsdt) {
     log.auto.debug({ bot: bot.name, committed, openOcoCount, trailingCount, budget: bot.budgetUsdt }, "bot: pressupost exhaurit");
-    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `pressupost exhaurit (${openOcoCount} OCO + ${trailingCount} trailing actius)`, results: [] }).catch(() => {});
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `pressupost exhaurit — ${openOcoCount} OCO + ${trailingCount} trailing (${committed.toFixed(0)}$ compromès / ${bot.budgetUsdt}$ pressupost, ${usdtPer.toFixed(0)}$/op)`, results: [], mode: bot.mode }).catch(() => {});
     return;
   }
 
@@ -449,8 +487,20 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
         : 0;
 
       if (analysis.verdict !== "BUY" || !bestStrategy || probability < minScore) {
-        log.auto.debug({ bot: bot.name, symbol, score: analysis.score, probability, verdict: analysis.verdict }, "sense senyal");
-        scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "NO_SIGNAL" });
+        let reason: string;
+        if (analysis.verdict !== "BUY") {
+          reason = `veredicte: ${analysis.verdict} (score ${analysis.score}/100)`;
+        } else if (!bestStrategy) {
+          reason = "cap estratègia activa (condicions no completes)";
+        } else {
+          reason = `probabilitat ${probability.toFixed(0)}% < mínim ${minScore}% [${bestStrategy.name}]`;
+        }
+        log.auto.debug({ bot: bot.name, symbol, score: analysis.score, probability, verdict: analysis.verdict, reason }, "sense senyal");
+        scanResults.push({
+          symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict,
+          decision: "NO_SIGNAL", probability, reason,
+          strategy: bestStrategy?.name,
+        });
         continue;
       }
 
@@ -465,8 +515,13 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
             ? computeProbability(confirm.score, confirmTf, confirmStrategy.confidence)
             : 0;
           if (confirm.verdict !== "BUY" || !confirmStrategy || confirmProb < minScore) {
-            log.auto.debug({ bot: bot.name, symbol, interval, confirmTf }, "multi-TF no confirmat");
-            scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "MULTI_TF_FAIL" });
+            const reason = `${confirmTf} no confirma: ${confirm.verdict} prob ${confirmProb.toFixed(0)}%`;
+            log.auto.debug({ bot: bot.name, symbol, interval, confirmTf, confirmProb }, "multi-TF no confirmat");
+            scanResults.push({
+              symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict,
+              decision: "MULTI_TF_FAIL", probability, reason,
+              strategy: bestStrategy.name,
+            });
             continue;
           }
         }
@@ -475,12 +530,18 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
       // No comprar si ja tenim un trailing SL actiu per aquest símbol
       if (hasActiveTrailing(symbol)) {
         log.auto.info({ bot: bot.name, symbol }, "bot: trailing SL actiu — ometent senyal");
-        scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "TRAILING_ACTIVE" });
+        scanResults.push({
+          symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict,
+          decision: "TRAILING_ACTIVE", probability, strategy: bestStrategy.name,
+        });
         continue;
       }
 
-      log.auto.info({ bot: bot.name, symbol, interval, score: analysis.score }, "senyal → comprant");
-      scanResults.push({ symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict, decision: "BUY_EXECUTED" });
+      log.auto.info({ bot: bot.name, symbol, interval, score: analysis.score, probability }, "senyal → comprant");
+      scanResults.push({
+        symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict,
+        decision: "BUY_EXECUTED", probability, strategy: bestStrategy.name,
+      });
 
       await executeBuy({
         symbol, quoteQty: usdtPer, score: analysis.score, interval,
@@ -498,8 +559,8 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     }
   }
 
-  if (tgScan && scanResults.length > 0) {
-    notifyMarketScan({ botName: bot.name, interval, minScore, results: scanResults })
+  if (tgScan) {
+    notifyMarketScan({ botName: bot.name, interval, minScore, results: scanResults, mode: bot.mode })
       .catch(err => log.auto.warn({ err: (err as Error).message }, "notifyMarketScan fallida"));
   }
 }
@@ -536,6 +597,7 @@ async function retryPendingOcos(): Promise<void> {
         ocoResult, p.symbol, p.ocoQty, p.tpPrice, p.slStopPrice,
         p.fillPrice, 0, p.trailDist, p.trailMode, p.tickSize, p.atr,
         p.intervalTf, p.botName, p.quoteQty, p.score, p.journalId, p.tradeCode,
+        p.mode === "real" ? "real" : "paper",
       );
 
       // Reconstrueix trailing amb els valors originals
@@ -602,20 +664,36 @@ async function checkOrphanPositions(): Promise<void> {
     const total = parseFloat(bal.free) + parseFloat(bal.locked);
     if (total <= 0) continue;
 
-    const symbol = `${bal.asset}USDT`;
+    // Prova primer amb el quote configurat, si falla prova USDT i USDC com a fallback
+    const qa = getQuoteAsset();
+    const candidateQuotes = [qa, ...(qa === "USDT" ? ["USDC"] : ["USDT"])];
+    let symbol = `${bal.asset}${qa}`;
+    let price: number | null = null;
+    for (const q of candidateQuotes) {
+      const candidate = `${bal.asset}${q}`;
+      try {
+        const p = await getTickerPrice(candidate);
+        if (!p || !isFinite(p) || p <= 0) continue; // rebutja NaN/0/Infinity
+        price = p;
+        symbol = candidate;
+        break;
+      } catch { /* prova el següent */ }
+    }
+    if (price === null) continue;
+    const priceNum = price;
 
-    // Obté preu de mercat per calcular valor USD
-    let price: number;
-    try { price = await getTickerPrice(symbol); }
-    catch { continue; }
-
-    const valueUsd = total * price;
+    const valueUsd = total * priceNum;
     if (valueUsd < ORPHAN_MIN_USD) continue;
 
-    // Quantitat desprotegida: posició total menys el que cobreixen les ordres SELL
-    const covered      = coveredQty.get(symbol) ?? 0;
+    // Quantitat desprotegida: posició total menys el que cobreixen les ordres SELL.
+    // Comprova tant el símbol actual com qualsevol variant de quote (p.ex. ETHUSDT vs ETHUSDC)
+    // per no generar falsos positius quan les ordres obertes usen un quote diferent.
+    const covered = Math.max(
+      coveredQty.get(symbol) ?? 0,
+      ...candidateQuotes.map(q => coveredQty.get(`${bal.asset}${q}`) ?? 0),
+    );
     const uncovered    = Math.max(0, total - covered);
-    const uncoveredUsd = uncovered * price;
+    const uncoveredUsd = uncovered * priceNum;
 
     // Totalment protegit (marge 2% per comissions/arrodoniments)
     if (uncoveredUsd < ORPHAN_MIN_USD || uncovered < total * 0.02) {
@@ -630,7 +708,7 @@ async function checkOrphanPositions(): Promise<void> {
     if (!watch) {
       // Primera detecció: registrar i avisar
       orphanWatchUpsert(symbol);
-      const meta = journalGetLastEntryMeta(symbol);
+      const meta = journalGetLastEntryMeta(symbol, "paper");
       log.auto.warn({ symbol, uncoveredUsd, uncovered }, "posició parcialment sense SL — esperant 5 min per corregir");
       notifyOrphanDetected({
         symbol,
@@ -686,7 +764,7 @@ async function checkOrphanPositions(): Promise<void> {
         const executedQty = parseFloat(sellRes.executedQty);
         const receivedUsd = parseFloat(sellRes.cummulativeQuoteQty);
         const fillPrice   = executedQty > 0 ? receivedUsd / executedQty : price;
-        const meta = journalGetLastEntryMeta(symbol);
+        const meta = journalGetLastEntryMeta(symbol, activBot?.mode ?? "paper");
         log.auto.info({ symbol, sellQty, receivedUsd, fillPrice }, "venda òrfena executada");
         notifyOrphanNoBot({
           symbol,
@@ -722,7 +800,7 @@ async function checkOrphanPositions(): Promise<void> {
     }
 
     // Preu d'entrada: des del journal o preu actual com a fallback
-    const journalEntry = journalGetLastEntryPrice(symbol, null);
+    const journalEntry = journalGetLastEntryPrice(symbol, null, activBot.mode);
     const fillPrice    = journalEntry?.price ?? price;
 
     // tickSize / stepSize — Binance públic (no requereix auth)
@@ -778,14 +856,14 @@ async function checkOrphanPositions(): Promise<void> {
         strategy: null, interval, entryType: "MARKET", trailingMode: trailMode,
         exitReason: null, capitalUsdt: null, capitalMode: settingGet("capital_mode"),
         notes: `Correcció automàtica OCO òrfena · Bot: ${activBot.name}`,
-        tradeCode: journalGetLastEntryPrice(symbol, null) ? journalGetLastTradeCode(symbol) : null,
+        tradeCode: journalGetLastEntryPrice(symbol, null, activBot.mode) ? journalGetLastTradeCode(symbol, 48 * 3600 * 1000, activBot.mode) : null,
         source: "AUTO", executedAt: now,
       });
 
       await applyOcoSuccess(
         ocoResult, symbol, ocoQty, tpPrice, slStopPrice,
         fillPrice, trailAct, trailDst, trailMode, tickSize, analysis.atr,
-        interval, activBot.name, valueUsd, 0, journalId, null,
+        interval, activBot.name, valueUsd, 0, journalId, null, activBot.mode,
       );
 
       orphanWatchDelete(symbol);
@@ -828,6 +906,8 @@ async function globalPoll(): Promise<void> {
       // MTF: for bots with interval ≥ 1h, check every 1h using closed higher-TF candles
       const checkInterval = (INTERVAL_MS[interval] ?? 0) >= INTERVAL_MS["1h"] ? "1h" : interval;
       if (!candleJustClosed(checkInterval)) continue;
+
+      log.auto.info({ bot: bot.name, interval, checkInterval }, "globalPoll: candle tancada, llançant runBotScan");
 
       // Run in background (non-blocking for other bots)
       runBotScan(bot, simConfig).catch(err =>

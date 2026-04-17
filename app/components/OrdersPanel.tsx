@@ -4,6 +4,7 @@ import { useEscapeKey } from "../hooks/useEscapeKey";
 import { BinanceOrder, BinanceBalance, BinanceTrade } from "../lib/binance-auth";
 import { formatCurrency } from "../lib/format";
 import { CoinRow } from "../lib/types";
+import { STABLES } from "../lib/constants";
 import NewOrderModal from "./NewOrderModal";
 import PortfolioTab from "./PortfolioTab";
 import AnalysisTab from "./AnalysisTab";
@@ -21,6 +22,7 @@ import EqualizerTab from "./EqualizerTab";
 import AutoLabTab from "./AutoLabTab";
 import StatusTab from "./StatusTab";
 import DeployTab from "./DeployTab";
+import ConvertTab from "./ConvertTab";
 import { useTradingMode } from "../contexts/TradingModeContext";
 
 export type Tab = "portfolio" | "portfolio-real"
@@ -28,9 +30,9 @@ export type Tab = "portfolio" | "portfolio-real"
                | "history"   | "history-real"
                | "journal"   | "journal-real"
                | "bot"       | "bot-real"
-               | "balance"
+               | "balance"   | "balance-real"
                | "analysis" | "matrix" | "errors" | "logs"
-               | "settings" | "simulation"
+               | "settings" | "simulation" | "convert"
                | "equalizer" | "autolab" | "status" | "deploy";
 
 /* ── Strategies ── */
@@ -1948,7 +1950,10 @@ function BalanceTable({ balances, loading, error, coins, openOrders }: {
   const priceMap = new Map<string, number>();
   for (const c of coins) priceMap.set(c.symbol, c.price);
   priceMap.set("USDT", 1);
+  priceMap.set("USDC", 1);
   priceMap.set("BUSD", 1);
+  priceMap.set("FDUSD", 1);
+  priceMap.set("TUSD", 1);
 
   const ordersPerAsset = new Map<string, number>();
   for (const o of openOrders) {
@@ -1964,8 +1969,8 @@ function BalanceTable({ balances, loading, error, coins, openOrders }: {
     const usdVal = total * price;
     return { ...b, free, locked, total, price, usdVal };
   }).sort((a, b_) => {
-    const aStable = a.asset === "USDT" || a.asset === "BUSD";
-    const bStable = b_.asset === "USDT" || b_.asset === "BUSD";
+    const aStable = STABLES.has(a.asset);
+    const bStable = STABLES.has(b_.asset);
     if (aStable && !bStable) return -1;
     if (!aStable && bStable) return 1;
     return b_.usdVal - a.usdVal;
@@ -1974,7 +1979,7 @@ function BalanceTable({ balances, loading, error, coins, openOrders }: {
   const totalUsd    = enriched.reduce((s, b) => s + b.usdVal, 0);
   const totalFree   = enriched.reduce((s, b) => s + b.free * b.price, 0);
   const totalLocked = enriched.reduce((s, b) => s + b.locked * b.price, 0);
-  const nonStable   = enriched.filter(b => b.asset !== "USDT" && b.asset !== "BUSD");
+  const nonStable   = enriched.filter(b => !STABLES.has(b.asset));
   const biggest     = nonStable.length > 0 ? nonStable[0] : null;
   const assetCount  = nonStable.length;
 
@@ -2036,7 +2041,7 @@ function BalanceTable({ balances, loading, error, coins, openOrders }: {
           </div>
           <div className="bal-list">
             {enriched.map(b => {
-              const isStable = b.asset === "USDT" || b.asset === "BUSD";
+              const isStable = STABLES.has(b.asset);
               const dp  = b.total < 1 ? 6 : b.total < 100 ? 4 : 2;
               const pct = totalUsd > 0 ? (b.usdVal / totalUsd) * 100 : 0;
               const freeUsd   = b.free   * b.price;
@@ -2146,7 +2151,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
   const setTab = onTab;
   const { viewMode } = useTradingMode();
   // Mode derived from active tab (takes precedence over global context for open orders / history)
-  const tabMode = (tab === "open-real" || tab === "history-real" || tab === "portfolio-real") ? "real" : "paper";
+  const tabMode = (tab === "open-real" || tab === "history-real" || tab === "portfolio-real" || tab === "balance-real") ? "real" : "paper";
   const [showNewOrder,    setShowNewOrder]    = useState(false);
   const [openOrders,      setOpenOrders]      = useState<BinanceOrder[]>([]);
   const [tgSending,       setTgSending]       = useState(false);
@@ -2185,17 +2190,17 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 
   const fetchHistory = useCallback(() => {
     setLoadingH(true); setErrorH(null);
-    fetch("/api/orders/history").then(r => r.json())
+    fetch(`/api/orders/history?mode=${tabMode}`).then(r => r.json())
       .then(d => { if (d.error) throw new Error(d.error); setHistory(d); })
       .catch(e => setErrorH(e.message)).finally(() => setLoadingH(false));
-  }, []);
+  }, [tabMode]);
 
   const fetchBalance = useCallback(() => {
     setLoadingB(true); setErrorB(null);
-    fetch("/api/balance").then(r => r.json())
+    fetch(`/api/balance?mode=${tabMode}`).then(r => r.json())
       .then(d => { if (d.error) throw new Error(d.error); setBalances(d); })
       .catch(e => setErrorB(e.message)).finally(() => setLoadingB(false));
-  }, []);
+  }, [tabMode]);
 
   useEffect(() => {
     fetchOpen();
@@ -2205,12 +2210,12 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
   }, [fetchOpen, refreshMs]);
 
   useEffect(() => {
-    if (tab === "history" && !history.length && !loadingH) fetchHistory();
-  }, [tab, history.length, loadingH, fetchHistory]);
+    if ((tab === "history" || tab === "history-real") && !loadingH) fetchHistory();
+  }, [tab, fetchHistory]);
 
   useEffect(() => {
-    if (tab === "balance" && !balances.length && !loadingB) fetchBalance();
-  }, [tab, balances.length, loadingB, fetchBalance]);
+    if ((tab === "balance" || tab === "balance-real") && !loadingB) fetchBalance();
+  }, [tab, fetchBalance]);
 
   // Load strategies once on mount
   useEffect(() => {
@@ -2253,6 +2258,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
           {tab === "settings"  && "Configuració"}
           {tab === "journal"   && "Diari d'operacions"}
           {tab === "simulation" && "Simulació"}
+          {tab === "convert"    && "Convertir crypto"}
           {tab === "bot"        && "Bot"}
           {tab === "equalizer"  && "Equalitzador"}
           {tab === "autolab"    && "AutoLab"}
@@ -2327,8 +2333,8 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
             </select>
             <button className="tb-btn" onClick={() => {
               fetchOpen(); setRefreshTrigger(n => n + 1);
-              if (tab === "history") fetchHistory();
-              if (tab === "balance") fetchBalance();
+              if (tab === "history" || tab === "history-real") fetchHistory();
+              if (tab === "balance" || tab === "balance-real") fetchBalance();
             }}>
               <i className="fa-solid fa-rotate-right" /> Refresca
             </button>
@@ -2343,7 +2349,8 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
       {tab === "open-real"      && <ErrorBoundary label="Ordres Real"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
       {tab === "history"        && <ErrorBoundary label="Historial Paper"><HistoryTable orders={history} loading={loadingH} error={errorH} /></ErrorBoundary>}
       {tab === "history-real"   && <ErrorBoundary label="Historial Real"><HistoryTable orders={history} loading={loadingH} error={errorH} /></ErrorBoundary>}
-      {tab === "balance"   && <ErrorBoundary label="Balance"><BalanceTable   balances={balances} loading={loadingB} error={errorB} coins={coins} openOrders={openOrders} /></ErrorBoundary>}
+      {tab === "balance"      && <ErrorBoundary label="Balance Paper"><BalanceTable balances={balances} loading={loadingB} error={errorB} coins={coins} openOrders={openOrders} /></ErrorBoundary>}
+      {tab === "balance-real" && <ErrorBoundary label="Balance Real"><BalanceTable balances={balances} loading={loadingB} error={errorB} coins={coins} openOrders={openOrders} /></ErrorBoundary>}
       {tab === "analysis"  && <ErrorBoundary label="Anàlisi"><AnalysisTab onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
       {tab === "matrix"    && <ErrorBoundary label="Escàner"><StrategyMatrix coins={coins} onOpenOrder={handleOpenOrderFromAnalysis} /></ErrorBoundary>}
       {tab === "errors"    && <ErrorsPanel />}
@@ -2352,6 +2359,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
       {tab === "journal"      && <ErrorBoundary label="Diari Paper"><JournalTab onNewOrder={() => setShowNewOrder(true)} mode="paper" /></ErrorBoundary>}
       {tab === "journal-real" && <ErrorBoundary label="Diari Real"><JournalTab onNewOrder={() => setShowNewOrder(true)} mode="real" /></ErrorBoundary>}
       {tab === "simulation" && <ErrorBoundary label="Simulació"><SimulationTab /></ErrorBoundary>}
+      {tab === "convert"    && <ErrorBoundary label="Convertir"><ConvertTab mode={viewMode} /></ErrorBoundary>}
       {tab === "bot"        && <ErrorBoundary label="Bot Paper"><BotTab mode="paper" /></ErrorBoundary>}
       {tab === "bot-real"   && <ErrorBoundary label="Bot Real"><BotTab mode="real" /></ErrorBoundary>}
       {tab === "equalizer"  && <ErrorBoundary label="Equalitzador"><EqualizerTab /></ErrorBoundary>}
@@ -2361,7 +2369,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 
       <div className="panel-footer">
         <span className="panel-footer__dot" />
-        Binance Demo · {refreshMs === 0 ? "refresc manual" : `auto-refresh ${refreshMs / 1000}s`}
+        {tabMode === "real" ? "Binance Real" : "Binance Demo"} · {refreshMs === 0 ? "refresc manual" : `auto-refresh ${refreshMs / 1000}s`}
         {lastRefreshed && (
           <span className="panel-footer__right">
             <span className="panel-footer__refreshed">

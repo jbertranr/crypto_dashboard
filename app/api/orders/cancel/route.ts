@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardRealFromLocalhost } from "../../../lib/real-guard";
 import { cancelOrder, cancelOcoOrder, placeMarketSell, getTickerPrice } from "../../../lib/binance-auth";
 import { apiError } from "../../../lib/api-error";
 import { journalAdd } from "../../../lib/journal-store";
@@ -10,6 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const { symbol, orderId, orderListId, side, origQty, price, type, sellAtMarket, mode: rawMode } = await req.json();
     const mode = rawMode === "real" ? "real" : "paper" as const;
+    const guard = guardRealFromLocalhost(req, mode); if (guard) return guard;
     let result;
     if (orderListId != null && orderListId !== -1) {
       try {

@@ -1,0 +1,32 @@
+
+╔══════════════════════════════════════════╗
+║        CryptDesk — Arrencada             ║
+╚══════════════════════════════════════════╝
+
+⏹  Aturant processos existents...
+Process on port 3000 killed
+Process on port 3001 killed
+   ports 3000/3001 alliberats
+
+🚀 Arrencant Next.js (port 3000)...
+   ✅ Next.js actiu
+
+🌐 Arrencant servidor públic (port 3001)...
+   ✅ Servidor públic actiu
+
+🔗 Arrencant túnel Cloudflare (port 3001)...
+   Esperant URL del túnel...
+   ✅ Telegram notificat
+
+╔══════════════════════════════════════════════════════════════╗
+║  Sistema CryptDesk operatiu                                  ║
+╠══════════════════════════════════════════════════════════════╣
+║  Dashboard local   http://localhost:3000                     ║
+║  App local         http://localhost:3001                     ║
+║  App externa       https://sas-nut-trend-cart.trycloudflare.com║
+╠══════════════════════════════════════════════════════════════╣
+║  Port 3000: mai exposat externament (segur)                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+   Test d'ordres:  node scripts/test-orders.mjs
+

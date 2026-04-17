@@ -66,6 +66,81 @@
   --radius-sm: 8px;
 }
 
+/* ── "War Mode" — REAL trading environment ───────────────────────────────── */
+.app__real-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app--real {
+  --accent:        #ea580c;
+  --accent-dark:   #c2410c;
+  --accent-dim:    rgba(234,88,12,0.08);
+  --accent-border: rgba(234,88,12,0.25);
+  --bg-page:       #fdf9f7;
+}
+
+.app--real .nav {
+  border-left: 3px solid #ea580c;
+}
+
+.app--real .topbar {
+  border-bottom: 2px solid #ea580c;
+}
+
+/* Badge parpellejant al topbar */
+.real-mode-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #ea580c;
+  border-radius: 4px;
+  padding: 3px 8px;
+  animation: real-pulse 2s ease-in-out infinite;
+}
+
+.real-mode-badge i {
+  font-size: 0.6rem;
+}
+
+@keyframes real-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.75; }
+}
+
+/* Banner sota el topbar */
+.real-mode-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 26px;
+  background: #ea580c;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #c2410c;
+  user-select: none;
+}
+
+.real-mode-banner i {
+  color: #fff;
+  font-size: 0.6rem;
+}
+
+/* ── end War Mode ──────────────────────────────────────────────────────────── */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body { height: 100%; }

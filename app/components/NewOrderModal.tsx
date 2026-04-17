@@ -62,12 +62,30 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   onSuccess: () => void;
   presetPrices?: { side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string; interval?: "5m" | "1h" | "4h" };
 }) {
-  const { viewMode } = useTradingMode();
+  const { viewMode, quoteAsset } = useTradingMode();
 
   const defaultCoin = coin ?? coins[0];
-  const [selectedPair, setSelectedPair] = useState(defaultCoin?.pair ?? "");
+  const [selectedPair,   setSelectedPair]   = useState(defaultCoin?.pair ?? "");
+  const [customPair,     setCustomPair]      = useState("");
+  const [customPrice,    setCustomPrice]     = useState<number>(0);
+  const [loadingPrice,   setLoadingPrice]    = useState(false);
+  const [allSymbols,     setAllSymbols]      = useState<{ symbol: string; base: string; quote: string }[]>([]);
+  const [symbolSearch,   setSymbolSearch]    = useState("");
+  const [showSymbolList, setShowSymbolList]  = useState(false);
+  const isCustom = selectedPair === "__custom__";
   const activeCoin = coins.find(c => c.pair === selectedPair) ?? defaultCoin;
-  const ref = activeCoin?.price ?? 0;
+  const effectivePair = isCustom ? customPair.toUpperCase().trim() : selectedPair;
+  const ref = isCustom ? customPrice : (activeCoin?.price ?? 0);
+
+  // Quote asset efectiu: per parells personalitzats, detectar-lo del símbol
+  const KNOWN_QUOTES = ["USDT","USDC","BUSD","FDUSD","TUSD","BTC","ETH","BNB"];
+  const pairQuoteAsset: string = isCustom && effectivePair.length >= 5
+    ? (KNOWN_QUOTES.find(q => effectivePair.endsWith(q)) ?? quoteAsset)
+    : quoteAsset;
+  // Base asset del parell personalitzat
+  const pairBaseAsset: string = isCustom && effectivePair.length >= 5
+    ? effectivePair.slice(0, effectivePair.length - pairQuoteAsset.length)
+    : (activeCoin?.symbol ?? "");
 
   /* mode toggle */
   const [mode, setMode] = useState<"oco" | "buy-exit">("buy-exit");
@@ -144,12 +162,44 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
 
   /* fetch exchange filters when pair changes */
   useEffect(() => {
-    if (!selectedPair) return;
-    fetch(`/api/exchange-info?symbol=${selectedPair}`)
+    if (!effectivePair) return;
+    fetch(`/api/exchange-info?symbol=${effectivePair}`)
       .then(r => r.json())
       .then(d => { if (d.stepSize) setStepSize(d.stepSize); if (d.tickSize) setTickSize(d.tickSize); })
       .catch(() => {});
-  }, [selectedPair]);
+  }, [effectivePair]);
+
+  /* fetch all symbols when custom mode is opened */
+  useEffect(() => {
+    if (!isCustom || allSymbols.length > 0) return;
+    fetch("/api/exchange-info/symbols")
+      .then(r => r.json())
+      .then((d: { symbols: { symbol: string; base: string; quote: string }[] }) => {
+        if (Array.isArray(d.symbols)) setAllSymbols(d.symbols);
+      })
+      .catch(() => {});
+  }, [isCustom, allSymbols.length]);
+
+  /* filtered symbols for autocomplete */
+  const filteredSymbols = symbolSearch.length >= 2
+    ? allSymbols.filter(s =>
+        s.symbol.includes(symbolSearch.toUpperCase()) ||
+        s.base.includes(symbolSearch.toUpperCase()) ||
+        s.quote.includes(symbolSearch.toUpperCase())
+      ).slice(0, 50)
+    : [];
+
+  /* fetch price for custom pairs */
+  useEffect(() => {
+    if (!isCustom || !customPair || customPair.length < 5) return;
+    const sym = customPair.toUpperCase().trim();
+    setLoadingPrice(true);
+    fetch(`/api/market-price?symbol=${sym}`)
+      .then(r => r.json())
+      .then((d: { price?: number }) => { if (d.price) setCustomPrice(d.price); })
+      .catch(() => {})
+      .finally(() => setLoadingPrice(false));
+  }, [isCustom, customPair]);
 
   /* apply a strategy proposal to buy-exit % fields */
   const applyStrategyToBuyExit = useCallback((s: StratProposal, price: number, atr: number) => {
@@ -205,7 +255,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     const ua = parseFloat(usdAmount);
     if (!isNaN(ua) && ref) setCryptoQty(roundDown(ua / ref, stepSize));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPair, side, tickSize]);
+  }, [effectivePair, side, tickSize]);
 
   /* quantity handlers */
   const onUsd = (v: string) => {
@@ -282,25 +332,25 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     const next = !trailingOn;
     setTrailingOn(next);
     if (next && trailingAtr === 0 && !analysisSnap) {
-      suggestTrailing(side, ref, selectedPair);
+      suggestTrailing(side, ref, effectivePair);
     }
   };
 
   // Re-suggest if side or pair changes while trailing is on (skip in OCO when analysis drives it)
   useEffect(() => {
-    if (trailingOn && ref && !(mode === "oco" && analysisSnap)) suggestTrailing(side, ref, selectedPair);
+    if (trailingOn && ref && !(mode === "oco" && analysisSnap)) suggestTrailing(side, ref, effectivePair);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [side, selectedPair]);
+  }, [side, effectivePair]);
 
   useEscapeKey(onClose);
 
   /* fetch analysis for both modes when pair/interval changes */
   useEffect(() => {
-    if (!selectedPair) return;
+    if (!effectivePair) return;
     let cancelled = false;
     setAnalysisLoading(true);
     setAnalysisSnap(null);
-    fetch(`/api/analysis?symbol=${selectedPair}&interval=${analysisInterval}`)
+    fetch(`/api/analysis?symbol=${effectivePair}&interval=${analysisInterval}`)
       .then(r => r.json())
       .then((d: AnalysisSnap) => {
         if (!cancelled) {
@@ -312,7 +362,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
       .catch(() => {})
       .finally(() => { if (!cancelled) setAnalysisLoading(false); });
     return () => { cancelled = true; };
-  }, [selectedPair, analysisInterval]);
+  }, [effectivePair, analysisInterval]);
 
   /* apply selected strategy — OCO: absolute prices; buy-exit: percentages */
   useEffect(() => {
@@ -362,9 +412,9 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     const usd   = parseFloat(beUsdAmount);
     const tpPct = parseFloat(beTpPct);
     const slPct = parseFloat(beSlPct);
-    if (!usd || usd <= 0)        { setError("Enter a valid USDT amount."); return; }
+    if (!usd || usd <= 0)        { setError(`Enter a valid ${pairQuoteAsset} amount.`); return; }
     if (!ref || ref <= 0)        { setError("Preu de referència no disponible."); return; }
-    if ((balances["USDT"] ?? 0) < usd) { setError(`Insufficient USDT balance (${balances["USDT"] ?? 0})`); return; }
+    if ((balances[pairQuoteAsset] ?? 0) < usd) { setError(`Insufficient ${pairQuoteAsset} balance (${balances[pairQuoteAsset] ?? 0})`); return; }
     if (!tpPct || tpPct <= 0)   { setError("Take Profit % must be > 0."); return; }
     if (!slPct || slPct <= 0)   { setError("Stop Loss % must be > 0."); return; }
 
@@ -385,7 +435,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          symbol: activeCoin.pair,
+          symbol: effectivePair,
           quoteOrderQty: usd.toFixed(2),
           tpPrice: tpPriceVal,
           slPrice: slPriceVal,
@@ -432,7 +482,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          symbol: activeCoin.pair, side, quantity: qty,
+          symbol: effectivePair, side, quantity: qty,
           tpPrice, slStopPrice, slLimitPrice, trailing,
           interval: analysisInterval,
           botName: selectedBot?.name ?? null,
@@ -487,18 +537,68 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             {coin ? (
               <div className="new-order__coin-locked">
                 <CoinIcon symbol={activeCoin.symbol} size={18} />
-                <span className="new-order__coin-name">{activeCoin.symbol} / USDT</span>
+                <span className="new-order__coin-name">{activeCoin.symbol} / {quoteAsset}</span>
                 <span className="new-order__price-ref">{formatCurrency(activeCoin.price)}</span>
               </div>
             ) : (
-              <select className="order-edit__input new-order__select"
-                value={selectedPair} onChange={e => setSelectedPair(e.target.value)}>
-                {coins.map(c => (
-                  <option key={c.pair} value={c.pair}>
-                    {c.symbol} — {formatCurrency(c.price)}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select className="order-edit__input new-order__select"
+                  value={selectedPair} onChange={e => { setSelectedPair(e.target.value); setCustomPair(""); setCustomPrice(0); }}>
+                  {coins.map(c => (
+                    <option key={c.pair} value={c.pair}>
+                      {c.symbol} — {formatCurrency(c.price)}
+                    </option>
+                  ))}
+                  <option value="__custom__">✏️ Parell personalitzat…</option>
+                </select>
+                {isCustom && (
+                  <div className="new-order__custom-pair">
+                    <div className="new-order__symbol-search-wrap">
+                      <i className="fa-solid fa-magnifying-glass new-order__symbol-search-icon" />
+                      <input
+                        className="order-edit__input new-order__symbol-search-input"
+                        placeholder="Cerca parell… (ex: SOLBTC, ETH)"
+                        value={symbolSearch}
+                        onChange={e => { setSymbolSearch(e.target.value); setShowSymbolList(true); }}
+                        onFocus={() => setShowSymbolList(true)}
+                        onBlur={() => setTimeout(() => setShowSymbolList(false), 150)}
+                        autoFocus
+                      />
+                      {customPair && (
+                        <span className="new-order__symbol-selected">
+                          {customPair}
+                          <button className="new-order__symbol-clear" onClick={() => { setCustomPair(""); setCustomPrice(0); setSymbolSearch(""); }}>×</button>
+                        </span>
+                      )}
+                    </div>
+                    {showSymbolList && filteredSymbols.length > 0 && (
+                      <ul className="new-order__symbol-list">
+                        {filteredSymbols.map(s => (
+                          <li key={s.symbol}
+                            className="new-order__symbol-item"
+                            onMouseDown={() => {
+                              setCustomPair(s.symbol);
+                              setSymbolSearch(s.symbol);
+                              setShowSymbolList(false);
+                              setCustomPrice(0);
+                            }}>
+                            <span className="new-order__symbol-item-sym">{s.symbol}</span>
+                            <span className="new-order__symbol-item-desc">{s.base} / {s.quote}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {allSymbols.length === 0 && <span className="new-order__custom-pair-hint">Carregant parells…</span>}
+                    {loadingPrice && <span className="new-order__custom-pair-hint">Obtenint preu…</span>}
+                    {!loadingPrice && customPrice > 0 && (
+                      <span className="new-order__custom-pair-hint new-order__custom-pair-hint--ok">
+                        1 {pairBaseAsset} = {customPrice} {pairQuoteAsset}
+                        {" · "}Saldo {pairQuoteAsset}: {balances[pairQuoteAsset]?.toFixed(pairQuoteAsset === "BTC" || pairQuoteAsset === "ETH" ? 6 : 2) ?? 0}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -557,33 +657,33 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
               <span className="order-edit__label">Quantity</span>
               <span className="new-order__balance-hint">
                 {side === "SELL"
-                  ? `Saldo: ${balances[activeCoin?.symbol ?? ""] ?? 0} ${activeCoin?.symbol ?? ""}`
-                  : `Saldo: ${formatCurrency(balances["USDT"] ?? 0)} USDT`
+                  ? `Saldo: ${balances[pairBaseAsset] ?? 0} ${pairBaseAsset}`
+                  : `Saldo: ${balances[pairQuoteAsset] != null ? balances[pairQuoteAsset].toFixed(pairQuoteAsset === "BTC" || pairQuoteAsset === "ETH" ? 6 : 2) : 0} ${pairQuoteAsset}`
                 }
               </span>
               <div className="new-order__toggle">
                 <button className={`new-order__toggle-btn${qtyMode === "usd" ? " new-order__toggle-btn--active" : ""}`}
-                  onClick={() => setQtyMode("usd")}>USD</button>
+                  onClick={() => setQtyMode("usd")}>{pairQuoteAsset}</button>
                 <button className={`new-order__toggle-btn${qtyMode === "crypto" ? " new-order__toggle-btn--active" : ""}`}
-                  onClick={() => setQtyMode("crypto")}>{activeCoin?.symbol}</button>
+                  onClick={() => setQtyMode("crypto")}>{pairBaseAsset || activeCoin?.symbol}</button>
               </div>
             </div>
             {qtyMode === "usd" ? (
               <>
                 <div className="new-order__prefix-wrap">
-                  <span className="new-order__prefix">$</span>
+                  <span className="new-order__prefix">{["USDT","USDC","BUSD","FDUSD","TUSD"].includes(pairQuoteAsset) ? "$" : pairQuoteAsset}</span>
                   <input className="order-edit__input new-order__prefixed" type="number"
                     min="0" step="any" value={usdAmount}
                     onChange={e => onUsd(e.target.value)} placeholder="0.00" />
                 </div>
-                {cryptoQty && <span className="new-order__hint">≈ {cryptoQty} {activeCoin?.symbol}</span>}
+                {cryptoQty && ref > 0 && <span className="new-order__hint">≈ {cryptoQty} {pairBaseAsset || activeCoin?.symbol}</span>}
               </>
             ) : (
               <>
                 <input className="order-edit__input" type="number"
                   min="0" step="any" value={cryptoQty}
                   onChange={e => onCrypto(e.target.value)} placeholder="0.000000" />
-                {usdAmount && <span className="new-order__hint">≈ ${usdAmount}</span>}
+                {usdAmount && ref > 0 && <span className="new-order__hint">≈ {["USDT","USDC","BUSD","FDUSD","TUSD"].includes(pairQuoteAsset) ? "$" : ""}{usdAmount} {["USDT","USDC","BUSD","FDUSD","TUSD"].includes(pairQuoteAsset) ? "" : pairQuoteAsset}</span>}
               </>
             )}
           </div>
@@ -746,12 +846,12 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
             </div>
           )}
 
-          {/* USDT amount */}
+          {/* Quote amount */}
           <div className="order-edit__field">
             <div className="new-order__label-row">
-              <span className="order-edit__label">Import USDT</span>
+              <span className="order-edit__label">Import {pairQuoteAsset}</span>
               <span className="new-order__balance-hint">
-                Saldo: {formatCurrency(balances["USDT"] ?? 0)} USDT
+                Saldo: {balances[pairQuoteAsset] != null ? balances[pairQuoteAsset].toFixed(pairQuoteAsset === "BTC" || pairQuoteAsset === "ETH" ? 6 : 2) : 0} {pairQuoteAsset}
               </span>
             </div>
             <div className="new-order__prefix-wrap">

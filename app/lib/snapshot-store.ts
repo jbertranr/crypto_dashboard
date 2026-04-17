@@ -5,10 +5,10 @@ export interface Snapshot {
   value: number;
 }
 
-export function addSnapshot(s: Snapshot): void {
-  snapshotAdd(s.time, s.value);
+export function addSnapshot(s: Snapshot, mode: "paper" | "real" = "paper"): void {
+  snapshotAdd(s.time, s.value, mode);
 }
 
-export function getSnapshots(): Snapshot[] {
-  return snapshotGetAll();
+export function getSnapshots(mode: "paper" | "real" = "paper"): Snapshot[] {
+  return snapshotGetAll(mode);
 }

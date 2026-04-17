@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { placeMarketBuy, type TradingMode } from "../../../lib/binance-auth";
+import { guardRealFromLocalhost } from "../../../lib/real-guard";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
 import { journalAdd } from "../../../lib/journal-store";
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
       mode?: string;
     };
     const mode: TradingMode = rawMode === "real" ? "real" : "paper";
+    const guard = guardRealFromLocalhost(req, mode); if (guard) return guard;
 
     const buyResult = await placeMarketBuy(symbol, quoteOrderQty, mode);
     const executedQty = buyResult.executedQty;

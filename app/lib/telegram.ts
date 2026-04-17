@@ -13,6 +13,19 @@ export function isConfigured(): boolean {
   return !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
 }
 
+const KNOWN_QUOTES = ["USDT","USDC","BUSD","FDUSD","TUSD","BTC","ETH","BNB"];
+
+/** Extracts the quote asset from a symbol like "SOLUSDC" → "USDC", "BTCUSDT" → "USDT" */
+function quoteOf(symbol: string): string {
+  return KNOWN_QUOTES.find(q => symbol.endsWith(q)) ?? "USDT";
+}
+
+/** Splits a symbol into [base, quote] display string e.g. "SOLUSDC" → "SOL/USDC" */
+function pairOf(symbol: string): string {
+  const q = quoteOf(symbol);
+  return `${symbol.slice(0, -q.length)}/${q}`;
+}
+
 function ts(): string {
   return new Date().toLocaleString("ca-ES", {
     day: "2-digit", month: "short", year: "numeric",
@@ -133,21 +146,33 @@ function buildPortfolioChartUrl(
 
 // ── Missatge de text ──────────────────────────────────────────────────────────
 
-export async function sendTelegram(text: string): Promise<void> {
+function getTgCredentials(mode?: string): { token: string; chatId: string } | null {
+  if (mode === "real") {
+    const token  = process.env.TELEGRAM_BOT_TOKEN_REAL  ?? process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID_REAL    ?? process.env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) return null;
+    return { token, chatId };
+  }
   const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) {
-    log.telegram.warn("TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID no configurats");
+  if (!token || !chatId) return null;
+  return { token, chatId };
+}
+
+export async function sendTelegram(text: string, mode?: string): Promise<void> {
+  const creds = getTgCredentials(mode);
+  if (!creds) {
+    log.telegram.warn({ mode }, "TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID no configurats");
     return;
   }
-  const res = await fetch(`${TG_API}${token}/sendMessage`, {
+  const res = await fetch(`${TG_API}${creds.token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: creds.chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
   });
   if (!res.ok) {
     const err = await res.text();
-    log.telegram.error({ status: res.status, err }, "error enviant missatge");
+    log.telegram.error({ status: res.status, err, mode }, "error enviant missatge");
   }
 }
 
@@ -175,8 +200,10 @@ export async function sendCard(
   _cardSubs: string[],
   _color: CardColor,
   block: string[],
+  mode?: string,
 ): Promise<void> {
-  await sendTelegram(`<b>${cardTitle}</b>\n\n${pre(block)}`);
+  const prefix = mode === "real" ? "🟠 REAL · " : "";
+  await sendTelegram(`<b>${prefix}${cardTitle}</b>\n\n${pre(block)}`, mode);
 }
 
 // ── Informe horari ────────────────────────────────────────────────────────────
@@ -201,7 +228,9 @@ export async function sendHourlyPortfolioReport(data: {
   const summaryLines: string[] = [
     kv("Saldo",    fmtUSD(data.totalValue)),
     data.delta1h != null
-      ? kv("Canvi 1h", `${sign}${fmtUSD(data.delta1h)}  (${sign}${pct1h!.toFixed(2)}%)`)
+      ? kv("Canvi 1h", pct1h != null
+          ? `${sign}${fmtUSD(data.delta1h)}  (${sign}${pct1h.toFixed(2)}%)`
+          : `${sign}${fmtUSD(data.delta1h)}`)
       : kv("Canvi 1h", "sense dades prèvies"),
     kv("Ordres",   `${data.openOrders}  (${data.ocoCount} OCO · ${data.limitCount} LIM)`),
   ];
@@ -229,8 +258,9 @@ export async function notifyOrderFill(data: {
   origQty:     number;
   execValue:   number;
   orderListId: number;
+  mode?:    string;
 }): Promise<void> {
-  const base  = data.symbol.replace(/USDT$/, "");
+  const base  = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   const isTP  = data.type === "LIMIT_MAKER";
   const isSL  = data.type === "STOP_LOSS_LIMIT" || data.type === "STOP_LOSS";
   const isBuy = data.side === "BUY";
@@ -241,18 +271,19 @@ export async function notifyOrderFill(data: {
   const qtyStr = `${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`;
 
   await sendCard(
-    `${label}  ·  ${base}/USDT`,
+    `${label}  ·  ${pairOf(data.symbol)}`,
     [`Preu: ${fmtUSD(data.execPrice)}  ·  Valor: ${fmtUSD(data.execValue)}`],
     color,
     [
-      kv("Símbol",    `${base}/USDT`),
+      kv("Símbol",    pairOf(data.symbol)),
       kv("Preu",      fmtUSD(data.execPrice)),
       kv("Quantitat", qtyStr),
       kv("Valor",     fmtUSD(data.execValue)),
       ...(data.orderListId !== -1 ? [kv("OCO", `#${data.orderListId}`)] : []),
       kv("Hora",      ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: trailing stop executat ──────────────────────────────────────
@@ -262,23 +293,25 @@ export async function notifyTrailingFill(data: {
   side:      string;
   stopPrice: number;
   qty:       string;
+  mode?:    string;
 }): Promise<void> {
-  const base   = data.symbol.replace(/USDT$/, "");
+  const base   = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   const qty    = parseFloat(data.qty);
   const qtyStr = `${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`;
 
   await sendCard(
-    `🔴 TRAILING STOP  ·  ${base}/USDT`,
+    `🔴 TRAILING STOP  ·  ${pairOf(data.symbol)}`,
     [`Stop: ${fmtUSD(data.stopPrice)}  ·  Valor: ${fmtUSD(qty * data.stopPrice)}`],
     "red",
     [
-      kv("Símbol",      `${base}/USDT`),
+      kv("Símbol",      pairOf(data.symbol)),
       kv("Stop activat", fmtUSD(data.stopPrice)),
       kv("Quantitat",   qtyStr),
       kv("Valor est.",  fmtUSD(qty * data.stopPrice)),
       kv("Hora",        ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Informe d'ordres en curs ──────────────────────────────────────────────────
@@ -291,6 +324,7 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
       "gray",
       [kv("Estat", "Cap ordre oberta"), kv("Hora", ts())],
     );
+
     return;
   }
 
@@ -311,12 +345,12 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
   ];
 
   for (const [listId, legs] of ocoMap) {
-    const base = legs[0].symbol.replace(/USDT$/, "");
+    const base = legs[0].symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
     const qty  = parseFloat(legs[0].origQty);
     const tp   = legs.find(l => l.type === "LIMIT_MAKER");
     const sl   = legs.find(l => l.type === "STOP_LOSS_LIMIT" || l.type === "STOP_LOSS");
     const block = [
-      `OCO #${listId}  ·  ${base}/USDT`,
+      `OCO #${listId}  ·  ${pairOf(legs[0].symbol)}`,
       COL_SEP.slice(0, 22),
       ...(tp ? [kv("TP",       fmtUSD(parseFloat(tp.price)))] : []),
       ...(sl ? [kv("SL stop",  fmtUSD(parseFloat(sl.stopPrice)))] : []),
@@ -327,7 +361,7 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
   }
 
   for (const o of singles) {
-    const base  = o.symbol.replace(/USDT$/, "");
+    const base  = o.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
     const qty   = parseFloat(o.origQty);
     const price = parseFloat(o.price) || parseFloat(o.stopPrice);
     const typeLabels: Record<string, string> = {
@@ -335,7 +369,7 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
       STOP_LOSS_LIMIT: "STOP LOSS", STOP_LOSS: "STOP LOSS",
     };
     const block = [
-      `${typeLabels[o.type] ?? o.type}  ·  ${base}/USDT  ·  ${o.side}`,
+      `${typeLabels[o.type] ?? o.type}  ·  ${pairOf(o.symbol)}  ·  ${o.side}`,
       COL_SEP.slice(0, 22),
       ...(parseFloat(o.stopPrice) > 0
         ? [kv("Stop", fmtUSD(parseFloat(o.stopPrice))), kv("Límit", fmtUSD(parseFloat(o.price)))]
@@ -404,8 +438,9 @@ export async function notifyNewOrder(data: {
   tpPrice:      string;
   slStopPrice:  string;
   orderListId?: number;
+  mode?:    string;
 }): Promise<void> {
-  const base      = data.symbol.replace(/USDT$/, "");
+  const base      = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   const isBuyExit = data.type === "BUY_AND_EXIT";
   const label     = isBuyExit ? "🛒 COMPRA + OCO" : "📌 NOVA ORDRE OCO";
 
@@ -414,11 +449,11 @@ export async function notifyNewOrder(data: {
   ];
 
   await sendCard(
-    `${label}  ·  ${base}/USDT`,
+    `${label}  ·  ${pairOf(data.symbol)}`,
     subs,
     "blue",
     [
-      kv("Símbol", `${base}/USDT`),
+      kv("Símbol", pairOf(data.symbol)),
       ...(isBuyExit && data.fillPrice ? [kv("Compra a",  fmtUSD(data.fillPrice))]  : []),
       ...(isBuyExit && data.quoteQty  ? [kv("Invertit",  fmtUSD(data.quoteQty))]   : []),
       ...(!isBuyExit && data.quantity ? [kv("Quantitat", `${data.quantity} ${base}`)] : []),
@@ -427,7 +462,8 @@ export async function notifyNewOrder(data: {
       ...(data.orderListId != null && data.orderListId !== -1 ? [kv("OCO", `#${data.orderListId}`)] : []),
       kv("Hora", ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: venda de mercat a USDT ──────────────────────────────────────
@@ -437,23 +473,25 @@ export async function notifyOrderSold(data: {
   executedQty:  string;
   receivedUSDT: string;
   fillPrice:    number;
+  mode?:    string;
 }): Promise<void> {
-  const base   = data.symbol.replace(/USDT$/, "");
+  const base   = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   const qty    = parseFloat(data.executedQty);
   const qtyStr = `${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`;
 
   await sendCard(
-    `💸 VENDA A MERCAT  ·  ${base}/USDT`,
-    [`${fmtUSD(data.fillPrice)}  →  ${fmtUSD(parseFloat(data.receivedUSDT))} USDT`],
+    `💸 VENDA A MERCAT  ·  ${pairOf(data.symbol)}`,
+    [`${fmtUSD(data.fillPrice)}  →  ${fmtUSD(parseFloat(data.receivedUSDT))} ${quoteOf(data.symbol)}`],
     "blue",
     [
-      kv("Símbol",    `${base}/USDT`),
+      kv("Símbol",    pairOf(data.symbol)),
       kv("Preu exec.", fmtUSD(data.fillPrice)),
       kv("Quantitat", qtyStr),
       kv("Rebut",     fmtUSD(parseFloat(data.receivedUSDT))),
       kv("Hora",      ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: Stop Loss modificat ─────────────────────────────────────────
@@ -466,15 +504,16 @@ export async function notifySlModified(data: {
   tpPrice?:     string;
   orderListId?: number;
   orderId?:     number;
+  mode?:    string;
 }): Promise<void> {
-  const base = data.symbol.replace(/USDT$/, "");
+  const base = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
 
   await sendCard(
-    `🛡 STOP LOSS MODIFICAT  ·  ${base}/USDT`,
+    `🛡 STOP LOSS MODIFICAT  ·  ${pairOf(data.symbol)}`,
     [`Nou stop: ${fmtUSD(parseFloat(data.newSlStop))}`],
     "orange",
     [
-      kv("Símbol",    `${base}/USDT`),
+      kv("Símbol",    pairOf(data.symbol)),
       ...(data.oldSl != null ? [kv("SL anterior",  fmtUSD(data.oldSl))] : []),
       kv("SL nou stop", fmtUSD(parseFloat(data.newSlStop))),
       kv("SL nou lím",  fmtUSD(parseFloat(data.newSlLimit))),
@@ -484,7 +523,8 @@ export async function notifySlModified(data: {
         : data.orderId != null ? [kv("Ordre", `#${data.orderId}`)] : []),
       kv("Hora", ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: ordre cancel·lada ────────────────────────────────────────────
@@ -497,24 +537,26 @@ export async function notifyOrderCancel(data: {
   price:        number;
   orderId?:     number;
   orderListId?: number;
+  mode?:    string;
 }): Promise<void> {
-  const base  = data.symbol.replace(/USDT$/, "");
+  const base  = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   const qty   = data.origQty;
   const isOco = (data.orderListId ?? -1) !== -1;
 
   await sendCard(
-    `⚫ ORDRE CANCEL·LADA  ·  ${base}/USDT`,
+    `⚫ ORDRE CANCEL·LADA  ·  ${pairOf(data.symbol)}`,
     [`${data.side === "BUY" ? "Compra" : "Venda"}  ·  ${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`],
     "gray",
     [
-      kv("Símbol",    `${base}/USDT`),
+      kv("Símbol",    pairOf(data.symbol)),
       kv("Direcció",  data.side === "BUY" ? "Compra" : "Venda"),
       kv("Quantitat", `${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`),
       ...(data.price > 0 ? [kv("Preu límit", fmtUSD(data.price))] : []),
       ...(isOco ? [kv("OCO", `#${data.orderListId}`)] : data.orderId ? [kv("Ordre", `#${data.orderId}`)] : []),
       kv("Hora", ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: posició detectada sense stop-loss ────────────────────────────
@@ -528,14 +570,15 @@ export async function notifyOrphanDetected(data: {
   orderId:     number | null;
   orderListId: number | null;
   tradeCode:   string | null;
+  mode?:    string;
 }): Promise<void> {
-  const base = data.symbol.replace(/USDT$/, "");
+  const base = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   await sendCard(
-    `🚨 POSICIÓ SENSE SL  ·  ${base}/USDT`,
+    `🚨 POSICIÓ SENSE SL  ·  ${pairOf(data.symbol)}`,
     [`Aplicant correcció en ${data.fixIn} min`],
     "orange",
     [
-      kv("Símbol",     `${base}/USDT`),
+      kv("Símbol",     pairOf(data.symbol)),
       kv("Valor",      fmtUSD(data.valueUsd)),
       kv("Quantitat",  `${data.qty} ${base}`),
       ...(data.entryPrice  ? [kv("Entrada est.",  fmtUSD(data.entryPrice))]        : []),
@@ -547,7 +590,8 @@ export async function notifyOrphanDetected(data: {
       kv("Correcció",  `en ${data.fixIn} min (lògica bot actiu)`),
       kv("Hora",       ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: posició òrfena venuda a mercat (sense bot) ──────────────────
@@ -561,8 +605,9 @@ export async function notifyOrphanNoBot(data: {
   orderId:     number | null;
   orderListId: number | null;
   tradeCode:   string | null;
+  mode?:    string;
 }): Promise<void> {
-  const base   = data.symbol.replace(/USDT$/, "");
+  const base   = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   const qty    = parseFloat(data.qty);
   const qtyStr = `${qty.toFixed(qty < 1 ? 6 : 4)} ${base}`;
 
@@ -571,11 +616,11 @@ export async function notifyOrphanNoBot(data: {
   const pnlSign = pnlUsd != null ? (pnlUsd >= 0 ? "+" : "") : "";
 
   await sendCard(
-    `🚨 VENDA AUTOMÀTICA — POSICIÓ ÒRFENA  ·  ${base}/USDT`,
+    `🚨 VENDA AUTOMÀTICA — POSICIÓ ÒRFENA  ·  ${pairOf(data.symbol)}`,
     ["Cap bot actiu — posició tancada a mercat per seguretat"],
     "red",
     [
-      kv("Símbol",      `${base}/USDT`),
+      kv("Símbol",      pairOf(data.symbol)),
       kv("Quantitat",   qtyStr),
       kv("Preu exec.",  fmtUSD(data.fillPrice)),
       kv("Rebut",       fmtUSD(data.receivedUsd)),
@@ -589,7 +634,8 @@ export async function notifyOrphanNoBot(data: {
       kv("Motiu",       "Sense OCO/SL i cap bot configurat per al símbol"),
       kv("Hora",        ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: OCO no col·locada (reintent pendent) ────────────────────────
@@ -603,14 +649,15 @@ export async function notifyOcoFailed(data: {
   slPrice:   string;
   error:     string;
   journalId: number;
+  mode?:    string;
 }): Promise<void> {
-  const base = data.symbol.replace(/USDT$/, "");
+  const base = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
   await sendCard(
-    `⚠️ COMPRA SENSE OCO  ·  ${base}/USDT`,
+    `⚠️ COMPRA SENSE OCO  ·  ${pairOf(data.symbol)}`,
     [`Posició sense SL/TP — reintent en curs`],
     "orange",
     [
-      kv("Símbol",    `${base}/USDT`),
+      kv("Símbol",    pairOf(data.symbol)),
       kv("Compra a",  fmtUSD(data.fillPrice)),
       kv("Invertit",  fmtUSD(data.quoteQty)),
       kv("Quantitat", `${data.ocoQty} ${base}`),
@@ -620,7 +667,8 @@ export async function notifyOcoFailed(data: {
       kv("Journal",   `#${data.journalId}`),
       kv("Hora",      ts()),
     ],
-  );
+      data.mode,
+);
 }
 
 // ── Notificació: escaneig de mercat (decisió d'entrada) ──────────────────────
@@ -632,11 +680,14 @@ export type ScanDecision =
   | "TRAILING_ACTIVE";
 
 export interface ScanSymbolResult {
-  symbol:   string;
-  price:    number;
-  score:    number;
-  verdict:  string;
-  decision: ScanDecision;
+  symbol:       string;
+  price:        number;
+  score:        number;
+  verdict:      string;
+  decision:     ScanDecision;
+  probability?: number;   // probabilitat calculada (score * 0.7 + bonuses)
+  reason?:      string;   // motiu detallat del rebuig
+  strategy?:    string;   // nom de l'estratègia millor (si n'hi ha)
 }
 
 export async function notifyMarketScan(data: {
@@ -645,18 +696,20 @@ export async function notifyMarketScan(data: {
   minScore:    number;
   skipReason?: string;
   results:     ScanSymbolResult[];
+  mode?:    string;
 }): Promise<void> {
   const DECISION_ICON: Record<ScanDecision, string> = {
-    BUY_EXECUTED:   "✅ COMPRA",
+    BUY_EXECUTED:   "✅ COMPRA EXECUTADA",
     NO_SIGNAL:      "⏸ sense senyal",
     MULTI_TF_FAIL:  "🔀 multi-TF no confirmat",
     TRAILING_ACTIVE:"🔵 trailing actiu",
   };
 
-  const header = `🔍 ESCANEIG · ${data.botName}`;
+  const modePrefix = data.mode === "real" ? "🟠 REAL · " : "";
+  const header = `🔍 ${modePrefix}ESCANEIG · ${data.botName}`;
 
   if (data.skipReason) {
-    await sendTelegram(`<b>${header}</b>\n⏭ Omès: ${data.skipReason}\n<i>${ts()}</i>`);
+    await sendTelegram(`<b>${header}</b>\n⏭ Omès: ${data.skipReason}\n<i>${ts()}</i>`, data.mode);
     return;
   }
 
@@ -666,18 +719,30 @@ export async function notifyMarketScan(data: {
   };
 
   const rows = data.results.map(r => {
-    const base  = r.symbol.replace(/USDT$/, "").padEnd(6);
+    const base  = r.symbol.replace(/USDT$|USDC$/,"").padEnd(5);
     const price = fmtUSD(r.price).padStart(10);
     const score = `${r.score}`.padStart(3);
     const bar   = scoreBar(r.score);
     const dec   = DECISION_ICON[r.decision];
-    return `${base} ${price}  ${score}/100  ${bar}\n       → ${dec}`;
+
+    let detail = "";
+    if (r.probability !== undefined) {
+      detail += `  prob: ${r.probability.toFixed(0)}% / mínim ${data.minScore}%`;
+    }
+    if (r.strategy) {
+      detail += `  [${r.strategy}]`;
+    }
+    if (r.reason) {
+      detail += `\n         motiu: ${r.reason}`;
+    }
+
+    return `${base} ${price}  ${score}/100  ${bar}\n       → ${dec}${detail}`;
   });
 
-  const infoLine = `Interval: ${data.interval}  ·  Mínim: ${data.minScore}  ·  ${ts()}`;
-  const body     = rows.length > 0 ? pre([infoLine, "─".repeat(38), ...rows]) : pre([infoLine, "(cap símbol analitzat)"]);
+  const infoLine = `Interval: ${data.interval}  ·  Mínim: ${data.minScore}%  ·  ${ts()}`;
+  const body     = rows.length > 0 ? pre([infoLine, "─".repeat(40), ...rows]) : pre([infoLine, "(cap símbol analitzat)"]);
 
-  await sendTelegram(`<b>${header}</b>\n${body}`);
+  await sendTelegram(`<b>${header}</b>\n${body}`, data.mode);
 }
 
 // ── Notificació: trailing stop activat ───────────────────────────────────────
@@ -689,20 +754,22 @@ export async function notifyTrailingActivated(data: {
   initialSl:   string;
   distance:    number;
   orderListId: number;
+  mode?:    string;
 }): Promise<void> {
-  const base = data.symbol.replace(/USDT$/, "");
+  const base = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
 
   await sendCard(
-    `🔔 TRAILING ACTIVAT  ·  ${base}/USDT`,
+    `🔔 TRAILING ACTIVAT  ·  ${pairOf(data.symbol)}`,
     [`Activació: ${fmtUSD(data.price)}  ·  SL: ${fmtUSD(parseFloat(data.initialSl))}`],
     "orange",
     [
-      kv("Símbol",      `${base}/USDT`),
+      kv("Símbol",      pairOf(data.symbol)),
       kv("Activació",   fmtUSD(data.price)),
       kv("SL inicial",  fmtUSD(parseFloat(data.initialSl))),
       kv("Distància",   fmtUSD(data.distance)),
       kv("OCO cancel.", `#${data.orderListId}`),
       kv("Hora",        ts()),
     ],
-  );
+      data.mode,
+);
 }

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardRealFromLocalhost } from "../../../lib/real-guard";
 import { placeMarketSell } from "../../../lib/binance-auth";
 import { cacheGet, cacheSet } from "../../../lib/cache-store";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
-import { settingGetBool, settingGet } from "../../../lib/settings-store";
+import { settingGetBool, settingGet, getQuoteAsset } from "../../../lib/settings-store";
 import { notifyOrderSold } from "../../../lib/telegram";
 import { journalAdd, journalGetLastTradeCode } from "../../../lib/journal-store";
 
@@ -28,7 +29,8 @@ export async function POST(req: NextRequest) {
   try {
     const { asset, quantity, mode: rawMode } = await req.json() as { asset: string; quantity: string; mode?: string };
     const mode = rawMode === "real" ? "real" : "paper" as const;
-    const symbol = `${asset}USDT`;
+    const guard = guardRealFromLocalhost(req, mode); if (guard) return guard;
+    const symbol = `${asset}${getQuoteAsset()}`;
 
     const { stepSize, minQty } = await getStepSize(symbol);
 
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     // --- Journal: record market sell exit ---
     try {
-      const tradeCode = journalGetLastTradeCode(symbol);
+      const tradeCode = journalGetLastTradeCode(symbol, 48 * 3600 * 1000, mode);
       journalAdd({
         type:            "EXIT_MARKET",
         symbol,

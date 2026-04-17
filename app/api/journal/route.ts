@@ -49,7 +49,8 @@ export async function GET(req: NextRequest) {
       } catch { /* si Binance falla, continuem sense backfill */ }
     }
 
-    const stats = journalStats();
+    const mode  = modeParam === "paper" || modeParam === "real" ? modeParam : "paper";
+    const stats = journalStats(mode);
     return NextResponse.json({ entries, stats });
   } catch (e) {
     return apiError(e, "journal/GET");

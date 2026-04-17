@@ -48,7 +48,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   capital_fixed_usdt:       "100",     // USDT per trade (FIXED mode)
   capital_pct_portfolio:    "5",       // % of total portfolio per trade (PCT mode)
   capital_max_open:         "3",       // max simultaneous open positions
-  // Pair priority (comma-separated list of enabled pairs)
+  // Quote asset (moneda base per a tots els parells de trading)
+  quote_asset:              "USDT",        // USDT | USDC | BUSD | FDUSD
+  // Pair priority (comma-separated list — ha de coincidir amb quote_asset)
   priority_pairs:           "BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT",
   // Auto-trading (master switch only — per-bot config is in the bots table)
   auto_trade_enabled: "0",             // master switch: para TOTS els bots (0 = off, 1 = on)
@@ -92,4 +94,13 @@ export function settingGetAll(): Record<string, string> {
   const result: Record<string, string> = { ...SETTING_DEFAULTS };
   for (const row of rows) result[row.key] = row.value;
   return result;
+}
+
+/* ── Quote asset helper ───────────────────────────────────────── */
+const VALID_QUOTE_ASSETS = new Set(["USDT", "USDC", "BUSD", "FDUSD", "TUSD"]);
+
+/** Retorna l'asset quote configurat (default: "USDT") */
+export function getQuoteAsset(): string {
+  const v = settingGet("quote_asset").toUpperCase();
+  return VALID_QUOTE_ASSETS.has(v) ? v : "USDT";
 }

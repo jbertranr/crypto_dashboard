@@ -105,19 +105,21 @@ type PnlData = { d1: number; d7: number; d30: number; d365: number };
 
 interface UnrealizedRow { asset: string; pnl: number; valueUSD: number; }
 
-function PnlSummaryPanel({ unrealizedRows }: {
+function PnlSummaryPanel({ unrealizedRows, mode, refreshTick }: {
   unrealizedRows: UnrealizedRow[];
+  mode: "paper" | "real";
+  refreshTick: number;
 }) {
   const [snapshots, setSnapshots] = useState<{ time: number; value: number }[]>([]);
   const [loadingSnap, setLoadingSnap] = useState(true);
 
   useEffect(() => {
-    fetch("/api/portfolio-snapshot")
+    fetch(`/api/portfolio-snapshot?mode=${mode}`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setSnapshots(d); })
       .catch(() => {})
       .finally(() => setLoadingSnap(false));
-  }, []);
+  }, [mode, refreshTick]);
 
   const totalUnrealized = unrealizedRows.reduce((s, r) => s + r.pnl, 0);
 
@@ -205,7 +207,7 @@ export default function PortfolioTab({
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
   const [costBasis, setCostBasis] = useState<Record<string, CostBasisEntry>>({});
-  const { viewMode: ctxMode } = useTradingMode();
+  const { viewMode: ctxMode, quoteAsset } = useTradingMode();
   const viewMode = modeProp ?? ctxMode;
   const [selling,   setSelling]   = useState<Record<string, boolean>>({});
   const [sellConfirm, setSellConfirm] = useState<string | null>(null); // asset awaiting confirm
@@ -234,11 +236,11 @@ export default function PortfolioTab({
   useEffect(() => { load(); }, [load, refreshTrigger]);
 
   useEffect(() => {
-    fetch("/api/cost-basis")
+    fetch(`/api/cost-basis?mode=${viewMode}`)
       .then(r => r.json())
       .then(d => { if (!d.error) setCostBasis(d); })
       .catch(err => console.warn("[PortfolioTab] cost-basis:", (err as Error).message));
-  }, [refreshTrigger]);
+  }, [viewMode, refreshTrigger]);
 
   // Auto-reload every 15 min to take a fresh snapshot
   useEffect(() => {
@@ -265,12 +267,12 @@ export default function PortfolioTab({
     fetch("/api/portfolio-snapshot", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ time: now, value: total }),
+      body: JSON.stringify({ time: now, value: total, mode: viewMode }),
     }).then(() => setSnapshotTick(t => t + 1));
   }, [balances, coins]);
 
   const cancelOcoAndSell = async (asset: string) => {
-    const symbol = `${asset}USDT`;
+    const symbol = `${asset}${quoteAsset}`;
     const ocoListIds = [...new Set(
       openOrders
         .filter(o => o.symbol === symbol && o.orderListId !== -1)
@@ -531,11 +533,11 @@ export default function PortfolioTab({
 
           {/* Portfolio evolution chart */}
           <div className="portfolio__evolution">
-            <PortfolioChart refreshTick={snapshotTick} period={period} setPeriod={setPeriod} onStats={handleChartStats} />
+            <PortfolioChart refreshTick={snapshotTick} period={period} setPeriod={setPeriod} onStats={handleChartStats} mode={viewMode} />
           </div>
 
           {/* P&L: realitzat + si tanques ara */}
-          <PnlSummaryPanel unrealizedRows={unrealizedRows} />
+          <PnlSummaryPanel unrealizedRows={unrealizedRows} mode={viewMode} refreshTick={snapshotTick} />
 
         </div>
         </>
@@ -850,8 +852,8 @@ export default function PortfolioTab({
       )}
 
       <div className="portfolio__footer">
-        <span className="panel-footer__dot" style={{ background: "var(--blue)" }} />
-        Binance Demo · Variació 24h = canvi de preu de mercat aplicat als holdings actuals
+        <span className="panel-footer__dot" style={{ background: viewMode === "real" ? "var(--accent)" : "var(--blue)" }} />
+        {viewMode === "real" ? "Binance Real" : "Binance Demo"} · Variació 24h = canvi de preu de mercat aplicat als holdings actuals
         {lastRefreshed && (
           <span className="panel-footer__right">
             <span className="panel-footer__refreshed">

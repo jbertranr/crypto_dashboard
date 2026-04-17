@@ -1,5 +1,24 @@
 # CryptDesk — Guia per a Claude
 
+## Documentació del projecte
+
+Abans de fer qualsevol canvi, consulta la documentació corresponent a `docs/`:
+
+| Fitxer | Contingut |
+|--------|-----------|
+| [docs/01_architecture.md](docs/01_architecture.md) | Arquitectura, ports, fluxes de dades |
+| [docs/02_api-reference.md](docs/02_api-reference.md) | Tots els endpoints REST (~50) |
+| [docs/03_database-schema.md](docs/03_database-schema.md) | Esquema SQLite (cache.db, paper.db, real.db) |
+| [docs/04_trading-engine.md](docs/04_trading-engine.md) | Motors: trailing, order monitor, bots, scheduler |
+| [docs/05_configuration.md](docs/05_configuration.md) | Variables d'entorn i settings de l'aplicació |
+| [docs/06_mobile-app.md](docs/06_mobile-app.md) | App pública (public/www) i proxy |
+| [docs/07_deployment.md](docs/07_deployment.md) | Deploy a producció, Oracle, pm2, rollback |
+| [docs/08_integrations.md](docs/08_integrations.md) | Binance API, Telegram Bot, Cloudflare Tunnel |
+| [docs/09_development-guide.md](docs/09_development-guide.md) | Convencions, patrons, zones de risc |
+| [docs/10_ai-agents.md](docs/10_ai-agents.md) | Agents IA: `/check`, `/agent_reviewer`, `@agent_styler` |
+
+---
+
 ## Desplegament a producció
 
 ```bash

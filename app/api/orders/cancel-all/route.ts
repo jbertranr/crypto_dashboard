@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardRealFromLocalhost } from "../../../lib/real-guard";
 import {
   getOpenOrders, cancelOrder, cancelOcoOrder,
   getAccount, placeMarketSell, roundPriceDown,
@@ -7,6 +8,7 @@ import { cacheGet } from "../../../lib/cache-store";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
 import { sendTelegram } from "../../../lib/telegram";
+import { getQuoteAsset } from "../../../lib/settings-store";
 
 // Stablecoins and quote assets we never sell
 const NEVER_SELL = new Set(["USDT", "BUSD", "USDC", "FDUSD", "TUSD", "BNB"]);
@@ -14,6 +16,7 @@ const NEVER_SELL = new Set(["USDT", "BUSD", "USDC", "FDUSD", "TUSD", "BNB"]);
 export async function POST(req: NextRequest) {
   const { sellAll = false, mode: rawMode } = await req.json().catch(() => ({})) as { sellAll?: boolean; mode?: string };
   const mode = rawMode === "real" ? "real" : "paper" as const;
+    const guard = guardRealFromLocalhost(req, mode); if (guard) return guard;
 
   try {
     /* ── 1. Cancel all open orders ── */
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
       });
 
       for (const bal of crypto) {
-        const symbol = `${bal.asset}USDT`;
+        const symbol = `${bal.asset}${getQuoteAsset()}`;
         try {
           // Get step size for quantity rounding
           const exInfo = cacheGet<{ stepSize: string }>(`exchange-info:${symbol}`);

@@ -1,0 +1,144 @@
+{"level":30,"time":1776404691511,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1776404691534,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":15,"nextDailyIn":1425,"msg":"scheduler iniciat"}
+{"level":30,"time":1776404691545,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1776404691573,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1776404692940,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776404693206,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":1,"msg":"inicialitzat"}
+{"level":30,"time":1776405591834,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776405601229,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"telegram","msg":"informe horari enviat"}
+{"level":30,"time":1776406168468,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776406168644,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776406259113,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776406267487,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776406267505,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776406274035,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776406274620,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776406279586,"pid":12780,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776406982587,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1776406982615,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":37,"nextDailyIn":1387,"msg":"scheduler iniciat"}
+{"level":30,"time":1776406982622,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1776406982632,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1776406983894,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776406984456,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":1,"msg":"inicialitzat"}
+{"level":40,"time":1776406988554,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":254.672920425,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776406989706,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776407040508,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","msg":"motor iniciat"}
+{"level":30,"time":1776407079637,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776407079692,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776407344106,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776407344112,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":254.81421734999998,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776407344572,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776407345717,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776407345720,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776407346171,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776407404569,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":254.74959317499997,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776407405786,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776407764438,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776407764451,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":254.83174254999997,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776407764903,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776407766043,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776407766047,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776407766499,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776407824252,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":254.74192589999996,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776407825448,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776407979789,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776408184235,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776408184237,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.04314027499996,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776408184687,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776408185823,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776408185832,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776408186296,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776408244531,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.20962967499995,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776408245686,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776408604373,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776408604379,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.28630242499997,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776408604853,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776408606030,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776408606032,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776408606505,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776408664345,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.4254087,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776408665478,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776408879539,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776409024391,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776409024393,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.34435464999996,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776409024839,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776409025982,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776409025989,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776409026439,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776409084656,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.343259325,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776409085802,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":50,"time":1776409201630,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"telegram","err":"Cannot read properties of null (reading 'toFixed')","msg":"error informe horari"}
+{"level":30,"time":1776409444455,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776409444460,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.761673475,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776409444921,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776409446059,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776409446061,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776409446524,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776409504463,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.91720962499997,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776409505620,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776409780193,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776409864624,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776409864627,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":256.5557841,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776409865077,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776409866226,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776409866234,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776409866692,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776409924645,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":256.320289225,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776409925863,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776410285005,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776410285011,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":256.07603174999997,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776410285496,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776410286688,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776410286697,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776410287503,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776410344797,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":256.050839275,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776410346057,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776410679856,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776410705018,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776410705020,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.86682467499995,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776410705522,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776410706739,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776410706744,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776410707248,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776410764804,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":255.88215922499998,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776410766501,"pid":34580,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776410978933,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1776410978943,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":30,"nextDailyIn":1320,"msg":"scheduler iniciat"}
+{"level":30,"time":1776410978947,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1776410978952,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1776410980148,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776410981135,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":1,"msg":"inicialitzat"}
+{"level":30,"time":1776411100370,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776411100375,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":256.24252114999996,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776411101046,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","err":"Binance /order 400: {\"code\":-2010,\"msg\":\"Account has insufficient balance for requested action.\"}","msg":"error en venda òrfena a mercat"}
+{"level":30,"time":1776411102206,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","msg":"aplicant correcció OCO a posició òrfena…"}
+{"level":40,"time":1776411102208,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"msg":"no s'ha trobat cap bot actiu — venent posició òrfena a mercat"}
+{"level":50,"time":1776411102661,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","err":"Binance /order 400: {\"code\":-1121,\"msg\":\"Invalid symbol.\"}","msg":"error en venda òrfena a mercat"}
+{"level":40,"time":1776411160365,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ETHUSDC","uncoveredUsd":256.02893277499993,"uncovered":0.10953249999999999,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":40,"time":1776411161527,"pid":35300,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","symbol":"ARKUSDC","uncoveredUsd":null,"uncovered":0.283,"msg":"posició parcialment sense SL — esperant 5 min per corregir"}
+{"level":30,"time":1776411320770,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1776411320796,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":25,"nextDailyIn":1315,"msg":"scheduler iniciat"}
+{"level":30,"time":1776411320836,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1776411320843,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1776411322186,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776411322823,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":1,"msg":"inicialitzat"}
+{"level":30,"time":1776411429283,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776411429346,"pid":23244,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776412360233,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1776412360247,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":7,"nextDailyIn":1297,"msg":"scheduler iniciat"}
+{"level":30,"time":1776412360254,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1776412360261,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1776412361986,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":1,"msg":"inicialitzat"}
+{"level":30,"time":1776412362113,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776412452541,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776412452627,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":50,"time":1776412803108,"pid":37360,"hostname":"DESKTOP-KPAMGTB","module":"telegram","err":"Cannot read properties of null (reading 'toFixed')","msg":"error informe horari"}
+{"level":30,"time":1776413161964,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat"}
+{"level":30,"time":1776413161982,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":54,"nextDailyIn":1284,"msg":"scheduler iniciat"}
+{"level":30,"time":1776413161990,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDT","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1776413161996,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1776413163017,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776413163231,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","count":1,"msg":"inicialitzat"}
+{"level":50,"time":1776416401612,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"telegram","err":"Cannot read properties of null (reading 'toFixed')","msg":"error informe horari"}
+{"level":30,"time":1776418448607,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}
+{"level":30,"time":1776418448647,"pid":5628,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":3,"mode":"real","msg":"balance"}

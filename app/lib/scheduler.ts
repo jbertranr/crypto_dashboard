@@ -13,6 +13,7 @@ import { sendPortfolioReport, sendHourlyPortfolioReport, sendTelegram, isConfigu
 import { db, orderMetaGet } from "./cache-store";
 import { log }                        from "./logger";
 import { STABLES, BINANCE_BASE }      from "./constants";
+import { getQuoteAsset }              from "./settings-store";
 declare global {
   var __schedulerStarted:      boolean | undefined;
   var __schedulerLastSnapshot: number  | undefined;
@@ -65,7 +66,8 @@ async function fetchPortfolioData(): Promise<PortfolioData> {
   const [account, openOrders] = await Promise.all([getAccount(), getOpenOrders()]);
 
   const assets = account.balances.filter(b => parseFloat(b.free) + parseFloat(b.locked) > 0.000001);
-  const pairs  = assets.filter(b => !STABLES.has(b.asset)).map(b => `${b.asset}USDT`);
+  const qa     = getQuoteAsset();
+  const pairs  = assets.filter(b => !STABLES.has(b.asset)).map(b => `${b.asset}${qa}`);
 
   const tickerMap = new Map<string, Ticker>();
   const results = await Promise.allSettled(
@@ -82,7 +84,7 @@ async function fetchPortfolioData(): Promise<PortfolioData> {
   const rows = assets.map(b => {
     const qty       = parseFloat(b.free) + parseFloat(b.locked);
     const isStable  = STABLES.has(b.asset);
-    const ticker    = tickerMap.get(`${b.asset}USDT`);
+    const ticker    = tickerMap.get(`${b.asset}${qa}`);
     const price     = ticker ? parseFloat(ticker.lastPrice) : (isStable ? 1 : 0);
     const change24h = ticker ? parseFloat(ticker.priceChangePercent) : 0;
     const valueUSD  = qty * price;
@@ -237,7 +239,8 @@ async function takePortfolioSnapshot(): Promise<void> {
   try {
     const account = await getAccount();
     const assets  = account.balances.filter(b => parseFloat(b.free) + parseFloat(b.locked) > 1e-8);
-    const pairs   = assets.filter(b => !STABLES.has(b.asset)).map(b => `${b.asset}USDT`);
+    const qa2     = getQuoteAsset();
+    const pairs   = assets.filter(b => !STABLES.has(b.asset)).map(b => `${b.asset}${qa2}`);
 
     const tickerResults = await Promise.allSettled(
       pairs.map(p =>
@@ -249,7 +252,7 @@ async function takePortfolioSnapshot(): Promise<void> {
     const priceMap = new Map<string, number>();
     pairs.forEach((p, i) => {
       const r = tickerResults[i];
-      if (r.status === "fulfilled") priceMap.set(p.replace(/USDT$/, ""), parseFloat(r.value.lastPrice));
+      if (r.status === "fulfilled") priceMap.set(p.replace(new RegExp(`${qa2}$`), ""), parseFloat(r.value.lastPrice));
     });
 
     let total = 0;

@@ -1,26 +1,16 @@
 /**
- * Bot store — persistent multi-bot config (SQLite, data/cache.db)
+ * Bot store — persistent multi-bot config.
+ *
+ * Paper bots → data/paper.db
+ * Real  bots → data/real.db
  *
  * Each bot is linked to a SavedConfig (simulation) and holds its own
  * operational parameters (budget, daily limit, time window).
- * The trading parameters (TP/SL ATRs, pairs, interval) are read-only
- * and derived from the linked simulation at runtime.
  */
 
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import { getDb, paperDb, realDb } from "./db";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH  = path.join(DATA_DIR, "cache.db");
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
-const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
-db.pragma("synchronous = NORMAL");
-
-db.exec(`
+const BOT_SCHEMA = `
   CREATE TABLE IF NOT EXISTS bots (
     id               TEXT    PRIMARY KEY,
     name             TEXT    NOT NULL,
@@ -33,18 +23,47 @@ db.exec(`
     require_multi_tf INTEGER NOT NULL DEFAULT 0,
     created_at       INTEGER NOT NULL
   );
-`);
+`;
 
-// ── Schema migration — add columns introduced after initial release ────────────
-{
-  const cols = (db.prepare("PRAGMA table_info(bots)").all() as { name: string }[]).map(r => r.name);
-  if (!cols.includes("code"))            db.exec("ALTER TABLE bots ADD COLUMN code             TEXT    NOT NULL DEFAULT ''");
-  if (!cols.includes("entry_desc"))      db.exec("ALTER TABLE bots ADD COLUMN entry_desc       TEXT    NOT NULL DEFAULT ''");
-  if (!cols.includes("exit_desc"))       db.exec("ALTER TABLE bots ADD COLUMN exit_desc        TEXT    NOT NULL DEFAULT ''");
-  if (!cols.includes("min_probability")) db.exec("ALTER TABLE bots ADD COLUMN min_probability  INTEGER          DEFAULT NULL");
-  if (!cols.includes("max_open"))        db.exec("ALTER TABLE bots ADD COLUMN max_open          INTEGER          DEFAULT NULL");
-  if (!cols.includes("mode"))            db.exec("ALTER TABLE bots ADD COLUMN mode              TEXT    NOT NULL DEFAULT 'paper'");
+function initBotDb(d: ReturnType<typeof getDb>) {
+  d.exec(BOT_SCHEMA);
+  const cols = (d.prepare("PRAGMA table_info(bots)").all() as { name: string }[]).map(r => r.name);
+  if (!cols.includes("code"))            d.exec("ALTER TABLE bots ADD COLUMN code             TEXT    NOT NULL DEFAULT ''");
+  if (!cols.includes("entry_desc"))      d.exec("ALTER TABLE bots ADD COLUMN entry_desc       TEXT    NOT NULL DEFAULT ''");
+  if (!cols.includes("exit_desc"))       d.exec("ALTER TABLE bots ADD COLUMN exit_desc        TEXT    NOT NULL DEFAULT ''");
+  if (!cols.includes("min_probability")) d.exec("ALTER TABLE bots ADD COLUMN min_probability  INTEGER          DEFAULT NULL");
+  if (!cols.includes("max_open"))        d.exec("ALTER TABLE bots ADD COLUMN max_open          INTEGER          DEFAULT NULL");
+  // Note: no mode column — mode is implicit from which DB the bot lives in
+
+  // Migrate existing data from cache.db (one-time, safe to retry)
+  migrateBotFromCacheDb(d);
 }
+
+function migrateBotFromCacheDb(target: ReturnType<typeof getDb>) {
+  try {
+    const cacheDbPath = require("path").join(require("path").dirname(
+      (target === paperDb
+        ? (paperDb as unknown as { filename: string }).filename
+        : (realDb  as unknown as { filename: string }).filename)
+    ), "cache.db");
+    if (!require("fs").existsSync(cacheDbPath)) return;
+
+    const srcMode = target === paperDb ? "paper" : "real";
+    target.exec(`ATTACH DATABASE '${cacheDbPath}' AS src`);
+    target.exec(`
+      INSERT OR IGNORE INTO bots (id, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, created_at,
+        code, entry_desc, exit_desc, min_probability, max_open)
+      SELECT id, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, created_at,
+        COALESCE(code, ''), COALESCE(entry_desc, ''), COALESCE(exit_desc, ''), min_probability, max_open
+      FROM src.bots
+      WHERE COALESCE(mode, 'paper') = '${srcMode}'
+    `);
+    target.exec("DETACH DATABASE src");
+  } catch { /* cache.db pot no tenir la taula — ignorat */ }
+}
+
+initBotDb(paperDb);
+initBotDb(realDb);
 
 /* ── Types ───────────────────────────────────────────────────── */
 
@@ -61,8 +80,8 @@ export interface Bot {
   requireMultiTf: boolean;
   entryDesc:      string;
   exitDesc:       string;
-  minProbability: number | null;  // null = usa el de la config de simulació
-  maxOpen:        number | null;  // null = usa el de la config de simulació
+  minProbability: number | null;
+  maxOpen:        number | null;
   mode:           "paper" | "real";
   createdAt:      number;
 }
@@ -82,11 +101,10 @@ interface BotRow {
   exit_desc:        string;
   min_probability:  number | null;
   max_open:         number | null;
-  mode:             string;
   created_at:       number;
 }
 
-function rowToBot(row: BotRow): Bot {
+function rowToBot(row: BotRow, mode: "paper" | "real"): Bot {
   return {
     id:             row.id,
     code:           row.code || "",
@@ -102,26 +120,42 @@ function rowToBot(row: BotRow): Bot {
     exitDesc:       row.exit_desc  || "",
     minProbability: row.min_probability ?? null,
     maxOpen:        row.max_open        ?? null,
-    mode:           (row.mode === "real" ? "real" : "paper"),
+    mode,
     createdAt:      row.created_at,
   };
 }
 
-function nextBotCode(): string {
-  const row = db.prepare("SELECT COUNT(*) as cnt FROM bots").get() as { cnt: number };
+function nextBotCode(mode: "paper" | "real"): string {
+  const row = getDb(mode).prepare("SELECT COUNT(*) as cnt FROM bots").get() as { cnt: number };
   return `B-${String(row.cnt + 1).padStart(3, "0")}`;
 }
 
 /* ── Accessors ───────────────────────────────────────────────── */
 
+/** Returns all bots from both DBs (needed by the auto-trader). */
 export function botGetAll(): Bot[] {
-  const rows = db.prepare("SELECT * FROM bots ORDER BY created_at ASC").all() as BotRow[];
-  return rows.map(rowToBot);
+  const paperRows = paperDb.prepare("SELECT * FROM bots ORDER BY created_at ASC").all() as BotRow[];
+  const realRows  = realDb.prepare("SELECT * FROM bots ORDER BY created_at ASC").all() as BotRow[];
+  const all = [
+    ...paperRows.map(r => rowToBot(r, "paper")),
+    ...realRows.map(r => rowToBot(r, "real")),
+  ];
+  all.sort((a, b) => a.createdAt - b.createdAt);
+  return all;
+}
+
+/** Returns only bots for a specific mode. */
+export function botGetByMode(mode: "paper" | "real"): Bot[] {
+  const rows = getDb(mode).prepare("SELECT * FROM bots ORDER BY created_at ASC").all() as BotRow[];
+  return rows.map(r => rowToBot(r, mode));
 }
 
 export function botGet(id: string): Bot | null {
-  const row = db.prepare("SELECT * FROM bots WHERE id = ?").get(id) as BotRow | undefined;
-  return row ? rowToBot(row) : null;
+  const paperRow = paperDb.prepare("SELECT * FROM bots WHERE id = ?").get(id) as BotRow | undefined;
+  if (paperRow) return rowToBot(paperRow, "paper");
+  const realRow  = realDb.prepare("SELECT * FROM bots WHERE id = ?").get(id) as BotRow | undefined;
+  if (realRow) return rowToBot(realRow, "real");
+  return null;
 }
 
 export function botCreate(data: {
@@ -147,13 +181,15 @@ export function botCreate(data: {
   if (data.hoursTo !== undefined && (data.hoursTo < 1 || data.hoursTo > 24))
     throw new Error("hoursTo ha d'estar entre 1 i 24 (24 = tot el dia)");
 
+  const mode = data.mode ?? "paper";
+  const d    = getDb(mode);
   const id   = `bot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-  const code = nextBotCode();
+  const code = nextBotCode(mode);
   const now  = Date.now();
-  db.prepare(`
+  d.prepare(`
     INSERT INTO bots
-      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, mode, created_at)
-    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, created_at)
+    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, code,
     data.name, data.simId,
@@ -166,7 +202,6 @@ export function botCreate(data: {
     data.exitDesc       ?? "",
     data.minProbability ?? null,
     data.maxOpen        ?? null,
-    data.mode           ?? "paper",
     now,
   );
   return botGet(id)!;
@@ -176,6 +211,7 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "
   const existing = botGet(id);
   if (!existing) return null;
 
+  const d = getDb(existing.mode);
   const fields: string[] = [];
   const values: unknown[] = [];
 
@@ -191,16 +227,18 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "
   if (patch.exitDesc       !== undefined) { fields.push("exit_desc = ?");          values.push(patch.exitDesc); }
   if ("minProbability" in patch)          { fields.push("min_probability = ?");    values.push(patch.minProbability ?? null); }
   if ("maxOpen"        in patch)          { fields.push("max_open = ?");           values.push(patch.maxOpen        ?? null); }
-  if (patch.mode       !== undefined)     { fields.push("mode = ?");               values.push(patch.mode); }
+  // Note: mode cannot be changed via update (would require moving between DBs)
 
   if (fields.length === 0) return existing;
   values.push(id);
-  db.prepare(`UPDATE bots SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+  d.prepare(`UPDATE bots SET ${fields.join(", ")} WHERE id = ?`).run(...values);
   return botGet(id)!;
 }
 
 export function botDelete(id: string): boolean {
-  const result = db.prepare("DELETE FROM bots WHERE id = ?").run(id);
+  const existing = botGet(id);
+  if (!existing) return false;
+  const result = getDb(existing.mode).prepare("DELETE FROM bots WHERE id = ?").run(id);
   return result.changes > 0;
 }
 

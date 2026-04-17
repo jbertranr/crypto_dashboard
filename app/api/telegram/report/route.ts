@@ -4,6 +4,7 @@ import { sendPortfolioReport, isConfigured } from "../../../lib/telegram";
 import { apiError } from "../../../lib/api-error";
 import { getSnapshots } from "../../../lib/snapshot-store";
 import { STABLES, BINANCE_BASE } from "../../../lib/constants";
+import { getQuoteAsset } from "../../../lib/settings-store";
 
 interface Ticker { symbol: string; lastPrice: string; priceChangePercent: string; }
 
@@ -46,9 +47,10 @@ export async function POST() {
     });
 
     // Parells USDT a consultar (no stables)
+    const qa = getQuoteAsset();
     const pairs = assets
       .filter(b => !STABLES.has(b.asset))
-      .map(b => `${b.asset}USDT`);
+      .map(b => `${b.asset}${qa}`);
 
     const tickers = await fetchTickers(pairs);
 
@@ -60,7 +62,7 @@ export async function POST() {
     const assetRows: AssetVal[] = assets.map(b => {
       const qty       = parseFloat(b.free) + parseFloat(b.locked);
       const isStable  = STABLES.has(b.asset);
-      const ticker    = tickers.get(`${b.asset}USDT`);
+      const ticker    = tickers.get(`${b.asset}${qa}`);
       const price     = ticker ? parseFloat(ticker.lastPrice) : (isStable ? 1 : 0);
       const change24h = ticker ? parseFloat(ticker.priceChangePercent) : 0;
       const valueUSD  = qty * price;

@@ -12,8 +12,9 @@ import { getTickerPrice, getOpenOrders, cancelOrder, cancelOcoOrder, getAccount,
 import { cacheGet } from "./cache-store";
 import { log } from "./logger";
 import { sendTelegram } from "./telegram";
+import { getQuoteAsset } from "./settings-store";
 
-const NEVER_SELL = new Set(["USDT", "BUSD", "USDC", "FDUSD", "TUSD", "BNB"]);
+const NEVER_SELL = new Set(["USDT", "USDC", "BUSD", "FDUSD", "TUSD", "BNB"]);
 
 declare global {
   var __crashMonitorStarted:    boolean | undefined;
@@ -124,7 +125,7 @@ async function checkCrash(): Promise<void> {
         for (const bal of account.balances) {
           const free = parseFloat(bal.free);
           if (free <= 0 || NEVER_SELL.has(bal.asset)) continue;
-          const symbol = `${bal.asset}USDT`;
+          const symbol = `${bal.asset}${getQuoteAsset()}`;
           try {
             const exInfo   = cacheGet<{ stepSize: string }>(`exchange-info:${symbol}`);
             const stepSize = exInfo?.data.stepSize ?? "0.001";

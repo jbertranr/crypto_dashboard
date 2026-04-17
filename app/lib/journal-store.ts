@@ -5,59 +5,82 @@
  * TF used, capital mode, trailing mode, exit reason, free notes.
  */
 
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import { getDb, paperDb, realDb } from "./db";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH  = path.join(DATA_DIR, "cache.db");
+// Alias for the old single-db references (now routes by mode)
+const db = paperDb; // default fallback — all explicit calls pass mode
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
-const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
-db.pragma("synchronous = NORMAL");
-
-db.exec(`
+const JOURNAL_SCHEMA = `
   CREATE TABLE IF NOT EXISTS trade_journal (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    type             TEXT    NOT NULL,          -- ENTRY_BUY | ENTRY_OCO | TRAIL_ACTIVE | EXIT_TP | EXIT_SL | EXIT_TRAILING | EXIT_MARKET | MANUAL
+    type             TEXT    NOT NULL,
     symbol           TEXT    NOT NULL,
-    side             TEXT    NOT NULL,          -- BUY | SELL
+    side             TEXT    NOT NULL,
     qty              TEXT    NOT NULL,
-    price            TEXT    NOT NULL,          -- execution price
-    quote_qty        TEXT    NOT NULL DEFAULT '0',  -- USDT value
+    price            TEXT    NOT NULL,
+    quote_qty        TEXT    NOT NULL DEFAULT '0',
     commission       TEXT    NOT NULL DEFAULT '0',
     commission_asset TEXT    NOT NULL DEFAULT 'BNB',
-    entry_price      TEXT    DEFAULT NULL,      -- for exits: original entry price
-    pnl_usdt         REAL    DEFAULT NULL,      -- for exits: realized P&L in USDT
-    pnl_pct          REAL    DEFAULT NULL,      -- for exits: P&L as %
+    entry_price      TEXT    DEFAULT NULL,
+    pnl_usdt         REAL    DEFAULT NULL,
+    pnl_pct          REAL    DEFAULT NULL,
     order_id         INTEGER DEFAULT NULL,
     order_list_id    INTEGER DEFAULT NULL,
-    strategy         TEXT    DEFAULT NULL,      -- Swing | Scalp | DCA | Breakout | Hedge
-    interval         TEXT    DEFAULT NULL,      -- 5m | 1h | 4h
-    entry_type       TEXT    DEFAULT NULL,      -- LIMIT | MARKET
-    trailing_mode    TEXT    DEFAULT NULL,      -- ATR | PIVOT_LOW
-    exit_reason      TEXT    DEFAULT NULL,      -- TP_HIT | SL_HIT | TRAILING_STOP | MARKET_SELL | MANUAL | CANCELED
-    capital_usdt     REAL    DEFAULT NULL,      -- USDT deployed
-    capital_mode     TEXT    DEFAULT NULL,      -- FIXED | PCT_PORTFOLIO
+    strategy         TEXT    DEFAULT NULL,
+    interval         TEXT    DEFAULT NULL,
+    entry_type       TEXT    DEFAULT NULL,
+    trailing_mode    TEXT    DEFAULT NULL,
+    exit_reason      TEXT    DEFAULT NULL,
+    capital_usdt     REAL    DEFAULT NULL,
+    capital_mode     TEXT    DEFAULT NULL,
     notes            TEXT    DEFAULT NULL,
-    source           TEXT    NOT NULL DEFAULT 'AUTO',   -- AUTO | MANUAL
-    trade_code       TEXT    DEFAULT NULL,              -- T-0001 — codi de trade inicial
-    tp_price         REAL    DEFAULT NULL,              -- preu objectiu Take Profit (quan es col·loca OCO)
-    sl_price         REAL    DEFAULT NULL,              -- preu Stop Loss (quan es col·loca OCO)
-    trailing_activate_at REAL DEFAULT NULL,            -- preu d'activació del trailing stop
+    source           TEXT    NOT NULL DEFAULT 'AUTO',
+    trade_code       TEXT    DEFAULT NULL,
+    tp_price         REAL    DEFAULT NULL,
+    sl_price         REAL    DEFAULT NULL,
+    trailing_activate_at REAL DEFAULT NULL,
     executed_at      INTEGER NOT NULL,
     created_at       INTEGER NOT NULL
   );
-`);
+`;
 
-/* Migrate: add trade_code if not yet present */
-try { db.exec("ALTER TABLE trade_journal ADD COLUMN trade_code TEXT DEFAULT NULL"); } catch { /* ja existeix */ }
-try { db.exec("ALTER TABLE trade_journal ADD COLUMN tp_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
-try { db.exec("ALTER TABLE trade_journal ADD COLUMN sl_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
-try { db.exec("ALTER TABLE trade_journal ADD COLUMN trailing_activate_at REAL DEFAULT NULL"); } catch { /* ja existeix */ }
-try { db.exec("ALTER TABLE trade_journal ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'"); } catch { /* ja existeix */ }
+function initJournalDb(d: ReturnType<typeof getDb>) {
+  d.exec(JOURNAL_SCHEMA);
+  try { d.exec("ALTER TABLE trade_journal ADD COLUMN trade_code TEXT DEFAULT NULL"); } catch { /* ja existeix */ }
+  try { d.exec("ALTER TABLE trade_journal ADD COLUMN tp_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
+  try { d.exec("ALTER TABLE trade_journal ADD COLUMN sl_price REAL DEFAULT NULL"); } catch { /* ja existeix */ }
+  try { d.exec("ALTER TABLE trade_journal ADD COLUMN trailing_activate_at REAL DEFAULT NULL"); } catch { /* ja existeix */ }
+
+  // Migrate existing data from cache.db (one-time, safe to retry)
+  migrateFromCacheDb(d);
+}
+
+function migrateFromCacheDb(target: ReturnType<typeof getDb>) {
+  try {
+    const dataDir = target === paperDb
+      ? (paperDb as unknown as { filename: string }).filename?.replace(/paper\.db$/, "")
+      : (realDb  as unknown as { filename: string }).filename?.replace(/real\.db$/, "");
+    const cacheDbPath = require("path").join(dataDir ?? require("path").join(process.cwd(), "data"), "cache.db");
+    if (!require("fs").existsSync(cacheDbPath)) return;
+
+    const srcMode = target === paperDb ? "paper" : "real";
+    // Attach source DB and copy rows not yet present
+    target.exec(`ATTACH DATABASE '${cacheDbPath}' AS src`);
+    target.exec(`
+      INSERT OR IGNORE INTO trade_journal
+        SELECT id, type, symbol, side, qty, price, quote_qty, commission, commission_asset,
+               entry_price, pnl_usdt, pnl_pct, order_id, order_list_id, strategy, interval,
+               entry_type, trailing_mode, exit_reason, capital_usdt, capital_mode, notes,
+               source, trade_code, tp_price, sl_price, trailing_activate_at, executed_at, created_at
+        FROM src.trade_journal
+        WHERE mode = '${srcMode}'
+    `);
+    target.exec("DETACH DATABASE src");
+  } catch { /* cache.db pot no tenir la taula o la columna mode — ignorat */ }
+}
+
+initJournalDb(paperDb);
+initJournalDb(realDb);
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -150,13 +173,14 @@ function rowToEntry(r: Record<string, unknown>): JournalEntry {
 /* ── Accessors ──────────────────────────────────────────────────────── */
 
 export function journalAdd(entry: NewJournalEntry): number {
-  const r = db.prepare(`
+  const d = getDb(entry.mode ?? "paper");
+  const r = d.prepare(`
     INSERT INTO trade_journal
       (type, symbol, side, qty, price, quote_qty, commission, commission_asset,
        entry_price, pnl_usdt, pnl_pct, order_id, order_list_id, strategy, interval,
        entry_type, trailing_mode, exit_reason, capital_usdt, capital_mode,
-       notes, source, mode, trade_code, tp_price, sl_price, trailing_activate_at, executed_at, created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       notes, source, trade_code, tp_price, sl_price, trailing_activate_at, executed_at, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(
     entry.type, entry.symbol, entry.side, entry.qty, entry.price,
     entry.quoteQty, entry.commission, entry.commissionAsset,
@@ -164,7 +188,6 @@ export function journalAdd(entry: NewJournalEntry): number {
     entry.orderId, entry.orderListId, entry.strategy, entry.interval,
     entry.entryType, entry.trailingMode, entry.exitReason,
     entry.capitalUsdt, entry.capitalMode, entry.notes, entry.source,
-    entry.mode ?? "paper",
     entry.tradeCode ?? null,
     entry.tpPrice ?? null, entry.slPrice ?? null,
     entry.trailingActivateAt ?? null,
@@ -173,24 +196,24 @@ export function journalAdd(entry: NewJournalEntry): number {
   return r.lastInsertRowid as number;
 }
 
-export function journalPatchTpSl(id: number, tpPrice: number, slPrice: number): void {
-  db.prepare("UPDATE trade_journal SET tp_price = ?, sl_price = ? WHERE id = ?").run(tpPrice, slPrice, id);
+export function journalPatchTpSl(id: number, tpPrice: number, slPrice: number, mode: "paper" | "real" = "paper"): void {
+  getDb(mode).prepare("UPDATE trade_journal SET tp_price = ?, sl_price = ? WHERE id = ?").run(tpPrice, slPrice, id);
 }
 
-export function journalPatchNotes(id: number, notes: string): void {
-  db.prepare("UPDATE trade_journal SET notes = ? WHERE id = ?").run(notes, id);
+export function journalPatchNotes(id: number, notes: string, mode: "paper" | "real" = "paper"): void {
+  getDb(mode).prepare("UPDATE trade_journal SET notes = ? WHERE id = ?").run(notes, id);
 }
 
-export function journalPatchOco(id: number, orderListId: number, tradeCode: string): void {
-  db.prepare("UPDATE trade_journal SET order_list_id = ?, trade_code = ? WHERE id = ?").run(orderListId, tradeCode, id);
+export function journalPatchOco(id: number, orderListId: number, tradeCode: string, mode: "paper" | "real" = "paper"): void {
+  getDb(mode).prepare("UPDATE trade_journal SET order_list_id = ?, trade_code = ? WHERE id = ?").run(orderListId, tradeCode, id);
 }
 
-export function journalPatchStrategy(id: number, strategy: string | null): void {
-  db.prepare("UPDATE trade_journal SET strategy = ? WHERE id = ?").run(strategy, id);
+export function journalPatchStrategy(id: number, strategy: string | null, mode: "paper" | "real" = "paper"): void {
+  getDb(mode).prepare("UPDATE trade_journal SET strategy = ? WHERE id = ?").run(strategy, id);
 }
 
-export function journalDelete(id: number): void {
-  db.prepare("DELETE FROM trade_journal WHERE id = ?").run(id);
+export function journalDelete(id: number, mode: "paper" | "real" = "paper"): void {
+  getDb(mode).prepare("DELETE FROM trade_journal WHERE id = ?").run(id);
 }
 
 export interface JournalFilter {
@@ -205,25 +228,26 @@ export interface JournalFilter {
 }
 
 export function journalGetAll(filter: JournalFilter = {}): JournalEntry[] {
+  const d = getDb(filter.mode ?? "paper");
   const conditions: string[] = [];
   const params: unknown[]    = [];
 
-  if (filter.symbol)   { conditions.push("symbol = ?");              params.push(filter.symbol); }
-  if (filter.side)     { conditions.push("side = ?");                params.push(filter.side); }
-  if (filter.strategy) { conditions.push("strategy = ?");            params.push(filter.strategy); }
-  if (filter.from)     { conditions.push("executed_at >= ?");        params.push(filter.from); }
-  if (filter.to)       { conditions.push("executed_at <= ?");        params.push(filter.to); }
-  if (filter.mode)     { conditions.push("mode = ?");                params.push(filter.mode); }
+  if (filter.symbol)   { conditions.push("symbol = ?");       params.push(filter.symbol); }
+  if (filter.side)     { conditions.push("side = ?");         params.push(filter.side); }
+  if (filter.strategy) { conditions.push("strategy = ?");     params.push(filter.strategy); }
+  if (filter.from)     { conditions.push("executed_at >= ?"); params.push(filter.from); }
+  if (filter.to)       { conditions.push("executed_at <= ?"); params.push(filter.to); }
+  // No mode filter needed — each DB is already mode-specific
 
   const where  = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const limit  = filter.limit  ?? 200;
   const offset = filter.offset ?? 0;
 
-  const rows = db
+  const rows = d
     .prepare(`SELECT * FROM trade_journal ${where} ORDER BY executed_at DESC, id DESC LIMIT ? OFFSET ?`)
     .all(...params, limit, offset) as Record<string, unknown>[];
 
-  return rows.map(rowToEntry);
+  return rows.map(r => ({ ...rowToEntry(r), mode: filter.mode ?? "paper" }));
 }
 
 /**
@@ -234,8 +258,9 @@ export function journalGetAll(filter: JournalFilter = {}): JournalEntry[] {
  *  3. Fallback: same symbol within ±7 days of the anchor entry
  * Always returns entries sorted ASC by executed_at.
  */
-export function journalGetRelated(id: number): JournalEntry[] {
-  const anchor = db
+export function journalGetRelated(id: number, mode: "paper" | "real" = "paper"): JournalEntry[] {
+  const d = getDb(mode);
+  const anchor = d
     .prepare("SELECT * FROM trade_journal WHERE id = ?")
     .get(id) as Record<string, unknown> | undefined;
   if (!anchor) return [];
@@ -248,7 +273,7 @@ export function journalGetRelated(id: number): JournalEntry[] {
 
   // 1. Shared trade code — must have >1 entries to be meaningful
   if (tradeCode) {
-    const rows = db
+    const rows = d
       .prepare("SELECT * FROM trade_journal WHERE trade_code = ? ORDER BY executed_at ASC")
       .all(tradeCode) as Record<string, unknown>[];
     if (rows.length > 1) return rows.map(rowToEntry);
@@ -256,24 +281,21 @@ export function journalGetRelated(id: number): JournalEntry[] {
 
   // 2. Same OCO list
   if (listId != null && listId > 0) {
-    const rows = db
+    const rows = d
       .prepare("SELECT * FROM trade_journal WHERE order_list_id = ? ORDER BY executed_at ASC")
       .all(listId) as Record<string, unknown>[];
     if (rows.length > 1) return rows.map(rowToEntry);
-    // Only 1 entry with this orderListId — look for nearby orphan entries (null orderListId, ±5 min)
-    // Directional: ENTRY types search forward (expect exit after), EXIT types search backward
     const window5    = 5 * 60 * 1000;
     const isEntry    = (anchor.type as string).startsWith("ENTRY") || anchor.type === "TRAIL_ACTIVE";
     const orphanFrom = isEntry ? execAt          : execAt - window5;
     const orphanTo   = isEntry ? execAt + window5 : execAt;
-    const orphans = db
+    const orphans = d
       .prepare(`SELECT * FROM trade_journal
                 WHERE symbol = ? AND order_list_id IS NULL
                   AND executed_at BETWEEN ? AND ?
                 ORDER BY executed_at ASC`)
       .all(symbol, orphanFrom, orphanTo) as Record<string, unknown>[];
     if (orphans.length > 0) {
-      // For entry types: only take up to the first EXIT orphan to avoid grabbing exits from later trades
       const relevant = isEntry
         ? orphans.slice(0, orphans.findIndex((o: Record<string, unknown>) => (o.type as string).startsWith("EXIT")) + 1 || orphans.length)
         : orphans;
@@ -284,23 +306,21 @@ export function journalGetRelated(id: number): JournalEntry[] {
   }
 
   // 3. Anchor has no orderListId — find the nearest entry (5 min, same symbol) that HAS one.
-  //    Directional: EXIT types search before themselves, ENTRY types search after.
   if (listId == null) {
     const window   = 5 * 60 * 1000;
     const isEntry  = (anchor.type as string).startsWith("ENTRY") || anchor.type === "TRAIL_ACTIVE";
     const nearFrom = isEntry ? execAt          : execAt - window;
     const nearTo   = isEntry ? execAt + window : execAt;
-    const near = db
+    const near = d
       .prepare(`SELECT order_list_id FROM trade_journal
                 WHERE symbol = ? AND order_list_id IS NOT NULL
                   AND executed_at BETWEEN ? AND ?
                 ORDER BY ABS(executed_at - ?) LIMIT 1`)
       .get(symbol, nearFrom, nearTo, execAt) as { order_list_id: number } | undefined;
     if (near?.order_list_id) {
-      const rows = db
+      const rows = d
         .prepare("SELECT * FROM trade_journal WHERE order_list_id = ? ORDER BY executed_at ASC")
         .all(near.order_list_id) as Record<string, unknown>[];
-      // Include anchor if it is not already in the group
       const inGroup = rows.some((r: Record<string, unknown>) => r.id === anchor.id);
       const combined = inGroup ? rows : [...rows, anchor].sort((a: Record<string, unknown>, b: Record<string, unknown>) => (a.executed_at as number) - (b.executed_at as number));
       if (combined.length > 1) return combined.map(rowToEntry);
@@ -309,14 +329,14 @@ export function journalGetRelated(id: number): JournalEntry[] {
 
   // 4. Same order id
   if (orderId != null && orderId > 0) {
-    const rows = db
+    const rows = d
       .prepare("SELECT * FROM trade_journal WHERE order_id = ? ORDER BY executed_at ASC")
       .all(orderId) as Record<string, unknown>[];
     if (rows.length > 1) return rows.map(rowToEntry);
   }
 
-  // No link found — return single anchor (timeline stays hidden)
-  const single = db
+  // No link found — return single anchor
+  const single = d
     .prepare("SELECT * FROM trade_journal WHERE id = ? ORDER BY executed_at ASC")
     .all(id) as Record<string, unknown>[];
   return single.map(rowToEntry);
@@ -326,12 +346,12 @@ export function journalGetRelated(id: number): JournalEntry[] {
  * Returns the entry price and qty from the most recent ENTRY_BUY for the given symbol.
  * Prefers matching by tradeCode when available, falls back to most recent within 48h.
  */
-export function journalGetLastEntryMeta(symbol: string): {
+export function journalGetLastEntryMeta(symbol: string, mode: "paper" | "real" = "paper"): {
   price: number; qty: number;
   orderId: number | null; orderListId: number | null; tradeCode: string | null;
 } | null {
   const since = Date.now() - 48 * 3600 * 1000;
-  const row = db.prepare(
+  const row = getDb(mode).prepare(
     `SELECT price, qty, order_id, order_list_id, trade_code
      FROM trade_journal
      WHERE symbol = ? AND type IN ('ENTRY_BUY','ENTRY_OCO') AND executed_at >= ?
@@ -350,15 +370,17 @@ export function journalGetLastEntryMeta(symbol: string): {
 export function journalGetLastEntryPrice(
   symbol: string,
   tradeCode: string | null,
+  mode: "paper" | "real" = "paper",
 ): { price: number; qty: number } | null {
+  const d = getDb(mode);
   if (tradeCode) {
-    const row = db.prepare(
+    const row = d.prepare(
       "SELECT price, qty FROM trade_journal WHERE trade_code = ? AND type = 'ENTRY_BUY' ORDER BY executed_at ASC LIMIT 1"
     ).get(tradeCode) as { price: string; qty: string } | undefined;
     if (row) return { price: parseFloat(row.price), qty: parseFloat(row.qty) };
   }
   const since = Date.now() - 48 * 3600 * 1000;
-  const row = db.prepare(
+  const row = d.prepare(
     "SELECT price, qty FROM trade_journal WHERE symbol = ? AND type = 'ENTRY_BUY' AND executed_at >= ? ORDER BY executed_at DESC LIMIT 1"
   ).get(symbol, since) as { price: string; qty: string } | undefined;
   return row ? { price: parseFloat(row.price), qty: parseFloat(row.qty) } : null;
@@ -369,9 +391,9 @@ export function journalGetLastEntryPrice(
  * within the last `withinMs` ms (default 48 h).
  * Used by exit routes to link a manual/market sell to its origin trade.
  */
-export function journalGetLastTradeCode(symbol: string, withinMs = 48 * 3600 * 1000): string | null {
+export function journalGetLastTradeCode(symbol: string, withinMs = 48 * 3600 * 1000, mode: "paper" | "real" = "paper"): string | null {
   const since = Date.now() - withinMs;
-  const row = db.prepare(`
+  const row = getDb(mode).prepare(`
     SELECT trade_code FROM trade_journal
     WHERE symbol = ? AND trade_code IS NOT NULL AND executed_at >= ?
     ORDER BY executed_at DESC LIMIT 1
@@ -379,7 +401,7 @@ export function journalGetLastTradeCode(symbol: string, withinMs = 48 * 3600 * 1
   return row?.trade_code ?? null;
 }
 
-export function journalStats(): {
+export function journalStats(mode: "paper" | "real" = "paper"): {
   totalEntries:   number;
   totalPnlUsdt:   number;
   wins:           number;
@@ -389,7 +411,8 @@ export function journalStats(): {
   biggestLoss:    number;
   avgPnl:         number;
 } {
-  const rows = db
+  const d = getDb(mode);
+  const rows = d
     .prepare("SELECT pnl_usdt, commission, commission_asset FROM trade_journal WHERE pnl_usdt IS NOT NULL")
     .all() as Array<{ pnl_usdt: number; commission: string; commission_asset: string }>;
 
@@ -399,10 +422,9 @@ export function journalStats(): {
     totalPnl += p;
     if (p >= 0) { wins++; if (p > bigWin) bigWin = p; }
     else         { losses++; if (p < bigLoss) bigLoss = p; }
-    // Sum commissions denominated in USDT/equivalent (raw value)
     totalComm += parseFloat(r.commission) || 0;
   }
-  const all = db.prepare("SELECT COUNT(*) as n FROM trade_journal").get() as { n: number };
+  const all = d.prepare("SELECT COUNT(*) as n FROM trade_journal").get() as { n: number };
   return {
     totalEntries:    all.n,
     totalPnlUsdt:    totalPnl,

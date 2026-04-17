@@ -9,6 +9,7 @@ interface TradingModeContextValue {
   setViewMode:     (m: ViewMode) => void;  // amb confirmació (per toggle manual)
   setViewModeSilent: (m: ViewMode) => void; // sense confirmació (per sincronització de tab)
   realConfigured:  boolean;
+  quoteAsset:      string;
 }
 
 const TradingModeContext = createContext<TradingModeContextValue>({
@@ -16,21 +17,20 @@ const TradingModeContext = createContext<TradingModeContextValue>({
   setViewMode:       () => {},
   setViewModeSilent: () => {},
   realConfigured:    false,
+  quoteAsset:        "USDT",
 });
 
 export function TradingModeProvider({ children }: { children: ReactNode }) {
   const [viewMode,       setViewModeState] = useState<ViewMode>("paper");
   const [realConfigured, setRealConfigured] = useState(false);
+  const [quoteAsset,     setQuoteAsset]     = useState("USDT");
 
   useEffect(() => {
-    const stored = localStorage.getItem("trading_view_mode");
-    if (stored === "real") setViewModeState("real");
-
     fetch("/api/trading-mode")
       .then(r => r.json())
-      .then((d: { realConfigured: boolean }) => {
+      .then((d: { realConfigured: boolean; quoteAsset?: string }) => {
         setRealConfigured(d.realConfigured);
-        if (!d.realConfigured && stored === "real") setViewModeState("paper");
+        if (d.quoteAsset) setQuoteAsset(d.quoteAsset);
       })
       .catch(() => {});
   }, []);
@@ -51,7 +51,6 @@ export function TradingModeProvider({ children }: { children: ReactNode }) {
       if (!ok) return;
     }
     setViewModeState(m);
-    localStorage.setItem("trading_view_mode", m);
   };
 
   // Sense confirmació — per sincronització automàtica quan canvia la tab activa
@@ -61,7 +60,7 @@ export function TradingModeProvider({ children }: { children: ReactNode }) {
   }, [realConfigured]);
 
   return (
-    <TradingModeContext.Provider value={{ viewMode, setViewMode, setViewModeSilent, realConfigured }}>
+    <TradingModeContext.Provider value={{ viewMode, setViewMode, setViewModeSilent, realConfigured, quoteAsset }}>
       {children}
     </TradingModeContext.Provider>
   );
