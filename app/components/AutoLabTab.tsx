@@ -434,7 +434,7 @@ export default function AutoLabTab() {
         </div>
         <div className="portfolio__card portfolio__card--neutral">
           <span className="portfolio__card-label"><i className="fa-solid fa-coins" /> Pressupost bot</span>
-          <span className="portfolio__card-value mono">{budgetU} USDT</span>
+          <span className="portfolio__card-value mono">{budgetU} USDC</span>
           <span className="portfolio__card-sub">per bot creat</span>
         </div>
       </div>
@@ -488,7 +488,7 @@ export default function AutoLabTab() {
               {!budgetOk && " ⚠ insuficient"}
             </p>
           )}
-          <label className="al-label">Pressupost bot (USDT)
+          <label className="al-label">Pressupost bot (USDC)
             <input className="al-input al-input--sm" type="number" min={10} step={10}
               value={budgetU} onChange={e => setBudgetU(parseInt(e.target.value) || 100)} />
           </label>

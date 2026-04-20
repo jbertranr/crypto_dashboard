@@ -9,7 +9,7 @@ function PnlItem({ label, value }: { label: string; value: number }) {
     <div className="topbar__stat">
       <span className="topbar__stat-label">{label}</span>
       <span className={`topbar__stat-value topbar__stat-change${pos ? " topbar__stat-change--up" : " topbar__stat-change--down"}`}>
-        {pos ? "+" : ""}{value.toFixed(2)} USDT
+        {pos ? "+" : ""}{value.toFixed(2)} USDC
       </span>
     </div>
   );

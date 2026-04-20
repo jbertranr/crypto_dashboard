@@ -10688,6 +10688,70 @@
   flex-shrink: 0;
 }
 
+/* Mode badge (PAPER / REAL) on bot card */
+.bc-mode-badge {
+  display: inline-flex; align-items: center;
+  font-size: 0.55rem; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px;
+  letter-spacing: 0.06em; white-space: nowrap;
+  flex-shrink: 0;
+}
+.bc-mode-badge--paper { background: #e0f2fe; color: #0284c7; }
+.bc-mode-badge--real  { background: #fef3c7; color: #d97706; }
+
+/* ── Manual scan panel ─────────────────────────────────────────────────────── */
+.bc-scan {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.bc-scan__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.bc-scan__title {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--text-1);
+  display: flex; align-items: center; gap: 6px;
+}
+.bc-scan__results { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.bc-scan__meta {
+  font-size: 0.68rem; color: var(--text-3);
+  padding: 2px 4px 6px;
+}
+.bc-scan-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; border-radius: 7px;
+  border: 1px solid transparent;
+}
+.bc-scan-row--buy      { background: #f0fdf4; border-color: #bbf7d0; }
+.bc-scan-row--trailing { background: #fffbeb; border-color: #fde68a; }
+.bc-scan-row--error    { background: #fef2f2; border-color: #fecaca; }
+.bc-scan-row--no       { background: var(--bg-row, #f8fafc); border-color: var(--border); opacity: 0.7; }
+.bc-scan-row__left  { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.bc-scan-row__right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.bc-scan-row__sym   { font-weight: 700; font-size: 0.8rem; color: var(--text-1); }
+.bc-scan-row__score { font-size: 0.68rem; color: var(--text-3); font-family: var(--font-mono, monospace); }
+.bc-scan-row__prob  {
+  font-size: 0.68rem; font-weight: 700;
+  background: #dcfce7; color: #16a34a;
+  padding: 1px 5px; border-radius: 4px;
+}
+.bc-scan-row--no .bc-scan-row__prob,
+.bc-scan-row--trailing .bc-scan-row__prob,
+.bc-scan-row--error .bc-scan-row__prob {
+  background: var(--border); color: var(--text-3);
+}
+.bc-scan-row__strat  { font-size: 0.68rem; color: var(--text-2); }
+.bc-scan-row__levels { display: flex; gap: 6px; font-size: 0.7rem; font-family: var(--font-mono, monospace); }
+.bc-scan-row__tp     { color: #16a34a; }
+.bc-scan-row__sl     { color: #dc2626; }
+.bc-scan-row__reason { font-size: 0.68rem; color: var(--text-3); font-style: italic; }
+
+
 /* Strategy preview in table */
 .bc-strat-preview {
   display: flex;

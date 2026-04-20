@@ -617,7 +617,7 @@ function EffectiveConfigPanel({ cfg, simConfig }: { cfg: EffectiveConfig; simCon
         </CfgGroup>
 
         <CfgGroup title="Gestió del capital">
-          {cfg.capitalMode === "FIXED"    && <CfgCard label="Mode" value={`Mida fixa — ${fmtNum(cfg.capitalFixed, 0)} USDT/trade`} src="sim" />}
+          {cfg.capitalMode === "FIXED"    && <CfgCard label="Mode" value={`Mida fixa — ${fmtNum(cfg.capitalFixed, 0)} USDC/trade`} src="sim" />}
           {cfg.capitalMode === "PCT"      && <CfgCard label="Mode" value={`% capital — ${cfg.capitalPct}% per trade`}              src="sim" />}
           {cfg.capitalMode === "RISK_PCT" && <CfgCard label="Mode" value={`Risc fix — ${cfg.riskPct}% de risc per trade`}          src="sim" />}
           {cfg.capitalMode === "ANTI_MARTINGALE" && <>
@@ -1419,7 +1419,7 @@ export default function SimulationTab() {
                       </div>
                       <div className="eq-sim-kv">
                         <span className="eq-sim-kv__l">Capital</span>
-                        <span className="eq-sim-kv__v mono dim">{sc.config.initialCapital ?? "—"} USDT</span>
+                        <span className="eq-sim-kv__v mono dim">{sc.config.initialCapital ?? "—"} USDC</span>
                       </div>
                     </div>
                     <div className="eq-sim-card__actions">
@@ -1578,7 +1578,7 @@ export default function SimulationTab() {
                 className={`btn btn-sm ${config.capitalMode === "FIXED" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() => set("capitalMode", "FIXED")}
               >
-                <i className="fa-solid fa-dollar-sign" /> USDT fix
+                <i className="fa-solid fa-dollar-sign" /> USDC fix
               </button>
               <button
                 className={`btn btn-sm ${config.capitalMode === "PCT" ? "btn-primary" : "btn-secondary"}`}
@@ -1595,7 +1595,7 @@ export default function SimulationTab() {
             </div>
             <div className="sim-config-grid">
               <label className="sim-field">
-                <span className="sim-field__label">Capital inicial (USDT)</span>
+                <span className="sim-field__label">Capital inicial (USDC)</span>
                 <input type="number" className="sim-field__input" min="10" max="1000000" step="100"
                   value={config.initialCapital}
                   onChange={e => set("initialCapital", parseFloat(e.target.value) || 1000)} />
@@ -1613,7 +1613,7 @@ export default function SimulationTab() {
               )}
               {config.capitalMode === "FIXED" && (
                 <label className="sim-field">
-                  <span className="sim-field__label">USDT per trade</span>
+                  <span className="sim-field__label">USDC per trade</span>
                   <input type="number" className="sim-field__input" min="1" max="100000" step="10"
                     value={config.capitalFixed}
                     onChange={e => set("capitalFixed", parseFloat(e.target.value) || 100)} />

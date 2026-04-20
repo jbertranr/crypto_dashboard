@@ -1,0 +1,33 @@
+{
+  "name": "conf_sol_435_4h",
+  "savedAt": "2026-04-20T21:05:04.863Z",
+  "config": {
+    "maxHoldingBars": 294,
+    "pumpVolMin": 3,
+    "minProbability": 60,
+    "maxOpen": 1,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 1000,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 80,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 0.9,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4.9,
+    "breakEvenAtr": 2.3,
+    "entryMode": "ANALYSIS"
+  }
+}

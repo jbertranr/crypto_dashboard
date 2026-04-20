@@ -66,7 +66,7 @@ function fmtDate(ts: number) {
 function fmtPnl(v: number | null) {
   if (v === null) return "—";
   const sign = v >= 0 ? "+" : "";
-  return `${sign}${v.toFixed(2)} USDT`;
+  return `${sign}${v.toFixed(2)} USDC`;
 }
 
 function fmtPct(v: number | null) {
@@ -947,7 +947,7 @@ export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?
                             <span className="metric-col__value">{parseFloat(e.commission).toFixed(6)} {e.commissionAsset}</span>
                           </div>
                           <div className="metric-col">
-                            <span className="metric-col__label">Capital USDT</span>
+                            <span className="metric-col__label">Capital USDC</span>
                             <span className="metric-col__value">{e.capitalUsdt?.toFixed(2) ?? "—"}</span>
                           </div>
                           <div className="metric-col">
@@ -1207,7 +1207,7 @@ export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?
                     onChange={e => setForm(p => ({ ...p, entryPrice: e.target.value }))} />
                 </div>
                 <div className="jmf-field">
-                  <label className="jmf-label">P&amp;L USDT (opt.)</label>
+                  <label className="jmf-label">P&amp;L USDC (opt.)</label>
                   <input type="number" step="any" className="journal-input" value={form.pnlUsdt}
                     onChange={e => setForm(p => ({ ...p, pnlUsdt: e.target.value }))} />
                 </div>

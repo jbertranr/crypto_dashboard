@@ -546,7 +546,7 @@ export default function PortfolioTab({
       {sellResult && (
         <div className="pf-sell-toast">
           <i className="fa-solid fa-circle-check" />
-          {sellResult.asset} venut correctament · rebut {sellResult.usdt} USDT
+          {sellResult.asset} venut correctament · rebut {sellResult.usdt} USDC
           <button onClick={() => setSellResult(null)}><i className="fa-solid fa-xmark" /></button>
         </div>
       )}
@@ -694,8 +694,8 @@ export default function PortfolioTab({
                   ) : canSell ? (
                     <button className="pf-row__sell-btn"
                       onClick={() => setSellConfirm(row.asset)}
-                      title={`Vendre ${row.free.toFixed(4)} ${row.asset} a mercat → USDT`}>
-                      <i className="fa-solid fa-right-left" /> → USDT
+                      title={`Vendre ${row.free.toFixed(4)} ${row.asset} a mercat → USDC`}>
+                      <i className="fa-solid fa-right-left" /> → USDC
                     </button>
                   ) : hasOcoBlocking && isCancelConfirm ? (
                     <div className="pf-row__sell-confirm">

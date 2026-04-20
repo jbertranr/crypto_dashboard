@@ -71,6 +71,36 @@ interface TradeEntry {
   executedAt:  number;
 }
 
+interface ScanResult {
+  symbol:       string;
+  price?:       number;
+  score?:       number;
+  atr?:         number;
+  verdict?:     string;
+  probability?: number;
+  strategy?:    string | null;
+  confidence?:  string | null;
+  decision:     "BUY_SIGNAL" | "NO_SIGNAL" | "TRAILING_ACTIVE" | "ERROR";
+  reason?:      string;
+  tpEst?:       number;
+  slEst?:       number;
+  trailActAt?:  number;
+  trailDst?:    number;
+}
+
+interface ScanResponse {
+  botId:        string;
+  botName:      string;
+  mode:         string;
+  interval:     string;
+  tpAtr:        number;
+  slAtr:        number;
+  capitalPerOp: number | null;
+  capitalMode:  string;
+  results:      ScanResult[];
+  scannedAt:    number;
+}
+
 // ── Interval helpers ──────────────────────────────────────────────────────────
 
 const INTERVAL_MS: Record<string, number> = {
@@ -129,6 +159,9 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
   const allDay = hoursFrom === "0" && hoursTo === "24";
   const [saving,         setSaving]         = useState(false);
   const [saveOk,         setSaveOk]         = useState(false);
+  const [scanData,       setScanData]       = useState<ScanResponse | null>(null);
+  const [scanning,       setScanning]       = useState(false);
+  const [buyingSymbol,   setBuyingSymbol]   = useState<string | null>(null);
 
   useEffect(() => {
     setEntryDesc(bot.entryDesc);
@@ -152,6 +185,57 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [bot.name]);
+
+  async function runScan() {
+    setScanning(true);
+    setScanData(null);
+    try {
+      const r = await fetch(`/api/bots/scan?botId=${bot.id}`);
+      const d = await r.json() as ScanResponse;
+      setScanData(d);
+    } catch { /* silenciat */ }
+    finally { setScanning(false); }
+  }
+
+  async function buySignal(result: ScanResult) {
+    if (!result.tpEst || !result.slEst) return;
+    const capitalPerOp = scanData?.capitalPerOp ?? null;
+    if (!capitalPerOp) return; // PCT mode not supported in manual scan
+    setBuyingSymbol(result.symbol);
+    try {
+      await fetch("/api/orders/buy-and-exit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol:        result.symbol,
+          quoteOrderQty: String(capitalPerOp),
+          // Pass ATR multipliers so buy-and-exit recomputes TP/SL from the real fill price
+          // (avoids mainnet/testnet price mismatch when in paper mode)
+          tpAtrMul:      scanData?.tpAtr,
+          slAtrMul:      scanData?.slAtr,
+          atr:           result.atr,
+          // Fallback absolute prices (used only if ATR fields are missing)
+          tpPrice:       result.tpEst ?? 0,
+          slPrice:       result.slEst ?? 0,
+          botName:       bot.name,
+          mode:          bot.mode,
+          trailing: result.trailActAt && result.trailDst && result.atr ? {
+            activateAt:  result.trailActAt,
+            distance:    result.trailDst,
+            activateAtr: scanData?.tpAtr ?? 1.5,
+            distanceAtr: scanData?.slAtr ?? 1.0,
+            logic:       "ATR",
+          } : undefined,
+        }),
+      });
+      setScanData(prev => prev ? {
+        ...prev,
+        results: prev.results.map(r2 =>
+          r2.symbol === result.symbol ? { ...r2, decision: "NO_SIGNAL" as const, reason: "ordre enviada" } : r2
+        ),
+      } : prev);
+    } finally { setBuyingSymbol(null); }
+  }
 
   async function saveDescriptions() {
     setSaving(true);
@@ -226,10 +310,13 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
         <span className="bc-detail__title">
           {bot.code && <span className="bc-code-badge">{bot.code}</span>}
           <i className="fa-solid fa-robot" /> {bot.name}
+          <span className={`bc-mode-badge bc-mode-badge--${bot.mode}`}>
+            {bot.mode === "real" ? "REAL" : "PAPER"}
+          </span>
         </span>
         {exits.length > 0 && (
           <span className={`bc-detail__total-pnl${totalPnl >= 0 ? " bc-detail__total-pnl--up" : " bc-detail__total-pnl--down"}`}>
-            {totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(2)} USDT
+            {totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(2)} USDC
           </span>
         )}
       </div>
@@ -337,6 +424,79 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
         </button>
       </div>
 
+      {/* ── Manual scan ── */}
+      <div className="bc-scan">
+        <div className="bc-scan__header">
+          <span className="bc-scan__title">
+            <i className="fa-solid fa-satellite-dish" /> Escaneig manual
+          </span>
+          <button className="btn btn-primary btn-sm" onClick={runScan} disabled={scanning}>
+            {scanning
+              ? <><i className="fa-solid fa-spinner fa-spin" /> Escanejant…</>
+              : <><i className="fa-solid fa-play" /> Escanejar ara</>}
+          </button>
+        </div>
+
+        {scanData && (
+          <div className="bc-scan__results">
+            <div className="bc-scan__meta">
+              {new Date(scanData.scannedAt).toLocaleTimeString("ca-ES")} ·
+              interval {scanData.interval} ·
+              TP {scanData.tpAtr}× ATR · SL {scanData.slAtr}× ATR
+              {scanData.capitalPerOp
+                ? ` · ${scanData.capitalPerOp} USDC/op`
+                : " · mode % (no suportat en manual)"}
+            </div>
+            {scanData.results.map(r => {
+              const isBuy      = r.decision === "BUY_SIGNAL";
+              const isTrailing = r.decision === "TRAILING_ACTIVE";
+              const isError    = r.decision === "ERROR";
+              const rowCls     = isBuy ? "bc-scan-row bc-scan-row--buy"
+                : isTrailing ? "bc-scan-row bc-scan-row--trailing"
+                : isError    ? "bc-scan-row bc-scan-row--error"
+                : "bc-scan-row bc-scan-row--no";
+              return (
+                <div key={r.symbol} className={rowCls}>
+                  <div className="bc-scan-row__left">
+                    <span className="bc-scan-row__sym">{r.symbol}</span>
+                    {r.score != null && (
+                      <span className="bc-scan-row__score">score {r.score}</span>
+                    )}
+                    {r.probability != null && (
+                      <span className="bc-scan-row__prob">{r.probability}%</span>
+                    )}
+                    {r.strategy && (
+                      <span className="bc-scan-row__strat">{r.strategy}</span>
+                    )}
+                  </div>
+                  <div className="bc-scan-row__right">
+                    {isBuy && r.tpEst && r.slEst && (
+                      <div className="bc-scan-row__levels">
+                        <span className="bc-scan-row__tp">TP {r.tpEst}</span>
+                        <span className="bc-scan-row__sl">SL {r.slEst}</span>
+                      </div>
+                    )}
+                    {r.reason && !isBuy && (
+                      <span className="bc-scan-row__reason">{r.reason}</span>
+                    )}
+                    {isBuy && (
+                      <button
+                        className="btn btn-success btn-xs"
+                        disabled={buyingSymbol !== null}
+                        onClick={() => buySignal(r)}>
+                        {buyingSymbol === r.symbol
+                          ? <><i className="fa-solid fa-spinner fa-spin" /> Comprant…</>
+                          : <><i className="fa-solid fa-cart-shopping" /> Comprar</>}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ── Stats row ── */}
       <div className="bc-detail__stats-row">
         <div className="bc-stat">
@@ -415,7 +575,7 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
                   formatter={(v, name) => {
                     if (name === "value") {
                       const val = v as number;
-                      return [`${val >= 0 ? "+" : ""}${val.toFixed(2)} USDT`, "P&L acumulat"];
+                      return [`${val >= 0 ? "+" : ""}${val.toFixed(2)} USDC`, "P&L acumulat"];
                     }
                     return [v, name];
                   }}
@@ -446,7 +606,7 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
                   <th>Símbol</th>
                   <th className="r">Entrada</th>
                   <th className="r">Sortida</th>
-                  <th className="r">P&amp;L USDT</th>
+                  <th className="r">P&amp;L USDC</th>
                   <th className="r">P&amp;L %</th>
                   <th>Raó</th>
                   <th>Codi</th>
@@ -509,7 +669,7 @@ function simTooltip(sim: BotInfo["simConfig"]): string {
   if (c.trailActivateAtr != null) parts.push(`Trail activa: ${c.trailActivateAtr}× ATR`);
   if (c.trailDistanceAtr != null) parts.push(`Trail dist: ${c.trailDistanceAtr}× ATR`);
   if (c.minProbability != null)   parts.push(`Score mínim: ${c.minProbability}`);
-  if (c.capitalMode)          parts.push(`Capital: ${c.capitalMode}${c.capitalFixed ? ` (${c.capitalFixed} USDT)` : c.capitalPct ? ` (${c.capitalPct}%)` : ""}`);
+  if (c.capitalMode)          parts.push(`Capital: ${c.capitalMode}${c.capitalFixed ? ` (${c.capitalFixed} USDC)` : c.capitalPct ? ` (${c.capitalPct}%)` : ""}`);
   if (sim.pnlPct != null)     parts.push(`P&L sim: ${sim.pnlPct > 0 ? "+" : ""}${sim.pnlPct.toFixed(1)}%`);
   return parts.join(" · ") || "Sense paràmetres";
 }
@@ -548,6 +708,9 @@ function BotTable({
               <div className="bc-bot-card__name-row">
                 {bot.code && <span className="bc-code-badge">{bot.code}</span>}
                 <span className="bc-bot-card__name">{bot.name}</span>
+                <span className={`bc-mode-badge bc-mode-badge--${bot.mode}`}>
+                  {bot.mode === "real" ? "REAL" : "PAPER"}
+                </span>
               </div>
               <span className="bc-sim-badge" data-tooltip={simTooltip(bot.simConfig)}>
                 <i className="fa-solid fa-flask" />{bot.simConfig?.name ?? bot.simId}
@@ -584,7 +747,7 @@ function BotTable({
                 </span>
               )}
               <span className="bc-param-chip">
-                <i className="fa-solid fa-wallet" />{bot.budgetUsdt} USDT
+                <i className="fa-solid fa-wallet" />{bot.budgetUsdt} USDC
               </span>
               <span className="bc-param-chip">
                 <i className="fa-solid fa-repeat" />màx {bot.maxDaily}/dia
@@ -663,7 +826,7 @@ function formatLog(entry: LogEntry): ChatItem | null {
   if (msg === "bot: pressupost exhaurit") {
     return { id, ts, kind: "idle", icon: "fa-wallet",
       title:  `Bot "${e.bot}" · pressupost exhaurit`,
-      detail: `Compromès: ${e.committed} USDT · Pressupost: ${e.budget} USDT` };
+      detail: `Compromès: ${e.committed} USDC · Pressupost: ${e.budget} USDC` };
   }
   if (msg === "sense senyal") {
     return { id, ts, kind: "skip", icon: "fa-minus",

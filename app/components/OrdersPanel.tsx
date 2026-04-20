@@ -71,6 +71,9 @@ export interface OrderMeta {
   entrySource: "AUTO" | "MANUAL" | null;
 }
 
+const QUOTE_RE = /USDT$|USDC$|BUSD$|FDUSD$|TUSD$|BTC$|ETH$|BNB$/;
+function stripQuote(sym: string): string { return sym.replace(QUOTE_RE, ""); }
+
 function stratKey(kind: "oco" | "ord", id: number): string {
   return `${kind}:${id}`;
 }
@@ -610,9 +613,9 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                         </div>
                         {/* MIDDLE: logo + hero amounts */}
                         <div className="order-card__col-hero">
-                          <CoinIcon symbol={g.symbol.replace("USDT", "")} size={44} />
+                          <CoinIcon symbol={stripQuote(g.symbol)} size={44} />
                           <div className="order-card__hero-info">
-                            <span className="order-card__hero-crypto">{g.symbol.replace("USDT", "")}</span>
+                            <span className="order-card__hero-crypto">{stripQuote(g.symbol)}</span>
                             {qty > 0 && entryP > 0 && (
                               <>
                                 <span className="order-card__hero-val mono">{formatCurrency(entryP * qty)}</span>
@@ -917,9 +920,9 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                         </span>
                       </div>
                       <div className="order-card__col-hero">
-                        <CoinIcon symbol={o.symbol.replace("USDT", "")} size={44} />
+                        <CoinIcon symbol={stripQuote(o.symbol)} size={44} />
                         <div className="order-card__hero-info">
-                          <span className="order-card__hero-crypto">{o.symbol.replace("USDT", "")}</span>
+                          <span className="order-card__hero-crypto">{stripQuote(o.symbol)}</span>
                           {entryP > 0 && qty > 0 && (
                             <>
                               <span className="order-card__section-label">INVERTIT</span>
@@ -1108,9 +1111,9 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                         <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(o.time)}</span>
                       </div>
                       <div className="order-card__col-hero">
-                        <CoinIcon symbol={o.symbol.replace("USDT", "")} size={44} />
+                        <CoinIcon symbol={stripQuote(o.symbol)} size={44} />
                         <div className="order-card__hero-info">
-                          <span className="order-card__hero-crypto">{qty} {o.symbol.replace("USDT", "")}</span>
+                          <span className="order-card__hero-crypto">{qty} {stripQuote(o.symbol)}</span>
                           {valueUSD > 0 && <span className="order-card__hero-val mono">{formatCurrency(valueUSD)}</span>}
                           {currentPrice > 0 && <span className="order-card__hero-sub">MERCAT <span className="mono">{formatCurrency(currentPrice)}</span></span>}
                         </div>
@@ -1159,7 +1162,7 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                       )}
                       <span className="order-card__section-label" style={{ marginTop: 8 }}>QTY</span>
                       <span className="order-card__col-price mono" style={{ fontSize: "0.8rem" }}>
-                        {qty} {o.symbol.replace("USDT", "")}
+                        {qty} {stripQuote(o.symbol)}
                         {price > 0 && <span className="dim" style={{ fontSize: "0.7rem" }}> ({formatCurrency(price * qty)})</span>}
                       </span>
                     </div>
@@ -1242,7 +1245,7 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
         const sym = cancelConfirm.kind === "oco"
           ? cancelConfirm.group.symbol
           : cancelConfirm.order.symbol;
-        const base = sym.replace(/USDT$/, "");
+        const base = stripQuote(sym);
         const qty  = parseFloat(
           cancelConfirm.kind === "oco"
             ? cancelConfirm.group.tpOrd.origQty
@@ -1451,7 +1454,7 @@ function BuyOcoCard({ buyOrder, group, trades }: {
   group:    OcoGroup;
   trades:   BinanceTrade[];
 }) {
-  const symbol  = buyOrder.symbol.replace(/USDT$/, "");
+  const symbol  = stripQuote(buyOrder.symbol);
   const buyQty  = parseFloat(buyOrder.executedQty) || 0;
 
   // Entry: avg fill from trades or cummulativeQuoteQty fallback
@@ -1504,7 +1507,7 @@ function BuyOcoCard({ buyOrder, group, trades }: {
           <div className="hist-card__id-row">
             <CoinIcon symbol={symbol} size={15} />
             <span className="hist-card__symbol">{symbol}</span>
-            <span className="hist-card__quote">/USDT</span>
+            <span className="hist-card__quote">/USDC</span>
             <span className="hist-chip hist-chip--side hist-chip--buy">BUY</span>
             <span className="hist-chip hist-chip--oco">OCO</span>
           </div>
@@ -1596,7 +1599,7 @@ function HistoryCard({ order, trades, otherLeg }: {
 }) {
   const result   = orderResult(order);
   const cfg      = RESULT_CFG[result];
-  const symbol   = order.symbol.replace(/USDT$/, "");
+  const symbol   = stripQuote(order.symbol);
   const isOco    = order.orderListId !== -1;
   const isFilled = order.status === "FILLED";
 
@@ -1653,7 +1656,7 @@ function HistoryCard({ order, trades, otherLeg }: {
         <div className="hist-card__id-row">
           <CoinIcon symbol={symbol} size={15} />
           <span className="hist-card__symbol">{symbol}</span>
-          <span className="hist-card__quote">/USDT</span>
+          <span className="hist-card__quote">/USDC</span>
           <span className={`hist-chip hist-chip--side hist-chip--${order.side.toLowerCase()}`}>
             <i className={`fa-solid fa-arrow-${order.side === "BUY" ? "up" : "down"}`} />
             {order.side}
@@ -1757,7 +1760,7 @@ function HistoryCard({ order, trades, otherLeg }: {
 function HistoryTree({ group, trades }: { group: OcoGroup; trades: BinanceTrade[] }) {
   const [open, setOpen] = useState(true);
   const tm = group.trailingMeta!;
-  const symbol = group.filled.symbol.replace(/USDT$/, "");
+  const symbol = stripQuote(group.filled.symbol);
   const fmtDate = (ts: number) =>
     new Date(ts).toLocaleString("ca-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -1777,7 +1780,7 @@ function HistoryTree({ group, trades }: { group: OcoGroup; trades: BinanceTrade[
         <div className="hist-card__identity">
           <CoinIcon symbol={symbol} size={15} />
           <span className="hist-card__symbol">{symbol}</span>
-          <span className="hist-card__quote">/USDT</span>
+          <span className="hist-card__quote">/USDC</span>
           <span className="hist-chip hist-chip--oco">OCO</span>
           <span className="hist-chip hist-chip--trailing">→ Trailing</span>
         </div>
@@ -1909,7 +1912,7 @@ function HistoryTable({ orders, loading, error }: {
         <div className="portfolio__card portfolio__card--neutral">
           <span className="portfolio__card-label"><i className="fa-solid fa-chart-bar" /> Volum operat</span>
           <span className="portfolio__card-value">{totalVolume > 0 ? formatCurrency(totalVolume) : "—"}</span>
-          <span className="portfolio__card-sub">USDT total executat</span>
+          <span className="portfolio__card-sub">USDC total executat</span>
         </div>
       </div>
 
@@ -2423,7 +2426,7 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
                     } catch (e) { setPanicMsg((e as Error).message); setPanicState("err"); }
                   }}>
                   <i className="fa-solid fa-fire" /> Cancel·la + Ven tot
-                  <span className="panic-modal__btn-sub">Converteix tot a USDT</span>
+                  <span className="panic-modal__btn-sub">Converteix tot a USDC</span>
                 </button>
               </div>
               <button className="panic-modal__close" onClick={() => setPanicState("idle")}>Tancar</button>

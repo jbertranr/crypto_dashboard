@@ -435,7 +435,7 @@ async function renderOrders(orders, costBasis, priceMap) {
       <div class="order-group-header">
         ${coinAvatar(sym, "avatar")}
         <div class="item-info">
-          <div class="item-name">${sym}<span class="og-slash">/USDT</span></div>
+          <div class="item-name">${sym}<span class="og-slash">/USDC</span></div>
           <div class="item-meta">${entryMeta}</div>
         </div>
         <div class="item-end">

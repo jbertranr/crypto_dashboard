@@ -493,7 +493,7 @@ export default function EqualizerTab() {
 
       // ── Build capital sizing description ──────────────────────────────
       const capDesc: Record<string, string> = {
-        FIXED:         `FIXED: cada trade usa ${selected.config.capitalFixed ?? "?"} USDT fixos.`,
+        FIXED:         `FIXED: cada trade usa ${selected.config.capitalFixed ?? "?"} USDC fixos.`,
         PCT:           `PCT: cada trade usa el ${selected.config.capitalPct ?? "?"}% del capital disponible en aquell moment.`,
         RISK_PCT:      `RISK_PCT: cada trade arrisca el ${selected.config.riskPct ?? "?"}% del capital (la mida s'adapta al SL).`,
         ANTI_MARTINGALE: `ANTI-MARTINGALA: base del ${selected.config.amBasePct ?? 60}% del capital. Redueix la mida un 50% per cada dues pèrdues consecutives. Recupera la mida base quan hi ha un guany.`,
@@ -597,13 +597,13 @@ export default function EqualizerTab() {
           wins:          analysisRun.stats.wins,
           losses:        analysisRun.stats.losses,
           winRate:       `${analysisRun.stats.winRate.toFixed(1)}%`,
-          totalPnl:      `${analysisRun.stats.totalPnlPct >= 0 ? "+" : ""}${analysisRun.stats.totalPnlPct.toFixed(2)}% (${analysisRun.stats.totalPnl.toFixed(2)} USDT)`,
+          totalPnl:      `${analysisRun.stats.totalPnlPct >= 0 ? "+" : ""}${analysisRun.stats.totalPnlPct.toFixed(2)}% (${analysisRun.stats.totalPnl.toFixed(2)} USDC)`,
           maxDrawdown:   `-${analysisRun.stats.maxDrawdown.toFixed(2)}%`,
           profitFactor:  analysisRun.stats.profitFactor.toFixed(3),
-          avgWin:        `${analysisRun.stats.avgWin.toFixed(2)} USDT`,
-          avgLoss:       `${analysisRun.stats.avgLoss.toFixed(2)} USDT`,
-          finalCapital:  `${analysisRun.stats.finalCapital.toFixed(2)} USDT`,
-          totalCommission: `${analysisRun.stats.totalCommission.toFixed(2)} USDT`,
+          avgWin:        `${analysisRun.stats.avgWin.toFixed(2)} USDC`,
+          avgLoss:       `${analysisRun.stats.avgLoss.toFixed(2)} USDC`,
+          finalCapital:  `${analysisRun.stats.finalCapital.toFixed(2)} USDC`,
+          totalCommission: `${analysisRun.stats.totalCommission.toFixed(2)} USDC`,
           ...(analysisRun.stats.moonPartialHits !== undefined
             ? { moonPartialHits: analysisRun.stats.moonPartialHits }
             : {}),
@@ -613,7 +613,7 @@ export default function EqualizerTab() {
           _description:
             "Totes les operacions del periode d'anàlisi. " +
             "Cada trade inclou: símbol, entrada/sortida (ISO 8601), preus, motiu de tancament (result), " +
-            "P&L en USDT i en %, capital resultant, comissió, i si el trailing / break-even s'havia activat.",
+            "P&L en USDC i en %, capital resultant, comissió, i si el trailing / break-even s'havia activat.",
           count: analysisRun.trades?.length ?? 0,
           trades: (analysisRun.trades ?? []).map(t => ({
             symbol:             t.symbol,
@@ -645,13 +645,13 @@ export default function EqualizerTab() {
             wins:         backtestRun.stats.wins,
             losses:       backtestRun.stats.losses,
             winRate:      `${backtestRun.stats.winRate.toFixed(1)}%`,
-            totalPnl:     `${backtestRun.stats.totalPnlPct >= 0 ? "+" : ""}${backtestRun.stats.totalPnlPct.toFixed(2)}% (${backtestRun.stats.totalPnl.toFixed(2)} USDT)`,
+            totalPnl:     `${backtestRun.stats.totalPnlPct >= 0 ? "+" : ""}${backtestRun.stats.totalPnlPct.toFixed(2)}% (${backtestRun.stats.totalPnl.toFixed(2)} USDC)`,
             maxDrawdown:  `-${backtestRun.stats.maxDrawdown.toFixed(2)}%`,
             profitFactor: backtestRun.stats.profitFactor.toFixed(3),
-            avgWin:       `${backtestRun.stats.avgWin.toFixed(2)} USDT`,
-            avgLoss:      `${backtestRun.stats.avgLoss.toFixed(2)} USDT`,
-            finalCapital: `${backtestRun.stats.finalCapital.toFixed(2)} USDT`,
-            totalCommission: `${backtestRun.stats.totalCommission.toFixed(2)} USDT`,
+            avgWin:       `${backtestRun.stats.avgWin.toFixed(2)} USDC`,
+            avgLoss:      `${backtestRun.stats.avgLoss.toFixed(2)} USDC`,
+            finalCapital: `${backtestRun.stats.finalCapital.toFixed(2)} USDC`,
+            totalCommission: `${backtestRun.stats.totalCommission.toFixed(2)} USDC`,
             ...(backtestRun.stats.moonPartialHits !== undefined
               ? { moonPartialHits: backtestRun.stats.moonPartialHits }
               : {}),
@@ -720,7 +720,7 @@ export default function EqualizerTab() {
         ``,
         `Mode de sortida: ${exitMode} | Mode d'entrada: ${entryMode}`,
         `Interval: ${interval} | Símbols: ${symbols}`,
-        `Capital inicial: ${capital} USDT`,
+        `Capital inicial: ${capital} USDC`,
         ``,
         `Paràmetres optimitzats (periode ${aFrom} → ${aTo}):`,
         paramLines,
@@ -894,7 +894,7 @@ export default function EqualizerTab() {
                         <div className="eq-sim-kv">
                           <span className="eq-sim-kv__l">Capital</span>
                           <span className="eq-sim-kv__v mono dim">
-                            {cfg.config.initialCapital ?? "—"} USDT
+                            {cfg.config.initialCapital ?? "—"} USDC
                           </span>
                         </div>
                         <div className="eq-sim-kv">

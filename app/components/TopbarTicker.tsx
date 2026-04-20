@@ -14,7 +14,7 @@ function buildMarketItems(btc: number, vol: number, gainerSym: string, gainerPct
 }
 
 function buildPnlItems(d1: number, d7: number, d30: number, d365: number): TickerItem[] {
-  const fmt = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)} USDT`;
+  const fmt = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)} USDC`;
   return [
     { label: "P&L 24h", value: fmt(d1),   up: d1   >= 0, down: d1   < 0 },
     { label: "P&L 7d",  value: fmt(d7),   up: d7   >= 0, down: d7   < 0 },

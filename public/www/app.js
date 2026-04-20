@@ -82,7 +82,7 @@ function renderPnl(pnl, portfolioTotal) {
       <span class="ph-label">P&amp;L del bot</span>
       ${totalHtml}
     </div>
-    <div class="ph-value ${cls}">${fmt(v1)} <span class="ph-unit">USDT</span></div>
+    <div class="ph-value ${cls}">${fmt(v1)} <span class="ph-unit">USDC</span></div>
     <div class="ph-row">
       ${periods.map(([label, v]) => {
         const val = v ?? 0;

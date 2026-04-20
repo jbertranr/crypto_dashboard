@@ -282,7 +282,7 @@ function OpportunityCard({ o, onOpenOrder, isBearish = false }: {
         <div className="opp-card__header-left">
           <div className="opp-card__coin-name">
             <span className="opp-card__coin-sym">{o.coin.symbol}</span>
-            <span className="opp-card__coin-quote">/USDT</span>
+            <span className="opp-card__coin-quote">/USDC</span>
           </div>
           <div className="opp-card__header-pills">
             <span className={`pill ${isBearish ? "pill--sell" : "pill--buy"}`}>{isBearish ? "SELL" : "BUY"}</span>
@@ -366,7 +366,7 @@ function OpportunityCard({ o, onOpenOrder, isBearish = false }: {
                 onKeyDown={e => e.key === "Enter" && handleBuy()}
                 style={{ width: 70 }}
               />
-              <span style={{ fontSize: "0.75rem", color: "var(--text-2)" }}>USDT</span>
+              <span style={{ fontSize: "0.75rem", color: "var(--text-2)" }}>USDC</span>
               <button className="sm-top__confirm-ok" onClick={handleBuy} disabled={buying}>
                 {buying ? <i className="fa-solid fa-spinner fa-spin" /> : "Confirmar"}
               </button>

@@ -51,7 +51,7 @@ export default function CoinTable({ coins }: { coins: CoinRow[] }) {
                   <div className="flex items-center gap-2.5">
                     <CoinIcon symbol={coin.symbol} />
                     <span className="font-semibold text-slate-800">{coin.symbol}</span>
-                    <span className="text-slate-300 text-xs">USDT</span>
+                    <span className="text-slate-300 text-xs">USDC</span>
                   </div>
                 </td>
                 <td className="px-5 py-3.5 text-right font-mono font-medium text-slate-800">

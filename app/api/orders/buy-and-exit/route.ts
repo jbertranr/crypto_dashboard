@@ -11,13 +11,18 @@ import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
 export async function POST(req: NextRequest) {
   try {
-    const { symbol, quoteOrderQty, tpPrice: tpTarget, slPrice: slTarget, trailing, botName, mode: rawMode } = await req.json() as {
+    const { symbol, quoteOrderQty, tpPrice: tpTarget, slPrice: slTarget, trailing, botName, mode: rawMode,
+            tpAtrMul, slAtrMul, atr: atrValue,
+          } = await req.json() as {
       symbol: string;
       quoteOrderQty: string;
       tpPrice: number;
       slPrice: number;
       botName?: string | null;
       mode?: string;
+      tpAtrMul?: number;
+      slAtrMul?: number;
+      atr?: number;
       trailing?: {
         activateAt: number; distance: number;
         activateAtr: number; distanceAtr: number; logic: string;
@@ -61,9 +66,16 @@ export async function POST(req: NextRequest) {
     const stepDp  = stepSize.includes(".") ? stepSize.length - stepSize.indexOf(".") - 1 : 0;
     const ocoQty  = (Math.floor(netQty / stepNum) * stepNum).toFixed(stepDp);
 
-    // 3. Validate incoming prices (coerce to number defensively)
-    const tpNum = Number(tpTarget);
-    const slNum = Number(slTarget);
+    // 3. Compute TP/SL — prefer ATR-from-fill if multipliers provided (avoids mainnet/testnet mismatch)
+    let tpNum: number;
+    let slNum: number;
+    if (tpAtrMul != null && slAtrMul != null && atrValue != null && atrValue > 0) {
+      tpNum = fillPrice + tpAtrMul * atrValue;
+      slNum = fillPrice - slAtrMul * atrValue;
+    } else {
+      tpNum = Number(tpTarget);
+      slNum = Number(slTarget);
+    }
     if (!Number.isFinite(tpNum) || tpNum <= 0)
       throw new Error(`tpPrice invàlid rebut del client: ${tpTarget}`);
     if (!Number.isFinite(slNum) || slNum <= 0)

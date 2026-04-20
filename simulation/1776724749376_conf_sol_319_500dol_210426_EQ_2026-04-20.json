@@ -1,0 +1,34 @@
+{
+  "name": "conf_sol_319_500dol_210426 [EQ 2026-04-20]",
+  "savedAt": "2026-04-20T22:39:09.376Z",
+  "config": {
+    "maxHoldingBars": 199.2,
+    "pumpVolMin": 3,
+    "minProbability": 60,
+    "maxOpen": 1,
+    "moonSlPct": 25,
+    "moonPartialAt": 2,
+    "moonPartialPct": 50,
+    "moonTrailPct": 20,
+    "symbols": [
+      "SOLUSDT"
+    ],
+    "interval": "4h",
+    "from": "2022-09-14",
+    "to": "2026-03-14",
+    "initialCapital": 500,
+    "useMarketFilter": false,
+    "capitalMode": "PCT",
+    "capitalFixed": 100,
+    "capitalPct": 95,
+    "riskPct": 60,
+    "exitMode": "LET_RUN",
+    "tpAtr": 3,
+    "slAtr": 0.9,
+    "trailActivateAtr": 2,
+    "trailDistanceAtr": 4.79,
+    "breakEvenAtr": 2.49,
+    "entryMode": "ANALYSIS"
+  },
+  "pnlPct": 306.2473817553272
+}
