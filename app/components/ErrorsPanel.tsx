@@ -42,6 +42,7 @@ export default function ErrorsPanel() {
   }, []);
 
   // Càrrega inicial
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   // Subscripció SSE — substitueix el setInterval(load, 15_000)

@@ -69,8 +69,10 @@ La columna **Proxy** indica si l'endpoint és accessible des del port 3001 (app 
 | Mètode | Ruta | Descripció | Proxy |
 |--------|------|-----------|-------|
 | `GET` | `/api/bots` | Llista de tots els bots | ❌ |
-| `POST` | `/api/bots` | Crea o actualitza un bot | ❌ |
-| `DELETE` | `/api/bots` | Elimina un bot. Body: `{ id }` | ❌ |
+| `POST` | `/api/bots` | Crea un bot. Body: `{ name, simId, mode, ... }` | ❌ |
+| `PATCH` | `/api/bots` | Actualitza un bot. Body: `{ id, ...patch }` | ❌ |
+| `PATCH` | `/api/bots` | **Bulk:** activa/desactiva tots els bots d'un mode. Body: `{ bulk: true, mode: "paper"\|"real", enabled: boolean }` | ❌ |
+| `DELETE` | `/api/bots` | Elimina un bot. Query: `?id=<id>` | ❌ |
 | `GET` | `/api/simulation/configs` | Configuracions de simulació desades | ❌ |
 | `POST` | `/api/simulation/run` | Executa backtest. Body: `{ config }` | ❌ |
 | `GET` | `/api/simulation/export` | Exporta resultats de simulació (CSV/JSON) | ❌ |

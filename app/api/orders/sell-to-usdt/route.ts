@@ -4,7 +4,7 @@ import { placeMarketSell } from "../../../lib/binance-auth";
 import { cacheGet, cacheSet } from "../../../lib/cache-store";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
-import { settingGetBool, settingGet, getQuoteAsset } from "../../../lib/settings-store";
+import { settingGetBoolForMode, settingGet, getQuoteAsset } from "../../../lib/settings-store";
 import { notifyOrderSold } from "../../../lib/telegram";
 import { journalAdd, journalGetLastTradeCode } from "../../../lib/journal-store";
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const result = await placeMarketSell(symbol, roundedQty, mode);
     const fillPrice = parseFloat(result.cummulativeQuoteQty) / parseFloat(result.executedQty);
 
-    log.orders.info({ symbol, qty: roundedQty, fillPrice, orderId: result.orderId }, "market sell → USDT");
+    log.orders.info({ symbol, qty: roundedQty, fillPrice, orderId: result.orderId }, "market sell → USDC");
 
     // --- Journal: record market sell exit ---
     try {
@@ -80,13 +80,14 @@ export async function POST(req: NextRequest) {
         notes:           null,
         tradeCode,
         source:          "AUTO",
+        mode,
         executedAt:      Date.now(),
       });
     } catch (je) {
-      log.orders.warn({ err: (je as Error).message }, "journal sell-to-usdt fallida");
+      log.orders.warn({ err: (je as Error).message }, "journal sell-to-usdc fallida");
     }
 
-    if (settingGetBool("tg_on_order_close")) {
+    if (settingGetBoolForMode("tg_on_order_close", mode)) {
       notifyOrderSold({
         symbol,
         executedQty:  result.executedQty,

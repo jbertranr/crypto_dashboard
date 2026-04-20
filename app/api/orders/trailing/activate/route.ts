@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  cancelOcoOrder, getTickerPrice, placeStopLossLimitOrder, roundPrice,
+  cancelOcoOrder, getTickerPrice, placeStopLossLimitOrder, roundPrice, type TradingMode,
 } from "../../../../lib/binance-auth";
 import { trailingActiveCreate, trailingDelete, orderMetaGet, orderMetaSet } from "../../../../lib/cache-store";
 import { ensureTrailingEngine } from "../../../../lib/trailing-engine";
+import { guardRealFromLocalhost } from "../../../../lib/real-guard";
 import { apiError } from "../../../../lib/api-error";
 import { log } from "../../../../lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
-    const { orderListId, symbol, side, quantity, trailDist, tickSize, entryPrice } =
+    const { orderListId, symbol, side, quantity, trailDist, tickSize, entryPrice, mode: rawMode } =
       await req.json() as {
         orderListId: number; symbol: string; side: "SELL" | "BUY";
         quantity: string; trailDist: number; tickSize: string; entryPrice?: number;
+        mode?: string;
       };
+    const mode: TradingMode = rawMode === "real" ? "real" : "paper";
+
+    const guard = guardRealFromLocalhost(req, mode); if (guard) return guard;
 
     // 1. Cancel the OCO (removes both TP and SL legs)
     // -2011: OCO ja no existeix (ja executada o cancel·lada) → no cal activar el trailing
     try {
-      await cancelOcoOrder(symbol, orderListId);
+      await cancelOcoOrder(symbol, orderListId, mode);
     } catch (e) {
       const msg = (e as Error).message ?? "";
       if (msg.includes("-2011") || msg.includes("Unknown order list")) {
@@ -30,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Get current price for initial SL placement
-    const price = await getTickerPrice(symbol);
+    const price = await getTickerPrice(symbol, mode);
 
     // 3. Place SL only — TP is not re-placed; trailing SL handles the full exit
     const initialSl    = side === "SELL" ? price - trailDist : price + trailDist;
@@ -40,7 +45,7 @@ export async function POST(req: NextRequest) {
       symbol, side, quantity,
       stopPrice:  roundPrice(initialSl,    tickSize),
       limitPrice: roundPrice(initialLimit, tickSize),
-    }) as { orderId: number };
+    }, mode) as { orderId: number };
 
     log.orders.info({ symbol, side, quantity, entryPrice: price, initialSl, slOrderId: slOrd.orderId }, "trailing activat manualment");
 
@@ -52,6 +57,7 @@ export async function POST(req: NextRequest) {
       entryPrice: entryPrice ?? price, tickSize,
       originOcoListId: orderListId,
       ocoCreatedAt: Date.now(),
+      mode,
     });
 
     // 5. Propagate tradeCode (and interval/botName) from the original OCO to the new SL order

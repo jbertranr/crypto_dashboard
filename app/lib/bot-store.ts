@@ -8,6 +8,8 @@
  * operational parameters (budget, daily limit, time window).
  */
 
+import path from "path";
+import fs from "fs";
 import { getDb, paperDb, realDb } from "./db";
 
 const BOT_SCHEMA = `
@@ -41,12 +43,12 @@ function initBotDb(d: ReturnType<typeof getDb>) {
 
 function migrateBotFromCacheDb(target: ReturnType<typeof getDb>) {
   try {
-    const cacheDbPath = require("path").join(require("path").dirname(
+    const cacheDbPath = path.join(path.dirname(
       (target === paperDb
         ? (paperDb as unknown as { filename: string }).filename
         : (realDb  as unknown as { filename: string }).filename)
     ), "cache.db");
-    if (!require("fs").existsSync(cacheDbPath)) return;
+    if (!fs.existsSync(cacheDbPath)) return;
 
     const srcMode = target === paperDb ? "paper" : "real";
     target.exec(`ATTACH DATABASE '${cacheDbPath}' AS src`);
@@ -246,4 +248,10 @@ export function botToggle(id: string): Bot | null {
   const bot = botGet(id);
   if (!bot) return null;
   return botUpdate(id, { enabled: !bot.enabled });
+}
+
+/** Enable or disable ALL bots of a given mode at once. */
+export function botSetAllEnabled(mode: "paper" | "real", enabled: boolean): number {
+  const result = getDb(mode).prepare("UPDATE bots SET enabled = ?").run(enabled ? 1 : 0);
+  return result.changes;
 }

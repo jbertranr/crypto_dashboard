@@ -29,7 +29,7 @@ export function useServerEvents(
   useEffect(() => {
     if (!enabled || !ctx) return;
     return ctx.subscribe(handlersRef);
-  }, [ctx, enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ctx, enabled]);  
 
   // ── Path B: sense context → connexió pròpia amb reconnexió ──
   const [connected, setConnected] = useState(false);
@@ -58,9 +58,9 @@ export function useServerEvents(
       esRef.current = null;
       const delay = retryRef.current;
       retryRef.current = Math.min(retryRef.current * 2, 30_000);
-      timerRef.current = setTimeout(connect, delay);
+      timerRef.current = setTimeout(connect, delay); // eslint-disable-line react-hooks/immutability
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!enabled || ctx) return;

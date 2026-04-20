@@ -5,6 +5,8 @@
  * TF used, capital mode, trailing mode, exit reason, free notes.
  */
 
+import path from "path";
+import fs from "fs";
 import { getDb, paperDb, realDb } from "./db";
 
 // Alias for the old single-db references (now routes by mode)
@@ -60,8 +62,8 @@ function migrateFromCacheDb(target: ReturnType<typeof getDb>) {
     const dataDir = target === paperDb
       ? (paperDb as unknown as { filename: string }).filename?.replace(/paper\.db$/, "")
       : (realDb  as unknown as { filename: string }).filename?.replace(/real\.db$/, "");
-    const cacheDbPath = require("path").join(dataDir ?? require("path").join(process.cwd(), "data"), "cache.db");
-    if (!require("fs").existsSync(cacheDbPath)) return;
+    const cacheDbPath = path.join(dataDir ?? path.join(process.cwd(), "data"), "cache.db");
+    if (!fs.existsSync(cacheDbPath)) return;
 
     const srcMode = target === paperDb ? "paper" : "real";
     // Attach source DB and copy rows not yet present

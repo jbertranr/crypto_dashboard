@@ -5,12 +5,12 @@ export { formatCurrency } from "./format";
 
 const BASE = BINANCE_BASE;
 
-// Well-known USDT pairs to show (sorted by typical market cap)
+// Well-known USDC pairs to show (sorted by typical market cap)
 const TOP_PAIRS = [
-  "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT",
-  "DOGEUSDT", "ADAUSDT", "AVAXUSDT", "TRXUSDT", "DOTUSDT",
-  "LINKUSDT", "MATICUSDT", "LTCUSDT", "SHIBUSDT", "UNIUSDT",
-  "ATOMUSDT", "ETCUSDT", "XLMUSDT", "APTUSDT", "NEARUSDT",
+  "BTCUSDC", "ETHUSDC", "BNBUSDC", "SOLUSDC", "XRPUSDC",
+  "DOGEUSDC", "ADAUSDC", "AVAXUSDC", "TRXUSDC", "DOTUSDC",
+  "LINKUSDC", "MATICUSDC", "LTCUSDC", "SHIBUSDC", "UNIUSDC",
+  "ATOMUSDC", "ETCUSDC", "XLMUSDC", "APTUSDC", "NEARUSDC",
 ];
 
 async function fetchTickers(): Promise<BinanceTicker[]> {
@@ -107,7 +107,7 @@ export async function getMarketData(): Promise<{
       ? ((currentPrice - pastPrice6m) / pastPrice6m) * 100
       : 0;
     return {
-      symbol: t.symbol.replace("USDT", ""),
+      symbol: t.symbol.replace(/USDT|USDC/, ""),
       pair: t.symbol,
       price: currentPrice,
       change1h:  0,
@@ -136,7 +136,7 @@ export async function getMarketData(): Promise<{
   const sorted = [...coins].sort((a, b) => b.change24h - a.change24h);
   const topGainer = sorted[0];
   const topLoser = sorted[sorted.length - 1];
-  const btcPrice = coins.find((c) => c.pair === "BTCUSDT")?.price ?? 0;
+  const btcPrice = coins.find((c) => c.pair === "BTCUSDC")?.price ?? 0;
 
   return {
     coins,

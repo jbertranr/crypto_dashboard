@@ -994,7 +994,7 @@ export default function SimulationTab() {
       trailDistanceAtr: prev.exitMode === "LET_RUN" ? def.letRunTrailDist : def.trailDist,
       breakEvenAtr:     def.breakEven,
     }));
-  }, [config.interval]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config.interval]);  
 
   const toggleSymbol = useCallback((sym: string) => {
     setConfig(prev => ({
@@ -1683,7 +1683,7 @@ export default function SimulationTab() {
           )}
           {config.entryMode === "ANALYSIS" && (
             <label className="sim-field">
-              <span className="sim-field__label">Probabilitat mínima d'entrada (%)</span>
+              <span className="sim-field__label">{"Probabilitat mínima d'entrada (%)"}</span>
               <input type="number" className="sim-field__input" min="50" max="95" step="5"
                 value={config.minProbability}
                 onChange={e => set("minProbability", parseFloat(e.target.value) || 70)} />

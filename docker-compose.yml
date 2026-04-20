@@ -1,0 +1,43 @@
+services:
+  # Next.js dashboard + API (internal only, never exposed externally)
+  app:
+    build:
+      context: .
+      target: runner
+    command: npm run start
+    env_file: .env.local
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - sqlite_data:/app/data
+      - app_logs:/app/logs
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # Public proxy server (mobile app, Cloudflare tunnel)
+  public:
+    build:
+      context: .
+      target: runner
+    command: node server-public.mjs
+    env_file: .env.local
+    environment:
+      - NODE_ENV=production
+      - NEXT_ORIGIN=http://app:3000
+      - PUBLIC_PORT=3001
+    ports:
+      - "3001:3001"
+    networks:
+      - internal
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
+  app_logs:
+
+networks:
+  internal:
+    driver: bridge

@@ -189,7 +189,7 @@ function emaArr(data: number[], period: number): number[] {
   const k = 2 / (period + 1);
   const result: number[] = new Array(data.length).fill(NaN);
   // Find first non-NaN
-  let start = data.findIndex(v => !isNaN(v));
+  const start = data.findIndex(v => !isNaN(v));
   if (start === -1 || data.length - start < period) return result;
   const startIdx = start + period - 1;
   result[startIdx] = data.slice(start, startIdx + 1).reduce((a, b) => a + b, 0) / period;

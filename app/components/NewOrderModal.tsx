@@ -62,7 +62,8 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   onSuccess: () => void;
   presetPrices?: { side: "BUY" | "SELL"; tp: string; sl: string; slLimit: string; interval?: "5m" | "1h" | "4h" };
 }) {
-  const { viewMode, quoteAsset } = useTradingMode();
+  const { viewMode, quoteAsset, realLocked } = useTradingMode();
+  const isRealLocked = realLocked && viewMode === "real";
 
   const defaultCoin = coin ?? coins[0];
   const [selectedPair,   setSelectedPair]   = useState(defaultCoin?.pair ?? "");
@@ -133,7 +134,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     const bot = bots.find(b => b.id === botId);
     const iv = bot?.simConfig?.config?.interval;
     if (iv === "5m" || iv === "1h" || iv === "4h") setAnalysisInterval(iv);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [bots]);
 
   /* form state */
@@ -404,7 +405,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     setTrailingActivateAtr(trailAct);
     setTrailingDistanceAtr(trailDst);
     setTrailingLogic(`${selectedBot.name} · TP ${tpAtr}×ATR · SL ${slAtr}×ATR · Trail: activa ${trailAct}×ATR, dist ${trailDst}×ATR`);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [selectedBot, analysisSnap, tickSize]);
 
   const submitBuyExit = async () => {
@@ -694,7 +695,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           {badDirection && (
             <div className="new-order__dir-hint">
               <i className="fa-solid fa-triangle-exclamation" />
-              TP ha d'estar per sobre del preu actual · SL per sota
+              {"TP ha d'estar per sobre del preu actual · SL per sota"}
             </div>
           )}
 
@@ -702,7 +703,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           <div className="order-edit__field">
             <span className="order-edit__label">
               <i className="fa-solid fa-circle new-order__tp-dot" /> Take Profit Price
-              <span className="new-order__field-hint">per sobre del preu d'entrada</span>
+              <span className="new-order__field-hint">{"per sobre del preu d'entrada"}</span>
             </span>
             <div className="new-order__price-row">
               <input className="order-edit__input" type="number" min="0" step="any"
@@ -719,7 +720,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           <div className="order-edit__field">
             <span className="order-edit__label">
               <i className="fa-solid fa-circle new-order__sl-dot" /> Stop Loss Trigger
-              <span className="new-order__field-hint">per sota del preu d'entrada</span>
+              <span className="new-order__field-hint">{"per sota del preu d'entrada"}</span>
             </span>
             <div className="new-order__price-row">
               <input className="order-edit__input" type="number" min="0" step="any"
@@ -766,7 +767,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                 <div className="new-order__trailing-row">
                   <div className="order-edit__field" style={{ flex: 1 }}>
                     <span className="order-edit__label">
-                      Preu d'activació
+                      {"Preu d'activació"}
                       {trailingAtr > 0 && <span className="new-order__atr-badge">{trailingActivateAtr}×ATR</span>}
                     </span>
                     <input className="order-edit__input" type="number" min="0" step="any"
@@ -916,7 +917,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                 <div className="new-order__trailing-row">
                   <div className="order-edit__field" style={{ flex: 1 }}>
                     <span className="order-edit__label">
-                      Preu d'activació
+                      {"Preu d'activació"}
                       {trailingAtr > 0 && <span className="new-order__atr-badge">{trailingActivateAtr}×ATR</span>}
                     </span>
                     <input className="order-edit__input" type="number" min="0" step="any"
@@ -939,16 +940,23 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           </> /* end mode === "buy-exit" */}
 
           {error && <div className="order-edit__error">{error}</div>}
+          {isRealLocked && (
+            <div className="order-edit__locked-warn">
+              <i className="fa-solid fa-lock" /> Mode real bloquejat — sols consultes. Desbloqueja al menú lateral.
+            </div>
+          )}
         </div>
 
         <div className="order-edit__footer">
           <button className="order-edit__btn-cancel" onClick={onClose} disabled={saving}>Cancel</button>
           {mode === "oco" ? (
-            <button className="order-edit__btn-save" onClick={submit} disabled={saving || badDirection}>
+            <button className="order-edit__btn-save" onClick={submit} disabled={saving || badDirection || isRealLocked}
+              title={isRealLocked ? "Mode real bloquejat" : undefined}>
               {saving ? "Placing…" : "Col·locar SELL OCO"}
             </button>
           ) : (
-            <button className="order-edit__btn-save" onClick={submitBuyExit} disabled={saving}>
+            <button className="order-edit__btn-save" onClick={submitBuyExit} disabled={saving || isRealLocked}
+              title={isRealLocked ? "Mode real bloquejat" : undefined}>
               {saving ? "Placing…" : "Compra + Sortida"}
             </button>
           )}

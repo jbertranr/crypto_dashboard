@@ -118,22 +118,45 @@ Executa ordres automàtiques basades en anàlisi tècnica quan es tanca una vela
 | `max_open` | Màxim ordres obertes simultànies | `5` |
 | `mode` | `paper` o `real` | `paper` |
 
-### Flux d'una iteració
+### Detecció de tancament de vela
+
+El poll global s'executa cada 60 s. Per cada bot actiu comprova si una vela nova ha tancat:
 
 ```
-Tick (cada 60s per bot actiu):
-  1. Comprova finestra horària (hours_from → hours_to)
-  2. Comprova si la vela ha tancat (nova vs anterior)
-  3. Comprova max_daily i max_open
-  4. getAnalysis(symbol, interval) → score 0–100
-  5. Si require_multi_tf: comprova intervals addicionals
-  6. Si score ≥ min_probability:
-     a. Calcula qty = budget_usdt / preu actual
-     b. placeMarketBuy(symbol, qty, bot.mode)
-     c. Calcula TP i SL via ATR
-     d. placeOcoOrder({ TP, SL }, bot.mode)
-     e. journalAdd({ entry, strategy, bot_id, mode })
-     f. Telegram: notificació de compra + OCO creada
+candleJustClosed(interval):
+  1. Calcula l'índex de l'última vela tancada: floor(ara / periode) - 1
+  2. Primera crida: guarda l'índex com a "darrer vist" → no dispara (evita scan a l'arrencada)
+  3. Crida següents:
+     · Si l'índex no ha avançat → cap vela nova → no dispara
+     · Si l'índex ha avançat:
+         - Actualitza "darrer vist" (sempre, per no re-disparar senyals vells)
+         - Comprova frescor: la vela va tancar fa menys del 25% del període?
+             · Per interval 4h (checkInterval 1h): finestra de 15 min
+             · Per interval 1h: finestra de 15 min
+           → Sí: dispara runBotScan
+           → No (vela massa vella, p.ex. el servidor estava aturat): no dispara
+```
+
+> **Nota:** Per a intervals ≥ 1h el bot comprova cada hora (no cada 4h) si la vela superior ha tancat. Això dóna una finestra de 15 min per recuperar-se d'un reinici del servidor.
+
+### Flux d'una iteració (runBotScan)
+
+```
+Quan una vela acaba de tancar:
+  1. Comprova finestra horària (hours_from → hours_to UTC)
+     → Fora: notifica Telegram "fora de finestra" i surt
+  2. Comprova max_daily i max_open i pressupost
+     → Exhaurit: notifica Telegram el motiu i surt
+  3. Per cada símbol del bot:
+     a. getAnalysis(symbol, interval) → score 0–100
+     b. Si require_multi_tf: comprova interval superior (confirmació)
+     c. Si score ≥ min_probability i senyal = BUY:
+          · placeMarketBuy(symbol, qty, bot.mode)
+          · Calcula TP i SL via ATR
+          · placeOcoOrder({ TP, SL }, bot.mode)
+          · journalAdd(...)
+  4. Telegram (si tg_on_market_scan = 1): envia resultat per cada símbol
+     · BUY_EXECUTED · NO_SIGNAL · MULTI_TF_FAIL · TRAILING_ACTIU
 ```
 
 ### Criteris d'entrada (indicadors)
@@ -225,3 +248,18 @@ Des del dashboard (Configuració → Status) o via settings:
 | `order_monitor_enabled` | Activa/desactiva l'OrderMonitor |
 | `auto_trade_enabled` | Activa/desactiva l'AutoTrader (tots els bots) |
 | `scheduler_enabled` | Activa/desactiva les tasques del Scheduler |
+
+## Controls de bots per mode
+
+A **Configuració → Bots** hi ha tres nivells de control:
+
+| Nivell | On | Efecte |
+|--------|----|--------|
+| **Master switch** (`auto_trade_enabled`) | Settings | Para absolutament tots els bots, independentment del mode |
+| **Bulk paper** | Botons "Activar tots / Desactivar tots" (fila Paper) | Activa/desactiva tots els bots `mode=paper` d'una sola acció |
+| **Bulk real** | Botons "Activar tots / Desactivar tots" (fila Real) | Activa/desactiva tots els bots `mode=real` (requereix confirmació) |
+| **Individual** | Toggle per cada bot card | Activa/desactiva un bot concret |
+
+La fila bulk és visible només si hi ha bots del mode corresponent. El comptador `actius/total` s'actualitza en temps real.
+
+Internament usa `PATCH /api/bots` amb `{ bulk: true, mode, enabled }` que executa un únic `UPDATE bots SET enabled = ?` a la base de dades del mode corresponent (`paper.db` o `real.db`).

@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { botGetAll, botGet, botCreate, botUpdate, botDelete } from "@/app/lib/bot-store";
+import { botGetAll, botGet, botCreate, botUpdate, botDelete, botSetAllEnabled } from "@/app/lib/bot-store";
 import path from "path";
 import fs from "fs";
 
@@ -132,6 +132,16 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { id, ...patch } = body as { id?: string } & Record<string, unknown>;
+
+  // Bulk mode: { bulk: true, mode: "paper"|"real", enabled: boolean }
+  if (patch.bulk === true) {
+    const mode = patch.mode === "real" ? "real" : "paper";
+    if (typeof patch.enabled !== "boolean")
+      return NextResponse.json({ error: "enabled (boolean) is required for bulk" }, { status: 400 });
+    const changed = botSetAllEnabled(mode, patch.enabled);
+    return NextResponse.json({ ok: true, changed });
+  }
+
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
   const existing = botGet(id);

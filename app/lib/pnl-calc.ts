@@ -4,8 +4,8 @@ export interface PnlPoint { time: number; pnl: number; }
 
 /**
  * Càlcul de P&L realitzat FIFO per un conjunt de trades d'un parell.
- * Usa quoteQty (USDT real liquidat) per capturar el preu d'execució real
- * incl. slippage. Comissions USDT es descompten; comissions BNB s'ignoren
+ * Usa quoteQty (USDC real liquidat) per capturar el preu d'execució real
+ * incl. slippage. Comissions USDC es descompten; comissions BNB s'ignoren
  * (es paguen d'un wallet separat).
  */
 export function calcSymbolPnl(trades: BinanceTrade[]): PnlPoint[] {

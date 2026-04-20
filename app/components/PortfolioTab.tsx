@@ -125,19 +125,17 @@ function PnlSummaryPanel({ unrealizedRows, mode, refreshTick }: {
 
   const fmtPnl = (v: number) => `${v >= 0 ? "+" : ""}${formatCurrency(v, 2)}`;
 
-  // Compute portfolio diff over a window: find value at windowStart, compare to last
-  function snapDiff(ms: number): { diff: number; pct: number } | null {
+  const snapDiff = useCallback((ms: number): { diff: number; pct: number } | null => {
     if (snapshots.length < 2) return null;
     const last     = snapshots[snapshots.length - 1].value;
     const cutoff   = Date.now() - ms;
-    // find the snapshot closest to (but not after) cutoff
     const inWindow = snapshots.filter(s => s.time <= cutoff);
     const ref      = inWindow.length > 0 ? inWindow[inWindow.length - 1].value
-                   : snapshots[0].value; // fallback to oldest
+                   : snapshots[0].value;
     const diff = last - ref;
     const pct  = ref > 0 ? (diff / ref) * 100 : 0;
     return { diff, pct };
-  }
+  }, [snapshots]);
 
   const evo = [
     { label: "24h", ms: 24 * 3_600_000 },
@@ -207,8 +205,9 @@ export default function PortfolioTab({
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
   const [costBasis, setCostBasis] = useState<Record<string, CostBasisEntry>>({});
-  const { viewMode: ctxMode, quoteAsset } = useTradingMode();
+  const { viewMode: ctxMode, quoteAsset, realLocked } = useTradingMode();
   const viewMode = modeProp ?? ctxMode;
+  const isRealLocked = realLocked && viewMode === "real";
   const [selling,   setSelling]   = useState<Record<string, boolean>>({});
   const [sellConfirm, setSellConfirm] = useState<string | null>(null); // asset awaiting confirm
   const [cancelSellConfirm, setCancelSellConfirm] = useState<string | null>(null); // asset awaiting OCO cancel+sell confirm
@@ -684,7 +683,8 @@ export default function PortfolioTab({
                       <span className="pf-row__sell-confirm-label">
                         Vendre {row.free.toFixed(4)} {row.asset}?
                       </span>
-                      <button className="pf-row__sell-yes" onClick={() => sellToUsdt(row.asset, row.free)}>
+                      <button className="pf-row__sell-yes" onClick={() => { if (!isRealLocked) sellToUsdt(row.asset, row.free); }}
+                        disabled={isRealLocked} title={isRealLocked ? "Mode real bloquejat" : undefined}>
                         <i className="fa-solid fa-check" /> Sí
                       </button>
                       <button className="pf-row__sell-no" onClick={() => setSellConfirm(null)}>

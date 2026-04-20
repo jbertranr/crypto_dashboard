@@ -240,7 +240,7 @@ async function fetchCandlesFromBinance(
       `&startTime=${batchStart}&endTime=${endMs}&limit=1000`,
     ].join("");
 
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
     if (!res.ok) throw new Error(`Binance error ${res.status} fetching ${symbol} ${interval}`);
 
     const raw: unknown[][] = await res.json();

@@ -1,0 +1,22 @@
+node_modules
+.next
+.git
+.gitignore
+
+# Secrets (passed at runtime via env_file)
+.env.local
+.deploy.env
+
+# Runtime dirs (mounted as volumes)
+data
+logs
+
+# Dev/docs
+docs
+scripts
+*.md
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

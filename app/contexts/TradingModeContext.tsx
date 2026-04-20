@@ -10,6 +10,8 @@ interface TradingModeContextValue {
   setViewModeSilent: (m: ViewMode) => void; // sense confirmació (per sincronització de tab)
   realConfigured:  boolean;
   quoteAsset:      string;
+  realLocked:      boolean;  // true = mode real en lectura, cap operació d'escriptura
+  setRealLocked:   (v: boolean) => void;
 }
 
 const TradingModeContext = createContext<TradingModeContextValue>({
@@ -18,12 +20,24 @@ const TradingModeContext = createContext<TradingModeContextValue>({
   setViewModeSilent: () => {},
   realConfigured:    false,
   quoteAsset:        "USDT",
+  realLocked:        true,
+  setRealLocked:     () => {},
 });
 
 export function TradingModeProvider({ children }: { children: ReactNode }) {
   const [viewMode,       setViewModeState] = useState<ViewMode>("paper");
   const [realConfigured, setRealConfigured] = useState(false);
   const [quoteAsset,     setQuoteAsset]     = useState("USDT");
+  const [realLocked,     setRealLockedState] = useState<boolean>(() => {
+    if (typeof localStorage === "undefined") return true;
+    const saved = localStorage.getItem("realLocked");
+    return saved === null ? true : saved === "true"; // per defecte bloquejat
+  });
+
+  const setRealLocked = (v: boolean) => {
+    setRealLockedState(v);
+    if (typeof localStorage !== "undefined") localStorage.setItem("realLocked", String(v));
+  };
 
   useEffect(() => {
     fetch("/api/trading-mode")
@@ -60,7 +74,7 @@ export function TradingModeProvider({ children }: { children: ReactNode }) {
   }, [realConfigured]);
 
   return (
-    <TradingModeContext.Provider value={{ viewMode, setViewMode, setViewModeSilent, realConfigured, quoteAsset }}>
+    <TradingModeContext.Provider value={{ viewMode, setViewMode, setViewModeSilent, realConfigured, quoteAsset, realLocked, setRealLocked }}>
       {children}
     </TradingModeContext.Provider>
   );

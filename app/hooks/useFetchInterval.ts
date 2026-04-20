@@ -14,7 +14,7 @@ export function useFetchInterval<T>(
   enabled = true,
 ): void {
   const onDataRef = useRef(onData);
-  onDataRef.current = onData;
+  onDataRef.current = onData; // eslint-disable-line react-hooks/refs
 
   useEffect(() => {
     if (!enabled) return;

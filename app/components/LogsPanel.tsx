@@ -54,9 +54,9 @@ export default function LogsPanel() {
   const minLevelRef  = useRef(minLevel);
   const modFilterRef = useRef(modFilter);
   const liveRef      = useRef(live);
-  minLevelRef.current  = minLevel;
-  modFilterRef.current = modFilter;
-  liveRef.current      = live;
+  minLevelRef.current  = minLevel; // eslint-disable-line react-hooks/refs
+  modFilterRef.current = modFilter; // eslint-disable-line react-hooks/refs
+  liveRef.current      = live; // eslint-disable-line react-hooks/refs
 
   const load = useCallback(async () => {
     try {

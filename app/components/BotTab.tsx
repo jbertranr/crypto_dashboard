@@ -238,7 +238,7 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
       <div className="bc-strategy">
         <div className="bc-strategy__col">
           <div className="bc-strategy__label">
-            <i className="fa-solid fa-arrow-right-to-bracket" /> Condicions d'entrada
+            <i className="fa-solid fa-arrow-right-to-bracket" /> {"Condicions d'entrada"}
           </div>
           <textarea
             className="bc-strategy__textarea"
@@ -564,7 +564,7 @@ function BotTable({
                     <i className="fa-solid fa-arrow-right-to-bracket" />
                     {bot.entryDesc.length > 55 ? bot.entryDesc.slice(0, 55) + "…" : bot.entryDesc}
                   </span>
-                : <span className="bc-strat-preview__empty">Sense descripció d'entrada</span>}
+                : <span className="bc-strat-preview__empty">{"Sense descripció d'entrada"}</span>}
               {bot.exitDesc
                 ? <span className="bc-strat-preview__item bc-strat-preview__item--exit" title={bot.exitDesc}>
                     <i className="fa-solid fa-arrow-right-from-bracket" />
@@ -747,6 +747,7 @@ export default function BotTab({ mode }: { mode?: "paper" | "real" }) {
     } catch { /* silenciat */ }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadBots(); loadLogs(); }, [loadBots, loadLogs]);
   useEffect(() => {
     const id = setInterval(loadBots, 30_000);

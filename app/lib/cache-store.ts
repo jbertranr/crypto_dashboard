@@ -67,10 +67,12 @@ addCol("ALTER TABLE order_trailing ADD COLUMN quantity   TEXT NOT NULL DEFAULT '
 addCol("ALTER TABLE order_trailing ADD COLUMN side       TEXT NOT NULL DEFAULT 'SELL'");
 addCol("ALTER TABLE order_trailing ADD COLUMN tick_size  TEXT NOT NULL DEFAULT '0.01'");
 addCol("ALTER TABLE order_trailing ADD COLUMN entry_price REAL NOT NULL DEFAULT 0");
+addCol("ALTER TABLE order_trailing ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
 addCol("ALTER TABLE trailing_active ADD COLUMN origin_oco_list_id INTEGER");
 addCol("ALTER TABLE trailing_active ADD COLUMN entry_price REAL NOT NULL DEFAULT 0");
 addCol("ALTER TABLE trailing_active ADD COLUMN sl_update_count INTEGER NOT NULL DEFAULT 0");
 addCol("ALTER TABLE trailing_active ADD COLUMN oco_created_at INTEGER");
+addCol("ALTER TABLE trailing_active ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS order_meta (
@@ -173,6 +175,7 @@ export interface TrailingRecord {
   side: "SELL" | "BUY";
   tickSize: string;
   entryPrice: number;
+  mode: "paper" | "real";
   createdAt: number; // set by trailingSet; read-only from DB
 }
 
@@ -180,12 +183,12 @@ export function trailingSet(orderListId: number, data: Omit<TrailingRecord, "ord
   db.prepare(
     `INSERT OR REPLACE INTO order_trailing
       (order_list_id, symbol, activate_at, distance, activate_atr, distance_atr, logic,
-       quantity, side, tick_size, entry_price, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       quantity, side, tick_size, entry_price, mode, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     orderListId, data.symbol, data.activateAt, data.distance,
     data.activateAtr, data.distanceAtr, data.logic,
-    data.quantity, data.side, data.tickSize, data.entryPrice, Date.now()
+    data.quantity, data.side, data.tickSize, data.entryPrice, data.mode ?? "paper", Date.now()
   );
 }
 
@@ -193,14 +196,17 @@ export function trailingGetAll(): TrailingRecord[] {
   const rows = db.prepare("SELECT * FROM order_trailing").all() as {
     order_list_id: number; symbol: string; activate_at: number; distance: number;
     activate_atr: number; distance_atr: number; logic: string;
-    quantity: string; side: string; tick_size: string; entry_price: number; created_at: number;
+    quantity: string; side: string; tick_size: string; entry_price: number;
+    mode: string; created_at: number;
   }[];
   return rows.map(r => ({
     orderListId: r.order_list_id, symbol: r.symbol,
     activateAt: r.activate_at, distance: r.distance,
     activateAtr: r.activate_atr, distanceAtr: r.distance_atr, logic: r.logic,
     quantity: r.quantity, side: r.side as "SELL" | "BUY",
-    tickSize: r.tick_size, entryPrice: r.entry_price, createdAt: r.created_at,
+    tickSize: r.tick_size, entryPrice: r.entry_price,
+    mode: (r.mode === "real" ? "real" : "paper") as "paper" | "real",
+    createdAt: r.created_at,
   }));
 }
 
@@ -218,17 +224,18 @@ export interface TrailingActive {
   originOcoListId: number | null;
   slUpdateCount: number;
   ocoCreatedAt: number | null;
+  mode: "paper" | "real";
 }
 
 export function trailingActiveCreate(data: Omit<TrailingActive, "id" | "status" | "createdAt" | "updatedAt" | "slUpdateCount"> & { ocoCreatedAt?: number | null }): number {
   const now = Date.now();
   const r = db.prepare(`
     INSERT INTO trailing_active
-      (symbol, side, quantity, tp_order_id, sl_order_id, current_sl, trail_dist, peak_price, entry_price, tick_size, origin_oco_list_id, oco_created_at, sl_update_count, status, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'active', ?, ?)
+      (symbol, side, quantity, tp_order_id, sl_order_id, current_sl, trail_dist, peak_price, entry_price, tick_size, origin_oco_list_id, oco_created_at, sl_update_count, mode, status, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'active', ?, ?)
   `).run(data.symbol, data.side, data.quantity, data.tpOrderId, data.slOrderId,
          data.currentSl, data.trailDist, data.peakPrice, data.entryPrice ?? 0, data.tickSize,
-         data.originOcoListId ?? null, data.ocoCreatedAt ?? null, now, now);
+         data.originOcoListId ?? null, data.ocoCreatedAt ?? null, data.mode ?? "paper", now, now);
   return r.lastInsertRowid as number;
 }
 
@@ -244,6 +251,7 @@ function rowToActive(r: Record<string, unknown>): TrailingActive {
     originOcoListId: (r.origin_oco_list_id as number | null) ?? null,
     slUpdateCount: (r.sl_update_count as number) ?? 0,
     ocoCreatedAt: (r.oco_created_at as number | null) ?? null,
+    mode: ((r.mode as string) === "real" ? "real" : "paper"),
   };
 }
 

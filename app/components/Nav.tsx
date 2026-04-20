@@ -66,7 +66,7 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
   tab: Tab; onTab: (t: Tab) => void; openOrdersCount?: number; username?: string;
 }) {
   const router = useRouter();
-  const { realConfigured } = useTradingMode();
+  const { realConfigured, realLocked, setRealLocked } = useTradingMode();
 
   // Mode actiu del toggle de nav
   const [navMode, setNavMode] = useState<NavMode>(() =>
@@ -83,8 +83,8 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
   // Sincronitzar navMode quan la tab canvia externament.
   // Tabs comunes (sense sufix de mode) no canvien el mode actiu.
   useEffect(() => {
-    if (tab.endsWith("-real")) setNavMode("real");
-    else if (Object.values(MODE_PAIRS).some(p => p.paper === tab)) setNavMode("paper");
+    if (tab.endsWith("-real")) setNavMode("real"); // eslint-disable-line react-hooks/set-state-in-effect
+    else if (Object.values(MODE_PAIRS).some(p => p.paper === tab)) setNavMode("paper"); // eslint-disable-line react-hooks/set-state-in-effect
     // else: tab comuna — manté el navMode actual
   }, [tab]);
 
@@ -146,6 +146,36 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
         >
           {c ? "R" : "REAL"}
         </button>
+      </div>
+
+      {/* ── Lock: Sols consultes (mode real) ── */}
+      <div
+        className={`nav__lock-wrap${c ? " nav__lock-wrap--collapsed" : ""}`}
+        title={c ? (realLocked ? "Real bloquejat (sols consultes)" : "Real desblocat (operativa activa)") : undefined}
+      >
+        {!c && <span className="nav__lock-label">
+          <i className={`fa-solid ${realLocked ? "fa-lock" : "fa-lock-open"} nav__lock-icon${!realLocked ? " nav__lock-icon--open" : ""}`} />
+          Sols consultes
+        </span>}
+        {c && <i className={`fa-solid ${realLocked ? "fa-lock" : "fa-lock-open"} nav__lock-icon-solo${!realLocked ? " nav__lock-icon--open" : ""}`} />}
+        <label className="nav__switch" title={realLocked ? "Clic per desblocar operativa real" : "Clic per bloquejar operativa real"}>
+          <input
+            type="checkbox"
+            checked={realLocked}
+            onChange={e => {
+              if (!e.target.checked) {
+                const ok = confirm(
+                  "⚠️  DESBLOCAR OPERATIVA REAL\n\n" +
+                  "Podràs col·locar i cancel·lar ordres reals.\n" +
+                  "Continuar?"
+                );
+                if (!ok) return;
+              }
+              setRealLocked(e.target.checked);
+            }}
+          />
+          <span className="nav__switch-track" />
+        </label>
       </div>
 
       {GROUPS.map(({ label, tabs }, gi) => (

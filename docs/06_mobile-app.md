@@ -111,7 +111,7 @@ Funcions disponibles globalment a totes les pàgines:
 | Funció | Descripció |
 |--------|-----------|
 | `apiFetch(path, opts)` | Fetch autenticat amb `API_BASE` prefixat |
-| `formatUsdt(value)` | Formata un número com a USDT (ex: `$1,234.56`) |
+| `formatUsdt(value)` | Formata un número com a USDC (ex: `$1,234.56`) |
 | `formatPct(value)` | Formata un percentatge (ex: `+2.34%`) |
 | `checkAuth()` | Comprova si la sessió és vàlida, redirigeix a login si no |
 | `logout()` | Tanca sessió i redirigeix |

@@ -447,7 +447,7 @@ function TopOpportunities({
 
       {!hasData && !loading ? (
         <div className="sm-top__empty sm-top__empty--prompt">
-          <i className="fa-solid fa-circle-info" /> Fes clic a <strong>Analitzar ara</strong> per iniciar l'escàner.
+          <i className="fa-solid fa-circle-info" /> {"Fes clic a"} <strong>Analitzar ara</strong> {" per iniciar l'escàner."}
         </div>
       ) : loading ? (
         <div className="sm-top__loading">
@@ -812,7 +812,7 @@ export default function StrategyMatrix({ coins, onOpenOrder }: {
 
           {/* Grouped matrix */}
           <div className="section-title strat-matrix__section-title">
-            <i className="fa-solid fa-table-list" /> Matriu d'estratègies
+            <i className="fa-solid fa-table-list" /> {"Matriu d'estratègies"}
             <span className="strat-matrix__bar-right">
               {loading
                 ? <span className="sm-progress">{activeCount}/{total}</span>
@@ -977,7 +977,7 @@ function StrategyGuide() {
   return (
     <div className="sm-guide">
       <div className="section-title">
-        <i className="fa-solid fa-book-open" /> Guia d'estratègies
+        <i className="fa-solid fa-book-open" /> {"Guia d'estratègies"}
       </div>
 
       <div className="section-title"><i className="fa-solid fa-diagram-project" /> Estratègies</div>

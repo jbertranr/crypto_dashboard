@@ -4,6 +4,10 @@
  */
 import { eventBus, type AppEvent } from "./event-bus";
 import { activityPush } from "./activity-store";
+import { settingGetBool } from "./settings-store";
+
+const activityEnabled = () =>
+  settingGetBool("activity_logger_enabled") || settingGetBool("activity_logger_enabled_real");
 
 declare global {
   var __activityLoggerStarted: boolean | undefined;
@@ -118,6 +122,7 @@ export function ensureActivityLogger(): void {
   global.__activityLoggerVer     = LOGGER_VER;
 
   eventBus.onEvent("log:new", (event: AppEvent) => {
+    if (!activityEnabled()) return;
     if (event.type !== "log:new") return;
     const { ts, level, module: mod = "", msg } = event.payload;
     const cls   = classifyLog(mod, msg, level);
@@ -126,6 +131,7 @@ export function ensureActivityLogger(): void {
   });
 
   eventBus.onEvent("order:fill", (event: AppEvent) => {
+    if (!activityEnabled()) return;
     if (event.type !== "order:fill") return;
     const { symbol, side, execPrice } = event.payload;
     activityPush({ ts: Date.now(), motor: "monitor", kind: "fill",

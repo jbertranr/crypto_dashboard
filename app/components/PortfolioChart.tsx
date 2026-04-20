@@ -83,7 +83,7 @@ export default function PortfolioChart({ refreshTick, period, setPeriod, onStats
   // Filtre de període
   const opt = PERIOD_OPTIONS.find(o => o.key === period)!;
   const data = opt.ms
-    ? allData.filter(s => s.time >= Date.now() - opt.ms!)
+    ? allData.filter(s => s.time >= Date.now() - opt.ms!) // eslint-disable-line react-hooks/purity
     : allData;
 
   const fmt = (ts: number) => {
@@ -95,9 +95,12 @@ export default function PortfolioChart({ refreshTick, period, setPeriod, onStats
       + d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
   };
 
-  const rawDisplay  = allData.length >= 2 ? (data.length >= 2 ? data : allData) : [];
-  const intervalMs  = rawDisplay.length >= 2 ? detectInterval(rawDisplay) : 0;
-  const displayData = rawDisplay.length >= 2 ? forwardFill(rawDisplay, intervalMs) : rawDisplay;
+  const { rawDisplay, displayData } = useMemo(() => {
+    const raw = allData.length >= 2 ? (data.length >= 2 ? data : allData) : [];
+    if (raw.length < 2) return { rawDisplay: raw, displayData: raw };
+    const ms = detectInterval(raw);
+    return { rawDisplay: raw, displayData: forwardFill(raw, ms) };
+  }, [allData, data]);
   const first  = displayData.length > 0 ? displayData[0].value : 0;
   const last   = displayData.length > 0 ? displayData[displayData.length - 1].value : 0;
   const diff   = last - first;

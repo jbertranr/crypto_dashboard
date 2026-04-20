@@ -49,15 +49,50 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   capital_pct_portfolio:    "5",       // % of total portfolio per trade (PCT mode)
   capital_max_open:         "3",       // max simultaneous open positions
   // Quote asset (moneda base per a tots els parells de trading)
-  quote_asset:              "USDT",        // USDT | USDC | BUSD | FDUSD
+  quote_asset:              "USDC",        // USDT | USDC | BUSD | FDUSD
   // Pair priority (comma-separated list — ha de coincidir amb quote_asset)
-  priority_pairs:           "BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT",
+  priority_pairs:           "BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC",
   // Auto-trading (master switch only — per-bot config is in the bots table)
-  auto_trade_enabled: "0",             // master switch: para TOTS els bots (0 = off, 1 = on)
+  auto_trade_enabled:      "0",        // master switch paper: para TOTS els bots paper
+  auto_trade_enabled_real: "0",        // master switch real:  para TOTS els bots real
+  // Motors i processos — paper
+  order_monitor_enabled:   "1",
+  trailing_engine_enabled: "1",
+  crash_monitor_enabled:   "1",
+  scheduler_enabled:       "1",
+  activity_logger_enabled: "1",
+  cancel_auto_sell:        "0",
+  sl_sell_remaining:       "0",
+  // Motors i processos — real
+  order_monitor_enabled_real:   "1",
+  trailing_engine_enabled_real: "1",
+  crash_monitor_enabled_real:   "1",
+  scheduler_enabled_real:       "1",
+  activity_logger_enabled_real: "1",
+  cancel_auto_sell_real:        "0",
+  sl_sell_remaining_real:       "0",
   // Motor watchdog
-  tg_on_market_scan:       "0",        // Telegram report each time a bot evaluates the market
-  tg_on_motor_anomaly:     "1",        // Telegram alert when a motor behaves anomalously
-  motor_anomaly_multiplier: "3",       // alert if motor hasn't run for N × its poll interval
+  tg_on_market_scan:            "0",    // Telegram report each time a bot evaluates the market (paper)
+  tg_on_motor_anomaly:          "1",   // Telegram alert when a motor behaves anomalously (global)
+  motor_anomaly_multiplier:     "3",   // alert if motor hasn't run for N × its poll interval
+  // Telegram — real mode variants
+  tg_on_new_order_real:         "1",
+  tg_on_order_close_real:       "1",
+  tg_on_sl_modify_real:         "1",
+  tg_on_trailing_activate_real: "1",
+  tg_on_market_scan_real:       "0",
+  // Entrada al mercat — real
+  entry_type_real:              "LIMIT",
+  trailing_sl_mode_real:        "ATR",
+  trailing_pivot_tf_real:       "1h",
+  trailing_pivot_offset_pct_real: "0.1",
+  // Capital — real
+  capital_mode_real:            "FIXED",
+  capital_fixed_usdt_real:      "100",
+  capital_pct_portfolio_real:   "5",
+  capital_max_open_real:        "3",
+  // Prioritats — real
+  priority_pairs_real:          "BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC",
 };
 
 /* ── Accessors ────────────────────────────────────────────────── */
@@ -70,6 +105,14 @@ export function settingGet(key: string): string {
 
 export function settingGetBool(key: string): boolean {
   return settingGet(key) === "1";
+}
+
+export function settingGetForMode(key: string, mode: "paper" | "real"): string {
+  return settingGet(mode === "real" ? `${key}_real` : key);
+}
+
+export function settingGetBoolForMode(key: string, mode: "paper" | "real"): boolean {
+  return settingGetBool(mode === "real" ? `${key}_real` : key);
 }
 
 const SETTING_VALIDATORS: Record<string, (v: string) => void> = {
@@ -99,8 +142,8 @@ export function settingGetAll(): Record<string, string> {
 /* ── Quote asset helper ───────────────────────────────────────── */
 const VALID_QUOTE_ASSETS = new Set(["USDT", "USDC", "BUSD", "FDUSD", "TUSD"]);
 
-/** Retorna l'asset quote configurat (default: "USDT") */
+/** Retorna l'asset quote configurat (default: "USDC") */
 export function getQuoteAsset(): string {
   const v = settingGet("quote_asset").toUpperCase();
-  return VALID_QUOTE_ASSETS.has(v) ? v : "USDT";
+  return VALID_QUOTE_ASSETS.has(v) ? v : "USDC";
 }

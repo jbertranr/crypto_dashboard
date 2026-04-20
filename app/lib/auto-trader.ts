@@ -23,7 +23,7 @@ function computeProbability(score: number, interval: string, confidence: string)
     score * 0.7 + (INTERVAL_BONUS[interval] ?? 0) + (CONF_BONUS[confidence] ?? 0),
   ));
 }
-import { settingGet, settingGetBool, getQuoteAsset } from "./settings-store";
+import { settingGetForMode, settingGetBoolForMode, getQuoteAsset } from "./settings-store";
 import { botGetAll, type Bot } from "./bot-store";
 import {
   placeMarketBuy, placeMarketSell, placeOcoOrder, getTickerPrice,
@@ -38,7 +38,7 @@ import {
 } from "./cache-store";
 import { ensureTrailingEngine } from "./trailing-engine";
 import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta } from "./journal-store";
-import { notifyNewOrder, notifyOcoFailed, notifyOrphanDetected, notifyOrphanNoBot, notifyMarketScan, type ScanSymbolResult } from "./telegram";
+import { notifyNewOrder, notifyOcoFailed, notifyOrphanDetected, notifyOrphanNoBot, notifyOrphanNoBotReal, notifyMarketScan, type ScanSymbolResult } from "./telegram";
 import { warnBotRealFromDev } from "./real-guard";
 import { log } from "./logger";
 import path from "path";
@@ -133,16 +133,24 @@ function candleJustClosed(interval: string): boolean {
   const period = INTERVAL_MS[interval] ?? 60_000;
   const now = Date.now();
   const lastClosedIndex = Math.floor(now / period) - 1; // index of the last *closed* candle
-  const lastTriggered   = _lastTriggeredCandle.get(interval) ?? lastClosedIndex; // init: don't fire on startup
+  const lastTriggered   = _lastTriggeredCandle.get(interval);
+
+  // First call: initialize without firing (don't scan on startup)
+  if (lastTriggered === undefined) {
+    _lastTriggeredCandle.set(interval, lastClosedIndex);
+    return false;
+  }
 
   if (lastClosedIndex <= lastTriggered) return false; // no new candle
+
+  // Always advance the pointer so stale signals don't re-trigger later
+  _lastTriggeredCandle.set(interval, lastClosedIndex);
 
   // Staleness check: only act if the close happened within 25% of the period
   const closeTime = (lastClosedIndex + 1) * period; // timestamp when that candle closed
   const ageMs     = now - closeTime;
   if (ageMs > period * 0.25) return false; // signal too old
 
-  _lastTriggeredCandle.set(interval, lastClosedIndex);
   return true;
 }
 
@@ -250,13 +258,13 @@ async function applyOcoSuccess(
       symbol,
       activateAt, distance,
       activateAtr: trailAct, distanceAtr: trailDst, logic: trailMode,
-      quantity: ocoQty, side: "SELL", tickSize, entryPrice: fillPrice,
+      quantity: ocoQty, side: "SELL", tickSize, entryPrice: fillPrice, mode,
     });
     ensureTrailingEngine();
   }
 
   // Notificació Telegram
-  if (settingGetBool("tg_on_new_order")) {
+  if (settingGetBoolForMode("tg_on_new_order", mode)) {
     notifyNewOrder({
       symbol, type: "BUY_AND_EXIT",
       quoteQty, fillPrice, tpPrice, slStopPrice,
@@ -335,7 +343,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
     trailingMode:       trailMode,
     exitReason:         null,
     capitalUsdt:        quoteQty,
-    capitalMode:        settingGet("capital_mode"),
+    capitalMode:        settingGetForMode("capital_mode", mode),
     notes:              `Auto-trade · Bot: ${botName} · score ${score} · ${interval}`,
     tradeCode,
     source:             "AUTO",
@@ -409,10 +417,10 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const slAtr      = config.slAtr      ?? 1.0;
   const trailAct   = config.trailActivateAtr  ?? 1.5;
   const trailDst   = config.trailDistanceAtr  ?? 1.0;
-  const trailMode  = settingGet("trailing_sl_mode") || "ATR";
+  const trailMode  = settingGetForMode("trailing_sl_mode", bot.mode as "paper" | "real") || "ATR";
   // Jerarquia: bot (explícit) > effectiveConfig de la sim > default 70
   const minScore   = bot.minProbability ?? effectiveConfig?.minProbability ?? 70;
-  const tgScan     = settingGetBool("tg_on_market_scan");
+  const tgScan     = settingGetBoolForMode("tg_on_market_scan", bot.mode as "paper" | "real");
 
   // Finestra horària (UTC)
   const nowHour = new Date().getUTCHours();
@@ -614,6 +622,7 @@ async function retryPendingOcos(): Promise<void> {
           side:        "SELL",
           tickSize:    p.tickSize,
           entryPrice:  p.fillPrice,
+          mode:        p.mode === "real" ? "real" : "paper",
         });
         ensureTrailingEngine();
       }
@@ -632,13 +641,13 @@ const STABLES        = new Set(["USDT","USDC","BUSD","TUSD","DAI","FDUSD"]);
 const ORPHAN_MIN_USD = 10;
 const ORPHAN_FIX_MS  = 5 * 60 * 1000;  // 5 minuts
 
-async function checkOrphanPositions(): Promise<void> {
+async function checkOrphanPositions(mode: TradingMode): Promise<void> {
   let openOrders: Awaited<ReturnType<typeof getOpenOrders>>;
   let account:    Awaited<ReturnType<typeof getAccount>>;
   try {
-    [openOrders, account] = await Promise.all([getOpenOrders(), getAccount()]);
+    [openOrders, account] = await Promise.all([getOpenOrders(mode), getAccount(mode)]);
   } catch (err) {
-    log.auto.warn({ err: (err as Error).message }, "checkOrphanPositions: error obtenint dades");
+    log.auto.warn({ mode, err: (err as Error).message }, "checkOrphanPositions: error obtenint dades");
     return;
   }
 
@@ -658,6 +667,11 @@ async function checkOrphanPositions(): Promise<void> {
 
   const now = Date.now();
 
+  // URL pública de Binance segons el mode
+  const binancePublicBase = mode === "real"
+    ? "https://api.binance.com"
+    : "https://demo-api.binance.com";
+
   for (const bal of account.balances) {
     if (STABLES.has(bal.asset)) continue;
 
@@ -672,7 +686,7 @@ async function checkOrphanPositions(): Promise<void> {
     for (const q of candidateQuotes) {
       const candidate = `${bal.asset}${q}`;
       try {
-        const p = await getTickerPrice(candidate);
+        const p = await getTickerPrice(candidate, mode);
         if (!p || !isFinite(p) || p <= 0) continue; // rebutja NaN/0/Infinity
         price = p;
         symbol = candidate;
@@ -708,8 +722,8 @@ async function checkOrphanPositions(): Promise<void> {
     if (!watch) {
       // Primera detecció: registrar i avisar
       orphanWatchUpsert(symbol);
-      const meta = journalGetLastEntryMeta(symbol, "paper");
-      log.auto.warn({ symbol, uncoveredUsd, uncovered }, "posició parcialment sense SL — esperant 5 min per corregir");
+      const meta = journalGetLastEntryMeta(symbol, mode);
+      log.auto.warn({ mode, symbol, uncoveredUsd, uncovered }, "posició parcialment sense SL — esperant 5 min per corregir");
       notifyOrphanDetected({
         symbol,
         valueUsd:    uncoveredUsd,
@@ -719,6 +733,7 @@ async function checkOrphanPositions(): Promise<void> {
         orderId:     meta?.orderId     ?? null,
         orderListId: meta?.orderListId ?? null,
         tradeCode:   meta?.tradeCode   ?? null,
+        mode,
       }).catch(err => log.auto.warn({ err: (err as Error).message }, "notifyOrphanDetected fallida"));
       orphanWatchMarkNotified(symbol);
       continue;
@@ -728,10 +743,10 @@ async function checkOrphanPositions(): Promise<void> {
     if (now - watch.detectedAt < ORPHAN_FIX_MS) continue;
 
     // Han passat 5 minuts: aplicar lògica del bot per fixar SL/TP
-    log.auto.info({ symbol }, "aplicant correcció OCO a posició òrfena…");
+    log.auto.info({ mode, symbol }, "aplicant correcció OCO a posició òrfena…");
 
-    // Trobar el bot actiu per aquest símbol
-    const bots = botGetAll().filter(b => b.enabled);
+    // Trobar el bot actiu per aquest símbol i mode
+    const bots = botGetAll().filter(b => b.enabled && b.mode === mode);
     let botConfig: SavedConfig | null = null;
     let activBot:  Bot | null = null;
     for (const bot of bots) {
@@ -744,14 +759,22 @@ async function checkOrphanPositions(): Promise<void> {
     }
 
     if (!botConfig || !activBot) {
-      log.auto.warn({ symbol, uncoveredUsd }, "no s'ha trobat cap bot actiu — venent posició òrfena a mercat");
+      if (mode === "real") {
+        // En mode real NO es ven automàticament: alerta i espera intervenció manual
+        log.auto.warn({ mode, symbol, uncoveredUsd }, "no s'ha trobat cap bot actiu (REAL) — alerta enviada, NO es ven");
+        notifyOrphanNoBotReal({ symbol, valueUsd: uncoveredUsd, qty: uncovered.toFixed(6), mode })
+          .catch(err => log.auto.warn({ err: (err as Error).message }, "notifyOrphanNoBotReal fallida"));
+        orphanWatchDelete(symbol); // reset per tornar a alertar al proper cicle si segueix sense cobertura
+        continue;
+      }
+      log.auto.warn({ mode, symbol, uncoveredUsd }, "no s'ha trobat cap bot actiu — venent posició òrfena a mercat");
       try {
         let stepSize = cacheGet<{ stepSize: string }>(`exchange-info:${symbol}`)?.data.stepSize;
         if (!stepSize) {
           // Cache miss: fetch directly from Binance public API
           try {
             const infoRes = await fetch(
-              `https://demo-api.binance.com/api/v3/exchangeInfo?symbol=${symbol}`,
+              `${binancePublicBase}/api/v3/exchangeInfo?symbol=${symbol}`,
               { cache: "no-store", signal: AbortSignal.timeout(5_000) },
             );
             const info = await infoRes.json() as { symbols?: { filters?: { filterType: string; stepSize?: string }[] }[] };
@@ -760,12 +783,12 @@ async function checkOrphanPositions(): Promise<void> {
           } catch { stepSize = "0.00001"; }
         }
         const sellQty     = roundQty(uncovered, stepSize);
-        const sellRes     = await placeMarketSell(symbol, sellQty);
+        const sellRes     = await placeMarketSell(symbol, sellQty, mode);
         const executedQty = parseFloat(sellRes.executedQty);
         const receivedUsd = parseFloat(sellRes.cummulativeQuoteQty);
         const fillPrice   = executedQty > 0 ? receivedUsd / executedQty : price;
-        const meta = journalGetLastEntryMeta(symbol, activBot?.mode ?? "paper");
-        log.auto.info({ symbol, sellQty, receivedUsd, fillPrice }, "venda òrfena executada");
+        const meta = journalGetLastEntryMeta(symbol, mode);
+        log.auto.info({ mode, symbol, sellQty, receivedUsd, fillPrice }, "venda òrfena executada");
         notifyOrphanNoBot({
           symbol,
           qty:         sellQty,
@@ -777,7 +800,7 @@ async function checkOrphanPositions(): Promise<void> {
           tradeCode:   meta?.tradeCode   ?? null,
         }).catch(err => log.auto.warn({ err: (err as Error).message }, "notifyOrphanNoBot fallida"));
       } catch (sellErr) {
-        log.auto.error({ symbol, err: (sellErr as Error).message }, "error en venda òrfena a mercat");
+        log.auto.error({ mode, symbol, err: (sellErr as Error).message }, "error en venda òrfena a mercat");
       }
       orphanWatchDelete(symbol);
       continue;
@@ -789,7 +812,7 @@ async function checkOrphanPositions(): Promise<void> {
     const slAtr      = config.slAtr      ?? 1.0;
     const trailAct   = config.trailActivateAtr  ?? 1.5;
     const trailDst   = config.trailDistanceAtr  ?? 1.0;
-    const trailMode  = settingGet("trailing_sl_mode") || "ATR";
+    const trailMode  = settingGetForMode("trailing_sl_mode", mode) || "ATR";
 
     // Obté ATR actual
     let analysis: Awaited<ReturnType<typeof fetchAndAnalyze>>;
@@ -813,7 +836,7 @@ async function checkOrphanPositions(): Promise<void> {
     } else {
       try {
         const eiRes = await fetch(
-          `https://api.binance.com/api/v3/exchangeInfo?symbol=${symbol}`,
+          `${binancePublicBase}/api/v3/exchangeInfo?symbol=${symbol}`,
           { signal: AbortSignal.timeout(10_000) },
         );
         if (eiRes.ok) {
@@ -844,7 +867,7 @@ async function checkOrphanPositions(): Promise<void> {
       const ocoResult = await placeOcoOrder({
         symbol, side: "SELL", quantity: ocoQty,
         tpPrice, slStopPrice, slLimitPrice,
-      }) as Record<string, unknown>;
+      }, activBot.mode) as Record<string, unknown>;
 
       const journalId = journalAdd({
         type: "ENTRY_OCO", symbol, side: "SELL",
@@ -854,10 +877,10 @@ async function checkOrphanPositions(): Promise<void> {
         orderId: null,
         orderListId: typeof ocoResult.orderListId === "number" ? ocoResult.orderListId : null,
         strategy: null, interval, entryType: "MARKET", trailingMode: trailMode,
-        exitReason: null, capitalUsdt: null, capitalMode: settingGet("capital_mode"),
+        exitReason: null, capitalUsdt: null, capitalMode: settingGetForMode("capital_mode", activBot.mode as "paper" | "real"),
         notes: `Correcció automàtica OCO òrfena · Bot: ${activBot.name}`,
         tradeCode: journalGetLastEntryPrice(symbol, null, activBot.mode) ? journalGetLastTradeCode(symbol, 48 * 3600 * 1000, activBot.mode) : null,
-        source: "AUTO", executedAt: now,
+        source: "AUTO", mode: activBot.mode, executedAt: now,
       });
 
       await applyOcoSuccess(
@@ -887,12 +910,12 @@ async function globalPoll(): Promise<void> {
   try {
     // Reintenta OCO pendents i detecta posicions sense SL (independentment del master switch)
     await retryPendingOcos();
-    await checkOrphanPositions();
+    await Promise.all([checkOrphanPositions("paper"), checkOrphanPositions("real")]);
 
-    // Master switch
-    if (!settingGetBool("auto_trade_enabled")) return;
-
-    const bots = botGetAll().filter(b => b.enabled);
+    // Master switch — filtra per mode
+    const bots = botGetAll().filter(b =>
+      b.enabled && settingGetBoolForMode("auto_trade_enabled", b.mode as "paper" | "real")
+    );
     if (bots.length === 0) return;
 
     for (const bot of bots) {

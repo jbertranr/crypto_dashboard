@@ -210,10 +210,12 @@ export default function EqualizerTab() {
   const [probSweep,  setProbSweep]  = useState(false);
   const [probValues, setProbValues] = useState<number[]>([60, 70, 80]);
 
-  const [running,  setRunning]  = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [results,  setResults]  = useState<IterResult[]>([]);
-  const [error,    setError]    = useState<string | null>(null);
+  const [running,    setRunning]    = useState(false);
+  const [progress,   setProgress]   = useState(0);
+  const [results,    setResults]    = useState<IterResult[]>([]);
+  const [error,      setError]      = useState<string | null>(null);
+  const [errCount,   setErrCount]   = useState(0);
+  const [lastErrMsg, setLastErrMsg] = useState<string | null>(null);
 
   const [picked,     setPicked]     = useState<IterResult | null>(null);
   const [valResult,  setValResult]  = useState<RunResult  | null>(null);
@@ -323,6 +325,8 @@ export default function EqualizerTab() {
     setRunning(true);
     setProgress(0);
     setError(null);
+    setErrCount(0);
+    setLastErrMsg(null);
     abortRef.current = false;
 
     const accumulated: IterResult[] = [];
@@ -363,7 +367,10 @@ export default function EqualizerTab() {
             .filter(r => r.minProbability === (prob ?? undefined))
             .map(r => ({ params: r.params, score: metricValue(r.stats, metric) }));
           sampler.iteration = i + 1;
-        } catch {
+        } catch (err) {
+          const msg = (err as Error).message ?? "Error desconegut";
+          setErrCount(c => c + 1);
+          setLastErrMsg(msg);
           sampler.iteration = i + 1;
           globalIter++;
         }
@@ -1098,6 +1105,11 @@ export default function EqualizerTab() {
             {running
               ? `Executant… ${progress}%${probSweep && probValues.length > 1 ? ` · ${probValues.length} blocs de probabilitat` : ""}`
               : `Completat`}
+            {errCount > 0 && (
+              <span className="eq-progress-errors" title={lastErrMsg ?? undefined}>
+                {" "}· <i className="fa-solid fa-triangle-exclamation" /> {errCount} error{errCount !== 1 ? "s" : ""}
+              </span>
+            )}
           </span>
         </div>
       )}

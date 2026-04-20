@@ -664,7 +664,7 @@ export default function AutoLabTab() {
           </div>
           <div className="al-log__body">
             {log.length === 0
-              ? <span className="dim">El log apareixerà aquí un cop iniciïs l'AutoLab.</span>
+              ? <span className="dim">{"El log apareixerà aquí un cop iniciïs l'AutoLab."}</span>
               : log.map((l, i) => (
                   <div key={i} className={`al-log__line al-log__line--${l.level}`}>
                     <span className="al-log__time">{l.t}</span>

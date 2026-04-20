@@ -9,6 +9,34 @@ import { fmtUSD } from "./format";
 
 const TG_API = `https://api.telegram.org/bot`;
 
+// ── IP del servidor (lazy, caché mòdul) ──────────────────────────────────────
+
+let _serverIp: string | null = null;
+
+async function getServerIp(): Promise<string> {
+  if (_serverIp) return _serverIp;
+  try {
+    const res = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(3000) });
+    const { ip } = await res.json() as { ip: string };
+    _serverIp = ip;
+    return ip;
+  } catch {
+    // fallback: primera IP local no-loopback
+    const { networkInterfaces } = await import("os");
+    const ifaces = networkInterfaces();
+    for (const iface of Object.values(ifaces)) {
+      for (const a of iface ?? []) {
+        if (a.family === "IPv4" && !a.internal) {
+          _serverIp = a.address;
+          return a.address;
+        }
+      }
+    }
+    _serverIp = "desconeguda";
+    return _serverIp;
+  }
+}
+
 export function isConfigured(): boolean {
   return !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID);
 }
@@ -202,8 +230,13 @@ export async function sendCard(
   block: string[],
   mode?: string,
 ): Promise<void> {
+  const ip = await getServerIp();
+  const modeLabel = mode === "real" ? "🟠 REAL" : "📄 PAPER";
   const prefix = mode === "real" ? "🟠 REAL · " : "";
-  await sendTelegram(`<b>${prefix}${cardTitle}</b>\n\n${pre(block)}`, mode);
+  await sendTelegram(
+    `<b>${prefix}${cardTitle}</b>\n\n${pre([...block, kv("Mode", modeLabel), kv("Servidor", ip)])}`,
+    mode,
+  );
 }
 
 // ── Informe horari ────────────────────────────────────────────────────────────
@@ -244,7 +277,8 @@ export async function sendHourlyPortfolioReport(data: {
         `${a.asset.padEnd(6)} ${fmtUSD(a.valueUSD).padStart(10)}  ${(a.pct.toFixed(1)+"%").padStart(6)}`)]
     : [];
 
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
+  const ip = await getServerIp();
+  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", ip)];
   await sendTelegram(`<b>${title}</b>\n\n${pre(block)}`);
 }
 
@@ -379,7 +413,8 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
     textParts.push(pre(block));
   }
 
-  textParts.push(`🕐 ${ts()}`);
+  const ip = await getServerIp();
+  textParts.push(`🕐 ${ts()}  ·  🖥 ${ip}`);
   await sendTelegram(textParts.join("\n"));
 }
 
@@ -423,7 +458,8 @@ export async function sendPortfolioReport(data: {
         `${a.asset.padEnd(6)} ${fmtUSD(a.valueUSD).padStart(10)}  ${(a.pct.toFixed(1)+"%").padStart(6)}`))]
     : [];
 
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
+  const ip = await getServerIp();
+  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", ip)];
   await sendTelegram(`<b>📊 INFORME DE PORTFOLIO</b>\n\n${pre(block)}`);
 }
 
@@ -638,6 +674,30 @@ export async function notifyOrphanNoBot(data: {
 );
 }
 
+// ── Notificació: posició òrfena real sense bot — NO es ven ───────────────────
+
+export async function notifyOrphanNoBotReal(data: {
+  symbol:     string;
+  valueUsd:   number;
+  qty:        string;
+  mode?:      string;
+}): Promise<void> {
+  const base = data.symbol.replace(/USDT$|USDC$|BUSD$|FDUSD$|TUSD$/, "");
+  await sendCard(
+    `🚨 POSICIÓ REAL SENSE COBERTURA  ·  ${pairOf(data.symbol)}`,
+    ["⚠️ Cap bot actiu — INTERVENCIÓ MANUAL REQUERIDA"],
+    "red",
+    [
+      kv("Símbol",    pairOf(data.symbol)),
+      kv("Valor",     fmtUSD(data.valueUsd)),
+      kv("Quantitat", `${data.qty} ${base}`),
+      kv("Acció",     "Afegeix un bot actiu o col·loca SL manualment"),
+      kv("Hora",      ts()),
+    ],
+    data.mode,
+  );
+}
+
 // ── Notificació: OCO no col·locada (reintent pendent) ────────────────────────
 
 export async function notifyOcoFailed(data: {
@@ -708,8 +768,10 @@ export async function notifyMarketScan(data: {
   const modePrefix = data.mode === "real" ? "🟠 REAL · " : "";
   const header = `🔍 ${modePrefix}ESCANEIG · ${data.botName}`;
 
+  const ip = await getServerIp();
+  const modeLabel = data.mode === "real" ? "🟠 REAL" : "📄 PAPER";
   if (data.skipReason) {
-    await sendTelegram(`<b>${header}</b>\n⏭ Omès: ${data.skipReason}\n<i>${ts()}</i>`, data.mode);
+    await sendTelegram(`<b>${header}</b>\n⏭ Omès: ${data.skipReason}\n<i>${modeLabel}  ·  ${ts()}  ·  🖥 ${ip}</i>`, data.mode);
     return;
   }
 
@@ -740,7 +802,8 @@ export async function notifyMarketScan(data: {
   });
 
   const infoLine = `Interval: ${data.interval}  ·  Mínim: ${data.minScore}%  ·  ${ts()}`;
-  const body     = rows.length > 0 ? pre([infoLine, "─".repeat(40), ...rows]) : pre([infoLine, "(cap símbol analitzat)"]);
+  const metaLine = `Mode: ${modeLabel}  ·  Servidor: ${ip}`;
+  const body     = rows.length > 0 ? pre([infoLine, metaLine, "─".repeat(40), ...rows]) : pre([infoLine, metaLine, "(cap símbol analitzat)"]);
 
   await sendTelegram(`<b>${header}</b>\n${body}`, data.mode);
 }

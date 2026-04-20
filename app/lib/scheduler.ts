@@ -13,7 +13,10 @@ import { sendPortfolioReport, sendHourlyPortfolioReport, sendTelegram, isConfigu
 import { db, orderMetaGet } from "./cache-store";
 import { log }                        from "./logger";
 import { STABLES, BINANCE_BASE }      from "./constants";
-import { getQuoteAsset }              from "./settings-store";
+import { getQuoteAsset, settingGetBool } from "./settings-store";
+
+const schedulerEnabled = () =>
+  settingGetBool("scheduler_enabled") || settingGetBool("scheduler_enabled_real");
 declare global {
   var __schedulerStarted:      boolean | undefined;
   var __schedulerLastSnapshot: number  | undefined;
@@ -126,6 +129,7 @@ function snapshotNear(targetMs: number) {
 // ── Comprovació consistència ordres (cada hora) ───────────────────────────────
 
 async function checkOrderConsistency(): Promise<void> {
+  if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
   try {
     const binanceOrders = await getOpenOrders();
@@ -179,6 +183,7 @@ async function checkOrderConsistency(): Promise<void> {
 // ── Informe horari ────────────────────────────────────────────────────────────
 
 async function sendHourlyReport(): Promise<void> {
+  if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
   try {
     const portfolio = await fetchPortfolioData();
@@ -204,6 +209,7 @@ async function sendHourlyReport(): Promise<void> {
 // ── Informe diari (7:30) amb gràfic ──────────────────────────────────────────
 
 async function sendDailyReport(): Promise<void> {
+  if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
   try {
     const portfolio = await fetchPortfolioData();
@@ -236,6 +242,7 @@ async function sendDailyReport(): Promise<void> {
 const SNAPSHOT_INTERVAL_MS = 15 * 60 * 1000;
 
 async function takePortfolioSnapshot(): Promise<void> {
+  if (!schedulerEnabled()) return;
   try {
     const account = await getAccount();
     const assets  = account.balances.filter(b => parseFloat(b.free) + parseFloat(b.locked) > 1e-8);

@@ -24,6 +24,12 @@ interface Settings {
   // Risk management
   cancel_auto_sell:            string;
   sl_sell_remaining:           string;
+  // Motors i processos
+  order_monitor_enabled:       string;
+  trailing_engine_enabled:     string;
+  crash_monitor_enabled:       string;
+  scheduler_enabled:           string;
+  activity_logger_enabled:     string;
   // Auto-trading master switch only (per-bot config is in the bots table)
   auto_trade_enabled:          string;
   [key: string]:            string;
@@ -103,8 +109,9 @@ const TF_PRESETS: Record<CfgInterval, Record<CfgOrderType, Record<string, string
   },
 };
 
-function presetKey(param: string, type: CfgOrderType, tf: CfgInterval): string {
-  return `${param}__${type}__${tf}`;
+function presetKey(param: string, type: CfgOrderType, tf: CfgInterval, mode?: "paper" | "real"): string {
+  const base = `${param}__${type}__${tf}`;
+  return mode === "real" ? `${base}__real` : base;
 }
 
 const DEFAULTS = {
@@ -119,20 +126,25 @@ const DEFAULTS = {
   capital_fixed_usdt: "100",
   capital_pct_portfolio: "5",
   capital_max_open: "3",
-  priority_pairs: "BTCUSDT,ETHUSDT,BNBUSDT,SOLUSDT,XRPUSDT",
-  auto_trade_enabled: "0",
-  cancel_auto_sell:   "0",
-  sl_sell_remaining:  "0",
+  priority_pairs: "BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC",
+  auto_trade_enabled:       "0",
+  cancel_auto_sell:         "0",
+  sl_sell_remaining:        "0",
+  order_monitor_enabled:    "1",
+  trailing_engine_enabled:  "1",
+  crash_monitor_enabled:    "1",
+  scheduler_enabled:        "1",
+  activity_logger_enabled:  "1",
   tg_on_motor_anomaly:      "1",
   motor_anomaly_multiplier: "3",
 };
 
 const ALL_PAIRS = [
-  { symbol: "BTC", pair: "BTCUSDT",  color: "#F7931A", iconCls: "fa-solid fa-bitcoin-sign" },
-  { symbol: "ETH", pair: "ETHUSDT",  color: "#627EEA", iconCls: "fa-brands fa-ethereum" },
-  { symbol: "BNB", pair: "BNBUSDT",  color: "#F3BA2F", iconCls: "fa-solid fa-coins" },
-  { symbol: "SOL", pair: "SOLUSDT",  color: "#00FFA3", iconCls: "fa-solid fa-sun" },
-  { symbol: "XRP", pair: "XRPUSDT",  color: "#00AAE4", iconCls: "fa-solid fa-droplet" },
+  { symbol: "BTC", pair: "BTCUSDC",  color: "#F7931A", iconCls: "fa-solid fa-bitcoin-sign" },
+  { symbol: "ETH", pair: "ETHUSDC",  color: "#627EEA", iconCls: "fa-brands fa-ethereum" },
+  { symbol: "BNB", pair: "BNBUSDC",  color: "#F3BA2F", iconCls: "fa-solid fa-coins" },
+  { symbol: "SOL", pair: "SOLUSDC",  color: "#00FFA3", iconCls: "fa-solid fa-sun" },
+  { symbol: "XRP", pair: "XRPUSDC",  color: "#00AAE4", iconCls: "fa-solid fa-droplet" },
 ] as const;
 
 const NOTIFICATIONS: {
@@ -151,7 +163,7 @@ const NOTIFICATIONS: {
     key:   "tg_on_order_close",
     icon:  "fa-money-bill-transfer",
     title: "Venda a mercat",
-    desc:  "Notifica quan es ven un actiu a mercat \u2192 USDT.",
+    desc:  "Notifica quan es ven un actiu a mercat \u2192 USDC.",
   },
   {
     key:   "tg_on_sl_modify",
@@ -192,6 +204,11 @@ export default function SettingsTab() {
   const [bots,           setBots]           = useState<Bot[]>([]);
   const [expandedBot,    setExpandedBot]    = useState<string | null>(null);
   const [showNewBotForm, setShowNewBotForm] = useState(false);
+  const [bulkSaving,     setBulkSaving]     = useState<"paper" | "real" | null>(null);
+  const [motorsMode,     setMotorsMode]     = useState<"paper" | "real">("paper");
+  const [telegramMode,   setTelegramMode]   = useState<"paper" | "real">("paper");
+  const [entryMode,      setEntryMode]      = useState<"paper" | "real">("paper");
+  const [fundingMode,    setFundingMode]    = useState<"paper" | "real">("paper");
   const [newBotName,     setNewBotName]     = useState("");
   const [newBotSimId,    setNewBotSimId]    = useState("");
   const [newBotBudget,   setNewBotBudget]   = useState("500");
@@ -282,12 +299,12 @@ export default function SettingsTab() {
   const getPreset = (param: string, type?: CfgOrderType, tf?: CfgInterval): string => {
     const t  = type ?? editType;
     const i  = tf   ?? editTf;
-    const k  = presetKey(param, t, i);
+    const k  = presetKey(param, t, i, entryMode);
     return settings?.[k] ?? TF_PRESETS[i]?.[t]?.[param] ?? "";
   };
 
   const setPreset = (param: string, value: string) =>
-    setSetting(presetKey(param, editType, editTf), value);
+    setSetting(presetKey(param, editType, editTf, entryMode), value);
 
   /** Delete all saved keys for current TF+type so built-in defaults take over */
   const resetPreset = async () => {
@@ -295,7 +312,7 @@ export default function SettingsTab() {
     const params = ["entry_limit_offset_pct", "oco_tp_atr", "oco_sl_atr",
                     "oco_sl_limit_offset_pct", "trailing_activate_atr", "trailing_distance_atr"];
     for (const p of params) {
-      const k = presetKey(p, editType, editTf);
+      const k = presetKey(p, editType, editTf, entryMode);
       await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -304,6 +321,9 @@ export default function SettingsTab() {
     }
     await load();
   };
+
+  const emk = (key: string) => entryMode   === "real" ? `${key}_real` : key;
+  const fmk = (key: string) => fundingMode === "real" ? `${key}_real` : key;
 
   const tp  = parseFloat(getPreset("oco_tp_atr"));
   const sl  = parseFloat(getPreset("oco_sl_atr"));
@@ -378,6 +398,18 @@ export default function SettingsTab() {
     } finally { setSavingBot(null); }
   };
 
+  const bulkSetEnabled = async (mode: "paper" | "real", enabled: boolean) => {
+    setBulkSaving(mode);
+    try {
+      await fetch("/api/bots", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bulk: true, mode, enabled }),
+      });
+      await reloadBots();
+    } finally { setBulkSaving(null); }
+  };
+
   return (
     <div className="settings-tab">
 
@@ -420,7 +452,7 @@ export default function SettingsTab() {
             {!settings
               ? "—"
               : (settings.capital_mode ?? "FIXED") === "FIXED"
-              ? <><span className="mono">{settings.capital_fixed_usdt ?? "100"}</span>{" USDT"}</>
+              ? <><span className="mono">{settings.capital_fixed_usdt ?? "100"}</span>{" USDC"}</>
               : <><span className="mono">{settings.capital_pct_portfolio ?? "5"}</span>{"% portf."}</>}
           </span>
           <span className="portfolio__card-sub">
@@ -445,14 +477,198 @@ export default function SettingsTab() {
           <span className="portfolio__card-value" style={{ fontSize: "1.1rem" }}>
             {settings?.entry_type ?? "LIMIT"}
           </span>
-          <span className="portfolio__card-sub">mode d'execució d'ordres</span>
+          <span className="portfolio__card-sub">{"mode d'execució d'ordres"}</span>
         </div>
+      </div>
+
+      {/* ── Motors i processos ── */}
+      <div className="analysis-section">
+        <div className="portfolio__section-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span><i className="fa-solid fa-gears" /> Motors i processos</span>
+          <div className="nav__mode-toggle">
+            <button
+              className={`nav__mode-btn${motorsMode === "paper" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setMotorsMode("paper")}
+            >PAPER</button>
+            <button
+              className={`nav__mode-btn nav__mode-btn--real${motorsMode === "real" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setMotorsMode("real")}
+            >REAL</button>
+          </div>
+        </div>
+
+        {/* Sub-capçalera motors */}
+        <div className="cfg-subheader">
+          <i className="fa-solid fa-microchip" /> Motors
+        </div>
+
+        {(() => {
+          const mk = (key: string) => motorsMode === "real" ? `${key}_real` : key;
+          return (
+            <>
+              {/* Auto-trader */}
+              <div className={`cfg-toggle-row${settings?.[mk("auto_trade_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-robot cfg-toggle-row__icon" style={{ color: settings?.[mk("auto_trade_enabled")] === "1" ? "var(--accent)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Auto-trader</div>
+                  <div className="cfg-toggle-row__desc">Escaneja el mercat i executa compres automàtiques segons els bots configurats. Els bots individuals es gestionen a la secció inferior.</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("auto_trade_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("auto_trade_enabled"), settings?.[mk("auto_trade_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("auto_trade_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Order monitor */}
+              <div className={`cfg-toggle-row${settings?.[mk("order_monitor_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-magnifying-glass-chart cfg-toggle-row__icon" style={{ color: settings?.[mk("order_monitor_enabled")] === "1" ? "var(--accent)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">{"Monitor d'ordres"} <span className="cfg-badge cfg-badge--neutral">35 s</span></div>
+                  <div className="cfg-toggle-row__desc">Detecta ordres executades (SL, TP, compres) i envia notificacions Telegram. Requerida per a les accions automàtiques de baix.</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("order_monitor_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("order_monitor_enabled"), settings?.[mk("order_monitor_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("order_monitor_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Trailing engine */}
+              <div className={`cfg-toggle-row${settings?.[mk("trailing_engine_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-chart-line cfg-toggle-row__icon" style={{ color: settings?.[mk("trailing_engine_enabled")] === "1" ? "var(--accent)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Trailing engine <span className="cfg-badge cfg-badge--neutral">30 s</span></div>
+                  <div className="cfg-toggle-row__desc">Mou el Stop Loss automàticament seguint el preu. Necessari per a totes les posicions amb trailing stop actiu.</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("trailing_engine_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("trailing_engine_enabled"), settings?.[mk("trailing_engine_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("trailing_engine_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Crash monitor */}
+              <div className={`cfg-toggle-row${settings?.[mk("crash_monitor_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-triangle-exclamation cfg-toggle-row__icon" style={{ color: settings?.[mk("crash_monitor_enabled")] === "1" ? "var(--orange, #f59e0b)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Crash monitor <span className="cfg-badge cfg-badge--neutral">60 s</span></div>
+                  <div className="cfg-toggle-row__desc">{"Sortida d'emergència automàtica si BTC cau bruscament. Quan desactivat, envia un avís Telegram però no ven res."}</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("crash_monitor_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("crash_monitor_enabled"), settings?.[mk("crash_monitor_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("crash_monitor_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Scheduler */}
+              <div className={`cfg-toggle-row${settings?.[mk("scheduler_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-clock cfg-toggle-row__icon" style={{ color: settings?.[mk("scheduler_enabled")] === "1" ? "var(--accent)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Scheduler <span className="cfg-badge cfg-badge--neutral">1 h / 24 h</span></div>
+                  <div className="cfg-toggle-row__desc">{"Envia informes horaris i diaris per Telegram, pren snapshots del portfolio i comprova la consistència d'ordres amb Binance."}</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("scheduler_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("scheduler_enabled"), settings?.[mk("scheduler_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("scheduler_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Activity logger */}
+              <div className={`cfg-toggle-row${settings?.[mk("activity_logger_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-list-ul cfg-toggle-row__icon" style={{ color: settings?.[mk("activity_logger_enabled")] === "1" ? "var(--accent)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Activity logger</div>
+                  <div className="cfg-toggle-row__desc">{"Registra l'activitat dels motors al feed d'activitat del dashboard. Desactivar-lo no afecta cap operació de trading."}</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("activity_logger_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("activity_logger_enabled"), settings?.[mk("activity_logger_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("activity_logger_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Sub-capçalera accions */}
+              <div className="cfg-subheader" style={{ marginTop: "1.2rem" }}>
+                <i className="fa-solid fa-bolt" /> Accions automàtiques
+              </div>
+
+              {/* cancel_auto_sell */}
+              <div className={`cfg-toggle-row${settings?.[mk("cancel_auto_sell")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-arrow-down-to-line cfg-toggle-row__icon" style={{ color: "var(--red)" }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">{"Vendre si el Stop Loss es cancel·la"}</div>
+                  <div className="cfg-toggle-row__desc">
+                    {"Si un Stop Loss (trailing o independent) s'elimina externament sense executar-se, fa una venda a mercat automàtica per evitar deixar la posició sense protecció."}
+                  </div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("cancel_auto_sell")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("cancel_auto_sell"), settings?.[mk("cancel_auto_sell")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("cancel_auto_sell")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* sl_sell_remaining */}
+              <div className={`cfg-toggle-row${settings?.[mk("sl_sell_remaining")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-shield-halved cfg-toggle-row__icon" style={{ color: "var(--red)" }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Liquidar posició completa al Stop Loss</div>
+                  <div className="cfg-toggle-row__desc">
+                    {"Després de qualsevol SL executat (estàndard o trailing), ven la resta de la posició a mercat. Garanteix que cap fragment quedi sense protecció."}
+                  </div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("sl_sell_remaining")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("sl_sell_remaining"), settings?.[mk("sl_sell_remaining")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("sl_sell_remaining")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* \u2500\u2500 Telegram section \u2500\u2500 */}
       <div className="analysis-section">
-        <div className="portfolio__section-title">
-          <i className="fa-brands fa-telegram" /> Telegram
+        <div className="portfolio__section-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span><i className="fa-brands fa-telegram" /> Telegram</span>
+          <div className="nav__mode-toggle">
+            <button
+              className={`nav__mode-btn${telegramMode === "paper" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setTelegramMode("paper")}
+            >PAPER</button>
+            <button
+              className={`nav__mode-btn nav__mode-btn--real${telegramMode === "real" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setTelegramMode("real")}
+            >REAL</button>
+          </div>
         </div>
 
         {/* Bot status block */}
@@ -501,9 +717,10 @@ export default function SettingsTab() {
 
         {/* Notification toggles */}
         <div className="cfg-toggles">
-          {NOTIFICATIONS.map(({ key, icon, title, desc }) => {
-            const enabled  = settings ? settings[key] === "1" : false;
-            const isSaving = saving === key;
+          {NOTIFICATIONS.filter(n => n.key !== "tg_on_motor_anomaly").map(({ key, icon, title, desc }) => {
+            const effKey   = telegramMode === "real" ? `${key}_real` : key;
+            const enabled  = settings ? settings[effKey] === "1" : false;
+            const isSaving = saving === effKey;
             return (
               <div key={key} className={`cfg-toggle-row${!enabled ? " cfg-toggle-row--off" : ""}`}>
                 <i className={`fa-solid ${icon} cfg-toggle-row__icon`} />
@@ -513,7 +730,7 @@ export default function SettingsTab() {
                 </div>
                 <button
                   className={`cfg-switch${enabled ? " cfg-switch--on" : ""}`}
-                  onClick={() => toggle(key)}
+                  onClick={() => setSetting(effKey, enabled ? "0" : "1")}
                   disabled={isSaving || !settings}
                   aria-label={enabled ? "Desactivar" : "Activar"}
                 >
@@ -522,6 +739,29 @@ export default function SettingsTab() {
               </div>
             );
           })}
+
+          {/* Anomalia motor — sempre global (no depèn del mode) */}
+          {(() => {
+            const n       = NOTIFICATIONS.find(x => x.key === "tg_on_motor_anomaly")!;
+            const enabled = settings ? settings["tg_on_motor_anomaly"] === "1" : false;
+            return (
+              <div className={`cfg-toggle-row${!enabled ? " cfg-toggle-row--off" : ""}`}>
+                <i className={`fa-solid ${n.icon} cfg-toggle-row__icon`} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">{n.title}</div>
+                  <div className="cfg-toggle-row__desc">{n.desc}</div>
+                </div>
+                <button
+                  className={`cfg-switch${enabled ? " cfg-switch--on" : ""}`}
+                  onClick={() => toggle("tg_on_motor_anomaly")}
+                  disabled={saving === "tg_on_motor_anomaly" || !settings}
+                  aria-label={enabled ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Multiplicador anomalia motor */}
           {settings?.tg_on_motor_anomaly === "1" && (
@@ -545,56 +785,16 @@ export default function SettingsTab() {
         </div>
       </div>
 
-      {/* ── Accions automàtiques ── */}
-      <div className="analysis-section">
-        <div className="portfolio__section-title">
-          <i className="fa-solid fa-robot" /> Accions automàtiques
-        </div>
-        <div className="cfg-toggle-row">
-          <i className="fa-solid fa-arrow-down-to-line cfg-toggle-row__icon" style={{ color: "var(--red)" }} />
-          <div className="cfg-toggle-row__body">
-            <div className="cfg-toggle-row__title">Vendre automàticament si el Stop Loss es cancel·la</div>
-            <div className="cfg-toggle-row__desc">
-              Si un Stop Loss (trailing o independent) s&apos;elimina externament sense executar-se,
-              el sistema fa una venda a mercat automàtica per evitar deixar la posició sense protecció.
-            </div>
-          </div>
-          <button
-            className={`cfg-switch${settings?.cancel_auto_sell === "1" ? " cfg-switch--on" : ""}`}
-            onClick={() => setSetting("cancel_auto_sell", settings?.cancel_auto_sell === "1" ? "0" : "1")}
-            disabled={!settings || saving !== null}
-            aria-label={settings?.cancel_auto_sell === "1" ? "Desactivar" : "Activar"}
-          >
-            <span className="cfg-switch__thumb" />
-          </button>
-        </div>
-
-        {/* sl_sell_remaining */}
-        <div className="cfg-toggle-row">
-          <i className="fa-solid fa-shield-halved cfg-toggle-row__icon" style={{ color: "var(--red)" }} />
-          <div className="cfg-toggle-row__body">
-            <div className="cfg-toggle-row__title">Liquidar posició completa quan s&apos;executa el Stop Loss</div>
-            <div className="cfg-toggle-row__desc">
-              Després de qualsevol SL executat (estàndard o trailing), el sistema verifica el saldo lliure
-              de la crypto i ven la resta a mercat automàticament. Garanteix que cap fragment quedi sense
-              protecció.
-            </div>
-          </div>
-          <button
-            className={`cfg-switch${settings?.sl_sell_remaining === "1" ? " cfg-switch--on" : ""}`}
-            onClick={() => setSetting("sl_sell_remaining", settings?.sl_sell_remaining === "1" ? "0" : "1")}
-            disabled={!settings || saving !== null}
-            aria-label={settings?.sl_sell_remaining === "1" ? "Desactivar" : "Activar"}
-          >
-            <span className="cfg-switch__thumb" />
-          </button>
-        </div>
-      </div>
-
       {/* ── Entrada al mercat ── */}
       <div className="analysis-section">
-        <div className="portfolio__section-title">
-          <i className="fa-solid fa-arrow-right-to-bracket" /> Entrada al mercat
+        <div className="portfolio__section-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span><i className="fa-solid fa-arrow-right-to-bracket" /> Entrada al mercat</span>
+          <div className="nav__mode-toggle">
+            <button className={`nav__mode-btn${entryMode === "paper" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setEntryMode("paper")}>PAPER</button>
+            <button className={`nav__mode-btn nav__mode-btn--real${entryMode === "real" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setEntryMode("real")}>REAL</button>
+          </div>
         </div>
 
         {/* Global default order type */}
@@ -607,8 +807,8 @@ export default function SettingsTab() {
           <div className="cfg-seg">
             {(["LIMIT", "MARKET"] as const).map(t => (
               <button key={t}
-                className={`cfg-seg__btn${settings?.entry_type === t ? " cfg-seg__btn--active" : ""}`}
-                onClick={() => setSetting("entry_type", t)}
+                className={`cfg-seg__btn${(settings?.[emk("entry_type")] ?? "LIMIT") === t ? " cfg-seg__btn--active" : ""}`}
+                onClick={() => setSetting(emk("entry_type"), t)}
                 disabled={!settings || saving !== null}
               >{t}</button>
             ))}
@@ -727,8 +927,8 @@ export default function SettingsTab() {
             <div className="cfg-seg">
               {(["ATR", "PIVOT_LOW"] as const).map(m => (
                 <button key={m}
-                  className={`cfg-seg__btn${(settings?.trailing_sl_mode ?? "ATR") === m ? " cfg-seg__btn--active" : ""}`}
-                  onClick={() => setSetting("trailing_sl_mode", m)}
+                  className={`cfg-seg__btn${(settings?.[emk("trailing_sl_mode")] ?? "ATR") === m ? " cfg-seg__btn--active" : ""}`}
+                  onClick={() => setSetting(emk("trailing_sl_mode"), m)}
                   disabled={!settings || saving !== null}
                   title={m === "ATR" ? "Distància fixa en ATRs des del màxim" : "SL ancores al últim pivot low del gràfic"}
                 >{m === "PIVOT_LOW" ? "Pivot Low" : "ATR"}</button>
@@ -753,7 +953,7 @@ export default function SettingsTab() {
         </div>
 
         {/* Trailing ATR: distance (ATR mode only) */}
-        {(settings?.trailing_sl_mode ?? "ATR") === "ATR" && (
+        {(settings?.[emk("trailing_sl_mode")] ?? "ATR") === "ATR" && (
           <div className="cfg-field-row">
             <i className="fa-solid fa-arrows-left-right cfg-toggle-row__icon" />
             <div className="cfg-toggle-row__body">
@@ -770,7 +970,7 @@ export default function SettingsTab() {
         )}
 
         {/* Pivot Low mode: TF selector + offset */}
-        {(settings?.trailing_sl_mode ?? "ATR") === "PIVOT_LOW" && (<>
+        {(settings?.[emk("trailing_sl_mode")] ?? "ATR") === "PIVOT_LOW" && (<>
           <div className="cfg-field-row">
             <i className="fa-solid fa-clock cfg-toggle-row__icon" />
             <div className="cfg-toggle-row__body">
@@ -783,8 +983,8 @@ export default function SettingsTab() {
             <div className="cfg-seg">
               {CFG_INTERVALS.map(tf => (
                 <button key={tf}
-                  className={`cfg-seg__btn${(settings?.trailing_pivot_tf ?? "1h") === tf ? " cfg-seg__btn--active" : ""}`}
-                  onClick={() => setSetting("trailing_pivot_tf", tf)}
+                  className={`cfg-seg__btn${(settings?.[emk("trailing_pivot_tf")] ?? "1h") === tf ? " cfg-seg__btn--active" : ""}`}
+                  onClick={() => setSetting(emk("trailing_pivot_tf"), tf)}
                   disabled={!settings || saving !== null}
                 >{tf}</button>
               ))}
@@ -801,9 +1001,9 @@ export default function SettingsTab() {
             </div>
             <input type="number" step="0.05" min="0" max="2"
               className="cfg-num-input"
-              value={settings?.trailing_pivot_offset_pct ?? DEFAULTS.trailing_pivot_offset_pct}
+              value={settings?.[emk("trailing_pivot_offset_pct")] ?? DEFAULTS.trailing_pivot_offset_pct}
               disabled={!settings || saving !== null}
-              onChange={e => setSetting("trailing_pivot_offset_pct", e.target.value)}
+              onChange={e => setSetting(emk("trailing_pivot_offset_pct"), e.target.value)}
             />
           </div>
           <div className="cfg-rr-row" style={{ justifyContent: "flex-start", gap: "0.5rem" }}>
@@ -818,8 +1018,14 @@ export default function SettingsTab() {
 
       {/* ── Capital i prioritats ── */}
       <div className="analysis-section">
-        <div className="portfolio__section-title">
-          <i className="fa-solid fa-piggy-bank" /> Capital i prioritats
+        <div className="portfolio__section-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span><i className="fa-solid fa-piggy-bank" /> Capital i prioritats</span>
+          <div className="nav__mode-toggle">
+            <button className={`nav__mode-btn${fundingMode === "paper" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setFundingMode("paper")}>PAPER</button>
+            <button className={`nav__mode-btn nav__mode-btn--real${fundingMode === "real" ? " nav__mode-btn--active" : ""}`}
+              onClick={() => setFundingMode("real")}>REAL</button>
+          </div>
         </div>
 
         {/* Capital mode */}
@@ -827,13 +1033,13 @@ export default function SettingsTab() {
           <i className="fa-solid fa-wallet cfg-toggle-row__icon" />
           <div className="cfg-toggle-row__body">
             <div className="cfg-toggle-row__title">Mode de capital</div>
-            <div className="cfg-toggle-row__desc">FIXED usa un import fix en USDT per operació; PCT calcula el % del saldo disponible en el moment de l&apos;entrada.</div>
+            <div className="cfg-toggle-row__desc">FIXED usa un import fix en USDC per operació; PCT calcula el % del saldo disponible en el moment de l&apos;entrada.</div>
           </div>
           <div className="cfg-seg">
             {(["FIXED", "PCT"] as const).map(m => (
               <button key={m}
-                className={`cfg-seg__btn${(settings?.capital_mode ?? "FIXED") === (m === "PCT" ? "PCT_PORTFOLIO" : "FIXED") ? " cfg-seg__btn--active" : ""}`}
-                onClick={() => setSetting("capital_mode", m === "PCT" ? "PCT_PORTFOLIO" : "FIXED")}
+                className={`cfg-seg__btn${(settings?.[fmk("capital_mode")] ?? "FIXED") === (m === "PCT" ? "PCT_PORTFOLIO" : "FIXED") ? " cfg-seg__btn--active" : ""}`}
+                onClick={() => setSetting(fmk("capital_mode"), m === "PCT" ? "PCT_PORTFOLIO" : "FIXED")}
                 disabled={!settings || saving !== null}
               >{m}</button>
             ))}
@@ -841,35 +1047,35 @@ export default function SettingsTab() {
         </div>
 
         {/* Fixed USDT */}
-        {(settings?.capital_mode ?? "FIXED") === "FIXED" && (
+        {(settings?.[fmk("capital_mode")] ?? "FIXED") === "FIXED" && (
           <div className="cfg-field-row">
             <i className="fa-solid fa-dollar-sign cfg-toggle-row__icon" />
             <div className="cfg-toggle-row__body">
-              <div className="cfg-toggle-row__title">Import per operació (USDT)</div>
-              <div className="cfg-toggle-row__desc">Quantitat fixa en USDT que s&apos;invertirà a cada entrada (ex: 100 = 100 USDT per trade).</div>
+              <div className="cfg-toggle-row__title">Import per operació (USDC)</div>
+              <div className="cfg-toggle-row__desc">Quantitat fixa en USDC que s&apos;invertirà a cada entrada (ex: 100 = 100 USDC per trade).</div>
             </div>
             <input type="number" step="10" min="1" max="100000"
               className="cfg-num-input" style={{ width: "88px" }}
-              value={settings?.capital_fixed_usdt ?? DEFAULTS.capital_fixed_usdt}
+              value={settings?.[fmk("capital_fixed_usdt")] ?? DEFAULTS.capital_fixed_usdt}
               disabled={!settings || saving !== null}
-              onChange={e => setSetting("capital_fixed_usdt", e.target.value)}
+              onChange={e => setSetting(fmk("capital_fixed_usdt"), e.target.value)}
             />
           </div>
         )}
 
         {/* PCT portfolio */}
-        {(settings?.capital_mode ?? "FIXED") === "PCT_PORTFOLIO" && (
+        {(settings?.[fmk("capital_mode")] ?? "FIXED") === "PCT_PORTFOLIO" && (
           <div className="cfg-field-row">
             <i className="fa-solid fa-chart-pie cfg-toggle-row__icon" />
             <div className="cfg-toggle-row__body">
               <div className="cfg-toggle-row__title">% del portafoli per operació</div>
-              <div className="cfg-toggle-row__desc">Percentatge del saldo USDT disponible destinat a cada entrada (ex: 5 = 5% del saldo lliure).</div>
+              <div className="cfg-toggle-row__desc">Percentatge del saldo USDC disponible destinat a cada entrada (ex: 5 = 5% del saldo lliure).</div>
             </div>
             <input type="number" step="0.5" min="0.5" max="100"
               className="cfg-num-input"
-              value={settings?.capital_pct_portfolio ?? DEFAULTS.capital_pct_portfolio}
+              value={settings?.[fmk("capital_pct_portfolio")] ?? DEFAULTS.capital_pct_portfolio}
               disabled={!settings || saving !== null}
-              onChange={e => setSetting("capital_pct_portfolio", e.target.value)}
+              onChange={e => setSetting(fmk("capital_pct_portfolio"), e.target.value)}
             />
           </div>
         )}
@@ -883,9 +1089,9 @@ export default function SettingsTab() {
           </div>
           <input type="number" step="1" min="1" max="20"
             className="cfg-num-input" style={{ width: "56px" }}
-            value={settings?.capital_max_open ?? DEFAULTS.capital_max_open}
+            value={settings?.[fmk("capital_max_open")] ?? DEFAULTS.capital_max_open}
             disabled={!settings || saving !== null}
-            onChange={e => setSetting("capital_max_open", e.target.value)}
+            onChange={e => setSetting(fmk("capital_max_open"), e.target.value)}
           />
         </div>
 
@@ -894,32 +1100,32 @@ export default function SettingsTab() {
           <span className="cfg-preset-header__label"><i className="fa-solid fa-star" /> Cryptos actives</span>
           <span className="cfg-rr-row__label" style={{ marginLeft: "auto", letterSpacing: 0, textTransform: "none" }}>
             {settings
-              ? (() => { const en = (settings.priority_pairs ?? DEFAULTS.priority_pairs).split(",").filter(Boolean); return `${en.length} de ${ALL_PAIRS.length} activades`; })()
+              ? (() => { const en = (settings[fmk("priority_pairs")] ?? DEFAULTS.priority_pairs).split(",").filter(Boolean); return `${en.length} de ${ALL_PAIRS.length} activades`; })()
               : "Carregant…"}
           </span>
         </div>
         <div className="cfg-toggles">
           {ALL_PAIRS.map(({ symbol, pair, color, iconCls }) => {
+            const ppKey   = fmk("priority_pairs");
             const enabled = settings
-              ? (settings.priority_pairs ?? DEFAULTS.priority_pairs).split(",").includes(pair)
+              ? (settings[ppKey] ?? DEFAULTS.priority_pairs).split(",").includes(pair)
               : true;
-            const isSaving = saving === `priority_${pair}`;
-            const toggle = async () => {
+            const isSaving = saving === `priority_${pair}_${fundingMode}`;
+            const togglePair = async () => {
               if (!settings) return;
-              const current = (settings.priority_pairs ?? DEFAULTS.priority_pairs).split(",").filter(Boolean);
+              const current = (settings[ppKey] ?? DEFAULTS.priority_pairs).split(",").filter(Boolean);
               const next = enabled
                 ? current.filter(p => p !== pair)
                 : [...current, pair];
-              // Keep at least 1 pair active
               if (next.length === 0) return;
-              setSaving(`priority_${pair}`);
+              setSaving(`priority_${pair}_${fundingMode}`);
               try {
                 await fetch("/api/settings", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ key: "priority_pairs", value: next.join(",") }),
+                  body: JSON.stringify({ key: ppKey, value: next.join(",") }),
                 });
-                setSettings(prev => prev ? { ...prev, priority_pairs: next.join(",") } : prev);
+                setSettings(prev => prev ? { ...prev, [ppKey]: next.join(",") } : prev);
               } finally { setSaving(null); }
             };
             return (
@@ -934,7 +1140,7 @@ export default function SettingsTab() {
                 </div>
                 <button
                   className={`cfg-switch${enabled ? " cfg-switch--on" : ""}`}
-                  onClick={toggle}
+                  onClick={togglePair}
                   disabled={isSaving || !settings}
                   aria-label={enabled ? "Desactivar" : "Activar"}
                 >
@@ -959,24 +1165,6 @@ export default function SettingsTab() {
           </button>
         </div>
 
-        {/* Master switch */}
-        <div className="cfg-toggle-row">
-          <i className="fa-solid fa-bolt cfg-toggle-row__icon"
-            style={{ color: settings?.auto_trade_enabled === "1" ? "var(--green)" : undefined }} />
-          <div className="cfg-toggle-row__body">
-            <div className="cfg-toggle-row__title">Master switch — tots els bots</div>
-            <div className="cfg-toggle-row__desc">Quan està desactivat, cap bot opera, independentment de la seva configuració individual.</div>
-          </div>
-          <button
-            className={`cfg-switch${settings?.auto_trade_enabled === "1" ? " cfg-switch--on" : ""}`}
-            onClick={() => setSetting("auto_trade_enabled", settings?.auto_trade_enabled === "1" ? "0" : "1")}
-            disabled={!settings || saving !== null}
-            aria-label="Master switch bots"
-          >
-            <span className="cfg-switch__thumb" />
-          </button>
-        </div>
-
         {/* Active warning */}
         {settings?.auto_trade_enabled === "1" && bots.some(b => b.enabled) && (
           <div className="cfg-auto-warning">
@@ -984,6 +1172,73 @@ export default function SettingsTab() {
             {" "}{bots.filter(b => b.enabled).length} bot{bots.filter(b => b.enabled).length !== 1 ? "s" : ""} actiu{bots.filter(b => b.enabled).length !== 1 ? "s" : ""}. El sistema executarà compres automàticament.
           </div>
         )}
+
+        {/* Bulk mode toggles */}
+        {bots.length > 0 && (() => {
+          const paperBots = bots.filter(b => b.mode === "paper");
+          const realBots  = bots.filter(b => b.mode === "real");
+          const paperAllOn  = paperBots.length > 0 && paperBots.every(b => b.enabled);
+          const realAllOn   = realBots.length  > 0 && realBots.every(b => b.enabled);
+          return (
+            <div className="cfg-bulk-row">
+              {paperBots.length > 0 && (
+                <div className="cfg-bulk-item">
+                  <span className="cfg-bulk-item__label">
+                    <i className="fa-solid fa-flask" /> Paper
+                    <span className="cfg-bulk-item__count">{paperBots.filter(b => b.enabled).length}/{paperBots.length}</span>
+                  </span>
+                  <div className="cfg-bulk-item__btns">
+                    <button
+                      className={`cfg-bulk-btn${paperAllOn ? " cfg-bulk-btn--active" : ""}`}
+                      disabled={bulkSaving === "paper" || paperAllOn}
+                      onClick={() => bulkSetEnabled("paper", true)}
+                    >
+                      {bulkSaving === "paper" ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-play" />}
+                      {" "}Activar tots
+                    </button>
+                    <button
+                      className={`cfg-bulk-btn cfg-bulk-btn--off${!paperAllOn && paperBots.some(b => b.enabled) ? " cfg-bulk-btn--active" : ""}`}
+                      disabled={bulkSaving === "paper" || paperBots.every(b => !b.enabled)}
+                      onClick={() => bulkSetEnabled("paper", false)}
+                    >
+                      {bulkSaving === "paper" ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-stop" />}
+                      {" "}Desactivar tots
+                    </button>
+                  </div>
+                </div>
+              )}
+              {realBots.length > 0 && (
+                <div className="cfg-bulk-item cfg-bulk-item--real">
+                  <span className="cfg-bulk-item__label">
+                    <i className="fa-solid fa-circle-dot" style={{ color: "var(--accent)" }} /> Real
+                    <span className="cfg-bulk-item__count">{realBots.filter(b => b.enabled).length}/{realBots.length}</span>
+                  </span>
+                  <div className="cfg-bulk-item__btns">
+                    <button
+                      className={`cfg-bulk-btn${realAllOn ? " cfg-bulk-btn--active" : ""}`}
+                      disabled={bulkSaving === "real" || realAllOn}
+                      onClick={async () => {
+                        if (!confirm(`Activar TOTS els bots en mode REAL? Operaran amb diners reals a Binance Mainnet.`)) return;
+                        bulkSetEnabled("real", true);
+                      }}
+                    >
+                      {bulkSaving === "real" ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-play" />}
+                      {" "}Activar tots
+                    </button>
+                    <button
+                      className={`cfg-bulk-btn cfg-bulk-btn--off${!realAllOn && realBots.some(b => b.enabled) ? " cfg-bulk-btn--active" : ""}`}
+                      disabled={bulkSaving === "real" || realBots.every(b => !b.enabled)}
+                      onClick={() => bulkSetEnabled("real", false)}
+                    >
+                      {bulkSaving === "real" ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-stop" />}
+                      {" "}Desactivar tots
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* New bot form */}
         {showNewBotForm && (
@@ -1017,13 +1272,13 @@ export default function SettingsTab() {
               return (
                 <div className="bot-form__sim-preview">
                   <span><i className="fa-solid fa-clock" /> {sc.config.interval}</span>
-                  <span><i className="fa-solid fa-coins" /> {sc.config.symbols.map(s => s.replace("USDT","")).join(", ")}</span>
+                  <span><i className="fa-solid fa-coins" /> {sc.config.symbols.map(s => s.replace("USDC","").replace("USDT","")).join(", ")}</span>
                   <span>TP {sc.config.tpAtr}× · SL {sc.config.slAtr}×</span>
                   <span>Trail {sc.config.trailActivateAtr}×/{sc.config.trailDistanceAtr}×</span>
                   <span>Score ≥ {sc.effectiveConfig?.minProbability ?? 80}%</span>
                   <span>
                     {sc.config.capitalMode === "FIXED"
-                      ? `${sc.config.capitalFixed ?? 100} USDT/op`
+                      ? `${sc.config.capitalFixed ?? 100} USDC/op`
                       : sc.config.capitalMode === "PCT"
                       ? `${sc.config.capitalPct ?? 10}% portf./op`
                       : `${sc.config.amBasePct ?? 60}% (Anti-M.)/op`}
@@ -1032,7 +1287,7 @@ export default function SettingsTab() {
               );
             })()}
             <div className="bot-form__row">
-              <label className="bot-form__label">Pressupost (USDT)</label>
+              <label className="bot-form__label">Pressupost (USDC)</label>
               <input type="number" step="50" min="10" max="100000" className="cfg-num-input" style={{ width: "80px" }}
                 value={newBotBudget} onChange={e => setNewBotBudget(e.target.value)} />
             </div>
@@ -1154,7 +1409,7 @@ export default function SettingsTab() {
                       <div className="bot-card__param-group-title">Paràmetres de simulació (read-only)</div>
                       <div className="bot-card__param-grid">
                         <div className="bot-card__param"><span className="bot-card__param-label">Interval</span><span className="bot-card__param-value">{sc.config.interval}</span></div>
-                        <div className="bot-card__param"><span className="bot-card__param-label">Parells</span><span className="bot-card__param-value">{sc.config.symbols.map(s => s.replace("USDT","")).join(", ")}</span></div>
+                        <div className="bot-card__param"><span className="bot-card__param-label">Parells</span><span className="bot-card__param-value">{sc.config.symbols.map(s => s.replace("USDC","").replace("USDT","")).join(", ")}</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">TP</span><span className="bot-card__param-value">{sc.config.tpAtr}× ATR</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">SL</span><span className="bot-card__param-value">{sc.config.slAtr}× ATR</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">Trail act.</span><span className="bot-card__param-value">{sc.config.trailActivateAtr}× ATR</span></div>
@@ -1162,7 +1417,7 @@ export default function SettingsTab() {
                         <div className="bot-card__param"><span className="bot-card__param-label">Score mín.</span><span className="bot-card__param-value">{bot.minProbability ?? sc.effectiveConfig?.minProbability ?? 80}%</span></div>
                         <div className="bot-card__param"><span className="bot-card__param-label">Capital/op.</span><span className="bot-card__param-value">
                           {sc.config.capitalMode === "FIXED"
-                            ? `${sc.config.capitalFixed ?? 100} USDT`
+                            ? `${sc.config.capitalFixed ?? 100} USDC`
                             : sc.config.capitalMode === "PCT"
                             ? `${sc.config.capitalPct ?? 10}% portf.`
                             : `${sc.config.amBasePct ?? 60}% (Anti-M.)`}
@@ -1181,7 +1436,7 @@ export default function SettingsTab() {
                   <div className="cfg-field-row" style={{ borderBottom: "none" }}>
                     <i className="fa-solid fa-wallet cfg-toggle-row__icon" />
                     <div className="cfg-toggle-row__body">
-                      <div className="cfg-toggle-row__title">Pressupost (USDT)</div>
+                      <div className="cfg-toggle-row__title">Pressupost (USDC)</div>
                       <div className="cfg-toggle-row__desc">Capital màxim compromès simultàniament.</div>
                     </div>
                     <input type="number" step="50" min="10" max="100000" className="cfg-num-input" style={{ width: "80px" }}

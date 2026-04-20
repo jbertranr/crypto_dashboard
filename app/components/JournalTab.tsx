@@ -4,6 +4,7 @@ import { STRATEGIES } from "./OrdersPanel";
 import CoinIcon from "./CoinIcon";
 import { useTradingMode } from "../contexts/TradingModeContext";
 import type { TradingMode } from "../lib/binance-auth";
+import type { SlMod } from "../api/trailing-history/route";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -244,6 +245,94 @@ interface TradeGroup {
   lastAt: number;
 }
 
+// ── TrailHistPanel ────────────────────────────────────────────────────────────
+
+function TrailHistPanel({ hist }: { hist: SlMod[] | "loading" | undefined }) {
+  if (!hist || hist === "loading") {
+    return (
+      <div style={{ padding: "0.5rem 0 0.75rem", color: "var(--text-3)", fontSize: "0.72rem" }}>
+        {hist === "loading" ? "Carregant historial trailing…" : null}
+      </div>
+    );
+  }
+  if (hist.length === 0) {
+    return (
+      <div style={{ padding: "0.5rem 0 0.75rem", color: "var(--text-3)", fontSize: "0.72rem" }}>
+        Sense modificacions de SL registrades als logs.
+      </div>
+    );
+  }
+
+  const minSl  = Math.min(...hist.map(m => m.oldSl), hist[hist.length - 1].newSl);
+  const maxPeak = Math.max(...hist.map(m => m.peak));
+  const range  = maxPeak - minSl || 1;
+  const W = 420, H = 60;
+  const xStep = W / (hist.length - 1 || 1);
+
+  const slPoints = hist.map((m, i) => `${(i * xStep).toFixed(1)},${(H - ((m.newSl - minSl) / range) * H).toFixed(1)}`).join(" ");
+  const pkPoints = hist.map((m, i) => `${(i * xStep).toFixed(1)},${(H - ((m.peak - minSl) / range) * H).toFixed(1)}`).join(" ");
+
+  const fmtDt = (ts: number) => {
+    const d = new Date(ts);
+    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  };
+
+  return (
+    <div className="trail-hist-panel">
+      <div className="trail-hist-panel__title">
+        <i className="fa-solid fa-chart-line" style={{ marginRight: 6, color: "#f59e0b" }} />
+        Historial trailing SL
+        <span style={{ marginLeft: 8, fontWeight: 400, color: "var(--text-3)", fontSize: "0.68rem" }}>
+          {hist.length} modificacions
+        </span>
+      </div>
+
+      {/* Mini sparkline */}
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W, height: H, display: "block", margin: "0.4rem 0" }}>
+        {/* Peak line (preu màxim) */}
+        <polyline points={pkPoints} fill="none" stroke="#4ade80" strokeWidth="1" strokeDasharray="3 2" opacity="0.5" />
+        {/* SL line */}
+        <polyline points={slPoints} fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+      </svg>
+      <div style={{ display: "flex", gap: 16, fontSize: "0.62rem", color: "var(--text-3)", marginBottom: "0.5rem" }}>
+        <span><span style={{ color: "#f59e0b" }}>—</span> SL stop</span>
+        <span><span style={{ color: "#4ade80" }}>- -</span> Peak preu</span>
+      </div>
+
+      {/* Table */}
+      <div style={{ overflowX: "auto" }}>
+        <table className="trail-hist-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>SL anterior</th>
+              <th>SL nou</th>
+              <th>Peak</th>
+              <th>Δ SL</th>
+            </tr>
+          </thead>
+          <tbody>
+            {hist.map((m, i) => {
+              const delta = m.newSl - m.oldSl;
+              return (
+                <tr key={i}>
+                  <td className="mono" style={{ color: "var(--text-3)", fontSize: "0.65rem" }}>{fmtDt(m.time)}</td>
+                  <td className="mono">{m.oldSl.toFixed(2)}</td>
+                  <td className="mono" style={{ color: "#f59e0b", fontWeight: 600 }}>{m.newSl.toFixed(2)}</td>
+                  <td className="mono" style={{ color: "#4ade80" }}>{m.peak.toFixed(2)}</td>
+                  <td className="mono" style={{ color: delta >= 0 ? "var(--green)" : "var(--red)" }}>
+                    {delta >= 0 ? "+" : ""}{delta.toFixed(2)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?: () => void; mode?: TradingMode }) {
@@ -261,6 +350,7 @@ export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?
   const [saving,    setSaving   ] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [showOnlyOpen,   setShowOnlyOpen   ] = useState(false);
+  const [trailHistMap,   setTrailHistMap   ] = useState<Record<number, SlMod[] | "loading">>({});
 
   // filters
   const [fSymbol,   setFSymbol  ] = useState("");
@@ -442,6 +532,30 @@ export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?
     }
   }
 
+  // ── Trailing history fetch (quan s'expandeix TRAIL_ACTIVE o EXIT_TRAILING) ──
+
+  useEffect(() => {
+    if (expanded === null) return;
+    const entry = entries.find(e => e.id === expanded);
+    if (!entry || (entry.type !== "TRAIL_ACTIVE" && entry.type !== "EXIT_TRAILING")) return;
+    const related = relatedMap[expanded];
+    if (related === "loading" || !related) return;
+    if (trailHistMap[expanded]) return;
+
+    const allEntries = [entry, ...related];
+    const trailActive  = allEntries.find(e => e.type === "TRAIL_ACTIVE");
+    const exitTrailing = allEntries.find(e => e.type === "EXIT_TRAILING");
+
+    const from = trailActive?.executedAt ?? entry.executedAt;
+    const to   = exitTrailing?.executedAt ?? Date.now();
+
+    setTrailHistMap(p => ({ ...p, [expanded]: "loading" }));
+    fetch(`/api/trailing-history?symbol=${entry.symbol}&from=${from}&to=${to}`)
+      .then(r => r.json() as Promise<SlMod[]>)
+      .then(mods => setTrailHistMap(p => ({ ...p, [expanded]: mods })))
+      .catch(() => setTrailHistMap(p => ({ ...p, [expanded]: [] })));
+  }, [expanded, relatedMap, entries, trailHistMap]);
+
   // ── Delete ──────────────────────────────────────────────────────────────────
 
   async function handleDelete(id: number) {
@@ -512,7 +626,7 @@ export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?
 
       {/* ── 5 KPIs ─────────────────────────────────────────────────────── */}
       <div className="section-title">
-        <i className="fa-solid fa-book-open" /> Diari d'operacions
+        <i className="fa-solid fa-book-open" /> {"Diari d'operacions"}
       </div>
       <div className="portfolio__cards">
 
@@ -816,6 +930,9 @@ export default function JournalTab({ onNewOrder, mode: modeProp }: { onNewOrder?
                     {isOpen && (
                       <div className="journal-table__detail">
                         <JournalTimeline related={relatedMap[e.id]} anchorId={e.id} />
+                        {(e.type === "TRAIL_ACTIVE" || e.type === "EXIT_TRAILING") && (
+                          <TrailHistPanel hist={trailHistMap[e.id]} />
+                        )}
                         <div className="journal-detail-grid">
                           <div className="metric-col">
                             <span className="metric-col__label">Tipus entrada</span>

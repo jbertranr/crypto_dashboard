@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
               notes:           null,
               tradeCode,
               source:          "MANUAL",
+              mode,
               executedAt:      Date.now(),
             });
           } catch (je) {
@@ -142,6 +143,7 @@ export async function POST(req: NextRequest) {
           notes:           null,
           tradeCode,
           source:          "MANUAL",
+          mode,
           executedAt:      Date.now(),
         });
       } catch (je) {

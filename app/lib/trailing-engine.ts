@@ -7,7 +7,7 @@ import {
   getKlines, getOpenOrders,
 } from "./binance-auth";
 import { notifyTrailingFill, notifyTrailingActivated, notifySlModified } from "./telegram";
-import { settingGetBool, settingGet } from "./settings-store";
+import { settingGetBool, settingGetBoolForMode, settingGet, settingGetForMode } from "./settings-store";
 import { journalAdd } from "./journal-store";
 import { trailingSlLock, trailingSlUnlock } from "./order-monitor";
 import { calcPivotLow } from "./indicators";
@@ -79,11 +79,17 @@ export function ensureTrailingEngine() {
 }
 
 async function runCycle() {
+  if (!settingGetBool("trailing_engine_enabled") && !settingGetBool("trailing_engine_enabled_real")) {
+    global.__trailingLastRun    = Date.now();
+    global.__trailingLastResult = "desactivat";
+    return;
+  }
   // 0. Cleanup stale suggestions: remove order_trailing entries whose OCO no longer exists on Binance
   const suggestions = trailingGetAll();
   if (suggestions.length > 0) {
     try {
-      const openOrders  = await getOpenOrders();
+      const [paperOrders, realOrders] = await Promise.all([getOpenOrders("paper"), getOpenOrders("real")]);
+      const openOrders = [...paperOrders, ...realOrders];
       const activeOcoIds = new Set(openOrders.map(o => o.orderListId).filter(id => id > 0));
       for (const s of suggestions) {
         if (!activeOcoIds.has(s.orderListId)) {
@@ -127,19 +133,19 @@ async function runCycle() {
 async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
   if (!s.quantity || !s.tickSize) return; // legacy record without enough data
 
-  const price = await getTickerPrice(s.symbol);
+  const price = await getTickerPrice(s.symbol, s.mode);
   if (!price || isNaN(price)) return;
 
   // Only activate once price crosses activateAt
   if (s.side === "SELL" && price < s.activateAt) return;
   if (s.side === "BUY"  && price > s.activateAt) return;
 
-  log.trailing.info({ symbol: s.symbol, price, activateAt: s.activateAt }, "trailing activat");
+  log.trailing.info({ mode: s.mode, symbol: s.symbol, price, activateAt: s.activateAt }, "trailing activat");
 
   // Cancel the OCO (removes both TP and SL legs).
   // If -2011: OCO already filled/cancelled — remove suggestion and bail out.
   try {
-    await cancelOcoOrder(s.symbol, s.orderListId);
+    await cancelOcoOrder(s.symbol, s.orderListId, s.mode);
   } catch (e) {
     const msg = (e as Error).message ?? "";
     if (msg.includes("-2011") || msg.includes("Unknown order list")) {
@@ -156,12 +162,12 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
 
   const stopStr  = roundPrice(initialSl,    s.tickSize);
   const limitStr = roundPrice(initialLimit, s.tickSize);
-  log.trailing.debug({ symbol: s.symbol, side: s.side, quantity: s.quantity, stopPrice: stopStr, limitPrice: limitStr, price, distance: s.distance, tickSize: s.tickSize }, "col·locant SL inicial");
+  log.trailing.debug({ mode: s.mode, symbol: s.symbol, side: s.side, quantity: s.quantity, stopPrice: stopStr, limitPrice: limitStr, price, distance: s.distance, tickSize: s.tickSize }, "col·locant SL inicial");
 
   const slOrd = await placeStopLossLimitOrder({
     symbol: s.symbol, side: s.side, quantity: s.quantity,
     stopPrice: stopStr, limitPrice: limitStr,
-  }) as { orderId: number };
+  }, s.mode) as { orderId: number };
 
   trailingActiveCreate({
     symbol: s.symbol, side: s.side, quantity: s.quantity,
@@ -170,6 +176,7 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
     peakPrice: price, entryPrice: s.entryPrice ?? price, tickSize: s.tickSize,
     originOcoListId: s.orderListId,
     ocoCreatedAt: s.createdAt ?? null,
+    mode: s.mode,
   });
 
   // Propagate tradeCode from original OCO to the new SL order
@@ -219,6 +226,7 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
       tradeCode,
       source:          "AUTO",
       executedAt:      cancelTs,
+      mode:            s.mode,
     });
     // 2) TRAIL_ACTIVE — 1ms després per garantir ordre correcte
     journalAdd({
@@ -247,12 +255,13 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
       tradeCode,
       source:          "AUTO",
       executedAt:      cancelTs + 1,
+      mode:            s.mode,
     });
   } catch (je) {
     log.trailing.warn({ err: (je as Error).message }, "journal trail-active fallida");
   }
 
-  if (settingGetBool("tg_on_trailing_activate")) {
+  if (settingGetBoolForMode("tg_on_trailing_activate", s.mode)) {
     notifyTrailingActivated({
       symbol:      s.symbol,
       side:        s.side,
@@ -260,6 +269,7 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
       initialSl:   stopStr,
       distance:    s.distance,
       orderListId: s.orderListId,
+      mode:        s.mode,
     }).catch(err => log.trailing.warn({ err: (err as Error).message }, "notifyTrailingActivated fallida"));
   }
 }
@@ -268,7 +278,7 @@ async function processTrailing(t: TrailingActive) {
   // Check if the SL order is still open
   let status: string;
   try {
-    const ord = await getOrder(t.symbol, t.slOrderId);
+    const ord = await getOrder(t.symbol, t.slOrderId, t.mode);
     status = ord.status;
   } catch (e) {
     const msg = (e as Error).message ?? "";
@@ -319,6 +329,7 @@ async function processTrailing(t: TrailingActive) {
         tradeCode,
         source:          "AUTO",
         executedAt:      Date.now(),
+        mode:            t.mode,
       });
     } catch (je) {
       log.trailing.warn({ err: (je as Error).message }, "journal exit fallida");
@@ -328,13 +339,14 @@ async function processTrailing(t: TrailingActive) {
       side:      t.side,
       stopPrice: t.currentSl,
       qty:       t.quantity,
+      mode:      t.mode,
     }).catch(err => log.trailing.warn({ err: (err as Error).message }, "notifyTrailingFill fallida"));
 
     // ── sl_sell_remaining: vendre qualsevol resta de posició lliure
-    if (settingGetBool("sl_sell_remaining")) {
+    if (settingGetBoolForMode("sl_sell_remaining", t.mode)) {
       try {
         const baseAsset = t.symbol.replace(/USDT$|BUSD$|USDC$|FDUSD$|TUSD$/, "");
-        const acct    = await getAccount();
+        const acct    = await getAccount(t.mode);
         const bal     = acct.balances.find(b => b.asset === baseAsset);
         const freeQty = parseFloat(bal?.free ?? "0");
         if (freeQty > 0) {
@@ -345,7 +357,7 @@ async function processTrailing(t: TrailingActive) {
           const sellQty  = (Math.floor(freeQty / stepNum) * stepNum).toFixed(stepDp);
           if (parseFloat(sellQty) > 0) {
             log.trailing.info({ symbol: t.symbol, freeQty, sellQty }, "sl_sell_remaining: venent resta posició");
-            const sell2 = await placeMarketSell(t.symbol, sellQty);
+            const sell2 = await placeMarketSell(t.symbol, sellQty, t.mode);
             const eQty2 = parseFloat(sell2.executedQty);
             const eVal2 = parseFloat(sell2.cummulativeQuoteQty);
             const ePx2  = eQty2 > 0 ? eVal2 / eQty2 : 0;
@@ -376,6 +388,7 @@ async function processTrailing(t: TrailingActive) {
                 tradeCode,
                 source:          "AUTO",
                 executedAt:      Date.now(),
+                mode:            t.mode,
               });
             } catch (je) {
               log.trailing.warn({ err: (je as Error).message }, "journal sl_sell_remaining fallida");
@@ -385,6 +398,7 @@ async function processTrailing(t: TrailingActive) {
               side:      t.side,
               stopPrice: ePx2,
               qty:       t.quantity,
+              mode:      t.mode,
             }).catch(err => log.trailing.warn({ err: (err as Error).message }, "notifyTrailingFill (sl_sell_remaining) fallida"));
           }
         }
@@ -399,11 +413,11 @@ async function processTrailing(t: TrailingActive) {
     log.trailing.warn({ symbol: t.symbol, slOrderId: t.slOrderId, status }, "SL cancel·lat/expirat externament");    const tradeCode = t.originOcoListId != null
       ? (orderMetaGet(`oco:${t.originOcoListId}`)?.tradeCode ?? null)
       : null;
-    if (settingGetBool("cancel_auto_sell") && t.side === "SELL") {
+    if (settingGetBoolForMode("cancel_auto_sell", t.mode) && t.side === "SELL") {
       const qty = t.quantity;
       log.trailing.info({ symbol: t.symbol, qty }, "cancel_auto_sell: venem a mercat per protegir posició");
       try {
-        const sell = await placeMarketSell(t.symbol, qty);
+        const sell = await placeMarketSell(t.symbol, qty, t.mode);
         const execQty   = parseFloat(sell.executedQty);
         const execValue = parseFloat(sell.cummulativeQuoteQty);
         const execPrice = execQty > 0 ? execValue / execQty : 0;
@@ -433,6 +447,7 @@ async function processTrailing(t: TrailingActive) {
             tradeCode,
             source:          "AUTO",
             executedAt:      Date.now(),
+            mode:            t.mode,
           });
         } catch (je) {
           log.trailing.warn({ err: (je as Error).message }, "journal auto-sell fallida");
@@ -442,6 +457,7 @@ async function processTrailing(t: TrailingActive) {
           side:      "SELL",
           stopPrice: execPrice,
           qty,
+          mode:      t.mode,
         }).catch(err => log.trailing.warn({ err: (err as Error).message }, "notifyTrailingFill (cancel_auto_sell) fallida"));
       } catch (se) {
         log.trailing.error({ symbol: t.symbol, err: (se as Error).message }, "cancel_auto_sell: venda fallida");
@@ -450,13 +466,13 @@ async function processTrailing(t: TrailingActive) {
     return;
   }
 
-  const price = await getTickerPrice(t.symbol);
+  const price = await getTickerPrice(t.symbol, t.mode);
   if (!price || isNaN(price)) return;
 
   // Resolve new SL candidate based on configured mode ─────────────────────
-  const slMode      = settingGet("trailing_sl_mode");           // "ATR" | "PIVOT_LOW"
-  const pivotTf     = settingGet("trailing_pivot_tf") || "1h";  // TF for pivot detection
-  const pivotOffset = parseFloat(settingGet("trailing_pivot_offset_pct") || "0.1") / 100;
+  const slMode      = settingGetForMode("trailing_sl_mode", t.mode) || "ATR";
+  const pivotTf     = settingGetForMode("trailing_pivot_tf", t.mode) || "1h";
+  const pivotOffset = parseFloat(settingGetForMode("trailing_pivot_offset_pct", t.mode) || "0.1") / 100;
 
   async function computeNewSl(peakCandidate: number): Promise<number | null> {
     if (slMode === "PIVOT_LOW") {
@@ -496,11 +512,11 @@ async function processTrailing(t: TrailingActive) {
     const oldSlOrderId = t.slOrderId;
     trailingSlLock(oldSlOrderId);
     try {
-      await cancelOrder(t.symbol, t.slOrderId);
+      await cancelOrder(t.symbol, t.slOrderId, t.mode);
       const newOrder = await placeStopLossLimitOrder({
         symbol: t.symbol, side: "SELL", quantity: t.quantity,
         stopPrice: stopStr, limitPrice: limitStr,
-      }) as { orderId: number };
+      }, t.mode) as { orderId: number };
 
       trailingActiveUpdateSl(t.id, newOrder.orderId, parseFloat(stopStr), Math.max(newPeak, t.peakPrice));
       // Carry tradeCode forward to the replacement SL order (fallback: OCO meta)
@@ -515,12 +531,13 @@ async function processTrailing(t: TrailingActive) {
         slMode === "PIVOT_LOW" ? "SL actualitzat a pivot low" : "SL pujat"
       );
 
-      if (settingGetBool("tg_on_sl_modify")) {
+      if (settingGetBoolForMode("tg_on_sl_modify", t.mode)) {
         notifySlModified({
           symbol:    t.symbol,
           oldSl:     t.currentSl,
           newSlStop: stopStr,
           newSlLimit: limitStr,
+          mode:      t.mode,
         }).catch(err => log.trailing.warn({ err: (err as Error).message }, "notifySlModified fallida"));
       }
     } catch (err) {
@@ -550,11 +567,11 @@ async function processTrailing(t: TrailingActive) {
     const oldSlOrderId = t.slOrderId;
     trailingSlLock(oldSlOrderId);
     try {
-      await cancelOrder(t.symbol, t.slOrderId);
+      await cancelOrder(t.symbol, t.slOrderId, t.mode);
       const newOrder = await placeStopLossLimitOrder({
         symbol: t.symbol, side: "BUY", quantity: t.quantity,
         stopPrice: stopStr, limitPrice: limitStr,
-      }) as { orderId: number };
+      }, t.mode) as { orderId: number };
 
       trailingActiveUpdateSl(t.id, newOrder.orderId, parseFloat(stopStr), newPeak);
       // Carry tradeCode forward to the replacement SL order (fallback: OCO meta)
@@ -566,12 +583,13 @@ async function processTrailing(t: TrailingActive) {
       });
       log.trailing.info({ symbol: t.symbol, oldSl: t.currentSl, newSl: stopStr, peak: newPeak }, "SL baixat");
 
-      if (settingGetBool("tg_on_sl_modify")) {
+      if (settingGetBoolForMode("tg_on_sl_modify", t.mode)) {
         notifySlModified({
           symbol:    t.symbol,
           oldSl:     t.currentSl,
           newSlStop: stopStr,
           newSlLimit: limitStr,
+          mode:      t.mode,
         }).catch(err => log.trailing.warn({ err: (err as Error).message }, "notifySlModified fallida"));
       }
     } catch (err) {

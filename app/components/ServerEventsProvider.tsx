@@ -49,9 +49,9 @@ export default function ServerEventsProvider({ children }: { children: ReactNode
       esRef.current = null;
       const delay = retryRef.current;
       retryRef.current = Math.min(retryRef.current * 2, 30_000);
-      timerRef.current = setTimeout(connect, delay);
+      timerRef.current = setTimeout(connect, delay); // eslint-disable-line react-hooks/immutability
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     connect();

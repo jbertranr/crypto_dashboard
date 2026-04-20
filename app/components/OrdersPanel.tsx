@@ -269,7 +269,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
   onStrategyChange: (key: string, strategy: string | null) => void;
   orderMeta: Record<string, OrderMeta>;
 }) {
-  const { viewMode } = useTradingMode();
+  const { viewMode, realLocked } = useTradingMode();
+  const isRealLocked = realLocked && viewMode === "real";
   const [canceling,    setCanceling]    = useState<Record<number, boolean>>({});
   const [editTarget,   setEditTarget]   = useState<EditTarget | null>(null);
   const [cancelError,  setCancelError]  = useState<string | null>(null);
@@ -357,8 +358,8 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
   }
 
   // Open confirmation modal instead of cancelling immediately
-  const handleCancel    = (o: BinanceOrder) => setCancelConfirm({ kind: "single", order: o });
-  const handleCancelOco = (g: OcoGroup)     => setCancelConfirm({ kind: "oco", group: g });
+  const handleCancel    = (o: BinanceOrder) => { if (isRealLocked) return; setCancelConfirm({ kind: "single", order: o }); };
+  const handleCancelOco = (g: OcoGroup)     => { if (isRealLocked) return; setCancelConfirm({ kind: "oco", group: g }); };
 
   const executeCancel = async (sellAtMarket: boolean) => {
     if (!cancelConfirm) return;
@@ -523,7 +524,7 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
       ) : !groups.length ? (
         <div className="state-empty">No open orders.</div>
       ) : !visibleGroups.length ? (
-        <div className="state-empty">Cap ordre amb estratègia "{filterStrategy}".</div>
+        <div className="state-empty">{`Cap ordre amb estratègia "${filterStrategy}".`}</div>
       ) : (
         <div className="order-cards">
           {visibleGroups.map(g => {
@@ -1843,7 +1844,7 @@ function HistoryTable({ orders, loading, error }: {
   const [loadingT,       setLoadingT]       = useState(true);
 
   useEffect(() => {
-    setLoadingT(true);
+    setLoadingT(true); // eslint-disable-line react-hooks/set-state-in-effect
     Promise.all([
       fetch("/api/trades").then(r => r.json()),
       fetch("/api/orders/trailing").then(r => r.json()),
@@ -2149,7 +2150,8 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
   onOrdersCount?: (n: number) => void;
 }) {
   const setTab = onTab;
-  const { viewMode } = useTradingMode();
+  const { viewMode, realLocked } = useTradingMode();
+  const isRealLocked = realLocked && (viewMode === "real" || tab === "open-real");
   // Mode derived from active tab (takes precedence over global context for open orders / history)
   const tabMode = (tab === "open-real" || tab === "history-real" || tab === "portfolio-real" || tab === "balance-real") ? "real" : "paper";
   const [showNewOrder,    setShowNewOrder]    = useState(false);
@@ -2305,9 +2307,10 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 
           {/* Botó de pànic */}
           <button
-            className="tb-btn tb-btn--panic"
-            onClick={() => setPanicState("confirm")}
-            title="Cancel·la totes les ordres obertes">
+            className={`tb-btn tb-btn--panic${isRealLocked ? " tb-btn--disabled" : ""}`}
+            onClick={() => { if (!isRealLocked) setPanicState("confirm"); }}
+            title={isRealLocked ? "Mode real bloquejat — desbloqueja al menú" : "Cancel·la totes les ordres obertes"}
+            disabled={isRealLocked}>
             <i className="fa-solid fa-triangle-exclamation" /> Pànic
           </button>
 

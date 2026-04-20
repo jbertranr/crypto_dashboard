@@ -5,7 +5,7 @@ import { trailingSet, cacheGet, orderMetaSet, nextTradeCode } from "../../../lib
 import { ensureTrailingEngine } from "../../../lib/trailing-engine";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
-import { settingGetBool, settingGet } from "../../../lib/settings-store";
+import { settingGetBoolForMode, settingGetForMode } from "../../../lib/settings-store";
 import { notifyNewOrder } from "../../../lib/telegram";
 import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       orderMetaSet(`oco:${result.orderListId}`, { interval: interval ?? null, tradeCode, botName: botName ?? null, entrySource: "MANUAL" });
     }
 
-    if (settingGetBool("tg_on_new_order")) {
+    if (settingGetBoolForMode("tg_on_new_order", mode)) {
       notifyNewOrder({
         symbol, type: "OCO",
         quantity: roundedQty,
@@ -62,11 +62,11 @@ export async function POST(req: NextRequest) {
         orderListId:     typeof result.orderListId === "number" ? result.orderListId : null,
         strategy:        null,
         interval:        null,
-        entryType:       settingGet("entry_type"),
-        trailingMode:    trailing ? settingGet("trailing_sl_mode") : null,
+        entryType:       settingGetForMode("entry_type", mode),
+        trailingMode:    trailing ? settingGetForMode("trailing_sl_mode", mode) : null,
         exitReason:      null,
-        capitalUsdt:     parseFloat(settingGet("capital_fixed_usdt") || "100"),
-        capitalMode:     settingGet("capital_mode"),
+        capitalUsdt:     parseFloat(settingGetForMode("capital_fixed_usdt", mode) || "100"),
+        capitalMode:     settingGetForMode("capital_mode", mode),
         notes:           null,
         tradeCode,
         source:          "MANUAL",

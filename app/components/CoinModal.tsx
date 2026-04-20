@@ -133,7 +133,7 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
           {[
             ["24h High",    formatCurrency(coin.high24h)],
             ["24h Low",     formatCurrency(coin.low24h)],
-            ["Volume USDT", formatCurrency(coin.volumeUSDT)],
+            ["Volume USDC", formatCurrency(coin.volumeUSDT)],
             ["Exchange",    "Binance Demo"],
           ].map(([l, v]) => (
             <div key={l} className="coin-modal__stat">

@@ -5,7 +5,7 @@ import { trailingSet, cacheGet, nextTradeCode, orderMetaSet } from "../../../lib
 import { ensureTrailingEngine } from "../../../lib/trailing-engine";
 import { apiError } from "../../../lib/api-error";
 import { log } from "../../../lib/logger";
-import { settingGetBool, settingGet } from "../../../lib/settings-store";
+import { settingGetBoolForMode, settingGetForMode } from "../../../lib/settings-store";
 import { notifyNewOrder } from "../../../lib/telegram";
 import { journalAdd, journalPatchTpSl } from "../../../lib/journal-store";
 
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     log.orders.info({ symbol, side: "SELL", fillPrice, quantity: ocoQty, commissionInBase, tpPrice, slStopPrice, buyOrderId: buyResult.orderId, ocoOrderListId: ocoResult.orderListId }, "compra de mercat + OCO");
 
-    if (settingGetBool("tg_on_new_order")) {
+    if (settingGetBoolForMode("tg_on_new_order", mode)) {
       notifyNewOrder({
         symbol, type: "BUY_AND_EXIT",
         quoteQty:   parseFloat(quoteOrderQty),
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     if (trailing && typeof ocoResult.orderListId === "number" && ocoResult.orderListId !== -1) {
       trailingSet(ocoResult.orderListId, {
         symbol, ...trailing,
-        quantity: ocoQty, side: "SELL", tickSize, entryPrice: fillPrice,
+        quantity: ocoQty, side: "SELL", tickSize, entryPrice: fillPrice, mode,
       });
       ensureTrailingEngine();
     }
@@ -150,10 +150,10 @@ export async function POST(req: NextRequest) {
         strategy:        null,
         interval:        null,
         entryType:       "MARKET",
-        trailingMode:       trailing ? settingGet("trailing_sl_mode") : null,
+        trailingMode:       trailing ? settingGetForMode("trailing_sl_mode", mode) : null,
         exitReason:         null,
         capitalUsdt:        buyUsdt,
-        capitalMode:        settingGet("capital_mode"),
+        capitalMode:        settingGetForMode("capital_mode", mode),
         notes:              null,
         tradeCode,
         source:             "MANUAL",
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
         trailingActivateAt: trailing?.activateAt ?? null,
         executedAt:         Date.now(),
       });
-      journalPatchTpSl(jId, parseFloat(tpPrice), parseFloat(slStopPrice));
+      journalPatchTpSl(jId, parseFloat(tpPrice), parseFloat(slStopPrice), mode);
     } catch (je) {
       log.orders.warn({ err: (je as Error).message }, "journal buy-and-exit entry fallida");
     }

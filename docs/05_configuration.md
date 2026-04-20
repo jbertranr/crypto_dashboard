@@ -91,6 +91,17 @@ Els settings es guarden a la taula `settings` de `data/cache.db`. Es gestionen d
 | `telegram_on_error` | `true` | Notificar errors crítics |
 | `telegram_on_consistency_alert` | `true` | Notificar divergències d'ordres |
 
+### Quote asset i parells
+
+| Clau | Default | Descripció |
+|------|---------|-----------|
+| `quote_asset` | `USDC` | Moneda quote de tots els parells (`USDC`, `USDT`, `BUSD`, `FDUSD`) |
+| `priority_pairs` | `BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC` | Parells actius al dashboard i als bots (ha de coincidir amb `quote_asset`) |
+
+> **Europa / Binance:** Binance Europa no permet USDT. Tots els parells han de ser en USDC. El setting `quote_asset` controla quin quote usa l'auto-trader per reescriure els símbols de les simulacions.
+>
+> **Nota tècnica:** El camp `symbol` dels `CoinRow` del mercat s'obté eliminant el quote asset del parell (`BTCUSDC` → `BTC`) via `.replace(/USDT|USDC/, "")`. Això permet que el PortfolioTab trobi el preu de mercat per a cada asset del balanç independentment de si el quote és USDT o USDC.
+
 ### Paràmetres de trading
 
 | Clau | Default | Descripció |
