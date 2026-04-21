@@ -62,7 +62,7 @@ function serveStatic(req, res) {
   });
 }
 
-function proxyToNext(req, res) {
+function proxyToNext(req, res, timeoutMs = 60_000) {
   const target    = new URL(NEXT_ORIGIN);
   const proxyReq  = http.request(
     {
@@ -71,13 +71,15 @@ function proxyToNext(req, res) {
       path:     req.url,
       method:   req.method,
       headers:  { ...req.headers, host: target.host },
+      timeout:  timeoutMs,
     },
     proxyRes => {
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
       proxyRes.pipe(res);
     },
   );
-  proxyReq.on("error", () => { res.writeHead(502); res.end(); });
+  proxyReq.on("timeout", () => { proxyReq.destroy(); res.writeHead(504); res.end(); });
+  proxyReq.on("error", () => { if (!res.headersSent) { res.writeHead(502); res.end(); } });
   req.pipe(proxyReq);
 }
 

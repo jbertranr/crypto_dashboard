@@ -318,7 +318,18 @@ const COMMISSION_RATE = 0.001; // 0.1% per compra i per venda
 
 // ── POST /api/simulation/run ──────────────────────────────────────────────────
 
+const SIM_TIMEOUT_MS = 55_000; // 55s — just below typical proxy timeout
+
 export async function POST(req: NextRequest) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<NextResponse>(resolve => {
+    timeoutId = setTimeout(
+      () => resolve(NextResponse.json({ error: "Simulació cancel·lada: temps màxim superat (55s)" }, { status: 504 })),
+      SIM_TIMEOUT_MS,
+    );
+  });
+
+  const runPromise = (async () => {
   try {
     const config: SimConfig = await req.json();
     const {
@@ -983,4 +994,9 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     return apiError(e, "simulation/run");
   }
+  })();
+
+  const result = await Promise.race([runPromise, timeoutPromise]);
+  if (timeoutId) clearTimeout(timeoutId);
+  return result;
 }

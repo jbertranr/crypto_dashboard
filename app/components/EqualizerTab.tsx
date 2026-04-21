@@ -210,6 +210,7 @@ export default function EqualizerTab() {
   const [probSweep,  setProbSweep]  = useState(false);
   const [probValues, setProbValues] = useState<number[]>([60, 70, 80]);
 
+  const [warming,    setWarming]    = useState(false);
   const [running,    setRunning]    = useState(false);
   const [progress,   setProgress]   = useState(0);
   const [results,    setResults]    = useState<IterResult[]>([]);
@@ -304,6 +305,7 @@ export default function EqualizerTab() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(60_000),
     });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
@@ -311,6 +313,27 @@ export default function EqualizerTab() {
     }
     return res.json();
   }
+
+  const handleWarmup = useCallback(async () => {
+    if (!selected) return;
+    const af = parseDate(aFrom), at = parseDate(aTo);
+    if (isNaN(af) || isNaN(at) || af >= at) { setError("Periode d'anàlisi invàlid"); return; }
+    setWarming(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/simulation/warmup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbols: selected.config.symbols, interval: selected.config.interval, from: af, to: at }),
+      });
+      const d = await r.json() as { ok?: boolean; error?: string };
+      if (!d.ok) setError(d.error ?? "Error escalfant cache");
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setWarming(false);
+    }
+  }, [selected, aFrom, aTo]);
 
   const handleSearch = useCallback(async () => {
     if (!selected) return;
@@ -828,14 +851,27 @@ export default function EqualizerTab() {
                   <i className="fa-solid fa-stop" /> Aturar
                 </button>
               ) : (
-                <button
-                  className="btn-primary btn-sm"
-                  onClick={handleSearch}
-                  disabled={!selected}
-                  title={!selected ? "Selecciona una simulació base primer" : "Iniciar optimització"}
-                >
-                  <i className="fa-solid fa-play" /> Executar
-                </button>
+                <>
+                  <button
+                    className="btn-secondary btn-sm"
+                    onClick={handleWarmup}
+                    disabled={!selected || warming}
+                    title="Descarrega candles a SQLite per accelerar les simulacions"
+                    style={{ marginRight: "0.35rem" }}
+                  >
+                    {warming
+                      ? <><i className="fa-solid fa-spinner fa-spin" /> Escalfant…</>
+                      : <><i className="fa-solid fa-fire-flame-curved" /> Cache</>}
+                  </button>
+                  <button
+                    className="btn-primary btn-sm"
+                    onClick={handleSearch}
+                    disabled={!selected}
+                    title={!selected ? "Selecciona una simulació base primer" : "Iniciar optimització"}
+                  >
+                    <i className="fa-solid fa-play" /> Executar
+                  </button>
+                </>
               )}
             </span>
           </div>
