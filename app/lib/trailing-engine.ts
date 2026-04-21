@@ -103,6 +103,8 @@ async function runCycle() {
   // 1. Auto-activate pending suggestions
   const freshSuggestions = trailingGetAll();
   for (const s of freshSuggestions) {
+    const enabledKey = s.mode === "real" ? "trailing_engine_enabled_real" : "trailing_engine_enabled";
+    if (!settingGetBool(enabledKey)) continue;
     const key = trailKey("suggest", s.orderListId);
     if (isPaused(key)) continue;
     try {
@@ -116,6 +118,8 @@ async function runCycle() {
   // 2. Trail active SL orders
   const actives = trailingActiveGetAll();
   for (const t of actives) {
+    const enabledKey = t.mode === "real" ? "trailing_engine_enabled_real" : "trailing_engine_enabled";
+    if (!settingGetBool(enabledKey)) continue;
     const key = trailKey("active", t.id);
     if (isPaused(key)) continue;
     try {

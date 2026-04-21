@@ -1034,3 +1034,7 @@
 {"level":50,"time":1776724653455,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"orders","code":"NETWORK","err":"fetch failed","msg":"error de ruta"}
 {"level":30,"time":1776724769199,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
 {"level":30,"time":1776724769340,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776724854792,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}
+{"level":30,"time":1776724855196,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}
+{"level":30,"time":1776724873787,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1776724878056,"pid":8940,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}

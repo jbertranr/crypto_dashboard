@@ -114,6 +114,9 @@ async function checkFills(): Promise<void> {
 }
 
 async function checkFillsInner(mode: "paper" | "real"): Promise<void> {
+  const enabledKey = mode === "real" ? "order_monitor_enabled_real" : "order_monitor_enabled";
+  if (!settingGetBool(enabledKey)) return;
+
   const knownOrders = mode === "real" ? knownOrdersReal : knownOrdersPaper;
 
   let current: Awaited<ReturnType<typeof getOpenOrders>>;
