@@ -88,8 +88,8 @@ async function fetchPortfolioData(): Promise<PortfolioData> {
     const qty       = parseFloat(b.free) + parseFloat(b.locked);
     const isStable  = STABLES.has(b.asset);
     const ticker    = tickerMap.get(`${b.asset}${qa}`);
-    const price     = ticker ? parseFloat(ticker.lastPrice) : (isStable ? 1 : 0);
-    const change24h = ticker ? parseFloat(ticker.priceChangePercent) : 0;
+    const price     = ticker?.lastPrice ? parseFloat(ticker.lastPrice) : (isStable ? 1 : 0);
+    const change24h = ticker?.priceChangePercent ? parseFloat(ticker.priceChangePercent) : 0;
     const valueUSD  = qty * price;
     const pnl24h    = valueUSD * (change24h / 100);
     totalValue += valueUSD;

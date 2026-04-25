@@ -23,6 +23,9 @@ interface SimConfig {
   initialCapital:   number;
   useMarketFilter:  boolean;  // IF preu > EMA(200) diari THEN permet entrada
   amBasePct:        number;   // % base del capital (Anti-Martingala)
+  pyramidBasePct:   number;   // % base del capital (Pyramid)
+  pyramidFactor:    number;   // multiplicador per win consecutiu
+  pyramidMaxLevel:  number;   // màxim de nivells d'escalada
   capitalMode:      CapitalMode;
   capitalFixed:     number;   // USDT per trade (FIXED)
   capitalPct:       number;   // % del capital per trade (PCT)
@@ -50,6 +53,9 @@ interface EffectiveConfig {
   pumpVolMin:       number;
   useMarketFilter:  boolean;
   amBasePct:        number;
+  pyramidBasePct?:  number;
+  pyramidFactor?:   number;
+  pyramidMaxLevel?: number;
   capitalMode:      CapitalMode;
   capitalFixed:     number;
   capitalPct:       number;
@@ -81,7 +87,8 @@ interface SavedConfig {
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const CONFIG_DEFAULTS = { maxHoldingBars: 8, pumpVolMin: 3.0, minProbability: 70, maxOpen: 3 } as const;
+const CONFIG_DEFAULTS = { maxHoldingBars: 8, pumpVolMin: 3.0, minProbability: 70, maxOpen: 3,
+  pyramidBasePct: 10, pyramidFactor: 1.25, pyramidMaxLevel: 3 } as const;
 
 const MOON_DEFAULTS = {
   moonSlPct:      25,
@@ -627,6 +634,12 @@ function EffectiveConfigPanel({ cfg, simConfig }: { cfg: EffectiveConfig; simCon
             <CfgCard label="2 SL"   value={`×0.5 → ${(cfg.amBasePct / 2).toFixed(0)}%`}     src="fix" />
             <CfgCard label="3+ SL"  value={`×0.25 → ${(cfg.amBasePct / 4).toFixed(0)}%`}    src="fix" />
           </>}
+          {cfg.capitalMode === "PYRAMID" && <>
+            <CfgCard label="Mode"    value="Pyramid (anti-martingala inversa)"                src="sim" />
+            <CfgCard label="Base"    value={`${cfg.pyramidBasePct ?? 10}% del capital`}       src="sim" />
+            <CfgCard label="×factor" value={`×${cfg.pyramidFactor ?? 1.25} per win`}         src="sim" />
+            <CfgCard label="Màx."    value={`${cfg.pyramidMaxLevel ?? 3} nivells`}            src="sim" />
+          </>}
           <CfgCard label="Màx. posicions" value={`${cfg.maxOpen} simultànies`}                src="sim" />
         </CfgGroup>
 
@@ -932,6 +945,9 @@ export default function SimulationTab() {
       initialCapital:   1000,
       useMarketFilter:  true,
       amBasePct:        60,
+      pyramidBasePct:   10,
+      pyramidFactor:    1.25,
+      pyramidMaxLevel:  3,
       capitalMode:      "RISK_PCT",
       capitalFixed:     100,
       capitalPct:       10,
@@ -1592,6 +1608,12 @@ export default function SimulationTab() {
               >
                 <i className="fa-solid fa-chart-pyramid" /> Anti-Martingala
               </button>
+              <button
+                className={`btn btn-sm ${config.capitalMode === "PYRAMID" ? "btn-primary" : "btn-secondary"}`}
+                onClick={() => set("capitalMode", "PYRAMID")}
+              >
+                <i className="fa-solid fa-layer-group" /> Pyramid
+              </button>
             </div>
             <div className="sim-config-grid">
               <label className="sim-field">
@@ -1638,12 +1660,43 @@ export default function SimulationTab() {
                   <span className="sim-field__hint">% del capital quan no hi ha pèrdues consecutives</span>
                 </label>
               )}
+              {config.capitalMode === "PYRAMID" && (<>
+                <label className="sim-field">
+                  <span className="sim-field__label">Capital base (%)</span>
+                  <input type="number" min="5" max="50" step="5"
+                    value={config.pyramidBasePct}
+                    onChange={e => set("pyramidBasePct", parseFloat(e.target.value) || 10)} />
+                  <span className="sim-field__hint">% del capital per operació sense wins consecutives</span>
+                </label>
+                <label className="sim-field">
+                  <span className="sim-field__label">Factor per win</span>
+                  <input type="number" min="1.1" max="2.0" step="0.05"
+                    value={config.pyramidFactor}
+                    onChange={e => set("pyramidFactor", parseFloat(e.target.value) || 1.25)} />
+                  <span className="sim-field__hint">Multiplicador de capital per cada win consecutiu</span>
+                </label>
+                <label className="sim-field">
+                  <span className="sim-field__label">Màx. nivells</span>
+                  <input type="number" min="1" max="5" step="1"
+                    value={config.pyramidMaxLevel}
+                    onChange={e => set("pyramidMaxLevel", parseInt(e.target.value) || 3)} />
+                  <span className="sim-field__hint">Wins consecutives màximes que compten</span>
+                </label>
+              </>)}
             </div>
             {config.capitalMode === "ANTI_MARTINGALE" && (
               <div className="sim-am-ladder">
                 <div>0–1 SL: {config.amBasePct}%</div>
                 <div>2 SL: {(config.amBasePct / 2).toFixed(0)}%</div>
                 <div>3+ SL: {(config.amBasePct / 4).toFixed(0)}%</div>
+              </div>
+            )}
+            {config.capitalMode === "PYRAMID" && (
+              <div className="sim-am-ladder">
+                {Array.from({ length: config.pyramidMaxLevel + 1 }, (_, i) => {
+                  const pct = (config.pyramidBasePct * Math.pow(config.pyramidFactor, i)).toFixed(1);
+                  return <div key={i}>{i === 0 ? "0 wins" : `${i} win${i > 1 ? "s" : ""}`}: {pct}% → {((config.initialCapital * parseFloat(pct)) / 100).toFixed(0)}$</div>;
+                })}
               </div>
             )}
           </div>
@@ -2033,6 +2086,14 @@ export default function SimulationTab() {
                   <span className="metric-col__label"><i className="fa-solid fa-stairs" /> AM reduccions</span>
                   <span className="metric-col__value" style={{ color: stats.amReductions > 0 ? "#d97706" : "var(--text-3)" }}>
                     {stats.amReductions}×
+                  </span>
+                </div>
+              )}
+              {config.capitalMode === "PYRAMID" && stats.pyramidBoosts !== undefined && (
+                <div className="metric-col">
+                  <span className="metric-col__label"><i className="fa-solid fa-layer-group" /> Pyramid boosts</span>
+                  <span className="metric-col__value" style={{ color: stats.pyramidBoosts > 0 ? "var(--green)" : "var(--text-3)" }}>
+                    {stats.pyramidBoosts}×
                   </span>
                 </div>
               )}

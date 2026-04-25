@@ -159,6 +159,31 @@ Quan una vela acaba de tancar:
      · BUY_EXECUTED · NO_SIGNAL · MULTI_TF_FAIL · TRAILING_ACTIU
 ```
 
+### Modes de gestió de capital
+
+El capital per operació es calcula a partir del mode configurat a la simulació desada (`sim_id`):
+
+| Mode | Fórmula | Paràmetres |
+|------|---------|-----------|
+| `FIXED` | `capitalFixed` USDC per trade | `capitalFixed` |
+| `PCT` | `budgetUsdt × capitalPct%` | `capitalPct` |
+| `ANTI_MARTINGALE` | `budgetUsdt × amBasePct%` × factor de pèrdua | `amBasePct` |
+| `RISK_PCT` | `(budgetUsdt × riskPct%) / distànciaSL%` (cap 50%) | `riskPct` |
+| `PYRAMID` | `budgetUsdt × pyramidBasePct%` × `pyramidFactor ^ wins_consecutives` (cap 50%) | `pyramidBasePct`, `pyramidFactor`, `pyramidMaxLevel` |
+
+**ANTI_MARTINGALE** — redueix la mida quan hi ha pèrdues consecutives:
+- 0–1 pèrdues: ×1.0 (mida base)
+- 2 pèrdues: ×0.5
+- 3+ pèrdues: ×0.25
+
+**PYRAMID** — augmenta la mida quan hi ha guanys consecutius (anti-martingala inversa):
+- Llegeix els últims trades del bot des del journal per comptar wins consecutives
+- 0 wins: `basePct%` (mida base)
+- 1 win: `basePct% × factor`
+- N wins: `basePct% × factor^N` (màxim `pyramidMaxLevel` nivells)
+- Qualsevol pèrdua reseteja el comptador a 0
+- Cap màxim: mai supera el 50% del `budgetUsdt`
+
 ### Criteris d'entrada (indicadors)
 
 L'anàlisi tècnica avalua:

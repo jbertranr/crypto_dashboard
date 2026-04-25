@@ -97,6 +97,8 @@ interface ScanResponse {
   slAtr:        number;
   capitalPerOp: number | null;
   capitalMode:  string;
+  budgetUsdt:   number;
+  committed:    number;
   results:      ScanResult[];
   scannedAt:    number;
 }
@@ -201,6 +203,22 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
     if (!result.tpEst || !result.slEst) return;
     const capitalPerOp = scanData?.capitalPerOp ?? null;
     if (!capitalPerOp) return; // PCT mode not supported in manual scan
+
+    // Avís de pressupost si la compra ultrapassaria el límit del bot
+    if (scanData) {
+      const afterBuy = scanData.committed + capitalPerOp;
+      if (afterBuy > scanData.budgetUsdt) {
+        const ok = window.confirm(
+          `⚠️ Pressupost del bot insuficient!\n\n` +
+          `Compromès: ${scanData.committed.toFixed(0)} USDC\n` +
+          `Aquesta compra: +${capitalPerOp} USDC\n` +
+          `Total: ${afterBuy.toFixed(0)} USDC > Límit: ${scanData.budgetUsdt} USDC\n\n` +
+          `Vols comprar igualment?`
+        );
+        if (!ok) return;
+      }
+    }
+
     setBuyingSymbol(result.symbol);
     try {
       await fetch("/api/orders/buy-and-exit", {
@@ -230,6 +248,7 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
       });
       setScanData(prev => prev ? {
         ...prev,
+        committed: prev.committed + (prev.capitalPerOp ?? 0),
         results: prev.results.map(r2 =>
           r2.symbol === result.symbol ? { ...r2, decision: "NO_SIGNAL" as const, reason: "ordre enviada" } : r2
         ),
@@ -447,6 +466,16 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
                 ? ` · ${scanData.capitalPerOp} USDC/op`
                 : " · mode % (no suportat en manual)"}
             </div>
+            {scanData.capitalPerOp !== null && (
+              <div className={`bc-scan__budget ${scanData.committed + scanData.capitalPerOp > scanData.budgetUsdt ? "bc-scan__budget--over" : ""}`}>
+                <i className="fa-solid fa-wallet" />
+                {" "}Pressupost: <strong>{(scanData.budgetUsdt - scanData.committed).toFixed(0)} USDC disponibles</strong>
+                {" "}({scanData.committed.toFixed(0)} / {scanData.budgetUsdt} USDC compromesos)
+                {scanData.committed + scanData.capitalPerOp > scanData.budgetUsdt && (
+                  <span className="bc-scan__budget-warn"> ⚠️ La propera compra ultrapassaria el límit</span>
+                )}
+              </div>
+            )}
             {scanData.results.map(r => {
               const isBuy      = r.decision === "BUY_SIGNAL";
               const isTrailing = r.decision === "TRAILING_ACTIVE";

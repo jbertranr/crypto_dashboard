@@ -97,7 +97,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   const [beSlPct,      setBeSlPct]      = useState("3.00");
 
   /* analysis (OCO mode) */
-  const [analysisInterval,  setAnalysisInterval]  = useState<"5m" | "1h" | "4h">(presetPrices?.interval ?? "1h");
+  const [analysisInterval,  setAnalysisInterval]  = useState<string>(presetPrices?.interval ?? "1h");
   const [analysisSnap,      setAnalysisSnap]      = useState<AnalysisSnap | null>(null);
   const [analysisLoading,   setAnalysisLoading]   = useState(false);
   const [selectedStratIdx,  setSelectedStratIdx]  = useState(0);
@@ -133,7 +133,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     if (!botId) return;
     const bot = bots.find(b => b.id === botId);
     const iv = bot?.simConfig?.config?.interval;
-    if (iv === "5m" || iv === "1h" || iv === "4h") setAnalysisInterval(iv);
+    if (iv) setAnalysisInterval(iv);
    
   }, [bots]);
 
@@ -507,6 +507,9 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
 
   const badDirection = !directionOk(side, parseFloat(tpPrice), parseFloat(slStopPrice), ref);
 
+  // Intervals disponibles: sempre 5m/1h/4h + el del bot si és diferent
+  const intervalButtons = Array.from(new Set(["5m", "1h", "4h", analysisInterval]));
+
   return (
     <div className="new-order__backdrop" onClick={onClose}>
       <div className="new-order__box" onClick={e => e.stopPropagation()}>
@@ -609,7 +612,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           {/* Analysis interval + strategy picker */}
           <div className="new-order__analysis-bar">
             <span className="new-order__analysis-label">Anàlisi</span>
-            {(["5m", "1h", "4h"] as const).map(iv => (
+            {intervalButtons.map(iv => (
               <button key={iv}
                 className={`new-order__interval-btn${analysisInterval === iv ? " new-order__interval-btn--active" : ""}`}
                 onClick={() => setAnalysisInterval(iv)}>
@@ -804,7 +807,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           {/* Analysis interval + strategy picker */}
           <div className="new-order__analysis-bar">
             <span className="new-order__analysis-label">Anàlisi</span>
-            {(["5m", "1h", "4h"] as const).map(iv => (
+            {intervalButtons.map(iv => (
               <button key={iv}
                 className={`new-order__interval-btn${analysisInterval === iv ? " new-order__interval-btn--active" : ""}`}
                 onClick={() => setAnalysisInterval(iv)}>

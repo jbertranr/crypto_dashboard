@@ -87,6 +87,29 @@ export async function GET(req: NextRequest) {
     return found ? s.slice(0, -found.length) + qa : s;
   });
 
+  // Pressupost compromès: OCO oberts + trailing actius × capitalPerOp
+  let committed = 0;
+  if (capitalPerOp !== null) {
+    try {
+      const base = BINANCE_URLS[bot.mode as "paper" | "real"] ?? BINANCE_URLS.paper;
+      const apiKey = bot.mode === "real"
+        ? process.env.BINANCE_API_KEY_REAL ?? ""
+        : process.env.BINANCE_API_KEY ?? "";
+      const openOrdersRes = await fetch(`${base}/openOrders`, {
+        headers: { "X-MBX-APIKEY": apiKey },
+        cache: "no-store", signal: AbortSignal.timeout(8_000),
+      });
+      if (openOrdersRes.ok) {
+        const orders = await openOrdersRes.json() as { orderListId: number; side: string }[];
+        const ocoGroups = new Set(orders.filter(o => o.orderListId !== -1 && o.side === "SELL").map(o => o.orderListId)).size;
+        const trailingCount = (db.prepare(
+          "SELECT COUNT(*) as n FROM trailing_active WHERE mode = ? AND status = 'active'"
+        ).get(bot.mode) as { n: number }).n;
+        committed = (ocoGroups + trailingCount) * capitalPerOp;
+      }
+    } catch { /* no bloqueja el scan si falla */ }
+  }
+
   const results = [];
   for (const symbol of symbols) {
     try {
@@ -148,6 +171,8 @@ export async function GET(req: NextRequest) {
     tpAtr, slAtr, trailAct, trailDst, minScore,
     capitalPerOp,
     capitalMode,
+    budgetUsdt: bot.budgetUsdt,
+    committed,
     results,
     scannedAt: Date.now(),
   });

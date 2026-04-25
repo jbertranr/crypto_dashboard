@@ -37,7 +37,7 @@ import {
   trailingActiveGetAll,
 } from "./cache-store";
 import { ensureTrailingEngine } from "./trailing-engine";
-import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta } from "./journal-store";
+import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta, journalGetBotConsecWins } from "./journal-store";
 import { notifyNewOrder, notifyOcoFailed, notifyOrphanDetected, notifyOrphanNoBot, notifyOrphanNoBotReal, notifyMarketScan, type ScanSymbolResult } from "./telegram";
 import { warnBotRealFromDev } from "./real-guard";
 import { log } from "./logger";
@@ -72,10 +72,13 @@ interface SavedConfig {
     slAtr:            number;
     trailActivateAtr: number;
     trailDistanceAtr: number;
-    capitalMode:      string;  // "FIXED" | "PCT" | "ANTI_MARTINGALE"
+    capitalMode:      string;  // "FIXED" | "PCT" | "ANTI_MARTINGALE" | "PYRAMID"
     capitalFixed?:    number;
     capitalPct?:      number;
     amBasePct?:       number;
+    pyramidBasePct?:  number;
+    pyramidFactor?:   number;
+    pyramidMaxLevel?: number;
   };
   effectiveConfig?: {
     minProbability?: number;
@@ -446,6 +449,15 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     usdtPer = bot.budgetUsdt * (config.capitalPct ?? 10) / 100;
   } else if (config.capitalMode === "ANTI_MARTINGALE") {
     usdtPer = bot.budgetUsdt * (config.amBasePct ?? 60) / 100;
+  } else if (config.capitalMode === "PYRAMID") {
+    const wins   = journalGetBotConsecWins(bot.name, bot.mode as "paper" | "real");
+    const level  = Math.min(wins, config.pyramidMaxLevel ?? 3);
+    const factor = Math.pow(config.pyramidFactor ?? 1.25, level);
+    usdtPer = Math.min(
+      bot.budgetUsdt * ((config.pyramidBasePct ?? 10) / 100) * factor,
+      bot.budgetUsdt * 0.5,
+    );
+    log.auto.debug({ bot: bot.name, wins, level, factor, usdtPer }, "pyramid: capital per operació");
   } else {
     usdtPer = config.capitalFixed ?? 100;
   }
@@ -638,8 +650,9 @@ async function retryPendingOcos(): Promise<void> {
 /* ── Detecció i correcció de posicions sense SL ──────────────── */
 
 const STABLES        = new Set(["USDT","USDC","BUSD","TUSD","DAI","FDUSD"]);
-const ORPHAN_MIN_USD = 10;
-const ORPHAN_FIX_MS  = 5 * 60 * 1000;  // 5 minuts
+const ORPHAN_MIN_USD    = 10;
+const ORPHAN_NOTIFY_MS  = 2 * 60 * 1000;  // 2 min abans de notificar (evita falsos positius per latència API)
+const ORPHAN_FIX_MS     = 5 * 60 * 1000;  // 5 min abans de corregir
 
 async function checkOrphanPositions(mode: TradingMode): Promise<void> {
   let openOrders: Awaited<ReturnType<typeof getOpenOrders>>;
@@ -720,26 +733,31 @@ async function checkOrphanPositions(mode: TradingMode): Promise<void> {
     const watch = orphanWatchGet(symbol);
 
     if (!watch) {
-      // Primera detecció: registrar i avisar
+      // Primera detecció: registrar però NO notificar encara (pot ser latència de l'API)
       orphanWatchUpsert(symbol);
+      log.auto.warn({ mode, symbol, uncoveredUsd, uncovered }, "posició parcialment sense SL — esperant 2 min per confirmar");
+      continue;
+    }
+
+    // Ja detectada: esperar el mínim per notificar (evita falsos positius per latència API)
+    if (!watch.notified && now - watch.detectedAt >= ORPHAN_NOTIFY_MS) {
       const meta = journalGetLastEntryMeta(symbol, mode);
-      log.auto.warn({ mode, symbol, uncoveredUsd, uncovered }, "posició parcialment sense SL — esperant 5 min per corregir");
+      log.auto.warn({ mode, symbol, uncoveredUsd, uncovered }, "posició sense SL confirmada — notificant");
       notifyOrphanDetected({
         symbol,
         valueUsd:    uncoveredUsd,
         qty:         uncovered.toFixed(6),
         entryPrice:  meta?.price ?? null,
-        fixIn:       5,
+        fixIn:       Math.round((ORPHAN_FIX_MS - (now - watch.detectedAt)) / 60_000),
         orderId:     meta?.orderId     ?? null,
         orderListId: meta?.orderListId ?? null,
         tradeCode:   meta?.tradeCode   ?? null,
         mode,
       }).catch(err => log.auto.warn({ err: (err as Error).message }, "notifyOrphanDetected fallida"));
       orphanWatchMarkNotified(symbol);
-      continue;
     }
 
-    // Ja detectada: esperar 5 minuts
+    // Esperar 5 minuts per corregir
     if (now - watch.detectedAt < ORPHAN_FIX_MS) continue;
 
     // Han passat 5 minuts: aplicar lògica del bot per fixar SL/TP

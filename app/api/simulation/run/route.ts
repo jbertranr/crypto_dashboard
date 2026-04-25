@@ -8,7 +8,7 @@ import { detectCandlePatterns } from "../../../lib/candle-patterns";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ExitMode     = "TRAILING" | "BREAK_EVEN" | "LET_RUN" | "MOON";
-export type CapitalMode  = "FIXED" | "PCT" | "RISK_PCT" | "ANTI_MARTINGALE";
+export type CapitalMode  = "FIXED" | "PCT" | "RISK_PCT" | "ANTI_MARTINGALE" | "PYRAMID";
 export type EntryMode    = "ANALYSIS" | "PUMP" | "CANDLES";
 
 export interface SimConfig {
@@ -26,6 +26,10 @@ export interface SimConfig {
   useMarketFilter:  boolean;  // true → bloqueja entrades si preu < EMA200 diari del símbol
   // Anti-Martingala
   amBasePct:        number;   // % base del capital per trade (defecte 60)
+  // Pyramid (anti-martingala inversa: augmenta en guanys)
+  pyramidBasePct:   number;   // % base del capital (defecte 10)
+  pyramidFactor:    number;   // multiplicador per win consecutiu (defecte 1.25)
+  pyramidMaxLevel:  number;   // màxim de nivells d'escalada (defecte 3)
   // Mode d'entrada
   entryMode:        EntryMode;
   pumpVolMin:       number;    // Mínim volRatio per a entrada PUMP (default 3.0)
@@ -109,6 +113,7 @@ export interface SimStats {
   candlesUsed:      number;
   totalCommission:  number;
   amReductions:     number;   // vegades que la mida es va reduir per pèrdua consecutiva
+  pyramidBoosts?:   number;   // vegades que la mida es va augmentar per win streak
   moonPartialHits?: number;   // trades que van arribar al parcial (MOON mode)
 }
 
@@ -444,9 +449,11 @@ export async function POST(req: NextRequest) {
     const maxHoldingBars = config.maxHoldingBars ?? 8;
     const openTrades = new Map<string, OpenTrade>();
 
-    // ── Anti-Martingala ────────────────────────────────────────────────────
+    // ── Anti-Martingala / Pyramid ─────────────────────────────────────────
     let consecutiveLosses = 0;
-    let amReductions = 0;
+    let consecutiveWins   = 0;
+    let amReductions  = 0;
+    let pyramidBoosts = 0;
 
     // ── Mostreig corba equity ─────────────────────────────────────────────
     // Target ~500 punts per qualsevol resolució temporal (15m, 1h, 1d…)
@@ -684,12 +691,14 @@ export async function POST(req: NextRequest) {
           openTrades.delete(sym);
           equityChanged = true;
 
-          // ── Anti-Martingala: actualitza pèrdues consecutives ──────────
+          // ── Anti-Martingala / Pyramid: actualitza comptadors ─────────
           if (pnlUsdt < 0) {
             consecutiveLosses++;
             if (consecutiveLosses >= 2) amReductions++;
+            consecutiveWins = 0;
           } else {
             consecutiveLosses = 0;
+            consecutiveWins++;
           }
         }
       }
@@ -820,12 +829,19 @@ export async function POST(req: NextRequest) {
             const amFactor = consecutiveLosses >= 3 ? 0.25
                            : consecutiveLosses === 2 ? 0.5
                            : 1.0;
+
+            const pyramidLevel  = Math.min(consecutiveWins, config.pyramidMaxLevel ?? 3);
+            const pyramidMult   = Math.pow(config.pyramidFactor ?? 1.25, pyramidLevel);
+            if (capitalMode === "PYRAMID" && pyramidLevel > 0) pyramidBoosts++;
+
             const rawCapital = capitalMode === "FIXED"
               ? Math.min(capitalFixed, capital)
               : capitalMode === "PCT"
               ? capital * (capitalPct / 100)
               : capitalMode === "ANTI_MARTINGALE"
               ? capital * ((amBasePct ?? 60) / 100) * amFactor
+              : capitalMode === "PYRAMID"
+              ? Math.min(capital * ((config.pyramidBasePct ?? 10) / 100) * pyramidMult, capital * 0.5)
               : slDistancePct > 0   // RISK_PCT
               ? Math.min((capital * (riskPct / 100)) / slDistancePct, capital * 0.5)
               : Math.min(capitalFixed, capital);
@@ -974,6 +990,7 @@ export async function POST(req: NextRequest) {
       candlesUsed:      timeline.filter(t => t >= from).length,
       totalCommission:  trades.reduce((s, t) => s + t.commission, 0),
       amReductions,
+      pyramidBoosts: capitalMode === "PYRAMID" ? pyramidBoosts : undefined,
       moonPartialHits,
     };
 
@@ -982,6 +999,9 @@ export async function POST(req: NextRequest) {
       capitalMode, capitalFixed, capitalPct, riskPct, maxOpen, minProbability,
       useMarketFilter,
       amBasePct,
+      pyramidBasePct: config.pyramidBasePct ?? 10,
+      pyramidFactor:  config.pyramidFactor  ?? 1.25,
+      pyramidMaxLevel: config.pyramidMaxLevel ?? 3,
       exitMode, tpAtr, slAtr,
       trailActivateAtr, trailDistanceAtr, breakEvenAtr,
       moonSlPct, moonPartialAt, moonPartialPct, moonTrailPct,

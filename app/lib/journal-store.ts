@@ -253,6 +253,30 @@ export function journalGetAll(filter: JournalFilter = {}): JournalEntry[] {
 }
 
 /**
+ * Returns the number of consecutive winning trades for a bot (by name).
+ * Looks at the last `limit` exit entries linked to this bot's buy entries via tradeCode.
+ */
+export function journalGetBotConsecWins(botName: string, mode: "paper" | "real" = "paper", limit = 10): number {
+  const d = getDb(mode);
+  const rows = d.prepare(`
+    SELECT pnl_usdt FROM trade_journal
+    WHERE trade_code IN (
+      SELECT trade_code FROM trade_journal
+      WHERE notes LIKE ? AND side = 'BUY' AND trade_code IS NOT NULL
+      ORDER BY executed_at DESC LIMIT ?
+    ) AND side = 'SELL' AND pnl_usdt IS NOT NULL
+    ORDER BY executed_at DESC
+  `).all(`%Bot: ${botName}%`, limit) as { pnl_usdt: number }[];
+
+  let count = 0;
+  for (const r of rows) {
+    if (r.pnl_usdt >= 0) count++;
+    else break;
+  }
+  return count;
+}
+
+/**
  * Returns all journal entries related to the one with the given id.
  * Linking strategy (in priority order):
  *  1. Same order_list_id (OCO group — entry + TP/SL)

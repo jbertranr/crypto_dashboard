@@ -10722,6 +10722,14 @@
   font-size: 0.68rem; color: var(--text-3);
   padding: 2px 4px 6px;
 }
+.bc-scan__budget {
+  font-size: 0.7rem; color: var(--text-2);
+  padding: 4px 6px; border-radius: 4px;
+  background: var(--surface-2);
+  margin-bottom: 4px;
+}
+.bc-scan__budget--over { background: rgba(217,119,6,0.12); color: #d97706; }
+.bc-scan__budget-warn { font-weight: 600; margin-left: 4px; }
 .bc-scan-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 7px 10px; border-radius: 7px;
