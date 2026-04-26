@@ -184,3 +184,9 @@ const ALLOWED_API = new Set([
 ```
 
 Format: `"MÈTODE /ruta/completa"`. Qualsevol ruta no present retorna **403 Forbidden**.
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[08_integrations]] · [[07_deployment]]

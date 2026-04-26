@@ -217,3 +217,9 @@ const db = getDb("cache");   // → data/cache.db (default)
 ```
 
 Tots els accesos usen statements preparats (`db.prepare(...)`) per prevenir SQL injection.
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[05_configuration]] · [[04_trading-engine]]

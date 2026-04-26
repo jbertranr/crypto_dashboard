@@ -122,6 +122,25 @@ Afegeix la pestanya a `Nav.tsx` (llista de tabs) i a `OrdersPanel.tsx` (renderit
 
 El bot comença a operar a la propera vela tancada.
 
+### Paràmetres clau del sim config
+
+| Paràmetre | Efecte en live trading |
+|-----------|----------------------|
+| `maxOpen` | Màxim posicions simultànies. Respectat tant pel bot automàtic com pel modal d'ordre manual |
+| `breakEvenAtr` | Quan el preu puja X×ATR per sobre de l'entrada, el SL es mou a break even. `0` = desactivat |
+| `slAtr` | Distància del Stop Loss en ATR. Valors baixos (< 1.0) amb intervals curts (30m) poden ser massa ajustats |
+| `symbols` | Format USDT (ex: `SOLUSDT`). El sistema els converteix automàticament a USDC en live |
+
+### Ordres manuals amb bot preset
+
+Quan es selecciona un bot al modal **Nova Ordre**, el sistema:
+- Aplica els mateixos `tpAtr`, `slAtr`, `trailActivateAtr`, `trailDistanceAtr` i `breakEvenAtr` del sim config
+- Comprova que no s'ha assolit `maxOpen` (bloqueja l'ordre si és el cas)
+- Comprova que el pressupost total del bot no se supera (avisa i demana confirmació)
+- Comprova que el símbol pertany als símbols del bot (avisa i demana confirmació)
+
+Això garanteix que les ordres manuals i automàtiques operin amb exactament els mateixos paràmetres.
+
 ---
 
 ## Patrons importants
@@ -266,3 +285,9 @@ export type Interval = "5m" | "15m" | "1h" | "4h" | "1d";
 - **Les migracions de BD son automàtiques:** afegeix camps amb `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
 - **Un sol túnel Cloudflare:** per al port 3001, mai pel 3000
 - **`CLAUDE.md` té prioritat:** si hi ha instruccions específiques allà, segueix-les per sobre d'aquesta guia
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[04_trading-engine]] · [[10_ai-agents]] · [[02_api-reference]]

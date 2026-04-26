@@ -85,7 +85,8 @@ export async function POST(req: NextRequest) {
       const entryPrice = await getTickerPrice(symbol);
       trailingSet(result.orderListId, {
         symbol, ...trailing,
-        quantity: roundedQty, side, tickSize, entryPrice,
+        breakEvenAtr: trailing.breakEvenAtr ?? 0,
+        quantity: roundedQty, side, tickSize, entryPrice, mode,
       });
       ensureTrailingEngine();
     }

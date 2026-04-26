@@ -138,3 +138,9 @@ Totes les respostes retornen JSON. En cas d'error:
 ```
 
 Els errors HTTP usats: `400` (paràmetres incorrectes), `401` (no autenticat), `403` (prohibit), `500` (error de servidor).
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[03_database-schema]] · [[05_configuration]]

@@ -226,3 +226,9 @@ winget install Cloudflare.cloudflared
 curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
 sudo dpkg -i cloudflared.deb
 ```
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[05_configuration]] · [[04_trading-engine]]

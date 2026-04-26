@@ -222,3 +222,9 @@ curl http://localhost:3001/api/status
 # Comprova que el mode real està configurat (si escau)
 curl http://localhost:3000/api/trading-mode
 ```
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[05_configuration]] · [[06_mobile-app]] · [[08_integrations]]

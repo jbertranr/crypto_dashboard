@@ -68,6 +68,7 @@ addCol("ALTER TABLE order_trailing ADD COLUMN side       TEXT NOT NULL DEFAULT '
 addCol("ALTER TABLE order_trailing ADD COLUMN tick_size  TEXT NOT NULL DEFAULT '0.01'");
 addCol("ALTER TABLE order_trailing ADD COLUMN entry_price REAL NOT NULL DEFAULT 0");
 addCol("ALTER TABLE order_trailing ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
+addCol("ALTER TABLE order_trailing ADD COLUMN break_even_atr REAL NOT NULL DEFAULT 0");
 addCol("ALTER TABLE trailing_active ADD COLUMN origin_oco_list_id INTEGER");
 addCol("ALTER TABLE trailing_active ADD COLUMN entry_price REAL NOT NULL DEFAULT 0");
 addCol("ALTER TABLE trailing_active ADD COLUMN sl_update_count INTEGER NOT NULL DEFAULT 0");
@@ -170,25 +171,27 @@ export interface TrailingRecord {
   distance: number;
   activateAtr: number;
   distanceAtr: number;
+  breakEvenAtr: number;
   logic: string;
   quantity: string;
   side: "SELL" | "BUY";
   tickSize: string;
   entryPrice: number;
   mode: "paper" | "real";
-  createdAt: number; // set by trailingSet; read-only from DB
+  createdAt: number;
 }
 
 export function trailingSet(orderListId: number, data: Omit<TrailingRecord, "orderListId" | "createdAt">): void {
   db.prepare(
     `INSERT OR REPLACE INTO order_trailing
       (order_list_id, symbol, activate_at, distance, activate_atr, distance_atr, logic,
-       quantity, side, tick_size, entry_price, mode, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       quantity, side, tick_size, entry_price, mode, break_even_atr, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     orderListId, data.symbol, data.activateAt, data.distance,
     data.activateAtr, data.distanceAtr, data.logic,
-    data.quantity, data.side, data.tickSize, data.entryPrice, data.mode ?? "paper", Date.now()
+    data.quantity, data.side, data.tickSize, data.entryPrice,
+    data.mode ?? "paper", data.breakEvenAtr ?? 0, Date.now()
   );
 }
 
@@ -197,7 +200,7 @@ export function trailingGetAll(): TrailingRecord[] {
     order_list_id: number; symbol: string; activate_at: number; distance: number;
     activate_atr: number; distance_atr: number; logic: string;
     quantity: string; side: string; tick_size: string; entry_price: number;
-    mode: string; created_at: number;
+    mode: string; created_at: number; break_even_atr: number;
   }[];
   return rows.map(r => ({
     orderListId: r.order_list_id, symbol: r.symbol,
@@ -205,6 +208,7 @@ export function trailingGetAll(): TrailingRecord[] {
     activateAtr: r.activate_atr, distanceAtr: r.distance_atr, logic: r.logic,
     quantity: r.quantity, side: r.side as "SELL" | "BUY",
     tickSize: r.tick_size, entryPrice: r.entry_price,
+    breakEvenAtr: r.break_even_atr ?? 0,
     mode: (r.mode === "real" ? "real" : "paper") as "paper" | "real",
     createdAt: r.created_at,
   }));

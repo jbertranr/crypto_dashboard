@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
       atr?: number;
       trailing?: {
         activateAt: number; distance: number;
-        activateAtr: number; distanceAtr: number; logic: string;
+        activateAtr: number; distanceAtr: number;
+        breakEvenAtr?: number; logic: string;
       };
     };
     const mode: TradingMode = rawMode === "real" ? "real" : "paper";
@@ -137,6 +138,7 @@ export async function POST(req: NextRequest) {
     if (trailing && typeof ocoResult.orderListId === "number" && ocoResult.orderListId !== -1) {
       trailingSet(ocoResult.orderListId, {
         symbol, ...trailing,
+        breakEvenAtr: trailing.breakEvenAtr ?? 0,
         quantity: ocoQty, side: "SELL", tickSize, entryPrice: fillPrice, mode,
       });
       ensureTrailingEngine();

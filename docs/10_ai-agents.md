@@ -355,3 +355,9 @@ Els fitxers de memòria s'organitzen per tipus:
 - `MEMORY.md` — Índex de tota la memòria (carregat automàticament)
 
 Aquesta memòria permet que futures sessions de Claude Code tinguin context sobre el projecte sense haver de re-explicar res.
+
+---
+
+## Vegeu també
+
+[[09_development-guide]] · [[01_architecture]]

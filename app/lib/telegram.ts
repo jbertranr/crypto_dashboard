@@ -11,6 +11,8 @@ const TG_API = `https://api.telegram.org/bot`;
 
 // ── IP del servidor (lazy, caché mòdul) ──────────────────────────────────────
 
+const ENV_LABEL = process.env.NODE_ENV === "production" ? "PROD" : "DEV";
+
 let _serverIp: string | null = null;
 
 async function getServerIp(): Promise<string> {
@@ -231,10 +233,9 @@ export async function sendCard(
   mode?: string,
 ): Promise<void> {
   const ip = await getServerIp();
-  const modeLabel = mode === "real" ? "🟠 REAL" : "📄 PAPER";
-  const prefix = mode === "real" ? "🟠 REAL · " : "";
+  const prefix = mode === "real" ? "🟠 REAL" : "📄 PAPER";
   await sendTelegram(
-    `<b>${prefix}${cardTitle}</b>\n\n${pre([...block, kv("Mode", modeLabel), kv("Servidor", ip)])}`,
+    `<b>[${prefix}]  ${cardTitle}</b>\n\n${pre([...block, kv("Servidor", `${ip} (${ENV_LABEL})`)])}`,
     mode,
   );
 }
@@ -278,7 +279,7 @@ export async function sendHourlyPortfolioReport(data: {
     : [];
 
   const ip = await getServerIp();
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", ip)];
+  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", `${ip} (${ENV_LABEL})`)];
   await sendTelegram(`<b>${title}</b>\n\n${pre(block)}`);
 }
 
@@ -414,7 +415,7 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
   }
 
   const ip = await getServerIp();
-  textParts.push(`🕐 ${ts()}  ·  🖥 ${ip}`);
+  textParts.push(`🕐 ${ts()}  ·  🖥 ${ip} (${ENV_LABEL})`);
   await sendTelegram(textParts.join("\n"));
 }
 
@@ -459,7 +460,7 @@ export async function sendPortfolioReport(data: {
     : [];
 
   const ip = await getServerIp();
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", ip)];
+  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", `${ip} (${ENV_LABEL})`)];
   await sendTelegram(`<b>📊 INFORME DE PORTFOLIO</b>\n\n${pre(block)}`);
 }
 
@@ -765,13 +766,12 @@ export async function notifyMarketScan(data: {
     TRAILING_ACTIVE:"🔵 trailing actiu",
   };
 
-  const modePrefix = data.mode === "real" ? "🟠 REAL · " : "";
-  const header = `🔍 ${modePrefix}ESCANEIG · ${data.botName}`;
+  const modeLabel = data.mode === "real" ? "🟠 REAL" : "📄 PAPER";
+  const header = `<b>[${modeLabel}]  🔍 ESCANEIG · ${data.botName}</b>`;
 
   const ip = await getServerIp();
-  const modeLabel = data.mode === "real" ? "🟠 REAL" : "📄 PAPER";
   if (data.skipReason) {
-    await sendTelegram(`<b>${header}</b>\n⏭ Omès: ${data.skipReason}\n<i>${modeLabel}  ·  ${ts()}  ·  🖥 ${ip}</i>`, data.mode);
+    await sendTelegram(`${header}\n⏭ Omès: ${data.skipReason}\n<i>${ts()}  ·  🖥 ${ip} (${ENV_LABEL})</i>`, data.mode);
     return;
   }
 
@@ -802,10 +802,10 @@ export async function notifyMarketScan(data: {
   });
 
   const infoLine = `Interval: ${data.interval}  ·  Mínim: ${data.minScore}%  ·  ${ts()}`;
-  const metaLine = `Mode: ${modeLabel}  ·  Servidor: ${ip}`;
+  const metaLine = `Servidor: ${ip} (${ENV_LABEL})`;
   const body     = rows.length > 0 ? pre([infoLine, metaLine, "─".repeat(40), ...rows]) : pre([infoLine, metaLine, "(cap símbol analitzat)"]);
 
-  await sendTelegram(`<b>${header}</b>\n${body}`, data.mode);
+  await sendTelegram(`${header}\n${body}`, data.mode);
 }
 
 // ── Notificació: trailing stop activat ───────────────────────────────────────

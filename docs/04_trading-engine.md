@@ -19,9 +19,14 @@ Cada 30s:
   1. Llegeix order_trailing (pendents d'activació)
      Per cada pendent:
        → Obté preu actual de Binance
+       → [Break Even] Si breakEvenAtr > 0 i preu ≥ entrada + breakEvenAtr×ATR:
+           · Obté el preu TP de l'OCO existent
+           · Cancel·la l'OCO original
+           · Col·loca nova OCO amb TP igual + SL a break even (preu d'entrada)
+           · Actualitza el registre (breakEvenAtr = 0 per no re-activar)
        → Si preu > activateAt:
            · Cancel·la l'OCO original
-           · Col·loca nou ordre SL
+           · Col·loca nou ordre SL (trailing)
            · Mou registre a trailing_active
            · Envia notificació Telegram
 
@@ -145,19 +150,39 @@ candleJustClosed(interval):
 Quan una vela acaba de tancar:
   1. Comprova finestra horària (hours_from → hours_to UTC)
      → Fora: notifica Telegram "fora de finestra" i surt
-  2. Comprova max_daily i max_open i pressupost
+  2. Comprova max_daily, max_open (config.maxOpen) i pressupost
      → Exhaurit: notifica Telegram el motiu i surt
+     ⚠ max_open llegit en ordre de prioritat: bot.maxOpen → effectiveConfig.maxOpen → config.maxOpen
   3. Per cada símbol del bot:
-     a. getAnalysis(symbol, interval) → score 0–100
-     b. Si require_multi_tf: comprova interval superior (confirmació)
-     c. Si score ≥ min_probability i senyal = BUY:
+     a. Comprova si ja hi ha posició oberta (OCO, trailing actiu o pendent) → salta
+     b. getAnalysis(symbol, interval) → score 0–100
+     c. Si require_multi_tf: comprova interval superior (confirmació)
+     d. Si score ≥ min_probability i senyal = BUY:
           · placeMarketBuy(symbol, qty, bot.mode)
-          · Calcula TP i SL via ATR
+          · Calcula TP = tpAtr×ATR, SL = slAtr×ATR
           · placeOcoOrder({ TP, SL }, bot.mode)
+          · Si trailing configurat: trailingSet(..., breakEvenAtr)
           · journalAdd(...)
   4. Telegram (si tg_on_market_scan = 1): envia resultat per cada símbol
      · BUY_EXECUTED · NO_SIGNAL · MULTI_TF_FAIL · TRAILING_ACTIU
 ```
+
+### Paràmetres de la simulació desada (sim config)
+
+Els paràmetres operatius d'un bot vénen del fitxer JSON de simulació (`simulation/<sim_id>.json`), camp `config`:
+
+| Paràmetre | Descripció | Default |
+|-----------|-----------|---------|
+| `tpAtr` | Multiplicador ATR per al Take Profit | `2.5` |
+| `slAtr` | Multiplicador ATR per al Stop Loss | `1.0` |
+| `trailActivateAtr` | Multiplicador ATR per activar el trailing | `1.5` |
+| `trailDistanceAtr` | Multiplicador ATR per a la distància del trailing | `1.0` |
+| `breakEvenAtr` | Multiplicador ATR per moure SL a break even | `0` (desactivat) |
+| `maxOpen` | Màxim de posicions simultànies del bot | sense límit |
+| `symbols` | Llista de símbols (format USDT, es converteix a USDC automàticament) | — |
+| `interval` | Timeframe de les veles | — |
+
+> **Break Even**: quan el preu arriba a `entrada + breakEvenAtr × ATR`, el SL es mou al preu d'entrada (benefici mínim garantit). S'aplica tant a ordres automàtiques del bot com a ordres manuals col·locades amb un bot preset seleccionat.
 
 ### Modes de gestió de capital
 
@@ -288,3 +313,9 @@ A **Configuració → Bots** hi ha tres nivells de control:
 La fila bulk és visible només si hi ha bots del mode corresponent. El comptador `actius/total` s'actualitza en temps real.
 
 Internament usa `PATCH /api/bots` amb `{ bulk: true, mode, enabled }` que executa un únic `UPDATE bots SET enabled = ?` a la base de dades del mode corresponent (`paper.db` o `real.db`).
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[02_api-reference]] · [[03_database-schema]] · [[08_integrations]]

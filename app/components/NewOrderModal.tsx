@@ -16,9 +16,12 @@ type AnalysisSnap = { price: number; atr: number; strategies: StratProposal[] };
 
 type BotPreset = {
   id: string; code: string; name: string; enabled: boolean;
+  budgetUsdt?: number;
   simConfig: { config: {
     interval?: string; tpAtr?: number; slAtr?: number;
     trailActivateAtr?: number; trailDistanceAtr?: number;
+    breakEvenAtr?: number; maxOpen?: number;
+    symbols?: string[];
   } } | null;
 };
 
@@ -118,8 +121,10 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   }, []);
 
   /* bot presets */
-  const [bots,          setBots]          = useState<BotPreset[]>([]);
-  const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
+  const [bots,             setBots]             = useState<BotPreset[]>([]);
+  const [selectedBotId,    setSelectedBotId]    = useState<string | null>(null);
+  const [botOpenOrders,    setBotOpenOrders]    = useState<{ symbol: string; value: number }[]>([]);
+  const [botPositionCount, setBotPositionCount] = useState(0);
   useEffect(() => {
     fetch("/api/bots").then(r => r.json())
       .then((d: { bots: BotPreset[] }) => setBots(d.bots ?? []))
@@ -127,6 +132,58 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   }, []);
 
   const selectedBot = bots.find(b => b.id === selectedBotId) ?? null;
+
+  // Quan canvia el bot seleccionat, carrega les ordres obertes atribuïdes al bot
+  useEffect(() => {
+    if (!selectedBot) { setBotOpenOrders([]); setBotPositionCount(0); return; }
+    fetch(`/api/orders?mode=${viewMode}`).then(r => r.json())
+      .then((d: { symbol: string; botName?: string | null; origQty: string; price: string; stopPrice: string; orderListId?: number }[]) => {
+        const allOrders = (Array.isArray(d) ? d : []).filter(o => o.botName === selectedBot.name);
+        // Deduplicar OCOs: cada llista té 2 ordres (TP + SL), comptem només la primera per orderListId
+        const seenOco = new Set<number>();
+        const orders = allOrders.filter(o => {
+          if (o.orderListId != null && o.orderListId !== -1) {
+            if (seenOco.has(o.orderListId)) return false;
+            seenOco.add(o.orderListId);
+          }
+          return true;
+        });
+        setBotPositionCount(orders.length);
+        const bySymbol = new Map<string, number>();
+        for (const o of orders) {
+          const price = parseFloat(o.price) || parseFloat(o.stopPrice) || 0;
+          const value = parseFloat(o.origQty) * price;
+          bySymbol.set(o.symbol, (bySymbol.get(o.symbol) ?? 0) + value);
+        }
+        setBotOpenOrders([...bySymbol.entries()].map(([symbol, value]) => ({ symbol, value })));
+      }).catch(() => {});
+  }, [selectedBot, viewMode]);
+
+  const botCommitted = botOpenOrders.reduce((s, o) => s + o.value, 0);
+  const newAmount    = parseFloat(beUsdAmount) || 0;
+
+  // Màxim de posicions simultànies
+  const botMaxOpen = selectedBot?.simConfig?.config?.maxOpen ?? null;
+  const isMaxOpenReached = botMaxOpen !== null && botPositionCount >= botMaxOpen;
+
+  // Pressupost: l'import únic supera el budget del bot
+  const isBudgetExceeded  = !!(selectedBot?.budgetUsdt != null && newAmount > selectedBot.budgetUsdt);
+  // Pressupost total: (compromisos actuals + nou import) supera el budget
+  const isTotalExceeded   = !!(selectedBot?.budgetUsdt != null && (botCommitted + newAmount) > selectedBot.budgetUsdt);
+  // Símbol fora del bot: el parells de la compra no és cap dels símbols del bot
+  const QSTRIP = /USDT$|USDC$|BUSD$|FDUSD$|TUSD$/;
+  const botSymbols = selectedBot?.simConfig?.config?.symbols ?? [];
+  const botBaseAssets = botSymbols.map(s => s.replace(QSTRIP, ""));
+  const currentBase   = effectivePair.replace(QSTRIP, "");
+  const isSymbolMismatch = botSymbols.length > 0 && !botBaseAssets.includes(currentBase);
+
+  // Confirmacions explícites de l'usuari per casos d'advertiment
+  const [confirmedTotalBudget, setConfirmedTotalBudget] = useState(false);
+  const [confirmedSymbol,      setConfirmedSymbol]      = useState(false);
+
+  // Reset confirmacions quan canvia bot, import o símbol
+  useEffect(() => { setConfirmedTotalBudget(false); }, [selectedBotId, beUsdAmount]);
+  useEffect(() => { setConfirmedSymbol(false);      }, [selectedBotId, effectivePair]);
 
   const selectBot = useCallback((botId: string | null) => {
     setSelectedBotId(botId);
@@ -152,14 +209,15 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   const [error,        setError]        = useState<string | null>(null);
 
   /* trailing stop */
-  const [trailingOn,          setTrailingOn]          = useState(true);
-  const [trailingActivateAt,  setTrailingActivateAt]  = useState("");
-  const [trailingDistance,    setTrailingDistance]    = useState("");
-  const [trailingActivateAtr, setTrailingActivateAtr] = useState(1.0);
-  const [trailingDistanceAtr, setTrailingDistanceAtr] = useState(1.5);
-  const [trailingAtr,         setTrailingAtr]         = useState(0);
-  const [trailingLogic,       setTrailingLogic]       = useState("");
-  const [trailingLoading,     setTrailingLoading]     = useState(false);
+  const [trailingOn,           setTrailingOn]           = useState(true);
+  const [trailingActivateAt,   setTrailingActivateAt]   = useState("");
+  const [trailingDistance,     setTrailingDistance]     = useState("");
+  const [trailingActivateAtr,  setTrailingActivateAtr]  = useState(1.0);
+  const [trailingDistanceAtr,  setTrailingDistanceAtr]  = useState(1.5);
+  const [trailingBreakEvenAtr, setTrailingBreakEvenAtr] = useState(0);
+  const [trailingAtr,          setTrailingAtr]          = useState(0);
+  const [trailingLogic,        setTrailingLogic]        = useState("");
+  const [trailingLoading,      setTrailingLoading]      = useState(false);
 
   /* fetch exchange filters when pair changes */
   useEffect(() => {
@@ -382,10 +440,11 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     if (!cfg) return;
     const { atr, price } = analysisSnap;
     if (!atr || !price) return;
-    const tpAtr   = cfg.tpAtr            ?? 2.5;
-    const slAtr   = cfg.slAtr            ?? 1.0;
-    const trailAct = cfg.trailActivateAtr ?? 1.5;
-    const trailDst = cfg.trailDistanceAtr ?? 1.0;
+    const tpAtr      = cfg.tpAtr            ?? 2.5;
+    const slAtr      = cfg.slAtr            ?? 1.0;
+    const trailAct   = cfg.trailActivateAtr ?? 1.5;
+    const trailDst   = cfg.trailDistanceAtr ?? 1.0;
+    const breakEvenAtr = cfg.breakEvenAtr   ?? 0;
     const prec = price >= 100 ? 2 : price >= 1 ? 4 : 6;
     // buy-exit: percentages
     setBeTpPct((tpAtr * atr / price * 100).toFixed(2));
@@ -404,7 +463,9 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     setTrailingDistance((trailDst * atr).toFixed(prec));
     setTrailingActivateAtr(trailAct);
     setTrailingDistanceAtr(trailDst);
-    setTrailingLogic(`${selectedBot.name} · TP ${tpAtr}×ATR · SL ${slAtr}×ATR · Trail: activa ${trailAct}×ATR, dist ${trailDst}×ATR`);
+    setTrailingBreakEvenAtr(breakEvenAtr);
+    const beLabel = breakEvenAtr > 0 ? ` · B/E ${breakEvenAtr}×ATR` : "";
+    setTrailingLogic(`${selectedBot.name} · TP ${tpAtr}×ATR · SL ${slAtr}×ATR · Trail: activa ${trailAct}×ATR, dist ${trailDst}×ATR${beLabel}`);
    
   }, [selectedBot, analysisSnap, tickSize]);
 
@@ -423,11 +484,12 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
     const slPriceVal = ref * (1 - slPct / 100);
 
     const trailing = trailingOn && trailingActivateAt && trailingDistance ? {
-      activateAt:  parseFloat(trailingActivateAt),
-      distance:    parseFloat(trailingDistance),
-      activateAtr: trailingActivateAtr,
-      distanceAtr: trailingDistanceAtr,
-      logic:       trailingLogic,
+      activateAt:   parseFloat(trailingActivateAt),
+      distance:     parseFloat(trailingDistance),
+      activateAtr:  trailingActivateAtr,
+      distanceAtr:  trailingDistanceAtr,
+      breakEvenAtr: trailingBreakEvenAtr,
+      logic:        trailingLogic,
     } : null;
 
     setSaving(true);
@@ -853,7 +915,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           {/* Quote amount */}
           <div className="order-edit__field">
             <div className="new-order__label-row">
-              <span className="order-edit__label">Import {pairQuoteAsset}</span>
+              <span className="order-edit__label">Import USDC</span>
               <span className="new-order__balance-hint">
                 Saldo: {balances[pairQuoteAsset] != null ? balances[pairQuoteAsset].toFixed(pairQuoteAsset === "BTC" || pairQuoteAsset === "ETH" ? 6 : 2) : 0} {pairQuoteAsset}
               </span>
@@ -864,6 +926,12 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                 min="0" step="any" value={beUsdAmount}
                 onChange={e => setBeUsdAmount(e.target.value)} placeholder="0.00" />
             </div>
+            {selectedBot?.budgetUsdt != null && parseFloat(beUsdAmount) > selectedBot.budgetUsdt && (
+              <div className="order-edit__locked-warn">
+                <i className="fa-solid fa-triangle-exclamation" />
+                {parseFloat(beUsdAmount).toFixed(2)} USDC supera el pressupost del bot <b>{selectedBot.name}</b> ({selectedBot.budgetUsdt} USDC). El bot no podrà gestionar aquesta posició.
+              </div>
+            )}
           </div>
 
           {/* TP % */}
@@ -942,6 +1010,55 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
 
           </> /* end mode === "buy-exit" */}
 
+          {/* Màxim de posicions — bloqueja sense confirmació */}
+          {mode === "buy-exit" && selectedBot && isMaxOpenReached && (
+            <div className="order-edit__locked-warn">
+              <i className="fa-solid fa-ban" />
+              {" "}El bot <b>{selectedBot.name}</b> ja té <b>{botPositionCount}/{botMaxOpen}</b> posicions obertes (límit del bot). Tanca alguna posició abans de continuar.
+            </div>
+          )}
+
+          {/* Validation warnings with explicit confirmation */}
+          {mode === "buy-exit" && selectedBot && newAmount > 0 && isTotalExceeded && !isBudgetExceeded && (
+            <div className="order-edit__locked-warn">
+              <i className="fa-solid fa-triangle-exclamation" />
+              {" "}El bot <b>{selectedBot.name}</b> té un pressupost de <b>{selectedBot.budgetUsdt} USDC</b>.
+              <div className="new-order__budget-breakdown">
+                {botOpenOrders.map(o => (
+                  <div key={o.symbol} className="new-order__budget-line">
+                    <span>{o.symbol}</span>
+                    <span>{o.value.toFixed(2)} USDC</span>
+                  </div>
+                ))}
+                <div className="new-order__budget-line new-order__budget-line--new">
+                  <span>+ {effectivePair} (nova)</span>
+                  <span>{newAmount.toFixed(2)} USDC</span>
+                </div>
+                <div className="new-order__budget-line new-order__budget-line--total">
+                  <span>Total</span>
+                  <span>{(botCommitted + newAmount).toFixed(2)} USDC</span>
+                </div>
+              </div>
+              <label className="new-order__confirm-check">
+                <input type="checkbox" checked={confirmedTotalBudget}
+                  onChange={e => setConfirmedTotalBudget(e.target.checked)} />
+                {" "}Confirmo que vull superar el pressupost
+              </label>
+            </div>
+          )}
+          {mode === "buy-exit" && selectedBot && newAmount > 0 && isSymbolMismatch && (
+            <div className="order-edit__locked-warn">
+              <i className="fa-solid fa-triangle-exclamation" />
+              {" "}<b>{effectivePair}</b> no és un dels símbols configurats del bot{" "}
+              <b>{selectedBot.name}</b> ({botSymbols.join(", ")}).
+              <label className="new-order__confirm-check">
+                <input type="checkbox" checked={confirmedSymbol}
+                  onChange={e => setConfirmedSymbol(e.target.checked)} />
+                {" "}Confirmo que vull comprar fora dels símbols del bot
+              </label>
+            </div>
+          )}
+
           {error && <div className="order-edit__error">{error}</div>}
           {isRealLocked && (
             <div className="order-edit__locked-warn">
@@ -958,8 +1075,9 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
               {saving ? "Placing…" : "Col·locar SELL OCO"}
             </button>
           ) : (
-            <button className="order-edit__btn-save" onClick={submitBuyExit} disabled={saving || isRealLocked}
-              title={isRealLocked ? "Mode real bloquejat" : undefined}>
+            <button className="order-edit__btn-save" onClick={submitBuyExit}
+              disabled={saving || isRealLocked || isMaxOpenReached || isBudgetExceeded || (newAmount > 0 && isTotalExceeded && !confirmedTotalBudget) || (newAmount > 0 && isSymbolMismatch && !confirmedSymbol)}
+              title={isRealLocked ? "Mode real bloquejat" : isBudgetExceeded ? `Import supera el pressupost del bot (${selectedBot?.budgetUsdt} USDC)` : (isTotalExceeded && !confirmedTotalBudget) ? "Confirma el superament del pressupost total" : (isSymbolMismatch && !confirmedSymbol) ? "Confirma el símbol fora del bot" : undefined}>
               {saving ? "Placing…" : "Compra + Sortida"}
             </button>
           )}

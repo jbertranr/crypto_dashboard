@@ -4,8 +4,8 @@
 ╚══════════════════════════════════════════╝
 
 ⏹  Aturant processos existents...
-Process on port 3000 killed
 Process on port 3001 killed
+Process on port 3000 killed
    ports 3000/3001 alliberats
 
 🚀 Arrencant Next.js (port 3000)...
@@ -23,7 +23,7 @@ Process on port 3001 killed
 ╠══════════════════════════════════════════════════════════════╣
 ║  Dashboard local   http://localhost:3000                     ║
 ║  App local         http://localhost:3001                     ║
-║  App externa       https://upload-meetings-congratulations-researchers.trycloudflare.com║
+║  App externa       Binary file /tmp/cf-tunnel.log matches    ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Port 3000: mai exposat externament (segur)                  ║
 ╚══════════════════════════════════════════════════════════════╝

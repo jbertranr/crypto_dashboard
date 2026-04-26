@@ -1,10 +1,10 @@
 import {
   trailingActiveGetAll, trailingActiveUpdateSl, trailingActiveSetStatus, TrailingActive,
-  trailingGetAll, trailingActiveCreate, trailingDelete, cacheGet, orderMetaGet, orderMetaSet,
+  trailingGetAll, trailingSet, trailingActiveCreate, trailingDelete, cacheGet, orderMetaGet, orderMetaSet,
 } from "./cache-store";
 import {
   cancelOrder, cancelOcoOrder, placeStopLossLimitOrder, placeMarketSell, getTickerPrice, getOrder, getAccount, roundPrice,
-  getKlines, getOpenOrders,
+  getKlines, getOpenOrders, placeOcoOrder,
 } from "./binance-auth";
 import { notifyTrailingFill, notifyTrailingActivated, notifySlModified } from "./telegram";
 import { settingGetBool, settingGetBoolForMode, settingGet, settingGetForMode } from "./settings-store";
@@ -140,7 +140,44 @@ async function checkAndActivate(s: ReturnType<typeof trailingGetAll>[number]) {
   const price = await getTickerPrice(s.symbol, s.mode);
   if (!price || isNaN(price)) return;
 
-  // Only activate once price crosses activateAt
+  // Break even: if price reaches entry + breakEvenAtr×ATR, move SL to entry price
+  if (s.breakEvenAtr > 0 && s.distanceAtr > 0 && s.entryPrice > 0) {
+    const atr = s.distance / s.distanceAtr;
+    const bePrice = s.side === "SELL"
+      ? s.entryPrice + s.breakEvenAtr * atr
+      : s.entryPrice - s.breakEvenAtr * atr;
+    const beTriggered = s.side === "SELL" ? price >= bePrice : price <= bePrice;
+
+    if (beTriggered) {
+      try {
+        // Get TP price from the open OCO before cancelling
+        const openOrders = await getOpenOrders(s.mode);
+        const ocoLegs = openOrders.filter((o: { symbol: string; orderListId: number }) => o.symbol === s.symbol && o.orderListId === s.orderListId);
+        const tpLeg = ocoLegs.find((o: { type: string }) => o.type === "LIMIT_MAKER");
+        if (tpLeg) {
+          const beSl    = roundPrice(s.entryPrice, s.tickSize);
+          const beSlLim = roundPrice(s.side === "SELL" ? s.entryPrice * 0.999 : s.entryPrice * 1.001, s.tickSize);
+          await cancelOcoOrder(s.symbol, s.orderListId, s.mode);
+          const newOco = await placeOcoOrder({
+            symbol: s.symbol, side: s.side,
+            quantity: s.quantity,
+            tpPrice: String(tpLeg.price), slStopPrice: beSl, slLimitPrice: beSlLim,
+          }, s.mode) as { orderListId: number };
+
+          // Actualitza el trailing record amb el nou OCO id i breakEvenAtr = 0
+          trailingDelete(s.orderListId);
+          const { orderListId: _old, createdAt: _ca, ...rest } = s;
+          trailingSet(newOco.orderListId, { ...rest, breakEvenAtr: 0 });
+          log.trailing.info({ symbol: s.symbol, bePrice, entryPrice: s.entryPrice, newOco: newOco.orderListId }, "break even activat — SL mogut a entrada");
+        }
+      } catch (e) {
+        log.trailing.warn({ symbol: s.symbol, err: (e as Error).message }, "break even fallat");
+      }
+      return;
+    }
+  }
+
+  // Only activate trailing once price crosses activateAt
   if (s.side === "SELL" && price < s.activateAt) return;
   if (s.side === "BUY"  && price > s.activateAt) return;
 

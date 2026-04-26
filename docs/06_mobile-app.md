@@ -202,3 +202,9 @@ GET /api/deploy       → 403 (endpoint restringit)
 3. Si necessita nous endpoints de l'API, afegeix-los a `ALLOWED_API` a `server-public.mjs` (veure [05_configuration.md](05_configuration.md))
 
 4. Afegeix l'enllaç a la navegació de `common.js` o a `index.html`
+
+---
+
+## Vegeu també
+
+[[01_architecture]] · [[05_configuration]] · [[08_integrations]] · [[07_deployment]]

@@ -46,3 +46,17 @@ next-env.d.ts
 # Desplegament
 .deploy.env
 /releases/
+docs/.obsidian/app.json
+docs/.obsidian/appearance.json
+docs/.obsidian/community-plugins.json
+docs/.obsidian/core-plugins.json
+docs/.obsidian/graph.json
+docs/.obsidian/workspace.json
+docs/.obsidian/plugins/claude-code-mcp/main.js
+docs/.obsidian/plugins/claude-code-mcp/manifest.json
+docs/.obsidian/plugins/claude-code-mcp/styles.css
+docs/.obsidian/plugins/obsidian42-brat/brat-migrations.json
+docs/.obsidian/plugins/obsidian42-brat/data.json
+docs/.obsidian/plugins/obsidian42-brat/main.js
+docs/.obsidian/plugins/obsidian42-brat/manifest.json
+docs/.obsidian/plugins/obsidian42-brat/styles.css

@@ -34,7 +34,7 @@ import {
   cacheGet, trailingSet, nextTradeCode, orderMetaSet,
   pendingOcoSave, pendingOcoGetAll, pendingOcoDelete, pendingOcoIncAttempts,
   orphanWatchUpsert, orphanWatchGet, orphanWatchDelete, orphanWatchMarkNotified, hasActiveTrailing,
-  trailingActiveGetAll,
+  trailingActiveGetAll, trailingGetAll,
 } from "./cache-store";
 import { ensureTrailingEngine } from "./trailing-engine";
 import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta, journalGetBotConsecWins } from "./journal-store";
@@ -72,6 +72,8 @@ interface SavedConfig {
     slAtr:            number;
     trailActivateAtr: number;
     trailDistanceAtr: number;
+    breakEvenAtr?:    number;
+    maxOpen?:         number;
     capitalMode:      string;  // "FIXED" | "PCT" | "ANTI_MARTINGALE" | "PYRAMID"
     capitalFixed?:    number;
     capitalPct?:      number;
@@ -213,11 +215,12 @@ interface BuyOpts {
   fillRef:   number;
   tpAtr:     number;
   slAtr:     number;
-  trailAct:  number;
-  trailDst:  number;
-  trailMode: string;
-  botName:   string;
-  mode:      TradingMode;
+  trailAct:     number;
+  trailDst:     number;
+  trailMode:    string;
+  breakEvenAtr: number;
+  botName:      string;
+  mode:         TradingMode;
 }
 
 async function applyOcoSuccess(
@@ -239,6 +242,7 @@ async function applyOcoSuccess(
   journalId:  number,
   existingTradeCode: string | null,
   mode: TradingMode = "paper",
+  breakEvenAtr = 0,
 ): Promise<void> {
   const orderListId = typeof ocoResult.orderListId === "number" ? ocoResult.orderListId : -1;
 
@@ -260,7 +264,7 @@ async function applyOcoSuccess(
     trailingSet(orderListId, {
       symbol,
       activateAt, distance,
-      activateAtr: trailAct, distanceAtr: trailDst, logic: trailMode,
+      activateAtr: trailAct, distanceAtr: trailDst, breakEvenAtr: breakEvenAtr, logic: trailMode,
       quantity: ocoQty, side: "SELL", tickSize, entryPrice: fillPrice, mode,
     });
     ensureTrailingEngine();
@@ -277,7 +281,7 @@ async function applyOcoSuccess(
 }
 
 async function executeBuy(opts: BuyOpts): Promise<void> {
-  const { symbol, quoteQty, score, interval, atr, tpAtr, slAtr, trailAct, trailDst, trailMode, botName, mode } = opts;
+  const { symbol, quoteQty, score, interval, atr, tpAtr, slAtr, trailAct, trailDst, trailMode, breakEvenAtr, botName, mode } = opts;
 
   // Avís si el bot fa una operació real des de l'entorn de desenvolupament
   if (mode === "real") await warnBotRealFromDev(botName, symbol);
@@ -400,7 +404,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
   await applyOcoSuccess(
     ocoResult, symbol, ocoQty, tpPrice, slStopPrice,
     fillPrice, trailAct, trailDst, trailMode, tickSize, atr,
-    interval, botName, quoteQty, score, journalId, tradeCode, mode,
+    interval, botName, quoteQty, score, journalId, tradeCode, mode, breakEvenAtr,
   );
 }
 
@@ -420,6 +424,7 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const slAtr      = config.slAtr      ?? 1.0;
   const trailAct   = config.trailActivateAtr  ?? 1.5;
   const trailDst   = config.trailDistanceAtr  ?? 1.0;
+  const breakEvenAtr = config.breakEvenAtr ?? 0;
   const trailMode  = settingGetForMode("trailing_sl_mode", bot.mode as "paper" | "real") || "ATR";
   // Jerarquia: bot (explícit) > effectiveConfig de la sim > default 70
   const minScore   = bot.minProbability ?? effectiveConfig?.minProbability ?? 70;
@@ -475,8 +480,8 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const trailingCount = trailingActiveGetAll().length;
   const totalOpen = openOcoCount + trailingCount;
 
-  // Límit de posicions simultànies (bot > effectiveConfig > sense límit)
-  const maxOpen = bot.maxOpen ?? effectiveConfig?.maxOpen ?? null;
+  // Límit de posicions simultànies (bot > effectiveConfig > config.maxOpen > sense límit)
+  const maxOpen = bot.maxOpen ?? effectiveConfig?.maxOpen ?? config.maxOpen ?? null;
   if (maxOpen !== null && totalOpen >= maxOpen) {
     log.auto.debug({ bot: bot.name, totalOpen, maxOpen }, "bot: màx. posicions simultànies assolit");
     if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `màx. posicions assolit (${totalOpen}/${maxOpen})`, results: [], mode: bot.mode }).catch(() => {});
@@ -547,9 +552,11 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
         }
       }
 
-      // No comprar si ja tenim un trailing SL actiu per aquest símbol
-      if (hasActiveTrailing(symbol)) {
-        log.auto.info({ bot: bot.name, symbol }, "bot: trailing SL actiu — ometent senyal");
+      // No comprar si ja tenim una posició oberta per a aquest símbol (OCO, trailing pendent o actiu)
+      const hasOpenOcoForSymbol = openOrders.some(o => o.symbol === symbol && o.orderListId !== -1);
+      const hasPendingTrailForSymbol = trailingGetAll().some(t => t.symbol === symbol);
+      if (hasActiveTrailing(symbol) || hasOpenOcoForSymbol || hasPendingTrailForSymbol) {
+        log.auto.info({ bot: bot.name, symbol, hasOpenOcoForSymbol, hasPendingTrailForSymbol }, "bot: posició ja oberta — ometent senyal");
         scanResults.push({
           symbol, price: analysis.price, score: analysis.score, verdict: analysis.verdict,
           decision: "TRAILING_ACTIVE", probability, strategy: bestStrategy.name,
@@ -566,7 +573,7 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
       await executeBuy({
         symbol, quoteQty: usdtPer, score: analysis.score, interval,
         atr: analysis.atr, fillRef: analysis.price,
-        tpAtr, slAtr, trailAct, trailDst, trailMode,
+        tpAtr, slAtr, trailAct, trailDst, trailMode, breakEvenAtr,
         botName: bot.name, mode: bot.mode,
       });
 
@@ -632,9 +639,10 @@ async function retryPendingOcos(): Promise<void> {
           logic:       p.trailMode,
           quantity:    p.ocoQty,
           side:        "SELL",
-          tickSize:    p.tickSize,
-          entryPrice:  p.fillPrice,
-          mode:        p.mode === "real" ? "real" : "paper",
+          tickSize:     p.tickSize,
+          entryPrice:   p.fillPrice,
+          breakEvenAtr: 0,
+          mode:         p.mode === "real" ? "real" : "paper",
         });
         ensureTrailingEngine();
       }
@@ -763,13 +771,18 @@ async function checkOrphanPositions(mode: TradingMode): Promise<void> {
     // Han passat 5 minuts: aplicar lògica del bot per fixar SL/TP
     log.auto.info({ mode, symbol }, "aplicant correcció OCO a posició òrfena…");
 
-    // Trobar el bot actiu per aquest símbol i mode
+    // Trobar el bot actiu per aquest símbol i mode.
+    // Els configs de simulació poden tenir USDT o USDC com a quote — comparem per base asset.
+    const KNOWN_QUOTES_RE = /USDT$|USDC$|BUSD$|FDUSD$|TUSD$|BTC$|ETH$|BNB$/;
+    const baseAsset = symbol.replace(KNOWN_QUOTES_RE, "");
     const bots = botGetAll().filter(b => b.enabled && b.mode === mode);
     let botConfig: SavedConfig | null = null;
     let activBot:  Bot | null = null;
     for (const bot of bots) {
       const cfg = loadSimConfig(bot.simId);
-      if (cfg && cfg.config.symbols?.includes(symbol)) {
+      if (cfg && cfg.config.symbols?.some((s: string) =>
+        s === symbol || s.replace(KNOWN_QUOTES_RE, "") === baseAsset
+      )) {
         botConfig = cfg;
         activBot  = bot;
         break;

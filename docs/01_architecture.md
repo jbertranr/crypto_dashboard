@@ -184,3 +184,9 @@ El dashboard utilitza SSE per rebre actualitzacions en temps real sense polling:
 | Snapshots portfolio | SQLite `snapshots` | Persistents |
 
 Invalidació manual: `DELETE /api/cache/invalidate?prefix=klines`
+
+---
+
+## Vegeu també
+
+[[02_api-reference]] · [[03_database-schema]] · [[04_trading-engine]] · [[05_configuration]] · [[08_integrations]]

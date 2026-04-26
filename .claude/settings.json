@@ -1,4 +1,5 @@
 {
+  "enabledMcpjsonServers": ["obsidian"],
   "permissions": {
     "allow": [
       "Bash(node -e \":*)",
