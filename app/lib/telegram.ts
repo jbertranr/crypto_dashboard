@@ -250,6 +250,7 @@ export async function sendHourlyPortfolioReport(data: {
   limitCount:  number;
   top:     Array<{ asset: string; valueUSD: number; pct: number; change24h: number }>;
   stables: Array<{ asset: string; valueUSD: number; pct: number }>;
+  mode?:   string;
 }): Promise<void> {
   const up   = (data.delta1h ?? 0) >= 0;
   const sign = up ? "+" : "";
@@ -257,7 +258,8 @@ export async function sendHourlyPortfolioReport(data: {
     ? (data.delta1h / (data.totalValue - data.delta1h)) * 100
     : null;
 
-  const title = up ? "📈 RESUM HORARI" : "📉 RESUM HORARI";
+  const prefix = data.mode === "real" ? "🟠 REAL" : "📄 PAPER";
+  const title = `[${prefix}]  ${up ? "📈 RESUM HORARI" : "📉 RESUM HORARI"}`;
 
   const summaryLines: string[] = [
     kv("Saldo",    fmtUSD(data.totalValue)),
@@ -280,7 +282,7 @@ export async function sendHourlyPortfolioReport(data: {
 
   const ip = await getServerIp();
   const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
-  await sendTelegram(`<b>${title}</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`);
+  await sendTelegram(`<b>${title}</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`, data.mode);
 }
 
 // ── Notificació: ordre executada ──────────────────────────────────────────────
@@ -434,6 +436,7 @@ export async function sendPortfolioReport(data: {
   limitCount:   number;
   top:     Array<{ asset: string; valueUSD: number; pct: number; change24h: number }>;
   stables?: Array<{ asset: string; valueUSD: number; pct: number }>;
+  mode?:   string;
 }): Promise<void> {
   const color = pickColor(data.delta24h ?? data.delta1h ?? data.pnl24h);
   const s24   = data.pnl24h  >= 0 ? "+" : "";
@@ -459,9 +462,10 @@ export async function sendPortfolioReport(data: {
         `${a.asset.padEnd(6)} ${fmtUSD(a.valueUSD).padStart(10)}  ${(a.pct.toFixed(1)+"%").padStart(6)}`))]
     : [];
 
-  const ip = await getServerIp();
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
-  await sendTelegram(`<b>📊 INFORME DE PORTFOLIO</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`);
+  const ip     = await getServerIp();
+  const prefix = data.mode === "real" ? "🟠 REAL" : "📄 PAPER";
+  const block  = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
+  await sendTelegram(`<b>[${prefix}]  📊 INFORME DE PORTFOLIO</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`, data.mode);
 }
 
 // ── Notificació: nova ordre col·locada ────────────────────────────────────────

@@ -14,6 +14,7 @@ import { db, orderMetaGet } from "./cache-store";
 import { log }                        from "./logger";
 import { STABLES, BINANCE_BASE }      from "./constants";
 import { getQuoteAsset, settingGetBool } from "./settings-store";
+import type { TradingMode } from "./types";
 
 const schedulerEnabled = () =>
   settingGetBool("scheduler_enabled") || settingGetBool("scheduler_enabled_real");
@@ -65,8 +66,8 @@ interface PortfolioData {
 
 interface Ticker { symbol: string; lastPrice: string; priceChangePercent: string; }
 
-async function fetchPortfolioData(): Promise<PortfolioData> {
-  const [account, openOrders] = await Promise.all([getAccount(), getOpenOrders()]);
+async function fetchPortfolioData(mode: TradingMode = "paper"): Promise<PortfolioData> {
+  const [account, openOrders] = await Promise.all([getAccount(mode), getOpenOrders(mode)]);
 
   const assets = account.balances.filter(b => parseFloat(b.free) + parseFloat(b.locked) > 0.000001);
   const qa     = getQuoteAsset();
@@ -185,25 +186,32 @@ async function checkOrderConsistency(): Promise<void> {
 async function sendHourlyReport(): Promise<void> {
   if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
-  try {
-    const portfolio = await fetchPortfolioData();
-    const snap1h    = snapshotNear(Date.now() - 60 * 60 * 1000);
-    const delta1h   = snap1h ? portfolio.totalValue - snap1h.value : null;
 
-    await sendHourlyPortfolioReport({
-      totalValue:  portfolio.totalValue,
-      delta1h,
-      openOrders:  portfolio.openOrders,
-      ocoCount:    portfolio.ocoCount,
-      limitCount:  portfolio.limitCount,
-      top:         portfolio.top,
-      stables:     portfolio.stables,
-    });
-    global.__schedulerLastHourly = Date.now();
-    log.telegram.info("informe horari enviat");
-  } catch (err) {
-    log.telegram.error({ err: (err as Error).message }, "error informe horari");
+  const modes: TradingMode[] = ["paper"];
+  if (settingGetBool("scheduler_enabled_real") && process.env.BINANCE_API_KEY_REAL) modes.push("real");
+
+  for (const mode of modes) {
+    try {
+      const portfolio = await fetchPortfolioData(mode);
+      const snap1h    = snapshotNear(Date.now() - 60 * 60 * 1000);
+      const delta1h   = snap1h ? portfolio.totalValue - snap1h.value : null;
+
+      await sendHourlyPortfolioReport({
+        totalValue:  portfolio.totalValue,
+        delta1h,
+        openOrders:  portfolio.openOrders,
+        ocoCount:    portfolio.ocoCount,
+        limitCount:  portfolio.limitCount,
+        top:         portfolio.top,
+        stables:     portfolio.stables,
+        mode,
+      });
+      log.telegram.info({ mode }, "informe horari enviat");
+    } catch (err) {
+      log.telegram.error({ err: (err as Error).message, mode }, "error informe horari");
+    }
   }
+  global.__schedulerLastHourly = Date.now();
 }
 
 // ── Informe diari (7:30) amb gràfic ──────────────────────────────────────────
@@ -211,30 +219,36 @@ async function sendHourlyReport(): Promise<void> {
 async function sendDailyReport(): Promise<void> {
   if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
-  try {
-    const portfolio = await fetchPortfolioData();
-    const snap24h   = snapshotNear(Date.now() - 24 * 60 * 60 * 1000);
-    const delta24h  = snap24h ? portfolio.totalValue - snap24h.value : null;
 
-    await sendPortfolioReport({
-      totalValue:  portfolio.totalValue,
-      cryptoValue: portfolio.cryptoValue,
-      stableValue: portfolio.stableValue,
-      pnl24h:      portfolio.pnl24h,
-      pnlPct:      portfolio.pnlPct,
-      delta24h,
-      openOrders:  portfolio.openOrders,
-      ocoCount:    portfolio.ocoCount,
-      limitCount:  portfolio.limitCount,
-      top:         portfolio.top,
-      stables:     portfolio.stables,
-    });
+  const modes: TradingMode[] = ["paper"];
+  if (settingGetBool("scheduler_enabled_real") && process.env.BINANCE_API_KEY_REAL) modes.push("real");
 
-    global.__schedulerLastDaily = Date.now();
-    log.telegram.info("informe diari enviat");
-  } catch (err) {
-    log.telegram.error({ err: (err as Error).message }, "error informe diari");
+  for (const mode of modes) {
+    try {
+      const portfolio = await fetchPortfolioData(mode);
+      const snap24h   = snapshotNear(Date.now() - 24 * 60 * 60 * 1000);
+      const delta24h  = snap24h ? portfolio.totalValue - snap24h.value : null;
+
+      await sendPortfolioReport({
+        totalValue:  portfolio.totalValue,
+        cryptoValue: portfolio.cryptoValue,
+        stableValue: portfolio.stableValue,
+        pnl24h:      portfolio.pnl24h,
+        pnlPct:      portfolio.pnlPct,
+        delta24h,
+        openOrders:  portfolio.openOrders,
+        ocoCount:    portfolio.ocoCount,
+        limitCount:  portfolio.limitCount,
+        top:         portfolio.top,
+        stables:     portfolio.stables,
+        mode,
+      });
+      log.telegram.info({ mode }, "informe diari enviat");
+    } catch (err) {
+      log.telegram.error({ err: (err as Error).message, mode }, "error informe diari");
+    }
   }
+  global.__schedulerLastDaily = Date.now();
 }
 
 // ── Snapshot del portfolio (cada 15 min) ─────────────────────────────────────
