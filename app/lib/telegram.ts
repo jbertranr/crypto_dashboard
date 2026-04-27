@@ -235,7 +235,7 @@ export async function sendCard(
   const ip = await getServerIp();
   const prefix = mode === "real" ? "🟠 REAL" : "📄 PAPER";
   await sendTelegram(
-    `<b>[${prefix}]  ${cardTitle}</b>\n\n${pre([...block, kv("Servidor", `${ip} (${ENV_LABEL})`)])}`,
+    `<b>[${prefix}]  ${cardTitle}</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`,
     mode,
   );
 }
@@ -279,8 +279,8 @@ export async function sendHourlyPortfolioReport(data: {
     : [];
 
   const ip = await getServerIp();
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", `${ip} (${ENV_LABEL})`)];
-  await sendTelegram(`<b>${title}</b>\n\n${pre(block)}`);
+  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
+  await sendTelegram(`<b>${title}</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`);
 }
 
 // ── Notificació: ordre executada ──────────────────────────────────────────────
@@ -415,7 +415,7 @@ export async function sendOpenOrdersReport(orders: BinanceOrder[]): Promise<void
   }
 
   const ip = await getServerIp();
-  textParts.push(`🕐 ${ts()}  ·  🖥 ${ip} (${ENV_LABEL})`);
+  textParts.push(`🕐 ${ts()}\n<i>${ip} · ${ENV_LABEL}</i>`);
   await sendTelegram(textParts.join("\n"));
 }
 
@@ -460,8 +460,8 @@ export async function sendPortfolioReport(data: {
     : [];
 
   const ip = await getServerIp();
-  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts()), kv("Servidor", `${ip} (${ENV_LABEL})`)];
-  await sendTelegram(`<b>📊 INFORME DE PORTFOLIO</b>\n\n${pre(block)}`);
+  const block = [...summaryLines, ...cryptoLines, ...stableLines, "", kv("Hora", ts())];
+  await sendTelegram(`<b>📊 INFORME DE PORTFOLIO</b>\n\n${pre(block)}\n<i>${ip} · ${ENV_LABEL}</i>`);
 }
 
 // ── Notificació: nova ordre col·locada ────────────────────────────────────────
@@ -771,7 +771,10 @@ export async function notifyMarketScan(data: {
 
   const ip = await getServerIp();
   if (data.skipReason) {
-    await sendTelegram(`${header}\n⏭ Omès: ${data.skipReason}\n<i>${ts()}  ·  🖥 ${ip} (${ENV_LABEL})</i>`, data.mode);
+    await sendTelegram(
+      `${header}\n\n${pre([kv("Omès", data.skipReason), kv("Hora", ts())])}\n<i>${ip} · ${ENV_LABEL}</i>`,
+      data.mode,
+    );
     return;
   }
 
@@ -802,10 +805,9 @@ export async function notifyMarketScan(data: {
   });
 
   const infoLine = `Interval: ${data.interval}  ·  Mínim: ${data.minScore}%  ·  ${ts()}`;
-  const metaLine = `Servidor: ${ip} (${ENV_LABEL})`;
-  const body     = rows.length > 0 ? pre([infoLine, metaLine, "─".repeat(40), ...rows]) : pre([infoLine, metaLine, "(cap símbol analitzat)"]);
+  const body     = rows.length > 0 ? pre([infoLine, "─".repeat(40), ...rows]) : pre([infoLine, "(cap símbol analitzat)"]);
 
-  await sendTelegram(`${header}\n${body}`, data.mode);
+  await sendTelegram(`${header}\n${body}\n<i>${ip} · ${ENV_LABEL}</i>`, data.mode);
 }
 
 // ── Notificació: trailing stop activat ───────────────────────────────────────
