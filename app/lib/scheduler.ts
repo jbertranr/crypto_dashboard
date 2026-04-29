@@ -14,7 +14,7 @@ import { db, orderMetaGet } from "./cache-store";
 import { log }                        from "./logger";
 import { STABLES, BINANCE_BASE }      from "./constants";
 import { getQuoteAsset, settingGetBool } from "./settings-store";
-import type { TradingMode } from "./types";
+import type { TradingMode } from "./binance-auth";
 
 const schedulerEnabled = () =>
   settingGetBool("scheduler_enabled") || settingGetBool("scheduler_enabled_real");
@@ -122,8 +122,8 @@ async function fetchPortfolioData(mode: TradingMode = "paper"): Promise<Portfoli
 }
 
 /** Snapshot més proper a `targetMs` en el passat. */
-function snapshotNear(targetMs: number) {
-  const snaps = getSnapshots().filter(s => s.time <= targetMs);
+function snapshotNear(targetMs: number, mode: TradingMode = "paper") {
+  const snaps = getSnapshots(mode).filter(s => s.time <= targetMs);
   return snaps.length > 0 ? snaps[snaps.length - 1] : null;
 }
 
@@ -193,7 +193,7 @@ async function sendHourlyReport(): Promise<void> {
   for (const mode of modes) {
     try {
       const portfolio = await fetchPortfolioData(mode);
-      const snap1h    = snapshotNear(Date.now() - 60 * 60 * 1000);
+      const snap1h    = snapshotNear(Date.now() - 60 * 60 * 1000, mode);
       const delta1h   = snap1h ? portfolio.totalValue - snap1h.value : null;
 
       await sendHourlyPortfolioReport({
@@ -226,7 +226,7 @@ async function sendDailyReport(): Promise<void> {
   for (const mode of modes) {
     try {
       const portfolio = await fetchPortfolioData(mode);
-      const snap24h   = snapshotNear(Date.now() - 24 * 60 * 60 * 1000);
+      const snap24h   = snapshotNear(Date.now() - 24 * 60 * 60 * 1000, mode);
       const delta24h  = snap24h ? portfolio.totalValue - snap24h.value : null;
 
       await sendPortfolioReport({
@@ -255,42 +255,51 @@ async function sendDailyReport(): Promise<void> {
 
 const SNAPSHOT_INTERVAL_MS = 15 * 60 * 1000;
 
+async function takeSnapshotForMode(mode: TradingMode): Promise<number | null> {
+  const account = await getAccount(mode);
+  const assets  = account.balances.filter(b => parseFloat(b.free) + parseFloat(b.locked) > 1e-8);
+  const qa2     = getQuoteAsset();
+  const pairs   = assets.filter(b => !STABLES.has(b.asset)).map(b => `${b.asset}${qa2}`);
+
+  const tickerResults = await Promise.allSettled(
+    pairs.map(p =>
+      fetch(`${BINANCE_BASE}/ticker/24hr?symbol=${p}`, { cache: "no-store" })
+        .then(r => r.json() as Promise<{ lastPrice: string }>)
+    )
+  );
+
+  const priceMap = new Map<string, number>();
+  pairs.forEach((p, i) => {
+    const r = tickerResults[i];
+    if (r.status === "fulfilled") priceMap.set(p.replace(new RegExp(`${qa2}$`), ""), parseFloat(r.value.lastPrice));
+  });
+
+  let total = 0;
+  for (const b of assets) {
+    const qty   = parseFloat(b.free) + parseFloat(b.locked);
+    const price = priceMap.get(b.asset) ?? (STABLES.has(b.asset) ? 1 : 0);
+    total += qty * price;
+  }
+  return total > 0 ? total : null;
+}
+
 async function takePortfolioSnapshot(): Promise<void> {
   if (!schedulerEnabled()) return;
-  try {
-    const account = await getAccount();
-    const assets  = account.balances.filter(b => parseFloat(b.free) + parseFloat(b.locked) > 1e-8);
-    const qa2     = getQuoteAsset();
-    const pairs   = assets.filter(b => !STABLES.has(b.asset)).map(b => `${b.asset}${qa2}`);
+  const modes: TradingMode[] = ["paper"];
+  if (settingGetBool("scheduler_enabled_real") && process.env.BINANCE_API_KEY_REAL) modes.push("real");
 
-    const tickerResults = await Promise.allSettled(
-      pairs.map(p =>
-        fetch(`${BINANCE_BASE}/ticker/24hr?symbol=${p}`, { cache: "no-store" })
-          .then(r => r.json() as Promise<{ lastPrice: string }>)
-      )
-    );
-
-    const priceMap = new Map<string, number>();
-    pairs.forEach((p, i) => {
-      const r = tickerResults[i];
-      if (r.status === "fulfilled") priceMap.set(p.replace(new RegExp(`${qa2}$`), ""), parseFloat(r.value.lastPrice));
-    });
-
-    let total = 0;
-    for (const b of assets) {
-      const qty   = parseFloat(b.free) + parseFloat(b.locked);
-      const price = priceMap.get(b.asset) ?? (STABLES.has(b.asset) ? 1 : 0);
-      total += qty * price;
+  for (const mode of modes) {
+    try {
+      const total = await takeSnapshotForMode(mode);
+      if (total !== null) {
+        addSnapshot({ time: Date.now(), value: total }, mode);
+        log.telegram.debug({ total, mode }, "snapshot del portfolio desat");
+      }
+    } catch (err) {
+      log.telegram.warn({ err: (err as Error).message, mode }, "error en prendre snapshot");
     }
-
-    if (total > 0) {
-      addSnapshot({ time: Date.now(), value: total });
-      log.telegram.debug({ total }, "snapshot del portfolio desat");
-    }
-    global.__schedulerLastSnapshot = Date.now();
-  } catch (err) {
-    log.telegram.warn({ err: (err as Error).message }, "error en prendre snapshot");
   }
+  global.__schedulerLastSnapshot = Date.now();
 }
 
 // ── Arrencada ─────────────────────────────────────────────────────────────────
