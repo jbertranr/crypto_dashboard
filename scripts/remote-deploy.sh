@@ -89,9 +89,14 @@ fi
 step "Build (npm run build)"
 
 info "Compilant — pot trigar 1-2 min..."
-npm run build 2>&1 | grep -E "✓|✗|error|warning|Route|warn|compiled|Finished" | sed 's/^/   /' || {
-  warn "Build complet (alguns warnings suprimits)"
-}
+set +o pipefail
+npm run build 2>&1 | grep -E "✓|✗|error|warning|Route|warn|compiled|Finished" | sed 's/^/   /'
+BUILD_STATUS=${PIPESTATUS[0]}
+set -o pipefail
+if [ "$BUILD_STATUS" -ne 0 ]; then
+  echo -e "\033[0;31m   ❌ Build fallat (codi $BUILD_STATUS) — el .next pot ser invàlid. Rollback recomanat: bash scripts/rollback.sh\033[0m"
+  exit 1
+fi
 ok "Build completat"
 
 # ── Restart PM2 ───────────────────────────────────────────────────────────────
