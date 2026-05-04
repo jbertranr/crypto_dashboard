@@ -341,17 +341,21 @@ async function processTrailing(t: TrailingActive) {
       : null;
     // --- Journal: record trailing exit ---
     try {
-      const qty    = parseFloat(t.quantity);
+      const ord2       = await getOrder(t.symbol, t.slOrderId, t.mode);
+      const realQty    = parseFloat(ord2.executedQty) > 0 ? parseFloat(ord2.executedQty) : parseFloat(t.quantity);
+      const realQuote  = parseFloat(ord2.cummulativeQuoteQty) > 0 ? parseFloat(ord2.cummulativeQuoteQty) : t.currentSl * realQty;
+      const realPrice  = realQty > 0 ? realQuote / realQty : t.currentSl;
+      const qty    = realQty;
       const ePx    = t.entryPrice > 0 ? t.entryPrice : null;
-      const pnl    = ePx ? (t.currentSl - ePx) * qty : null;
-      const pnlPct = ePx ? ((t.currentSl - ePx) / ePx) * 100 : null;
+      const pnl    = ePx ? (realPrice - ePx) * qty : null;
+      const pnlPct = ePx ? ((realPrice - ePx) / ePx) * 100 : null;
       journalAdd({
         type:           "EXIT_TRAILING",
         symbol:          t.symbol,
         side:            t.side,
-        qty:             t.quantity,
-        price:           String(t.currentSl),
-        quoteQty:        String(t.currentSl * qty),
+        qty:             String(qty),
+        price:           String(realPrice),
+        quoteQty:        String(realQuote),
         commission:      "0",
         commissionAsset: "BNB",
         entryPrice:      ePx ? String(ePx) : null,

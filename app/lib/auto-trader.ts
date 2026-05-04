@@ -957,11 +957,9 @@ async function globalPoll(): Promise<void> {
       }
 
       const interval = simConfig.config.interval;
-      // MTF: for bots with interval ≥ 1h, check every 1h using closed higher-TF candles
-      const checkInterval = (INTERVAL_MS[interval] ?? 0) >= INTERVAL_MS["1h"] ? "1h" : interval;
-      if (!candleJustClosed(checkInterval)) continue;
+      if (!candleJustClosed(interval)) continue;
 
-      log.auto.info({ bot: bot.name, interval, checkInterval }, "globalPoll: candle tancada, llançant runBotScan");
+      log.auto.info({ bot: bot.name, interval }, "globalPoll: candle tancada, llançant runBotScan");
 
       // Run in background (non-blocking for other bots)
       runBotScan(bot, simConfig).catch(err =>

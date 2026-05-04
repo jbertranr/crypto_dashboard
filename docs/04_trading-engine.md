@@ -142,7 +142,7 @@ candleJustClosed(interval):
            → No (vela massa vella, p.ex. el servidor estava aturat): no dispara
 ```
 
-> **Nota:** Per a intervals ≥ 1h el bot comprova cada hora (no cada 4h) si la vela superior ha tancat. Això dóna una finestra de 15 min per recuperar-se d'un reinici del servidor.
+> **Nota:** El bot espera el tancament real de la seva vela (`interval`). Per a un bot de 4h, el scan es llança exactament quan tanca la vela de 4h. La finestra de frescor (25% del període = 1h per a 4h) permet recuperar-se d'un reinici del servidor sense perdre el senyal.
 
 ### Flux d'una iteració (runBotScan)
 
@@ -179,7 +179,7 @@ Els paràmetres operatius d'un bot vénen del fitxer JSON de simulació (`simula
 | `trailDistanceAtr` | Multiplicador ATR per a la distància del trailing | `1.0` |
 | `breakEvenAtr` | Multiplicador ATR per moure SL a break even | `0` (desactivat) |
 | `maxOpen` | Màxim de posicions simultànies del bot | sense límit |
-| `symbols` | Llista de símbols (format USDT, es converteix a USDC automàticament) | — |
+| `symbols` | Llista de símbols en format USDC (ex: `BTCUSDC`, `SOLUSDC`). Mai s'usa USDT — Binance Europa no el permet | — |
 | `interval` | Timeframe de les veles | — |
 
 > **Break Even**: quan el preu arriba a `entrada + breakEvenAtr × ATR`, el SL es mou al preu d'entrada (benefici mínim garantit). S'aplica tant a ordres automàtiques del bot com a ordres manuals col·locades amb un bot preset seleccionat.
@@ -211,7 +211,7 @@ El capital per operació es calcula a partir del mode configurat a la simulació
 
 ### Criteris d'entrada (indicadors)
 
-L'anàlisi tècnica avalua:
+L'anàlisi tècnica avalua, entre d'altres:
 - **RSI** (14): compra si < 40, evitar si > 70
 - **MACD**: creuament positiu
 - **EMA 20/50/200**: preu per sobre de les EMAs
@@ -220,7 +220,52 @@ L'anàlisi tècnica avalua:
 - **Volum**: confirma el moviment
 - **Patrons de vela**: Hammer, Doji, Engulfing, Morning Star...
 
-El score final (0–100) pondera tots els senyals. Un bot entra quan supera `min_probability`.
+### Decisió d'entrada — dos valors, una sola lògica
+
+L'aplicació mostra **dos valors de score** que poden semblar contradictoris però tenen rols ben diferenciats:
+
+| Valor | On es veu | Ús real |
+|-------|-----------|---------|
+| **`analysis.score`** (0–100, mitjana plana) | Taula principal, tooltip | **Únic valor que decideix si el bot entra** |
+| **`layerScores`** (ponderat 40/30/30) | Popup de targeta de senyal | Informatiu; **no influeix en cap decisió** |
+
+El `layerScores` ponderat (Direcció 40% · Context 30% · Trigger 30%) és útil per entendre *per quin motiu* s'ha generat un senyal, però **ni el bot ni les simulacions l'usen per entrar**.
+
+### Fases de decisió (bot i simulació — lògica idèntica)
+
+**Fase 1 — Verdict mínim**
+
+```
+analysis.score ≥ 65  →  verdict = "BUY"   (continua)
+analysis.score  < 65  →  verdict = "WAIT"  (descarta)
+analysis.score ≤ 35  →  verdict = "AVOID" (descarta)
+```
+
+**Fase 2 — Probabilitat ponderada**
+
+```
+probabilitat = score × 0.7 + bonus_interval + bonus_confiança
+```
+
+| Interval | Bonus interval |
+|----------|---------------|
+| 1d, 4h   | +10           |
+| 1h       | +5            |
+| 30m      | +2            |
+| 15m      | +0            |
+
+| Confiança de l'estratègia | Bonus confiança |
+|--------------------------|----------------|
+| Alta                     | +10            |
+| Moderada                 | +5             |
+| Baixa                    | +0             |
+
+Si `probabilitat < min_probability` del bot → **no entra**.
+
+**Exemple:** score=72, interval=1h, confiança=alta, min_probability=70
+→ probabilitat = 72×0.7 + 5 + 10 = 65.4 → arrodonit **65** → 65 < 70 → **NO entra**
+
+> Les simulacions usen exactament la mateixa funció `computeProbability()` i els mateixos llindars. Els resultats de backtest reflecteixen fidelment el comportament real del bot.
 
 ---
 
