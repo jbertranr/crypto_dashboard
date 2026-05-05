@@ -428,7 +428,9 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   const trailMode  = settingGetForMode("trailing_sl_mode", bot.mode as "paper" | "real") || "ATR";
   // Jerarquia: bot (explícit) > effectiveConfig de la sim > default 70
   const minScore   = bot.minProbability ?? effectiveConfig?.minProbability ?? 70;
-  const tgScan     = settingGetBoolForMode("tg_on_market_scan", bot.mode as "paper" | "real");
+  const isProduction = process.env.NODE_ENV === "production";
+  const tgScan     = settingGetBoolForMode("tg_on_market_scan", bot.mode as "paper" | "real")
+    && (bot.mode !== "real" || isProduction);
 
   // Finestra horària (UTC)
   const nowHour = new Date().getUTCHours();

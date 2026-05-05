@@ -40,21 +40,18 @@ export function guardRealFromLocalhost(req: NextRequest, mode: string): NextResp
 
 /**
  * Crida des del bot (auto-trader, sense request HTTP).
- * Envia un Telegram d'avís però NO bloqueja l'operació.
+ * En entorn de desenvolupament bloqueja l'operació llençant un error.
  */
 export async function warnBotRealFromDev(botName: string, symbol: string): Promise<void> {
-  const nodeEnv = process.env.NODE_ENV ?? "development";
-  const isDev   = nodeEnv !== "production";
+  const isDev = (process.env.NODE_ENV ?? "development") !== "production";
   if (!isDev) return;
 
-  const msg =
-    `⚠️ <b>AVÍS DE DESENVOLUPAMENT</b>\n\n` +
-    `El bot <b>${botName}</b> està executant una operació <b>REAL</b> des d'un entorn de desenvolupament (localhost).\n\n` +
-    `Símbol: <b>${symbol}</b>\n` +
-    `Entorn: <code>${nodeEnv}</code>\n\n` +
-    `<i>Si això és intencionat, ignora aquest missatge. Si no, atura el bot immediatament.</i>`;
+  await sendTelegram(
+    `🚫 <b>COMPRA REAL BLOQUEJADA</b>\n\n` +
+    `El bot <b>${botName}</b> ha intentat comprar <b>${symbol}</b> en mode REAL des d'un entorn de desenvolupament.\n\n` +
+    `L'operació ha estat cancel·lada. Les compres reals només estan permeses a producció.`,
+    "real",
+  ).catch(err => log.auto.warn({ err: (err as Error).message }, "warnBotRealFromDev: error enviant Telegram"));
 
-  await sendTelegram(msg, "real").catch(err =>
-    log.auto.warn({ err: (err as Error).message }, "warnBotRealFromDev: error enviant Telegram"),
-  );
+  throw new Error(`Compra REAL bloquejada en entorn de desenvolupament (bot: ${botName}, símbol: ${symbol})`);
 }

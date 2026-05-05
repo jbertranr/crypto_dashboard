@@ -499,3 +499,15 @@
 {"level":30,"time":1777922840499,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"telegram","mode":"real","msg":"informe horari enviat"}
 {"level":30,"time":1777923025134,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","bot":"Només per testeig - Te perdues -Anàlisi cada 30 minuts","interval":"30m","checkInterval":"30m","msg":"globalPoll: candle tancada, llançant runBotScan"}
 {"level":30,"time":1777923739239,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1777924639191,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1777924824660,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","bot":"Solana i Bitcoin a 4 hores (454%)","interval":"4h","checkInterval":"1h","msg":"globalPoll: candle tancada, llançant runBotScan"}
+{"level":30,"time":1777924824667,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","bot":"Només per testeig - Te perdues -Anàlisi cada 30 minuts","interval":"30m","checkInterval":"30m","msg":"globalPoll: candle tancada, llançant runBotScan"}
+{"level":30,"time":1777925539194,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1777926439295,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1777926439533,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"telegram","mode":"paper","msg":"informe horari enviat"}
+{"level":30,"time":1777926440140,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"telegram","mode":"real","msg":"informe horari enviat"}
+{"level":30,"time":1777926625166,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","bot":"Només per testeig - Te perdues -Anàlisi cada 30 minuts","interval":"30m","checkInterval":"30m","msg":"globalPoll: candle tancada, llançant runBotScan"}
+{"level":30,"time":1777927339618,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1777928239652,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1777928424804,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","bot":"Solana i Bitcoin a 4 hores (454%)","interval":"4h","checkInterval":"1h","msg":"globalPoll: candle tancada, llançant runBotScan"}
+{"level":30,"time":1777928424807,"pid":26100,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","bot":"Només per testeig - Te perdues -Anàlisi cada 30 minuts","interval":"30m","checkInterval":"30m","msg":"globalPoll: candle tancada, llançant runBotScan"}
