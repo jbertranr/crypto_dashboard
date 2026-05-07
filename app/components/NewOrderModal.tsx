@@ -494,6 +494,8 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
 
     setSaving(true);
     try {
+      const botCfg = selectedBot?.simConfig?.config;
+      const atrVal = analysisSnap?.atr;
       const res = await fetch("/api/orders/buy-and-exit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -505,6 +507,13 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           trailing,
           botName: selectedBot?.name ?? null,
           mode: viewMode,
+          // Quan s'aplica un bot, enviem els multiplicadors ATR perquè el servidor
+          // recalculi TP/SL des del fillPrice real (evita SL erroni si el preu es mou)
+          ...(botCfg && atrVal ? {
+            tpAtrMul: botCfg.tpAtr ?? 2.5,
+            slAtrMul: botCfg.slAtr ?? 1.0,
+            atr:      atrVal,
+          } : {}),
         }),
       });
       const d = await res.json();
@@ -935,41 +944,67 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           </div>
 
           {/* TP % */}
-          <div className="order-edit__field">
-            <span className="order-edit__label">
-              <i className="fa-solid fa-circle new-order__tp-dot" /> Take Profit %
-            </span>
-            <div className="new-order__price-row">
-              <input className="order-edit__input new-order__pct-pos" type="number"
-                min="0.01" step="0.01" value={beTpPct}
-                onChange={e => setBeTpPct(e.target.value)} />
-              <div className="new-order__pct-wrap">
-                <span className="new-order__pct-computed">
-                  {ref && beTpPct ? (ref * (1 + parseFloat(beTpPct) / 100)).toFixed(ref >= 100 ? 2 : ref >= 1 ? 4 : 6) : "—"}
+          {(() => {
+            const atrVal = analysisSnap?.atr;
+            const dp     = ref && ref >= 100 ? 2 : ref && ref >= 1 ? 4 : 6;
+            const tpMul  = (atrVal && ref && beTpPct)
+              ? (parseFloat(beTpPct) / 100 * ref) / atrVal : null;
+            return (
+              <div className="order-edit__field">
+                <span className="order-edit__label">
+                  <i className="fa-solid fa-circle new-order__tp-dot" /> Take Profit %
+                  {tpMul != null && (
+                    <span className="new-order__atr-badge" style={{ background: "rgba(16,185,129,0.12)", color: "var(--green)", border: "1px solid rgba(16,185,129,0.3)" }}>
+                      {tpMul.toFixed(2)}×ATR
+                    </span>
+                  )}
                 </span>
-                <span className="new-order__pct-sign">%</span>
+                <div className="new-order__price-row">
+                  <input className="order-edit__input new-order__pct-pos" type="number"
+                    min="0.01" step="0.01" value={beTpPct}
+                    onChange={e => setBeTpPct(e.target.value)} />
+                  <div className="new-order__pct-wrap">
+                    <span className="new-order__pct-computed">
+                      {ref && beTpPct ? (ref * (1 + parseFloat(beTpPct) / 100)).toFixed(dp) : "—"}
+                    </span>
+                    <span className="new-order__pct-sign">%</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* SL % */}
-          <div className="order-edit__field">
-            <span className="order-edit__label">
-              <i className="fa-solid fa-circle new-order__sl-dot" /> Stop Loss %
-              <span className="new-order__field-hint">SL Limit offset fix 0.1%</span>
-            </span>
-            <div className="new-order__price-row">
-              <input className="order-edit__input new-order__pct-neg" type="number"
-                min="0.01" step="0.01" value={beSlPct}
-                onChange={e => setBeSlPct(e.target.value)} />
-              <div className="new-order__pct-wrap">
-                <span className="new-order__pct-computed">
-                  {ref && beSlPct ? (ref * (1 - parseFloat(beSlPct) / 100)).toFixed(ref >= 100 ? 2 : ref >= 1 ? 4 : 6) : "—"}
+          {(() => {
+            const atrVal = analysisSnap?.atr;
+            const dp     = ref && ref >= 100 ? 2 : ref && ref >= 1 ? 4 : 6;
+            const slMul  = (atrVal && ref && beSlPct)
+              ? (parseFloat(beSlPct) / 100 * ref) / atrVal : null;
+            return (
+              <div className="order-edit__field">
+                <span className="order-edit__label">
+                  <i className="fa-solid fa-circle new-order__sl-dot" /> Stop Loss %
+                  <span className="new-order__field-hint">SL Limit offset fix 0.1%</span>
+                  {slMul != null && (
+                    <span className="new-order__atr-badge" style={{ background: "rgba(239,68,68,0.1)", color: "var(--red)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                      {slMul.toFixed(2)}×ATR
+                    </span>
+                  )}
                 </span>
-                <span className="new-order__pct-sign">%</span>
+                <div className="new-order__price-row">
+                  <input className="order-edit__input new-order__pct-neg" type="number"
+                    min="0.01" step="0.01" value={beSlPct}
+                    onChange={e => setBeSlPct(e.target.value)} />
+                  <div className="new-order__pct-wrap">
+                    <span className="new-order__pct-computed">
+                      {ref && beSlPct ? (ref * (1 - parseFloat(beSlPct) / 100)).toFixed(dp) : "—"}
+                    </span>
+                    <span className="new-order__pct-sign">%</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Trailing Stop */}
           <div className="new-order__trailing">

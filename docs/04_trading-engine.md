@@ -136,7 +136,7 @@ candleJustClosed(interval):
      · Si l'índex ha avançat:
          - Actualitza "darrer vist" (sempre, per no re-disparar senyals vells)
          - Comprova frescor: la vela va tancar fa menys del 25% del període?
-             · Per interval 4h (checkInterval 1h): finestra de 15 min
+             · Per interval 4h: finestra de 1h
              · Per interval 1h: finestra de 15 min
            → Sí: dispara runBotScan
            → No (vela massa vella, p.ex. el servidor estava aturat): no dispara
@@ -165,6 +165,7 @@ Quan una vela acaba de tancar:
           · journalAdd(...)
   4. Telegram (si tg_on_market_scan = 1): envia resultat per cada símbol
      · BUY_EXECUTED · NO_SIGNAL · MULTI_TF_FAIL · TRAILING_ACTIU
+     ⚠ Mode real: la notificació només s'envia a producció (NODE_ENV=production)
 ```
 
 ### Paràmetres de la simulació desada (sim config)

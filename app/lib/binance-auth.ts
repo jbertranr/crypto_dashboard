@@ -383,6 +383,16 @@ export async function placeMarketBuy(
   }, mode);
 }
 
+export async function placeMarketBuyQty(
+  symbol: string,
+  quantity: string,
+  mode: TradingMode = "paper"
+): Promise<MarketBuyResult> {
+  return signedRequest("POST", "/order", {
+    symbol, side: "BUY", type: "MARKET", quantity,
+  }, mode);
+}
+
 export async function placeOcoOrder(params: {
   symbol: string; side: "BUY" | "SELL"; quantity: string;
   tpPrice: string; slStopPrice: string; slLimitPrice: string;

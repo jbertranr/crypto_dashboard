@@ -462,6 +462,55 @@ html, body {
 .ph-stat-pill.neu { background: transparent; color: rgba(255,255,255,0.75); }
 .ph-stat-pill.pos::before { content: "▲ "; font-size: 0.7em; opacity: 0.85; }
 .ph-stat-pill.neg::before { content: "▼ "; font-size: 0.7em; opacity: 0.85; }
+.ph-pct {
+  font-size: 1.1rem; font-weight: 700; opacity: 0.85;
+  margin-left: 0.4rem; letter-spacing: -0.02em;
+}
+.ph-pct.pos { color: #a7f3d0; }
+.ph-pct.neg { color: #fca5a5; }
+.ph-pct.neu { color: rgba(255,255,255,0.6); }
+/* ── Day navigator ─── */
+.ph-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.15rem;
+}
+.ph-date {
+  font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.85);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.ph-nav-btn {
+  background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
+  width: 1.8rem; height: 1.8rem; color: white; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s; line-height: 1;
+  padding: 0;
+}
+.ph-nav-btn:disabled { opacity: 0.25; cursor: default; }
+.ph-nav-btn:not(:disabled):active { background: rgba(255,255,255,0.25); }
+.ph-portfolio-line {
+  font-size: 1.05rem; font-weight: 800; color: rgba(255,255,255,0.9);
+  letter-spacing: -0.03em; margin-bottom: 0.25rem;
+}
+/* Swipe animation */
+@keyframes phSlideLeft  { from { transform: translateX(0); opacity: 1; } 50% { transform: translateX(-18px); opacity: 0.5; } to { transform: translateX(0); opacity: 1; } }
+@keyframes phSlideRight { from { transform: translateX(0); opacity: 1; } 50% { transform: translateX(18px);  opacity: 0.5; } to { transform: translateX(0); opacity: 1; } }
+.ph-slide-left  { animation: phSlideLeft  0.25s ease; }
+.ph-slide-right { animation: phSlideRight 0.25s ease; }
+.ph-bot-row {
+  border-top: 1px solid rgba(255,255,255,0.15);
+  margin: 0 -1.4rem 0; padding: 0.6rem 1.4rem 0;
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+.ph-bot-label {
+  font-size: 0.58rem; font-weight: 700; color: rgba(255,255,255,0.5);
+  text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;
+}
+.ph-bot-stats { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.ph-bot-stat {
+  font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.55);
+}
+.ph-bot-stat.pos { color: #a7f3d0; }
+.ph-bot-stat.neg { color: #fca5a5; }
 
 /* ── Portfolio total hero card ────────────────────────────────── */
 .portfolio-total {
@@ -824,6 +873,21 @@ html, body {
   text-align: center; font-size: 0.67rem; color: var(--text-3);
   padding: 0.85rem; margin-bottom: 0.5rem; letter-spacing: 0.01em;
 }
+
+/* ── Mode toggle (PAPER / REAL) in header ────────────────────── */
+.mobile-mode-toggle {
+  display: flex; align-items: center;
+  background: rgba(0,0,0,0.07); border-radius: 6px;
+  padding: 2px; gap: 2px; margin-right: 6px;
+}
+.mmt-btn {
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.04em;
+  padding: 3px 7px; border-radius: 4px; border: none;
+  background: transparent; color: var(--text-2);
+  cursor: pointer; transition: all 0.15s;
+}
+.mmt-btn--active { background: #fff; color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.mmt-btn--real.mmt-btn--active { color: var(--red); }
 
 /* ── Settings page ───────────────────────────────────────────── */
 .settings-page { background: var(--bg-card); min-height: 100vh; }

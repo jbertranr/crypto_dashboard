@@ -514,13 +514,13 @@ async function fetchAll() {
 
   try {
     const [orders, status, costBasis, market] = await Promise.all([
-      fetch(API_BASE + "/api/orders",     { credentials: "include" }).then(r =>
+      fetch(API_BASE + "/api/orders"     + modeParam(), { credentials: "include" }).then(r =>
         r.status === 401 ? null : r.json()
       ).catch(() => []),
-      fetch(API_BASE + "/api/status",     { credentials: "include" }).then(r =>
+      fetch(API_BASE + "/api/status",                  { credentials: "include" }).then(r =>
         r.status === 401 ? { code: "AUTH" } : r.json()
       ).catch(() => null),
-      fetch(API_BASE + "/api/cost-basis", { credentials: "include" }).then(r => r.json()).catch(() => ({})),
+      fetch(API_BASE + "/api/cost-basis" + modeParam(), { credentials: "include" }).then(r => r.json()).catch(() => ({})),
       fetch(API_BASE + "/api/market",     { credentials: "include" }).then(r => r.json()).catch(() => []),
     ]);
     const priceMap = {};

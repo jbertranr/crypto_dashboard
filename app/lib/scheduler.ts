@@ -129,49 +129,58 @@ function snapshotNear(targetMs: number, mode: TradingMode = "paper") {
 
 // ── Comprovació consistència ordres (cada hora) ───────────────────────────────
 
+async function checkOrderConsistencyForMode(mode: TradingMode): Promise<{ orphanTrailing: number[]; binanceCount: number }> {
+  const binanceOrders = await getOpenOrders(mode);
+  const binanceIds    = new Set(binanceOrders.map(o => o.orderId));
+
+  const trailingRows = db.prepare(
+    "SELECT sl_order_id FROM trailing_active WHERE status = 'active' AND mode = ?"
+  ).all(mode) as Array<{ sl_order_id: number }>;
+
+  const orphanTrailing: number[] = [];
+  for (const { sl_order_id } of trailingRows) {
+    if (!binanceIds.has(sl_order_id)) orphanTrailing.push(sl_order_id);
+  }
+
+  return { orphanTrailing, binanceCount: binanceOrders.length };
+}
+
 async function checkOrderConsistency(): Promise<void> {
   if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
   try {
-    const binanceOrders = await getOpenOrders();
+    const modes: TradingMode[] = ["paper", "real"];
+    const allOrphans: { mode: TradingMode; ids: number[]; binanceCount: number }[] = [];
 
-    // Reconstruïm les ordres enriquides igual que fa /api/orders
-    const trailingRows = db.prepare(
-      "SELECT sl_order_id, origin_oco_list_id, sl_update_count FROM trailing_active WHERE status = 'active'"
-    ).all() as Array<{ sl_order_id: number; origin_oco_list_id: number | null; sl_update_count: number }>;
-    const trailingMap = new Map(trailingRows.map(r => [r.sl_order_id, r]));
-
-    const binanceIds = new Set(binanceOrders.map(o => o.orderId));
-
-    // Ordres que la nostra DB té com a trailing_active però Binance ja no té
-    const orphanTrailing: number[] = [];
-    for (const [slOrderId] of trailingMap) {
-      if (!binanceIds.has(slOrderId)) orphanTrailing.push(slOrderId);
-    }
-
-    if (orphanTrailing.length === 0) {
-      log.telegram.debug({ total: binanceOrders.length }, "comprovació ordres OK");
-      return;
-    }
-
-    // Construïm l'alerta
-    const lines: string[] = [
-      "⚠️ *Divergència d'ordres detectada*",
-      "",
-      `Binance té *${binanceOrders.length}* ordres obertes.`,
-    ];
-
-    if (orphanTrailing.length > 0) {
-      lines.push("", `🔴 Trailing actiu a la DB però absent a Binance (${orphanTrailing.length}):`)
-      for (const id of orphanTrailing) {
-        const meta = orderMetaGet(`order:${id}`);
-        lines.push(`  • orderId=${id}${meta?.tradeCode ? ` tradeCode=${meta.tradeCode}` : ""}`);
+    for (const mode of modes) {
+      try {
+        const { orphanTrailing, binanceCount } = await checkOrderConsistencyForMode(mode);
+        if (orphanTrailing.length > 0)
+          allOrphans.push({ mode, ids: orphanTrailing, binanceCount });
+        else
+          log.telegram.debug({ mode, total: binanceCount }, "comprovació ordres OK");
+      } catch (err) {
+        log.telegram.warn({ mode, err: (err as Error).message }, "checkOrderConsistency: error obtenint ordres");
       }
     }
 
-    lines.push("", `_${new Date().toLocaleString("ca-ES")}_`);
+    if (allOrphans.length === 0) return;
+
+    const lines: string[] = ["⚠️ *Divergència d'ordres detectada*", ""];
+    for (const { mode, ids, binanceCount } of allOrphans) {
+      const modeLabel = mode === "real" ? "🔴 REAL" : "📄 Paper";
+      lines.push(`${modeLabel} — Binance té *${binanceCount}* ordres obertes.`);
+      lines.push(`🔴 Trailing actiu a la DB però absent a Binance (${ids.length}):`);
+      for (const id of ids) {
+        const meta = orderMetaGet(`order:${id}`);
+        lines.push(`  • orderId=${id}${meta?.tradeCode ? ` tradeCode=${meta.tradeCode}` : ""}`);
+      }
+      lines.push("");
+    }
+
+    lines.push(`_${new Date().toLocaleString("ca-ES")}_`);
     await sendTelegram(lines.join("\n"));
-    log.telegram.warn({ orphanTrailing }, "divergència d'ordres detectada");
+    log.telegram.warn({ allOrphans }, "divergència d'ordres detectada");
   } catch (err) {
     log.telegram.error({ err: (err as Error).message }, "error comprovació ordres");
   }

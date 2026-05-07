@@ -26,7 +26,7 @@ function computeProbability(score: number, interval: string, confidence: string)
 import { settingGetForMode, settingGetBoolForMode, getQuoteAsset } from "./settings-store";
 import { botGetAll, type Bot } from "./bot-store";
 import {
-  placeMarketBuy, placeMarketSell, placeOcoOrder, getTickerPrice,
+  placeMarketBuy, placeMarketBuyQty, placeMarketSell, placeOcoOrder, getTickerPrice,
   roundPriceUp, roundPriceDown, roundQty, getOpenOrders, getAccount,
   type TradingMode,
 } from "./binance-auth";
@@ -286,8 +286,36 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
   // Avís si el bot fa una operació real des de l'entorn de desenvolupament
   if (mode === "real") await warnBotRealFromDev(botName, symbol);
 
-  // 1. Compra a mercat
-  const buyResult   = await placeMarketBuy(symbol, String(quoteQty), mode);
+  // 1. tickSize / stepSize — cal ABANS de la compra per calcular la quantitat exacta
+  const cached = cacheGet<{ tickSize: string; stepSize: string }>(`exchange-info:${symbol}`);
+  let tickSize = "0.01";
+  let stepSize = "0.001";
+  if (cached) {
+    tickSize = cached.data.tickSize ?? tickSize;
+    stepSize = cached.data.stepSize ?? stepSize;
+  } else {
+    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+    try {
+      const info = await fetch(`${base}/api/exchange-info?symbol=${symbol}`, { signal: AbortSignal.timeout(10_000) })
+        .then(r => r.json() as Promise<{ tickSize?: string; stepSize?: string }>);
+      if (info.tickSize) tickSize = info.tickSize;
+      if (info.stepSize) stepSize = info.stepSize;
+    } catch { /* usa defaults */ }
+  }
+  const stepNum = parseFloat(stepSize);
+  const stepDp  = stepSize.includes(".") ? stepSize.length - stepSize.indexOf(".") - 1 : 0;
+
+  // Preu actual per calcular la quantitat base a comprar
+  const preBuyPrice = await getTickerPrice(symbol, mode);
+  if (!preBuyPrice || isNaN(preBuyPrice)) throw new Error(`No s'ha pogut obtenir el preu de ${symbol}`);
+
+  // Quantitat base arrodonida al stepSize (evita fraccionaments no suportats per OCO/LIMIT)
+  const rawBaseQty = quoteQty / preBuyPrice;
+  const buyQty     = (Math.floor(rawBaseQty / stepNum) * stepNum).toFixed(stepDp);
+  if (parseFloat(buyQty) <= 0) throw new Error(`Quantitat calculada zero per ${symbol}: quoteQty=${quoteQty} price=${preBuyPrice} stepSize=${stepSize}`);
+
+  // 2. Compra a mercat amb quantitat base (garanteix que ocoQty == buyQty)
+  const buyResult   = await placeMarketBuyQty(symbol, buyQty, mode);
   const executedQty = buyResult.executedQty;
   const fillPrice   = parseFloat(buyResult.cummulativeQuoteQty) / parseFloat(executedQty);
 
@@ -297,26 +325,9 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
     .filter(f => f.commissionAsset === baseAsset)
     .reduce((sum, f) => sum + parseFloat(f.commission), 0);
 
-  // 2. tickSize / stepSize
-  const cached = cacheGet<{ tickSize: string; stepSize: string }>(`exchange-info:${symbol}`);
-  let tickSize = "0.01";
-  let stepSize = "1";
-  if (cached) {
-    tickSize = cached.data.tickSize ?? tickSize;
-    stepSize = cached.data.stepSize ?? stepSize;
-  } else {
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const info = await fetch(`${base}/api/exchange-info?symbol=${symbol}`, { signal: AbortSignal.timeout(10_000) })
-      .then(r => r.json() as Promise<{ tickSize?: string; stepSize?: string }>);
-    if (info.tickSize) tickSize = info.tickSize;
-    if (info.stepSize) stepSize = info.stepSize;
-  }
-
-  // Quantitat neta (sense comissions), arrodonida al stepSize
-  const netQty  = parseFloat(executedQty) - commInBase;
-  const stepNum = parseFloat(stepSize);
-  const stepDp  = stepSize.includes(".") ? stepSize.length - stepSize.indexOf(".") - 1 : 0;
-  const ocoQty  = (Math.floor(netQty / stepNum) * stepNum).toFixed(stepDp);
+  // Quantitat neta (sense comissions), re-arrodonida al stepSize
+  const netQty = parseFloat(executedQty) - commInBase;
+  const ocoQty = (Math.floor(netQty / stepNum) * stepNum).toFixed(stepDp);
 
   // 3. Preus TP / SL a partir de l'ATR
   const tpTarget = fillPrice + tpAtr * atr;
@@ -660,11 +671,15 @@ async function retryPendingOcos(): Promise<void> {
 /* ── Detecció i correcció de posicions sense SL ──────────────── */
 
 const STABLES        = new Set(["USDT","USDC","BUSD","TUSD","DAI","FDUSD"]);
-const ORPHAN_MIN_USD    = 10;
+const FEE_ASSETS     = new Set(["BNB"]);   // actius de comissions: ignorar si val < llindar
+const FEE_ASSET_MAX_USD = 50;              // per sota d'aquest valor s'assumeix que és reserva de fees
+const ORPHAN_MIN_USD    = 15;
 const ORPHAN_NOTIFY_MS  = 2 * 60 * 1000;  // 2 min abans de notificar (evita falsos positius per latència API)
 const ORPHAN_FIX_MS     = 5 * 60 * 1000;  // 5 min abans de corregir
 
 async function checkOrphanPositions(mode: TradingMode): Promise<void> {
+  if (!settingGetBoolForMode("orphan_check_enabled", mode)) return;
+
   let openOrders: Awaited<ReturnType<typeof getOpenOrders>>;
   let account:    Awaited<ReturnType<typeof getAccount>>;
   try {
@@ -721,6 +736,7 @@ async function checkOrphanPositions(mode: TradingMode): Promise<void> {
 
     const valueUsd = total * priceNum;
     if (valueUsd < ORPHAN_MIN_USD) continue;
+    if (FEE_ASSETS.has(bal.asset) && valueUsd < FEE_ASSET_MAX_USD) continue;
 
     // Quantitat desprotegida: posició total menys el que cobreixen les ordres SELL.
     // Comprova tant el símbol actual com qualsevol variant de quote (p.ex. ETHUSDT vs ETHUSDC)

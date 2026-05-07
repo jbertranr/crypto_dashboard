@@ -5,6 +5,11 @@
 // localhost → http://localhost:3000 | extern → túnel Cloudflare port 3000
 const API_BASE = window.API_BASE ?? "http://localhost:3000";
 
+// ── Trading mode preference ────────────────────────────────────────────────────
+
+function getMobileMode() { return localStorage.getItem("cd_trading_mode") ?? "paper"; }
+function modeParam()     { return getMobileMode() === "real" ? "?mode=real" : ""; }
+
 // ── Font size preference ───────────────────────────────────────────────────────
 
 const FONT_SIZES = { small: "14px", medium: "17px", large: "20px" };
@@ -176,6 +181,27 @@ function initHamburger(activePage) {
   document.getElementById("hamburger-btn").addEventListener("click", open);
   overlay.addEventListener("click", close);
   document.getElementById("nav-close").addEventListener("click", close);
+
+  // Mode toggle (PAPER / REAL) in the app header
+  const appHeader = document.querySelector(".app-header");
+  if (appHeader) {
+    const currentMode = getMobileMode();
+    const modeToggle  = document.createElement("div");
+    modeToggle.id = "mobile-mode-toggle";
+    modeToggle.className = "mobile-mode-toggle";
+    modeToggle.innerHTML =
+      `<button class="mmt-btn${currentMode === "paper" ? " mmt-btn--active" : ""}" data-mode="paper">PAPER</button>` +
+      `<button class="mmt-btn mmt-btn--real${currentMode === "real" ? " mmt-btn--active" : ""}" data-mode="real">REAL</button>`;
+    modeToggle.querySelectorAll(".mmt-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        localStorage.setItem("cd_trading_mode", btn.dataset.mode);
+        window.location.reload();
+      });
+    });
+    const statusEl = appHeader.querySelector(".header-status");
+    if (statusEl) appHeader.insertBefore(modeToggle, statusEl);
+    else appHeader.appendChild(modeToggle);
+  }
 
   document.getElementById("logout-btn").addEventListener("click", async () => {
     await fetch(API_BASE + "/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});

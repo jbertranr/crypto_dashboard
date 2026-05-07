@@ -129,7 +129,7 @@ El bot comença a operar a la propera vela tancada.
 | `maxOpen` | Màxim posicions simultànies. Respectat tant pel bot automàtic com pel modal d'ordre manual |
 | `breakEvenAtr` | Quan el preu puja X×ATR per sobre de l'entrada, el SL es mou a break even. `0` = desactivat |
 | `slAtr` | Distància del Stop Loss en ATR. Valors baixos (< 1.0) amb intervals curts (30m) poden ser massa ajustats |
-| `symbols` | Format USDT (ex: `SOLUSDT`). El sistema els converteix automàticament a USDC en live |
+| `symbols` | Format USDC (ex: `SOLUSDC`, `BTCUSDC`). Mai s'usa USDT — Binance Europa no el permet |
 
 ### Ordres manuals amb bot preset
 
@@ -210,6 +210,16 @@ Qualsevol operació en mode real envia ordres amb **diners reals**. Sempre:
 - Verifica el mode abans de cridar funcions de Binance
 - Usa `real-guard.ts` per a confirmacions explícites
 - Comprova `realConfigured` via `GET /api/trading-mode` abans d'activar
+
+**Restriccions de seguretat en desenvolupament (`NODE_ENV !== "production"`):**
+
+| Origen | Operació real | Comportament |
+|--------|--------------|--------------|
+| Dashboard (manual) | Qualsevol | **403 bloquejat** (`guardRealFromLocalhost`) |
+| Bot (auto-trader) | Compra | **Error llançat + Telegram d'avís** (`warnBotRealFromDev`) |
+| Bot (auto-trader) | Notificació scan | **Silenciada** (mai s'envia en dev) |
+
+Les compres reals del bot **només s'executen a producció**. Si el bot detecta `NODE_ENV !== "production"` en intentar comprar en real, envia un Telegram d'avís i cancel·la l'operació.
 
 ```typescript
 import { requireRealConfirmation } from "@/lib/real-guard";

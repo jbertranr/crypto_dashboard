@@ -189,9 +189,9 @@ async function fetchAll() {
 
   try {
     const [market, balance, orders, trailing] = await Promise.all([
-      fetch(API_BASE + "/api/market",          { credentials: "include" }).then(r => r.json()).catch(() => []),
-      fetch(API_BASE + "/api/balance",         { credentials: "include" }).then(r => r.json()).catch(() => []),
-      fetch(API_BASE + "/api/orders",          { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/market",                   { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/balance" + modeParam(),   { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/orders"  + modeParam(),   { credentials: "include" }).then(r => r.json()).catch(() => []),
       fetch(API_BASE + "/api/orders/trailing", { credentials: "include" }).then(r => r.json()).catch(() => ({})),
     ]);
 

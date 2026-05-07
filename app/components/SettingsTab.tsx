@@ -32,6 +32,7 @@ interface Settings {
   activity_logger_enabled:     string;
   // Auto-trading master switch only (per-bot config is in the bots table)
   auto_trade_enabled:          string;
+  orphan_check_enabled:        string;
   [key: string]:            string;
 }
 
@@ -137,6 +138,7 @@ const DEFAULTS = {
   activity_logger_enabled:  "1",
   tg_on_motor_anomaly:      "1",
   motor_anomaly_multiplier: "3",
+  orphan_check_enabled:     "0",
 };
 
 const ALL_PAIRS = [
@@ -603,6 +605,23 @@ export default function SettingsTab() {
                   onClick={() => setSetting(mk("activity_logger_enabled"), settings?.[mk("activity_logger_enabled")] === "1" ? "0" : "1")}
                   disabled={!settings || saving !== null}
                   aria-label={settings?.[mk("activity_logger_enabled")] === "1" ? "Desactivar" : "Activar"}
+                >
+                  <span className="cfg-switch__thumb" />
+                </button>
+              </div>
+
+              {/* Orphan check */}
+              <div className={`cfg-toggle-row${settings?.[mk("orphan_check_enabled")] !== "1" ? " cfg-toggle-row--off" : ""}`}>
+                <i className="fa-solid fa-circle-exclamation cfg-toggle-row__icon" style={{ color: settings?.[mk("orphan_check_enabled")] === "1" ? "var(--orange, #f59e0b)" : undefined }} />
+                <div className="cfg-toggle-row__body">
+                  <div className="cfg-toggle-row__title">Comprovació posicions òrfenes <span className="cfg-badge cfg-badge--neutral">15 min</span></div>
+                  <div className="cfg-toggle-row__desc">{"Detecta posicions obertes a la DB que no tenen cap ordre SL activa a Binance i envia una alerta per Telegram. Desactivar en entorns de desenvolupament per evitar notificacions duplicades."}</div>
+                </div>
+                <button
+                  className={`cfg-switch${settings?.[mk("orphan_check_enabled")] === "1" ? " cfg-switch--on" : ""}`}
+                  onClick={() => setSetting(mk("orphan_check_enabled"), settings?.[mk("orphan_check_enabled")] === "1" ? "0" : "1")}
+                  disabled={!settings || saving !== null}
+                  aria-label={settings?.[mk("orphan_check_enabled")] === "1" ? "Desactivar" : "Activar"}
                 >
                   <span className="cfg-switch__thumb" />
                 </button>
@@ -1363,7 +1382,7 @@ export default function SettingsTab() {
           const sc = bot.simConfig;
           const masterOn = settings?.auto_trade_enabled === "1";
           return (
-            <div key={bot.id} className={`bot-card${!bot.enabled || !masterOn ? " bot-card--disabled" : ""}`}>
+            <div key={bot.id} className={`bot-card${!bot.enabled ? " bot-card--disabled" : !masterOn ? " bot-card--master-off" : ""}`}>
               <div className="bot-card__header">
                 <button
                   className={`cfg-switch${bot.enabled ? " cfg-switch--on" : ""}`}

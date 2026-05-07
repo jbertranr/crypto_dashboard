@@ -62,37 +62,118 @@ async function doLogin(username, password) {
   return r.ok;
 }
 
-// ── P&L ───────────────────────────────────────────────────────────────────────
+// ── P&L hero — swipeable day navigator ───────────────────────────────────────
 
-function renderPnl(pnl, portfolioTotal) {
-  const totalHtml = portfolioTotal > 0
-    ? `<span class="ph-portfolio">${fmtUSD(portfolioTotal)}</span>` : "";
-  if (!pnl || pnl.code) {
-    el("pnl-hero").innerHTML = `
-      <div class="ph-top"><span class="ph-label">P&amp;L del bot</span>${totalHtml}</div>
-      <div class="ph-value neu">—</div>
-      <div class="ph-row"></div>`;
-    return;
+const DAY_MS = 24 * 60 * 60 * 1000;
+let heroOffset     = 0;   // 0=avui, 1=ahir, 2=avant-ahir, …
+let _heroSnapshots = [];
+let _heroTotal     = 0;
+let _heroPnl       = null;
+let _heroSwipeReady = false;
+
+function snapClosest(snapshots, targetMs) {
+  if (!snapshots?.length) return null;
+  return snapshots.reduce((b, s) =>
+    !b || Math.abs(s.time - targetMs) < Math.abs(b.time - targetMs) ? s : b, null);
+}
+
+function heroMaxOffset(snapshots) {
+  if (!snapshots?.length) return 0;
+  return Math.max(0, Math.round((Date.now() - snapshots[0].time) / DAY_MS) - 1);
+}
+
+function renderPnl(pnl, portfolioTotal, snapshots) {
+  _heroSnapshots = snapshots ?? [];
+  _heroTotal     = portfolioTotal;
+  _heroPnl       = pnl;
+
+  const now = Date.now();
+  const max = heroMaxOffset(_heroSnapshots);
+  heroOffset = Math.min(heroOffset, max);
+
+  let value, prevValue, refDate;
+  if (heroOffset === 0) {
+    value     = portfolioTotal;
+    prevValue = snapClosest(_heroSnapshots, now - DAY_MS)?.value ?? null;
+    refDate   = new Date(now);
+  } else {
+    const s  = snapClosest(_heroSnapshots, now - heroOffset * DAY_MS);
+    const sp = snapClosest(_heroSnapshots, now - (heroOffset + 1) * DAY_MS);
+    value     = s?.value  ?? null;
+    prevValue = sp?.value ?? null;
+    refDate   = s ? new Date(s.time) : null;
   }
-  const v1  = pnl.d1 ?? 0;
-  const cls = v1 > 0 ? "pos" : v1 < 0 ? "neg" : "neu";
-  const periods = [["Avui", pnl.d1], ["7d", pnl.d7], ["30d", pnl.d30]];
+
+  const change = (value != null && prevValue != null) ? value - prevValue : null;
+  const pct    = (change != null && prevValue > 0) ? change / prevValue * 100 : null;
+  const cls    = change == null ? "neu" : change > 0 ? "pos" : change < 0 ? "neg" : "neu";
+
+  const dateLabel = heroOffset === 0 ? "Avui"
+    : heroOffset === 1 ? "Ahir"
+    : refDate ? refDate.toLocaleDateString("ca-ES", { weekday: "short", day: "numeric", month: "short" })
+    : `fa ${heroOffset}d`;
+
+  const valueStr  = value  != null ? fmtUSD(value)  : "—";
+  const changeStr = change != null ? `${change >= 0 ? "+" : ""}${change.toFixed(2)}` : "—";
+  const pctStr    = pct    != null
+    ? `<span class="ph-pct ${cls}">${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%</span>` : "";
+
+  const periods = [["Avui", pnl?.d1], ["7d", pnl?.d7], ["30d", pnl?.d30]];
+  const botRow  = (pnl && !pnl.code) ? `
+    <div class="ph-bot-row">
+      <span class="ph-bot-label">P&amp;L bot tancat</span>
+      <div class="ph-bot-stats">
+        ${periods.map(([label, v]) => {
+          const c = (v ?? 0) > 0 ? "pos" : (v ?? 0) < 0 ? "neg" : "neu";
+          return `<span class="ph-bot-stat ${c}">${label} ${fmt(v)}</span>`;
+        }).join("")}
+      </div>
+    </div>` : "";
+
   el("pnl-hero").innerHTML = `
-    <div class="ph-top">
-      <span class="ph-label">P&amp;L del bot</span>
-      ${totalHtml}
+    <div class="ph-nav">
+      <button class="ph-nav-btn" id="ph-prev" ${heroOffset >= max ? "disabled" : ""}>&#8249;</button>
+      <span class="ph-date">${dateLabel}</span>
+      <button class="ph-nav-btn" id="ph-next" ${heroOffset <= 0 ? "disabled" : ""}>&#8250;</button>
     </div>
-    <div class="ph-value ${cls}">${fmt(v1)} <span class="ph-unit">USDC</span></div>
-    <div class="ph-row">
-      ${periods.map(([label, v]) => {
-        const val = v ?? 0;
-        const c   = val > 0 ? "pos" : val < 0 ? "neg" : "neu";
-        return `<div class="ph-stat">
-          <div class="ph-stat-label">${label}</div>
-          <div class="ph-stat-pill ${c}">${fmt(v)}</div>
-        </div>`;
-      }).join("")}
-    </div>`;
+    <div class="ph-portfolio-line">${valueStr}</div>
+    <div class="ph-value ${cls}">${changeStr} <span class="ph-unit">USDC</span>${pctStr}</div>
+    ${botRow}`;
+
+  el("ph-prev")?.addEventListener("click", () => {
+    if (heroOffset < heroMaxOffset(_heroSnapshots)) { heroOffset++; renderPnl(_heroPnl, _heroTotal, _heroSnapshots); }
+  });
+  el("ph-next")?.addEventListener("click", () => {
+    if (heroOffset > 0) { heroOffset--; renderPnl(_heroPnl, _heroTotal, _heroSnapshots); }
+  });
+
+  if (!_heroSwipeReady) {
+    _heroSwipeReady = true;
+    let sx = 0, sy = 0, swiping = false;
+    const hero = el("pnl-hero");
+    hero.addEventListener("touchstart", e => {
+      sx = e.touches[0].clientX;
+      sy = e.touches[0].clientY;
+      swiping = false;
+    }, { passive: true });
+    hero.addEventListener("touchmove", e => {
+      if (!swiping && Math.abs(e.touches[0].clientX - sx) > Math.abs(e.touches[0].clientY - sy))
+        swiping = true;
+    }, { passive: true });
+    hero.addEventListener("touchend", e => {
+      if (!swiping) return;
+      const dx = e.changedTouches[0].clientX - sx;
+      if (Math.abs(dx) < 35) return;
+      const maxOff = heroMaxOffset(_heroSnapshots);
+      const dir = dx < 0 ? 1 : -1;  // swipe left = back in time
+      if (dir === 1 && heroOffset < maxOff) heroOffset++;
+      else if (dir === -1 && heroOffset > 0) heroOffset--;
+      else return;
+      el("pnl-hero").classList.add(dir === 1 ? "ph-slide-left" : "ph-slide-right");
+      setTimeout(() => el("pnl-hero")?.classList.remove("ph-slide-left", "ph-slide-right"), 250);
+      renderPnl(_heroPnl, _heroTotal, _heroSnapshots);
+    }, { passive: true });
+  }
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────────
@@ -201,7 +282,7 @@ function renderBalance(assets, priceMap) {
       const value  = qty * price;
       return { asset: a.asset, free, locked, qty, value, isStable };
     })
-    .filter(a => a.value > 10)
+    .filter(a => a.value > 10 || a.asset === "BNB")
     .sort((a, b) => {
       if (a.isStable !== b.isStable) return a.isStable ? 1 : -1;
       return b.value - a.value;
@@ -277,16 +358,17 @@ async function fetchAll(cachedStatus = null) {
   el("refresh-btn").classList.add("spinning");
 
   try {
-    const [status, pnl, orders, errors, balance, market] = await Promise.all([
+    const [status, pnl, orders, errors, balance, market, snapshots] = await Promise.all([
       cachedStatus ? Promise.resolve(cachedStatus)
         : fetch(API_BASE + "/api/status", { credentials: "include" }).then(r =>
             r.status === 401 ? { code: "AUTH" } : r.json()
           ).catch(() => null),
-      fetch(API_BASE + "/api/pnl",      { credentials: "include" }).then(r => r.json()).catch(() => null),
-      fetch(API_BASE + "/api/orders",   { credentials: "include" }).then(r => r.json()).catch(() => []),
-      fetch(API_BASE + "/api/errors",   { credentials: "include" }).then(r => r.json()).catch(() => null),
-      fetch(API_BASE + "/api/balance",  { credentials: "include" }).then(r => r.json()).catch(() => []),
-      fetch(API_BASE + "/api/market",   { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/pnl",                                    { credentials: "include" }).then(r => r.json()).catch(() => null),
+      fetch(API_BASE + "/api/orders"             + modeParam(),        { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/errors",                                  { credentials: "include" }).then(r => r.json()).catch(() => null),
+      fetch(API_BASE + "/api/balance"            + modeParam(),        { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/market",                                  { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/portfolio-snapshot" + modeParam(),        { credentials: "include" }).then(r => r.json()).catch(() => []),
     ]);
 
     const priceMap = {};
@@ -306,7 +388,7 @@ async function fetchAll(cachedStatus = null) {
       return sum + qty * price;
     }, 0) : 0;
 
-    renderPnl(pnl, portfolioTotal);
+    renderPnl(pnl, portfolioTotal, snapshots);
     renderOrders(Array.isArray(orders) ? orders : [], priceMap);
     renderErrors(errors);
     renderBalance(Array.isArray(balance) ? balance : [], priceMap);

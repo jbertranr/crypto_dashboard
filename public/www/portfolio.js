@@ -211,10 +211,10 @@ async function fetchAll() {
 
   try {
     const [market, balance, costBasis, snapshots] = await Promise.all([
-      fetch(API_BASE + "/api/market",             { credentials: "include" }).then(r => r.json()).catch(() => []),
-      fetch(API_BASE + "/api/balance",            { credentials: "include" }).then(r => r.json()).catch(() => []),
-      fetch(API_BASE + "/api/cost-basis",         { credentials: "include" }).then(r => r.json()).catch(() => ({})),
-      fetch(API_BASE + "/api/portfolio-snapshot", { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/market",                          { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/balance"            + modeParam(), { credentials: "include" }).then(r => r.json()).catch(() => []),
+      fetch(API_BASE + "/api/cost-basis"         + modeParam(), { credentials: "include" }).then(r => r.json()).catch(() => ({})),
+      fetch(API_BASE + "/api/portfolio-snapshot" + modeParam(), { credentials: "include" }).then(r => r.json()).catch(() => []),
     ]);
 
     if (!Array.isArray(balance)) { showLogin(); return; }

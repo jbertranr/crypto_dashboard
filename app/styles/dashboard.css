@@ -10130,6 +10130,10 @@
 .bot-card--disabled {
   opacity: 0.55;
 }
+.bot-card--master-off {
+  border-left: 3px solid #f59e0b;
+  opacity: 0.8;
+}
 
 .bot-card__header {
   display: flex;
