@@ -146,8 +146,7 @@ async function checkOrderConsistencyForMode(mode: TradingMode): Promise<{ orphan
 }
 
 async function checkOrderConsistency(): Promise<void> {
-  if (!schedulerEnabled()) return;
-  if (!isConfigured()) return;
+  if (!schedulerEnabled() || !isConfigured()) return;
   try {
     const modes: TradingMode[] = ["paper", "real"];
     const allOrphans: { mode: TradingMode; ids: number[]; binanceCount: number }[] = [];
@@ -192,12 +191,17 @@ async function checkOrderConsistency(): Promise<void> {
 
 // ── Informe horari ────────────────────────────────────────────────────────────
 
-async function sendHourlyReport(): Promise<void> {
-  if (!schedulerEnabled()) return;
-  if (!isConfigured()) return;
-
-  const modes: TradingMode[] = ["paper"];
+function activeModes(): TradingMode[] {
+  const modes: TradingMode[] = [];
+  if (settingGetBool("scheduler_enabled")) modes.push("paper");
   if (settingGetBool("scheduler_enabled_real") && process.env.BINANCE_API_KEY_REAL) modes.push("real");
+  return modes;
+}
+
+async function sendHourlyReport(): Promise<void> {
+  if (!isConfigured()) return;
+  const modes = activeModes();
+  if (modes.length === 0) return;
 
   for (const mode of modes) {
     try {
@@ -226,11 +230,9 @@ async function sendHourlyReport(): Promise<void> {
 // ── Informe diari (7:30) amb gràfic ──────────────────────────────────────────
 
 async function sendDailyReport(): Promise<void> {
-  if (!schedulerEnabled()) return;
   if (!isConfigured()) return;
-
-  const modes: TradingMode[] = ["paper"];
-  if (settingGetBool("scheduler_enabled_real") && process.env.BINANCE_API_KEY_REAL) modes.push("real");
+  const modes = activeModes();
+  if (modes.length === 0) return;
 
   for (const mode of modes) {
     try {
@@ -293,9 +295,8 @@ async function takeSnapshotForMode(mode: TradingMode): Promise<number | null> {
 }
 
 async function takePortfolioSnapshot(): Promise<void> {
-  if (!schedulerEnabled()) return;
-  const modes: TradingMode[] = ["paper"];
-  if (settingGetBool("scheduler_enabled_real") && process.env.BINANCE_API_KEY_REAL) modes.push("real");
+  const modes = activeModes();
+  if (modes.length === 0) return;
 
   for (const mode of modes) {
     try {

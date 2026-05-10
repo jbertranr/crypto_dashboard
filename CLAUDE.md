@@ -132,13 +132,44 @@ No cal actualitzar cap URL quan canvia el túnel.
 - `logs/` — Fitxers de log per dia
 - `scripts/test-orders.mjs` — Script de test: compara ordres de Binance vs API local
 
+## Comandes de verificació
+
+```bash
+npm run typecheck   # Comprova errors TypeScript sense compilar (tsc --noEmit)
+npm run lint        # ESLint
+npm run build       # Build complet (també detecta errors de tipus)
+
+# Scripts de manteniment
+node scripts/test-orders.mjs    # Compara ordres Binance vs DB local
+node scripts/test-doge.mjs      # Prova l'anàlisi tècnica per un símbol
+node scripts/cleanup-orphans.mjs # Neteja ordres sense posició associada
+```
+
+---
+
 ## Notes importants
 
-- La base de dades és SQLite a `data/cache.db`; les migracions s'apliquen automàticament en arrencar el backend
+- **3 bases de dades SQLite** a `data/`: `cache.db` (infraestructura compartida), `paper.db` (trades Testnet), `real.db` (trades Mainnet). Les migracions s'apliquen automàticament en arrencar el backend.
+- **Sistema single-user**: l'autenticació és un únic `DASHBOARD_USERNAME` + `DASHBOARD_PASSWORD` a `.env.local`. No hi ha suport multi-tenant — un segon usuari compartiria totes les dades i les mateixes claus Binance.
 - `public/www/common.js` conté helpers compartits entre totes les pàgines mòbils; `config.js` es carrega abans i defineix `API_BASE`
 - Els bots de trading s'activen a través de la configuració del dashboard (port 3000)
 - El scheduler comprova cada hora si les ordres de Binance coincideixen amb la DB local; si detecta divergències envia alerta per Telegram
-- Per testejar la consistència d'ordres manualment: `node scripts/test-orders.mjs`
+
+### Perill d'hidratació (Next.js SSE)
+
+No accedir mai a `localStorage` en l'inicialitzador de `useState` — en SSR retorna `undefined` i provoca mismatch entre servidor i client. Patró correcte:
+
+```typescript
+// ❌ MAL — causa hydration error
+const [val, setVal] = useState(() => localStorage.getItem("key") ?? "default");
+
+// ✅ BÉ — inicialitza amb el valor SSR, sincronitza al client
+const [val, setVal] = useState("default");
+useEffect(() => {
+  const saved = localStorage.getItem("key");
+  if (saved !== null) setVal(saved);
+}, []);
+```
 
 ---
 

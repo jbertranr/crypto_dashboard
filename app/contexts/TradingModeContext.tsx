@@ -28,16 +28,17 @@ export function TradingModeProvider({ children }: { children: ReactNode }) {
   const [viewMode,       setViewModeState] = useState<ViewMode>("paper");
   const [realConfigured, setRealConfigured] = useState(false);
   const [quoteAsset,     setQuoteAsset]     = useState("USDT");
-  const [realLocked,     setRealLockedState] = useState<boolean>(() => {
-    if (typeof localStorage === "undefined") return true;
-    const saved = localStorage.getItem("realLocked");
-    return saved === null ? true : saved === "true"; // per defecte bloquejat
-  });
+  const [realLocked, setRealLockedState] = useState<boolean>(true);
 
   const setRealLocked = (v: boolean) => {
     setRealLockedState(v);
-    if (typeof localStorage !== "undefined") localStorage.setItem("realLocked", String(v));
+    localStorage.setItem("realLocked", String(v));
   };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("realLocked");
+    if (saved !== null) setRealLockedState(saved === "true");
+  }, []);
 
   useEffect(() => {
     fetch("/api/trading-mode")

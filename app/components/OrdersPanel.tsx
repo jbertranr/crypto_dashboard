@@ -676,7 +676,7 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                       <div className="order-card__col-chart">
                         <OcoProgressChart
                           symbol={g.symbol}
-                          startTime={activeTs ? (activeTs.ocoCreatedAt ?? g.startTime) : g.startTime}
+                          startTime={g.startTime}
                           tpPrice={tpPrice} slPrice={activeTs ? activeTs.currentSl : slPrice}
                           side={g.side}
                           slLabel={activeTs ? "SL Trail" : "SL"}
