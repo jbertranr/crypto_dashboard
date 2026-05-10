@@ -71,6 +71,33 @@ interface TradeEntry {
   executedAt:  number;
 }
 
+interface OpenOrder {
+  orderId:         number;
+  symbol:          string;
+  orderListId:     number;
+  side:            string;
+  type:            string;
+  price:           string;
+  stopPrice:       string;
+  origQty:         string;
+  isTrailingSl:    boolean;
+  originOcoListId: number | null;
+  slUpdateCount:   number | null;
+  botName:         string | null;
+  tradeCode:       string | null;
+}
+
+interface OpenPosition {
+  symbol:     string;
+  tradeCode:  string | null;
+  tpPrice:    number | null;
+  slPrice:    number | null;
+  isTrailing: boolean;
+  slUpdates:  number;
+  qty:        number;
+  entryPrice: number | null;
+}
+
 interface ScanResult {
   symbol:       string;
   price?:       number;
@@ -147,6 +174,68 @@ const EXIT_REASONS: Record<string, string> = {
   MARKET_SELL: "Market", MANUAL: "Manual", CANCELED: "Cancel·lat",
 };
 
+// ── Open positions helper ─────────────────────────────────────────────────────
+
+function groupPositions(orders: OpenOrder[], entries: TradeEntry[]): OpenPosition[] {
+  const byCode = new Map<string, OpenOrder[]>();
+  const noCode: OpenOrder[] = [];
+
+  for (const o of orders) {
+    if (o.tradeCode) {
+      const grp = byCode.get(o.tradeCode) ?? [];
+      grp.push(o);
+      byCode.set(o.tradeCode, grp);
+    } else {
+      noCode.push(o);
+    }
+  }
+
+  const positions: OpenPosition[] = [];
+
+  for (const [code, grp] of byCode) {
+    const tp    = grp.find(o => o.type === "LIMIT_MAKER" || o.type === "TAKE_PROFIT_LIMIT");
+    const sl    = grp.find(o => o.type === "STOP_LOSS_LIMIT" || o.type === "STOP_LOSS");
+    const trail = grp.find(o => o.isTrailingSl);
+    const buyE  = entries.find(e => e.tradeCode === code && e.type === "BUY");
+    positions.push({
+      symbol:     grp[0].symbol,
+      tradeCode:  code,
+      tpPrice:    tp  ? parseFloat(tp.price)                  : null,
+      slPrice:    sl  ? parseFloat(sl.stopPrice || sl.price)  : null,
+      isTrailing: !!trail,
+      slUpdates:  trail?.slUpdateCount ?? 0,
+      qty:        tp  ? parseFloat(tp.origQty) : (sl ? parseFloat(sl.origQty) : 0),
+      entryPrice: buyE ? parseFloat(buyE.price) : null,
+    });
+  }
+
+  // Fallback: OCO groups without tradeCode
+  const byOco = new Map<number, OpenOrder[]>();
+  for (const o of noCode) {
+    if (o.orderListId !== -1) {
+      const grp = byOco.get(o.orderListId) ?? [];
+      grp.push(o);
+      byOco.set(o.orderListId, grp);
+    }
+  }
+  for (const [, grp] of byOco) {
+    const tp = grp.find(o => o.type === "LIMIT_MAKER");
+    const sl = grp.find(o => o.type === "STOP_LOSS_LIMIT");
+    positions.push({
+      symbol:     grp[0].symbol,
+      tradeCode:  null,
+      tpPrice:    tp ? parseFloat(tp.price)     : null,
+      slPrice:    sl ? parseFloat(sl.stopPrice) : null,
+      isTrailing: false,
+      slUpdates:  0,
+      qty:        tp ? parseFloat(tp.origQty)   : 0,
+      entryPrice: null,
+    });
+  }
+
+  return positions;
+}
+
 // ── Bot detail panel ──────────────────────────────────────────────────────────
 
 function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () => void; onUpdated: (b: BotInfo) => void }) {
@@ -164,6 +253,8 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
   const [scanData,       setScanData]       = useState<ScanResponse | null>(null);
   const [scanning,       setScanning]       = useState(false);
   const [buyingSymbol,   setBuyingSymbol]   = useState<string | null>(null);
+  const [openOrders,     setOpenOrders]     = useState<OpenOrder[]>([]);
+  const [loadingPos,     setLoadingPos]     = useState(true);
 
   useEffect(() => {
     setEntryDesc(bot.entryDesc);
@@ -187,6 +278,19 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [bot.name]);
+
+  function fetchOpenOrders() {
+    setLoadingPos(true);
+    fetch(`/api/orders?mode=${bot.mode}`)
+      .then(r => r.json())
+      .then((orders: OpenOrder[]) => setOpenOrders(orders.filter(o => o.botName === bot.name)))
+      .catch(() => {})
+      .finally(() => setLoadingPos(false));
+  }
+
+  useEffect(() => { fetchOpenOrders(); }, [bot.name, bot.mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const openPositions = groupPositions(openOrders, entries);
 
   async function runScan() {
     setScanning(true);
@@ -522,6 +626,69 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Posicions obertes ── */}
+      <div className="bc-open-pos">
+        <div className="bc-open-pos__header">
+          <span className="bc-open-pos__title">
+            <i className="fa-solid fa-chart-line" /> Posicions obertes
+          </span>
+          {openPositions.length > 0 && (
+            <span className="bc-open-pos__count">{openPositions.length}</span>
+          )}
+          <button
+            className="bot-chat__icon-btn"
+            style={{ marginLeft: "auto" }}
+            onClick={fetchOpenOrders}
+            disabled={loadingPos}
+            title="Refresca posicions">
+            <i className={`fa-solid fa-rotate-right${loadingPos ? " fa-spin" : ""}`} />
+          </button>
+        </div>
+
+        {loadingPos ? (
+          <div className="bc-open-pos__empty">
+            <i className="fa-solid fa-spinner fa-spin" /> Carregant…
+          </div>
+        ) : openPositions.length === 0 ? (
+          <div className="bc-open-pos__empty">
+            <i className="fa-solid fa-inbox" /> Sense posicions obertes
+          </div>
+        ) : (
+          <div className="bc-open-pos__list">
+            {openPositions.map((pos, i) => (
+              <div key={pos.tradeCode ?? i} className="bc-open-pos-row">
+                <div className="bc-open-pos-row__left">
+                  <span className="bc-open-pos-row__sym">{pos.symbol}</span>
+                  {pos.isTrailing && (
+                    <span className="bc-open-pos-row__trail">
+                      <i className="fa-solid fa-shield-halved" />
+                      Trail{pos.slUpdates > 0 ? ` ×${pos.slUpdates}` : ""}
+                    </span>
+                  )}
+                  {pos.tradeCode && (
+                    <span className="bc-open-pos-row__code">{pos.tradeCode}</span>
+                  )}
+                </div>
+                <div className="bc-open-pos-row__prices">
+                  {pos.entryPrice != null && (
+                    <span className="bc-open-pos-row__entry">
+                      <i className="fa-solid fa-arrow-right-to-bracket" />
+                      {pos.entryPrice.toFixed(4)}
+                    </span>
+                  )}
+                  {pos.tpPrice != null && (
+                    <span className="bc-open-pos-row__tp">TP {pos.tpPrice}</span>
+                  )}
+                  {pos.slPrice != null && (
+                    <span className="bc-open-pos-row__sl">SL {pos.slPrice}</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

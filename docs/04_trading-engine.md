@@ -314,6 +314,26 @@ Dos processos auxiliars que vetllen per la salut dels motors principals:
 
 ---
 
+## Independència de la sessió d'usuari
+
+**Els motors funcionen sempre, independentment de si hi ha algú connectat al dashboard.**
+
+Quan el servidor Next.js arrenca, els motors s'inicien al primer request HTTP i queden actius com a singletons de Node.js (`globalThis`). A partir d'aquell moment, no depenen de cap sessió:
+
+| Font de dades | On viu | Exemple |
+|--------------|--------|---------|
+| Configuració dels motors (activat/desactivat) | `cache.db` → taula `settings` | `scheduler_enabled`, `auto_trade_enabled` |
+| Bots actius i paràmetres | `paper.db` / `real.db` → taula `bots` | `enabled`, `budget_usdt`, `sim_id` |
+| Trailing stops pendents i actius | `cache.db` → `order_trailing`, `trailing_active` | `symbol`, `activateAt`, `mode` |
+| Claus API Binance | `.env.local` | `BINANCE_API_KEY_REAL` |
+| Token Telegram | `.env.local` | `TELEGRAM_BOT_TOKEN` |
+
+La **sessió** només serveix per autenticar l'accés al dashboard web (port 3000). Tancar el navegador o deixar caducar la sessió no atura cap motor ni cap notificació.
+
+> **Resum pràctic:** el que configures al dashboard es desa immediatament a SQLite. Els motors llegeixen de SQLite cada vegada que executen. Si tanques el navegador i el servidor segueix engegat, tot continua funcionant exactament igual.
+
+---
+
 ## Modes paper i real als motors
 
 Tots els motors respecten el mode assignat a cada bot o trailing:

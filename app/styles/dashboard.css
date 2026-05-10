@@ -10799,6 +10799,101 @@
 .bc-scan-row__sl     { color: #dc2626; }
 .bc-scan-row__reason { font-size: 0.68rem; color: var(--text-3); font-style: italic; }
 
+/* Open positions section */
+.bc-open-pos {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.bc-open-pos__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.bc-open-pos__title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.bc-open-pos__count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+.bc-open-pos__empty {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bc-open-pos__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bc-open-pos-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 7px;
+  padding: 7px 10px;
+  gap: 8px;
+}
+.bc-open-pos-row__left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.bc-open-pos-row__sym {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-1);
+}
+.bc-open-pos-row__trail {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  padding: 1px 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.bc-open-pos-row__code {
+  font-size: 0.63rem;
+  color: var(--text-3);
+  font-family: var(--font-mono, monospace);
+}
+.bc-open-pos-row__prices {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-family: var(--font-mono, monospace);
+}
+.bc-open-pos-row__entry {
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.bc-open-pos-row__tp { color: #16a34a; font-weight: 600; }
+.bc-open-pos-row__sl { color: #dc2626; font-weight: 600; }
 
 /* Strategy preview in table */
 .bc-strat-preview {

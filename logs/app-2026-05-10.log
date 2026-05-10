@@ -1,0 +1,14 @@
+{"level":30,"time":1778393460516,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat (paper + real)"}
+{"level":30,"time":1778393460549,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":49,"nextDailyIn":1399,"msg":"scheduler iniciat"}
+{"level":30,"time":1778393460570,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDC","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1778393460582,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1778393461246,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","mode":"real","count":1,"msg":"inicialitzat"}
+{"level":30,"time":1778393461952,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","mode":"paper","count":5,"msg":"inicialitzat"}
+{"level":30,"time":1778393462183,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778393501201,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778408505355,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778408526298,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778408526391,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778408527987,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","msg":"motor iniciat"}
+{"level":30,"time":1778408537353,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}
+{"level":30,"time":1778408537421,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}

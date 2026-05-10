@@ -228,8 +228,10 @@ import { requireRealConfirmation } from "@/lib/real-guard";
 await requireRealConfirmation(mode, "Estàs a punt d'enviar una ordre real");
 ```
 
-### Motors singletons
-Els motors (TrailingEngine, OrderMonitor) s'inicien amb `globalThis`. **No instanciar-ne de nous** des d'endpoints o components. Usa les funcions de gestió existents:
+### Motors singletons i independència de sessió
+Els motors (TrailingEngine, OrderMonitor, AutoTrader, Scheduler) s'inicien amb `globalThis` i **continuen actius independentment de si hi ha algú connectat al dashboard**. Tancar el navegador o deixar caducar la sessió no els atura ni canvia el seu comportament. Llegeixen la configuració de SQLite i les claus de `.env.local`, no de la sessió HTTP.
+
+**No instanciar-ne de nous** des d'endpoints o components. Usa les funcions de gestió existents:
 
 ```typescript
 import { getTrailingEngine } from "@/lib/trailing-engine";
