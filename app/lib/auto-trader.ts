@@ -970,15 +970,23 @@ async function globalPoll(): Promise<void> {
     );
     if (bots.length === 0) return;
 
-    for (const bot of bots) {
+    // Determina quins intervals han tancat vela ABANS d'iterar bots,
+    // per evitar que el primer bot avanci el punter i el segon no dispari.
+    const botsWithConfig = bots.flatMap(bot => {
       const simConfig = loadSimConfig(bot.simId);
       if (!simConfig) {
         log.auto.warn({ bot: bot.name, simId: bot.simId }, "bot: simulació no trobada, saltant");
-        continue;
+        return [];
       }
+      return [{ bot, simConfig, interval: simConfig.config.interval }];
+    });
 
-      const interval = simConfig.config.interval;
-      if (!candleJustClosed(interval)) continue;
+    const closedIntervals = new Set(
+      botsWithConfig.map(b => b.interval).filter(iv => candleJustClosed(iv))
+    );
+
+    for (const { bot, simConfig, interval } of botsWithConfig) {
+      if (!closedIntervals.has(interval)) continue;
 
       log.auto.info({ bot: bot.name, interval }, "globalPoll: candle tancada, llançant runBotScan");
 
