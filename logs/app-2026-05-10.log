@@ -12,3 +12,7 @@
 {"level":30,"time":1778408527987,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"trailing-engine","msg":"motor iniciat"}
 {"level":30,"time":1778408537353,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}
 {"level":30,"time":1778408537421,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}
+{"level":30,"time":1778413951188,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778413952231,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778413974144,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}
+{"level":30,"time":1778413974183,"pid":27488,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":4,"mode":"real","msg":"balance"}

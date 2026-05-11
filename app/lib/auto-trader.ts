@@ -34,7 +34,7 @@ import {
   cacheGet, trailingSet, nextTradeCode, orderMetaSet,
   pendingOcoSave, pendingOcoGetAll, pendingOcoDelete, pendingOcoIncAttempts,
   orphanWatchUpsert, orphanWatchGet, orphanWatchDelete, orphanWatchMarkNotified, hasActiveTrailing,
-  trailingActiveGetAll, trailingGetAll,
+  trailingActiveGetAll, trailingGetAll, orderMetaKeysByBot,
 } from "./cache-store";
 import { ensureTrailingEngine } from "./trailing-engine";
 import { journalAdd, journalPatchOco, journalPatchTpSl, journalGetLastEntryPrice, journalGetLastTradeCode, journalGetLastEntryMeta, journalGetBotConsecWins } from "./journal-store";
@@ -487,10 +487,13 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
     log.auto.error({ bot: bot.name, mode: bot.mode, err: (err as Error).message }, "bot: error obtenint ordres obertes (clau API invàlida?)");
     return;
   }
-  const openOcoCount = new Set(
-    openOrders.filter(o => o.orderListId !== -1).map(o => o.orderListId)
-  ).size;
-  const trailingCount = trailingActiveGetAll().length;
+  // Filtra per bot: només compta OCO i trailing d'aquest bot concret
+  const botMetaKeys  = orderMetaKeysByBot(bot.name);
+  const openOcoIds   = new Set(openOrders.filter(o => o.orderListId !== -1).map(o => o.orderListId));
+  const openOcoCount = [...openOcoIds].filter(id => botMetaKeys.has(`oco:${id}`)).length;
+  const trailingCount = trailingActiveGetAll()
+    .filter(t => t.mode === bot.mode && t.originOcoListId !== null && botMetaKeys.has(`oco:${t.originOcoListId}`))
+    .length;
   const totalOpen = openOcoCount + trailingCount;
 
   // Límit de posicions simultànies (bot > effectiveConfig > config.maxOpen > sense límit)

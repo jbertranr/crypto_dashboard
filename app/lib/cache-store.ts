@@ -331,6 +331,12 @@ export function orderMetaPatchNotes(key: string, notes: string): void {
   `).run(key, notes);
 }
 
+/** Retorna el conjunt de claus d'order_meta associades a un bot concret (ex: "oco:123456"). */
+export function orderMetaKeysByBot(botName: string): Set<string> {
+  const rows = db.prepare("SELECT key FROM order_meta WHERE bot_name = ?").all(botName) as { key: string }[];
+  return new Set(rows.map(r => r.key));
+}
+
 export function orderMetaGetAll(): Record<string, OrderMeta> {
   const rows = db.prepare("SELECT key, interval, exit_notes, trade_code, bot_name, entry_source FROM order_meta").all() as Array<{
     key: string; interval: string | null; exit_notes: string | null; trade_code: string | null; bot_name: string | null; entry_source: string | null;
