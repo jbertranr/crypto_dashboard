@@ -4331,6 +4331,12 @@
 .order-card:last-child {
   border-bottom: none;
 }
+.order-card--closed {
+  opacity: 0.75;
+}
+.order-card--closed .order-card__row {
+  background: var(--bg-card-2);
+}
 
 /* ── Horizontal main row ───────────────────────────────────── */
 .order-card__row {

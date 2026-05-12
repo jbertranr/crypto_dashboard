@@ -8,7 +8,7 @@ import { getOpenOrders, getOrder, placeMarketSell, getAccount } from "./binance-
 import { notifyOrderFill } from "./telegram";
 import { journalAdd, journalGetLastEntryPrice, type JournalType, type JournalExitReason } from "./journal-store";
 import { settingGetBool, settingGetBoolForMode, settingGet } from "./settings-store";
-import { cacheGet, cacheDelete, orderMetaGet, trailingActiveGetAll, trailingActiveGetAllIncludingDone } from "./cache-store";
+import { cacheGet, cacheDelete, orderMetaGet, trailingActiveGetAllIncludingDone, trailingActiveSetStatus } from "./cache-store";
 import { log } from "./logger";
 
 const POLL_MS = 35_000; // lleugerament desfasat del trailing engine (30s)
@@ -177,8 +177,15 @@ async function checkFillsInner(mode: "paper" | "real"): Promise<void> {
                                                 : null;
         // Skip journaling if this SL fill belongs to a trailing — trailing-engine journals it
         // Use IncludingDone because trailing-engine may have already marked it "filled"
-        if (isSl && trailingActiveGetAllIncludingDone().some(t => t.slOrderId === orderId)) {
-          log.orders.info({ orderId, symbol: meta.symbol }, "fill SL trailing — journal delegat al trailing engine");
+        const matchingTrailing = isSl ? trailingActiveGetAllIncludingDone().find(t => t.slOrderId === orderId) : undefined;
+        if (matchingTrailing) {
+          // Marca el registre com a "filled" immediatament — el trailing engine pot trigar o fallar
+          if (matchingTrailing.status === "active") {
+            trailingActiveSetStatus(matchingTrailing.id, "filled");
+            log.orders.info({ orderId, symbol: meta.symbol, trailingId: matchingTrailing.id }, "fill SL trailing — trailing_active marcat com a filled");
+          } else {
+            log.orders.info({ orderId, symbol: meta.symbol }, "fill SL trailing — journal delegat al trailing engine");
+          }
           if (meta.orderListId > 0) filledOcoLists.add(meta.orderListId);
         } else try {
           const isExit = isTp || isSl || (!isEntry && meta.side === "SELL");

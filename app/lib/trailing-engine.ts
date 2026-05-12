@@ -1,6 +1,7 @@
 import {
   trailingActiveGetAll, trailingActiveUpdateSl, trailingActiveSetStatus, TrailingActive,
   trailingGetAll, trailingSet, trailingActiveCreate, trailingDelete, cacheGet, orderMetaGet, orderMetaSet,
+  trailingSlHistoryAdd,
 } from "./cache-store";
 import {
   cancelOrder, cancelOcoOrder, placeStopLossLimitOrder, placeMarketSell, getTickerPrice, getOrder, getAccount, roundPrice,
@@ -564,6 +565,7 @@ async function processTrailing(t: TrailingActive) {
       }, t.mode) as { orderId: number };
 
       trailingActiveUpdateSl(t.id, newOrder.orderId, parseFloat(stopStr), Math.max(newPeak, t.peakPrice));
+      trailingSlHistoryAdd({ trailingActiveId: t.id, symbol: t.symbol, mode: t.mode, oldSl: t.currentSl, newSl: parseFloat(stopStr), peakPrice: newPeak });
       // Carry tradeCode forward to the replacement SL order (fallback: OCO meta)
       const slMeta = orderMetaGet(`ord:${oldSlOrderId}`)
         ?? (t.originOcoListId ? orderMetaGet(`oco:${t.originOcoListId}`) : null);
@@ -619,6 +621,7 @@ async function processTrailing(t: TrailingActive) {
       }, t.mode) as { orderId: number };
 
       trailingActiveUpdateSl(t.id, newOrder.orderId, parseFloat(stopStr), newPeak);
+      trailingSlHistoryAdd({ trailingActiveId: t.id, symbol: t.symbol, mode: t.mode, oldSl: t.currentSl, newSl: parseFloat(stopStr), peakPrice: newPeak });
       // Carry tradeCode forward to the replacement SL order (fallback: OCO meta)
       const slMeta = orderMetaGet(`ord:${oldSlOrderId}`)
         ?? (t.originOcoListId ? orderMetaGet(`oco:${t.originOcoListId}`) : null);

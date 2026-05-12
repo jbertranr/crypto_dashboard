@@ -76,6 +76,19 @@ addCol("ALTER TABLE trailing_active ADD COLUMN oco_created_at INTEGER");
 addCol("ALTER TABLE trailing_active ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS trailing_sl_history (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    trailing_active_id INTEGER NOT NULL,
+    symbol             TEXT    NOT NULL,
+    mode               TEXT    NOT NULL DEFAULT 'paper',
+    old_sl             REAL    NOT NULL,
+    new_sl             REAL    NOT NULL,
+    peak_price         REAL    NOT NULL,
+    recorded_at        INTEGER NOT NULL
+  );
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS order_meta (
     key        TEXT PRIMARY KEY,
     interval   TEXT,
@@ -275,6 +288,40 @@ export function trailingActiveUpdateSl(id: number, slOrderId: number, currentSl:
 export function trailingActiveSetStatus(id: number, status: string): void {
   db.prepare("UPDATE trailing_active SET status=?, updated_at=? WHERE id=?")
     .run(status, Date.now(), id);
+}
+
+// ── Trailing SL history ──────────────────────────────────────────────────────
+
+export interface TrailingSlHistoryEntry {
+  time:  number;
+  oldSl: number;
+  newSl: number;
+  peak:  number;
+}
+
+export function trailingSlHistoryAdd(entry: {
+  trailingActiveId: number;
+  symbol:           string;
+  mode:             string;
+  oldSl:            number;
+  newSl:            number;
+  peakPrice:        number;
+}): void {
+  db.prepare(
+    "INSERT INTO trailing_sl_history (trailing_active_id, symbol, mode, old_sl, new_sl, peak_price, recorded_at) VALUES (?,?,?,?,?,?,?)"
+  ).run(entry.trailingActiveId, entry.symbol, entry.mode, entry.oldSl, entry.newSl, entry.peakPrice, Date.now());
+}
+
+export function trailingSlHistoryGet(trailingActiveId: number): TrailingSlHistoryEntry[] {
+  return db.prepare(
+    "SELECT recorded_at AS time, old_sl AS oldSl, new_sl AS newSl, peak_price AS peak FROM trailing_sl_history WHERE trailing_active_id=? ORDER BY recorded_at ASC"
+  ).all(trailingActiveId) as TrailingSlHistoryEntry[];
+}
+
+export function trailingSlHistoryGetBySymbol(symbol: string, fromMs: number, toMs: number): TrailingSlHistoryEntry[] {
+  return db.prepare(
+    "SELECT recorded_at AS time, old_sl AS oldSl, new_sl AS newSl, peak_price AS peak FROM trailing_sl_history WHERE symbol=? AND recorded_at >= ? AND recorded_at <= ? ORDER BY recorded_at ASC"
+  ).all(symbol, fromMs, toMs) as TrailingSlHistoryEntry[];
 }
 
 export function strategyGetAll(): Record<string, string> {

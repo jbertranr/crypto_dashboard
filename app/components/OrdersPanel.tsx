@@ -265,12 +265,21 @@ function EditModal({ target, onClose, onSuccess }: {
 }
 
 /* ── Open Orders cards ── */
-function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, onStrategyChange, orderMeta }: {
+type ClosedEntry = {
+  id: number; type: string; symbol: string; side: string;
+  price: string; qty: string;
+  pnlUsdt: number | null; pnlPct: number | null;
+  tradeCode: string | null; strategy: string | null;
+  executedAt: number;
+};
+
+function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, onStrategyChange, orderMeta, mode }: {
   orders: BinanceOrder[]; loading: boolean; error: string | null;
   onRefresh: () => void; coins: CoinRow[];
   strategies: Record<string, string>;
   onStrategyChange: (key: string, strategy: string | null) => void;
   orderMeta: Record<string, OrderMeta>;
+  mode: "paper" | "real";
 }) {
   const { viewMode, realLocked } = useTradingMode();
   const isRealLocked = realLocked && viewMode === "real";
@@ -294,6 +303,30 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
   const [trailingActive, setTrailingActive] = useState<TrailingActiveRec[]>([]);
   const [activatingTs,   setActivatingTs]   = useState<Record<number, boolean>>({});
   const [tsError,        setTsError]        = useState<Record<number, string>>({});
+  const [showClosed,     setShowClosed]     = useState<boolean>(() => {
+    try { return localStorage.getItem("openOrdersShowClosed") === "1"; } catch { return false; }
+  });
+  const [closedEntries,  setClosedEntries]  = useState<ClosedEntry[]>([]);
+  const [loadingClosed,  setLoadingClosed]  = useState(false);
+
+  const fetchClosed = useCallback(() => {
+    setLoadingClosed(true);
+    fetch(`/api/journal?mode=${mode}&limit=50`)
+      .then(r => r.json())
+      .then((d: { entries: ClosedEntry[] }) => {
+        const exits = (d.entries ?? []).filter(e =>
+          e.type === "EXIT_TP" || e.type === "EXIT_SL" || e.type === "EXIT_TRAILING" ||
+          e.type === "EXIT_MARKET" || e.type === "CANCELED"
+        );
+        setClosedEntries(exits);
+      })
+      .catch(err => console.warn("[OpenOrderTable] closed:", (err as Error).message))
+      .finally(() => setLoadingClosed(false));
+  }, [mode]);
+
+  useEffect(() => {
+    if (showClosed) fetchClosed();
+  }, [showClosed, fetchClosed]);
 
   const fetchTrailing = useCallback(() => {
     fetch("/api/orders/trailing").then(r => r.json()).then((d: { suggestions: TrailingSuggestion[]; active: TrailingActiveRec[] }) => {
@@ -1225,6 +1258,81 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
                 </div>
               );
             }
+          })}
+        </div>
+      )}
+
+      {/* ── Closed orders toggle + section ── */}
+      <div className="section-title" style={{ marginTop: "1.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <span><i className="fa-solid fa-flag-checkered" /> Ordres tancades</span>
+        <button
+          className={`strat-filter__btn${showClosed ? " strat-filter__btn--active" : ""}`}
+          style={{ marginLeft: "auto", fontSize: "0.75rem" }}
+          onClick={() => {
+            const next = !showClosed;
+            setShowClosed(next);
+            try { localStorage.setItem("openOrdersShowClosed", next ? "1" : "0"); } catch { /* */ }
+          }}
+        >
+          <i className={`fa-solid fa-eye${showClosed ? "-slash" : ""}`} />
+          {showClosed ? " Amagar" : " Mostrar"}
+        </button>
+      </div>
+
+      {showClosed && (
+        <div className="order-cards">
+          {loadingClosed ? (
+            <div className="state-empty">Carregant…</div>
+          ) : closedEntries.length === 0 ? (
+            <div className="state-empty">Cap operació tancada recent.</div>
+          ) : closedEntries.map(e => {
+            const exitLabel = e.type === "EXIT_TP" ? "TP" : e.type === "EXIT_SL" ? "SL" : e.type === "EXIT_TRAILING" ? "Trailing" : e.type === "EXIT_MARKET" ? "Mercat" : "Cancel·lat";
+            const exitCls   = e.type === "EXIT_TP" ? "pill--tp" : e.type === "EXIT_SL" ? "pill--sl" : e.type === "EXIT_TRAILING" ? "pill--trailing" : e.type === "CANCELED" ? "pill--canceled" : "pill--limit";
+            const pnl       = e.pnlUsdt ?? 0;
+            const pnlPos    = pnl >= 0;
+            return (
+              <div key={e.id} className="order-card order-card--closed">
+                <div className="order-card__row">
+                  <div className="order-card__col-identity">
+                    <div className="order-card__col-top">
+                      {e.tradeCode && <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{e.tradeCode}</span>}
+                      <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(e.executedAt)}</span>
+                    </div>
+                    <div className="order-card__col-hero">
+                      <CoinIcon symbol={stripQuote(e.symbol)} size={44} />
+                      <div className="order-card__hero-info">
+                        <span className="order-card__hero-crypto">{stripQuote(e.symbol)}</span>
+                        {e.pnlUsdt != null && (
+                          <span className="order-card__hero-val mono" style={{ color: pnlPos ? "var(--green)" : "var(--red)" }}>
+                            {pnlPos ? "+" : ""}{formatCurrency(pnl)}
+                          </span>
+                        )}
+                        {e.pnlPct != null && (
+                          <span className="order-card__hero-sub mono">
+                            {e.pnlPct >= 0 ? "+" : ""}{e.pnlPct.toFixed(2)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="order-card__col-bottom">
+                      <span className={`pill ${exitCls}`}>{exitLabel}</span>
+                      <span className={`pill ${e.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
+                        <i className={`fa-solid ${e.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{e.side}
+                      </span>
+                      {e.strategy && <span className="pill" style={{ background: STRATEGY_MAP[e.strategy] ?? "#666", color: "#fff", borderColor: "transparent" }}>{e.strategy}</span>}
+                    </div>
+                  </div>
+                  <div className="order-card__col-sl">
+                    <span className="order-card__section-label order-card__section-label--sl">PREU SORTIDA</span>
+                    <span className="order-card__col-price mono">{parseFloat(e.price) > 0 ? formatCurrency(parseFloat(e.price)) : "—"}</span>
+                    <span className="order-card__section-label" style={{ marginTop: 8 }}>QTY</span>
+                    <span className="order-card__col-price mono" style={{ fontSize: "0.8rem" }}>
+                      {parseFloat(e.qty).toFixed(parseFloat(e.qty) < 1 ? 6 : 4)} {stripQuote(e.symbol)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
           })}
         </div>
       )}
@@ -2351,8 +2459,8 @@ export default function OrdersPanel({ coins, tab, onTab, onOrdersCount }: {
 
       {tab === "portfolio"      && <ErrorBoundary label="Portfolio Paper"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} mode="paper" /></ErrorBoundary>}
       {tab === "portfolio-real" && <ErrorBoundary label="Portfolio Real"><PortfolioTab coins={coins} openOrders={openOrders} refreshTrigger={refreshTrigger} mode="real" /></ErrorBoundary>}
-      {tab === "open"           && <ErrorBoundary label="Ordres Paper"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
-      {tab === "open-real"      && <ErrorBoundary label="Ordres Real"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} /></ErrorBoundary>}
+      {tab === "open"           && <ErrorBoundary label="Ordres Paper"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} mode="paper" /></ErrorBoundary>}
+      {tab === "open-real"      && <ErrorBoundary label="Ordres Real"><OpenOrderTable orders={openOrders} loading={loadingO} error={errorO} onRefresh={fetchOpen} coins={coins} strategies={strategies} onStrategyChange={handleStrategyChange} orderMeta={orderMeta} mode="real" /></ErrorBoundary>}
       {tab === "history"        && <ErrorBoundary label="Historial Paper"><HistoryTable orders={history} loading={loadingH} error={errorH} /></ErrorBoundary>}
       {tab === "history-real"   && <ErrorBoundary label="Historial Real"><HistoryTable orders={history} loading={loadingH} error={errorH} /></ErrorBoundary>}
       {tab === "balance"      && <ErrorBoundary label="Balance Paper"><BalanceTable balances={balances} loading={loadingB} error={errorB} coins={coins} openOrders={openOrders} /></ErrorBoundary>}
