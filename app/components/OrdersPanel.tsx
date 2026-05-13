@@ -1781,7 +1781,23 @@ function BuyOcoCard({ buyOrder, group, trades }: {
           <i className="fa-regular fa-calendar" />
           {fmtDate(buyOrder.time)}
         </span>
+        {exitLeg && (
+          <span className="hist-detail dim">
+            <i className="fa-regular fa-calendar-check" />
+            {fmtDate(exitLeg.updateTime || exitLeg.time)}
+          </span>
+        )}
       </div>
+
+      {/* Chart */}
+      <ClosedOrderChart
+        symbol={buyOrder.symbol}
+        startTime={buyOrder.time}
+        endTime={exitLeg ? (exitLeg.updateTime || exitLeg.time) : Date.now()}
+        tpPrice={tpLeg ? parseFloat(tpLeg.price) : null}
+        slPrice={slLeg ? parseFloat(slLeg.stopPrice || slLeg.price) : null}
+        side="SELL"
+      />
     </div>
   );
 }
@@ -2029,6 +2045,16 @@ function HistoryTree({ group, trades }: { group: OcoGroup; trades: BinanceTrade[
           )}
         </div>
       )}
+
+      {/* Chart */}
+      <ClosedOrderChart
+        symbol={group.filled.symbol}
+        startTime={group.filled.time}
+        endTime={group.trailingOrder ? (group.trailingOrder.updateTime || group.trailingOrder.time) : Date.now()}
+        tpPrice={tpLeg ? parseFloat(tpLeg.price) : null}
+        slPrice={slLeg ? parseFloat(slLeg.stopPrice || slLeg.price) : null}
+        side="SELL"
+      />
     </div>
   );
 }
