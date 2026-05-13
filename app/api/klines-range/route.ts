@@ -46,7 +46,21 @@ export async function GET(req: NextRequest) {
     fetchStart = startTime;
   }
 
-  const KEY = `klinesrange:${symbol}:${startTime}:${window ?? "auto"}`;
+  const endTimeParam = req.nextUrl.searchParams.get("endTime");
+  const endTimeMs = endTimeParam ? parseInt(endTimeParam, 10) : null;
+
+  // Historical range mode: startTime → endTime (no window)
+  if (endTimeMs && !window) {
+    const durationMs = endTimeMs - startTimeMs;
+    interval =
+      durationMs < 2      * H ? "1m"  :
+      durationMs < 12     * H ? "5m"  :
+      durationMs < 4 * 24 * H ? "15m" :
+      durationMs < 14* 24 * H ? "1h"  : "4h";
+    fetchStart = startTime;
+  }
+
+  const KEY = `klinesrange:${symbol}:${startTime}:${window ?? "auto"}:${endTimeMs ?? ""}`;
   const cached = cacheGet<Array<{ time: number; close: number }>>(KEY);
   if (cached) return NextResponse.json(cached.data);
 
@@ -55,6 +69,7 @@ export async function GET(req: NextRequest) {
   u.searchParams.set("interval",  interval);
   u.searchParams.set("startTime", fetchStart);
   u.searchParams.set("limit",     "500");
+  if (endTimeMs && !window) u.searchParams.set("endTime", String(endTimeMs));
   const url = u.toString();
   const res = await fetch(url);
   if (!res.ok) return NextResponse.json({ error: "Binance error" }, { status: 500 });
@@ -62,6 +77,7 @@ export async function GET(req: NextRequest) {
   const raw: unknown[][] = await res.json();
   const data = raw.map(k => ({ time: k[0] as number, close: parseFloat(k[4] as string) }));
   log.binance.debug({ symbol, interval, candles: data.length }, "klines-range");
-  cacheSet(KEY, data, 60);
+  // Historical (closed) ranges don't change — cache 1h; live ranges 60s
+  cacheSet(KEY, data, endTimeMs && !window ? 3600 : 60);
   return NextResponse.json(data);
 }

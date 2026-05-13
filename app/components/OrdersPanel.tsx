@@ -23,6 +23,7 @@ import AutoLabTab from "./AutoLabTab";
 import StatusTab from "./StatusTab";
 import DeployTab from "./DeployTab";
 import ConvertTab from "./ConvertTab";
+import ClosedOrderChart from "./ClosedOrderChart";
 import { useTradingMode } from "../contexts/TradingModeContext";
 
 export type Tab = "portfolio" | "portfolio-real"
@@ -265,12 +266,24 @@ function EditModal({ target, onClose, onSuccess }: {
 }
 
 /* ── Open Orders cards ── */
-type ClosedEntry = {
+type JournalRow = {
   id: number; type: string; symbol: string; side: string;
-  price: string; qty: string;
+  price: string; qty: string; entryPrice: string | null;
   pnlUsdt: number | null; pnlPct: number | null;
-  tradeCode: string | null; strategy: string | null;
+  tradeCode: string | null; orderListId: number | null; orderId: number | null;
+  strategy: string | null; interval: string | null;
+  tpPrice: number | null; slPrice: number | null;
   executedAt: number;
+};
+type ClosedTrade = {
+  key: string;
+  symbol: string;
+  side: "BUY" | "SELL";
+  strategy: string | null;
+  interval: string | null;
+  tradeCode: string | null;
+  entry: { executedAt: number; price: string; qty: string; tpPrice: number | null; slPrice: number | null } | null;
+  exit:  { type: string; executedAt: number; price: string; pnlUsdt: number | null; pnlPct: number | null } | null;
 };
 
 function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, onStrategyChange, orderMeta, mode }: {
@@ -303,22 +316,39 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
   const [trailingActive, setTrailingActive] = useState<TrailingActiveRec[]>([]);
   const [activatingTs,   setActivatingTs]   = useState<Record<number, boolean>>({});
   const [tsError,        setTsError]        = useState<Record<number, string>>({});
-  const [showClosed,     setShowClosed]     = useState<boolean>(() => {
+  const [showClosed,    setShowClosed]    = useState<boolean>(() => {
     try { return localStorage.getItem("openOrdersShowClosed") === "1"; } catch { return false; }
   });
-  const [closedEntries,  setClosedEntries]  = useState<ClosedEntry[]>([]);
-  const [loadingClosed,  setLoadingClosed]  = useState(false);
+  const [closedTrades,  setClosedTrades]  = useState<ClosedTrade[]>([]);
+  const [loadingClosed, setLoadingClosed] = useState(false);
+  const [openChartKey,  setOpenChartKey]  = useState<string | null>(null);
 
   const fetchClosed = useCallback(() => {
     setLoadingClosed(true);
-    fetch(`/api/journal?mode=${mode}&limit=50`)
+    fetch(`/api/journal?mode=${mode}&limit=100`)
       .then(r => r.json())
-      .then((d: { entries: ClosedEntry[] }) => {
-        const exits = (d.entries ?? []).filter(e =>
-          e.type === "EXIT_TP" || e.type === "EXIT_SL" || e.type === "EXIT_TRAILING" ||
-          e.type === "EXIT_MARKET" || e.type === "CANCELED"
-        );
-        setClosedEntries(exits);
+      .then((d: { entries: JournalRow[] }) => {
+        const rows = d.entries ?? [];
+        // Group by tradeCode (fallback: orderListId → orderId)
+        const map = new Map<string, ClosedTrade>();
+        for (const e of rows) {
+          const key = e.tradeCode ?? (e.orderListId ? `ocl:${e.orderListId}` : `ord:${e.orderId}`);
+          if (!key) continue;
+          if (!map.has(key)) map.set(key, {
+            key, symbol: e.symbol, side: e.side as "BUY" | "SELL",
+            strategy: e.strategy, interval: e.interval, tradeCode: e.tradeCode,
+            entry: null, exit: null,
+          });
+          const g = map.get(key)!;
+          if (e.type === "ENTRY_BUY" || e.type === "ENTRY_OCO") {
+            g.entry = { executedAt: e.executedAt, price: e.price, qty: e.qty, tpPrice: e.tpPrice, slPrice: e.slPrice };
+          } else if (e.type === "EXIT_TP" || e.type === "EXIT_SL" || e.type === "EXIT_TRAILING" || e.type === "EXIT_MARKET" || e.type === "CANCELED") {
+            g.exit = { type: e.type, executedAt: e.executedAt, price: e.price, pnlUsdt: e.pnlUsdt, pnlPct: e.pnlPct };
+            if (!g.strategy && e.strategy) g.strategy = e.strategy;
+          }
+        }
+        const closed = [...map.values()].filter(g => g.exit !== null);
+        setClosedTrades(closed);
       })
       .catch(err => console.warn("[OpenOrderTable] closed:", (err as Error).message))
       .finally(() => setLoadingClosed(false));
@@ -1283,54 +1313,110 @@ function OpenOrderTable({ orders, loading, error, onRefresh, coins, strategies, 
         <div className="order-cards">
           {loadingClosed ? (
             <div className="state-empty">Carregant…</div>
-          ) : closedEntries.length === 0 ? (
+          ) : closedTrades.length === 0 ? (
             <div className="state-empty">Cap operació tancada recent.</div>
-          ) : closedEntries.map(e => {
-            const exitLabel = e.type === "EXIT_TP" ? "TP" : e.type === "EXIT_SL" ? "SL" : e.type === "EXIT_TRAILING" ? "Trailing" : e.type === "EXIT_MARKET" ? "Mercat" : "Cancel·lat";
-            const exitCls   = e.type === "EXIT_TP" ? "pill--tp" : e.type === "EXIT_SL" ? "pill--sl" : e.type === "EXIT_TRAILING" ? "pill--trailing" : e.type === "CANCELED" ? "pill--canceled" : "pill--limit";
-            const pnl       = e.pnlUsdt ?? 0;
+          ) : closedTrades.map(t => {
+            const ex       = t.exit!;
+            const en       = t.entry;
+            const exitLabel = ex.type === "EXIT_TP" ? "TP" : ex.type === "EXIT_SL" ? "SL" : ex.type === "EXIT_TRAILING" ? "Trailing" : ex.type === "EXIT_MARKET" ? "Mercat" : "Cancel·lat";
+            const exitCls   = ex.type === "EXIT_TP" ? "pill--tp" : ex.type === "EXIT_SL" ? "pill--sl" : ex.type === "EXIT_TRAILING" ? "pill--trailing" : ex.type === "CANCELED" ? "pill--canceled" : "pill--limit";
+            const pnl       = ex.pnlUsdt ?? 0;
             const pnlPos    = pnl >= 0;
+            const duration  = en ? ex.executedAt - en.executedAt : null;
+            const chartOpen = openChartKey === t.key;
+            const entryP    = en ? parseFloat(en.price) : 0;
+            const exitP     = parseFloat(ex.price);
+            const qty       = en ? parseFloat(en.qty) : 0;
             return (
-              <div key={e.id} className="order-card order-card--closed">
+              <div key={t.key} className="order-card order-card--closed">
                 <div className="order-card__row">
+                  {/* Identity col */}
                   <div className="order-card__col-identity">
                     <div className="order-card__col-top">
-                      {e.tradeCode && <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{e.tradeCode}</span>}
-                      <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(e.executedAt)}</span>
+                      {t.tradeCode && <span className="pill order-card__tc-badge"><i className="fa-solid fa-hashtag" />{t.tradeCode}</span>}
+                      {en && <span className="pill order-card__date"><i className="fa-regular fa-calendar" />{fmtDate(en.executedAt)}</span>}
+                      {duration != null && duration > 0 && <span className="pill pill--limit"><i className="fa-regular fa-clock" />{fmtDuration(duration)}</span>}
                     </div>
                     <div className="order-card__col-hero">
-                      <CoinIcon symbol={stripQuote(e.symbol)} size={44} />
+                      <CoinIcon symbol={stripQuote(t.symbol)} size={44} />
                       <div className="order-card__hero-info">
-                        <span className="order-card__hero-crypto">{stripQuote(e.symbol)}</span>
-                        {e.pnlUsdt != null && (
+                        <span className="order-card__hero-crypto">{stripQuote(t.symbol)}</span>
+                        {ex.pnlUsdt != null && (
                           <span className="order-card__hero-val mono" style={{ color: pnlPos ? "var(--green)" : "var(--red)" }}>
                             {pnlPos ? "+" : ""}{formatCurrency(pnl)}
                           </span>
                         )}
-                        {e.pnlPct != null && (
-                          <span className="order-card__hero-sub mono">
-                            {e.pnlPct >= 0 ? "+" : ""}{e.pnlPct.toFixed(2)}%
+                        {ex.pnlPct != null && (
+                          <span className="order-card__hero-sub mono" style={{ color: ex.pnlPct >= 0 ? "var(--green)" : "var(--red)" }}>
+                            {ex.pnlPct >= 0 ? "+" : ""}{ex.pnlPct.toFixed(2)}%
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="order-card__col-bottom">
                       <span className={`pill ${exitCls}`}>{exitLabel}</span>
-                      <span className={`pill ${e.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
-                        <i className={`fa-solid ${e.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{e.side}
+                      <span className={`pill ${t.side === "BUY" ? "pill--buy" : "pill--sell"}`}>
+                        <i className={`fa-solid ${t.side === "BUY" ? "fa-arrow-up" : "fa-arrow-down"}`} />{t.side}
                       </span>
-                      {e.strategy && <span className="pill" style={{ background: STRATEGY_MAP[e.strategy] ?? "#666", color: "#fff", borderColor: "transparent" }}>{e.strategy}</span>}
+                      {t.strategy && <span className="pill" style={{ background: STRATEGY_MAP[t.strategy] ?? "#666", color: "#fff", borderColor: "transparent" }}>{t.strategy}</span>}
+                      {t.interval && <span className="pill order-card__tf-badge"><i className="fa-solid fa-chart-simple" />{t.interval}</span>}
                     </div>
                   </div>
+
+                  {/* Entry col */}
                   <div className="order-card__col-sl">
-                    <span className="order-card__section-label order-card__section-label--sl">PREU SORTIDA</span>
-                    <span className="order-card__col-price mono">{parseFloat(e.price) > 0 ? formatCurrency(parseFloat(e.price)) : "—"}</span>
-                    <span className="order-card__section-label" style={{ marginTop: 8 }}>QTY</span>
-                    <span className="order-card__col-price mono" style={{ fontSize: "0.8rem" }}>
-                      {parseFloat(e.qty).toFixed(parseFloat(e.qty) < 1 ? 6 : 4)} {stripQuote(e.symbol)}
-                    </span>
+                    <span className="order-card__section-label" style={{ color: "var(--yellow)" }}>ENTRADA</span>
+                    <span className="order-card__col-price mono">{entryP > 0 ? formatCurrency(entryP) : "—"}</span>
+                    {en && <span className="order-card__section-label" style={{ marginTop: 6, fontSize: "0.62rem", color: "var(--text-3)" }}>{fmtDate(en.executedAt)}</span>}
+                    {qty > 0 && <>
+                      <span className="order-card__section-label" style={{ marginTop: 8 }}>QTY</span>
+                      <span className="order-card__col-price mono" style={{ fontSize: "0.78rem" }}>
+                        {qty.toFixed(qty < 1 ? 6 : 4)} {stripQuote(t.symbol)}
+                      </span>
+                    </>}
+                    {entryP > 0 && en?.tpPrice && <><span className="order-card__section-label order-card__section-label--tp" style={{ marginTop: 8 }}>TP</span><span className="order-card__col-price mono" style={{ color: "var(--green)", fontSize: "0.82rem" }}>{formatCurrency(en.tpPrice)}</span></>}
+                    {entryP > 0 && en?.slPrice && <><span className="order-card__section-label order-card__section-label--sl" style={{ marginTop: 4 }}>SL</span><span className="order-card__col-price mono" style={{ color: "var(--red)", fontSize: "0.82rem" }}>{formatCurrency(en.slPrice)}</span></>}
+                  </div>
+
+                  {/* Exit col */}
+                  <div className="order-card__col-sl" style={{ borderLeft: "2px solid var(--border)" }}>
+                    <span className="order-card__section-label order-card__section-label--sl">SORTIDA</span>
+                    <span className="order-card__col-price mono">{exitP > 0 ? formatCurrency(exitP) : "—"}</span>
+                    <span className="order-card__section-label" style={{ marginTop: 6, fontSize: "0.62rem", color: "var(--text-3)" }}>{fmtDate(ex.executedAt)}</span>
+                    {entryP > 0 && exitP > 0 && <>
+                      <span className="order-card__section-label" style={{ marginTop: 8 }}>Δ PREU</span>
+                      <span className="order-card__col-price mono" style={{ fontSize: "0.82rem", color: exitP >= entryP ? "var(--green)" : "var(--red)" }}>
+                        {exitP >= entryP ? "+" : ""}{(((exitP - entryP) / entryP) * 100).toFixed(2)}%
+                      </span>
+                    </>}
+                  </div>
+
+                  {/* Chart toggle col */}
+                  <div className="order-card__col-trailing" style={{ minWidth: 60 }}>
+                    <div className="order-card__col-trailing-actions">
+                      <button
+                        className={`order-btn ${chartOpen ? "order-btn--secondary" : "order-btn--secondary"}`}
+                        style={{ fontSize: "0.7rem" }}
+                        onClick={() => setOpenChartKey(k => k === t.key ? null : t.key)}
+                      >
+                        <i className={`fa-solid fa-chart-${chartOpen ? "bar" : "line"}`} />
+                        <span> {chartOpen ? "Amagar" : "Gràfic"}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                {/* Expandable chart */}
+                {chartOpen && en && (
+                  <ClosedOrderChart
+                    symbol={t.symbol}
+                    startTime={en.executedAt}
+                    endTime={ex.executedAt}
+                    tpPrice={en.tpPrice}
+                    slPrice={en.slPrice}
+                    side={t.side}
+                  />
+                )}
               </div>
             );
           })}

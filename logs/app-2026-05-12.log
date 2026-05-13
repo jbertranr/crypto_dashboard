@@ -52,3 +52,4 @@
 {"level":30,"time":1778622355460,"pid":16956,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":0,"mode":"real","msg":"order history"}
 {"level":30,"time":1778622356208,"pid":16956,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":87,"msg":"trades"}
 {"level":30,"time":1778622356508,"pid":16956,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":87,"msg":"trades"}
+{"level":40,"time":1778696731295,"pid":16956,"hostname":"DESKTOP-KPAMGTB","module":"orders","path":"/openOrders","attempt":0,"msg":"clock drift (-1021): resyncing i reintentant"}
