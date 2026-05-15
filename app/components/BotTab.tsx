@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   ResponsiveContainer, ComposedChart, Area,
   XAxis, YAxis, Tooltip, ReferenceDot, ReferenceLine,
@@ -37,6 +37,7 @@ interface BotInfo {
   exitDesc:       string;
   minProbability: number | null;
   maxOpen:        number | null;
+  priority:       number;
   mode:           "paper" | "real";
   simConfig: {
     name?: string;
@@ -245,6 +246,7 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
   const [exitDesc,       setExitDesc]       = useState(bot.exitDesc);
   const [minProb,        setMinProb]        = useState<string>(bot.minProbability != null ? String(bot.minProbability) : "");
   const [maxOpenVal,     setMaxOpenVal]     = useState<string>(bot.maxOpen        != null ? String(bot.maxOpen)        : "");
+  const [priorityVal,    setPriorityVal]    = useState<string>(String(bot.priority ?? 50));
   const [hoursFrom,      setHoursFrom]      = useState<string>(String(bot.hoursFrom));
   const [hoursTo,        setHoursTo]        = useState<string>(String(bot.hoursTo));
   const allDay = hoursFrom === "0" && hoursTo === "24";
@@ -261,9 +263,10 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
     setExitDesc(bot.exitDesc);
     setMinProb(bot.minProbability != null ? String(bot.minProbability) : "");
     setMaxOpenVal(bot.maxOpen     != null ? String(bot.maxOpen)        : "");
+    setPriorityVal(String(bot.priority ?? 50));
     setHoursFrom(String(bot.hoursFrom));
     setHoursTo(String(bot.hoursTo));
-  }, [bot.entryDesc, bot.exitDesc, bot.minProbability, bot.maxOpen, bot.hoursFrom, bot.hoursTo]);
+  }, [bot.entryDesc, bot.exitDesc, bot.minProbability, bot.maxOpen, bot.priority, bot.hoursFrom, bot.hoursTo]);
 
   useEffect(() => {
     setLoading(true);
@@ -371,6 +374,7 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
         body: JSON.stringify({
           id: bot.id, entryDesc, exitDesc,
           minProbability: minProbNum, maxOpen: maxOpenNum,
+          priority:  parseInt(priorityVal) || 50,
           hoursFrom: parseInt(hoursFrom) || 0,
           hoursTo:   parseInt(hoursTo)   || 24,
         }),
@@ -495,6 +499,19 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
               placeholder="cap límit"
               value={maxOpenVal}
               onChange={e => setMaxOpenVal(e.target.value)}
+            />
+          </label>
+          <label className="bc-strategy__param-field">
+            <span className="bc-strategy__param-label">
+              <i className="fa-solid fa-arrow-up-1-9" /> Prioritat d&apos;execució
+              <span className="bc-strategy__param-hint">menys = primer (1–99)</span>
+            </span>
+            <input
+              type="number" min="1" max="99" step="1"
+              className="bc-strategy__param-input"
+              placeholder="50"
+              value={priorityVal}
+              onChange={e => setPriorityVal(e.target.value)}
             />
           </label>
         </div>
@@ -871,11 +888,13 @@ function simTooltip(sim: BotInfo["simConfig"]): string {
 }
 
 function BotTable({
-  bots, selectedId, onSelect,
+  bots, selectedId, selectedBot, onSelect, onUpdated,
 }: {
   bots: BotInfo[];
   selectedId: string | null;
+  selectedBot: BotInfo | null;
   onSelect: (bot: BotInfo) => void;
+  onUpdated: (b: BotInfo) => void;
 }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -895,7 +914,8 @@ function BotTable({
         const statusLbl = !bot.enabled ? "Desactivat" : active ? "Actiu" : "Fora d'hores";
 
         return (
-          <div key={bot.id}
+          <React.Fragment key={bot.id}>
+          <div
             className={`bc-bot-card${selected ? " bc-bot-card--selected" : ""}`}
             onClick={() => onSelect(bot)}>
 
@@ -964,6 +984,11 @@ function BotTable({
                   <i className="fa-solid fa-layer-group" />màx {bot.maxOpen} pos.
                 </span>
               )}
+              {bot.priority !== 50 && (
+                <span className="bc-param-chip bc-param-chip--priority">
+                  <i className="fa-solid fa-arrow-up-1-9" />P{bot.priority}
+                </span>
+              )}
               {bot.requireMultiTf && (
                 <span className="bc-param-chip bc-param-chip--accent">
                   <i className="fa-solid fa-layer-group" />Multi-TF
@@ -979,6 +1004,18 @@ function BotTable({
                 : <span className="dim">—</span>}
             </div>
           </div>
+
+          {/* ── Inline detail panel ── */}
+          {selected && selectedBot && (
+            <div className="bc-inline-detail">
+              <BotDetailPanel
+                bot={selectedBot}
+                onBack={() => onSelect(selectedBot)}
+                onUpdated={onUpdated}
+              />
+            </div>
+          )}
+          </React.Fragment>
         );
       })}
     </div>
@@ -1159,7 +1196,7 @@ export default function BotTab({ mode }: { mode?: "paper" | "real" }) {
   const visibleBots  = mode ? bots.filter(b => b.mode === mode) : bots;
   const activeBots   = visibleBots.filter(b => b.enabled);
   const inactiveBots = visibleBots.filter(b => !b.enabled);
-  const allBots      = [...activeBots, ...inactiveBots];
+  const allBots      = [...activeBots, ...inactiveBots].sort((a, b) => (a.priority ?? 50) - (b.priority ?? 50));
   const selectedBot  = selectedBotId ? bots.find(b => b.id === selectedBotId) ?? null : null;
 
   const visible = showDebug ? items : items.filter(i => !SKIP_KINDS.includes(i.kind));
@@ -1225,39 +1262,35 @@ export default function BotTab({ mode }: { mode?: "paper" | "real" }) {
 
         <span className="bot-chat__spacer" />
 
-        {!selectedBotId && <>
-          <label className="bot-chat__toggle">
-            <input type="checkbox" checked={showDebug}
-              onChange={e => setShowDebug(e.target.checked)} />
-            Mostrar tot
-          </label>
-          <label className="bot-chat__toggle">
-            <input type="checkbox" checked={live}
-              onChange={e => setLive(e.target.checked)} />
-            Live
-          </label>
-          <button className="bot-chat__icon-btn"
-            onClick={() => { loadBots(); loadLogs(); }} title="Refresca">
-            <i className="fa-solid fa-rotate-right" />
-          </button>
-          <button className="bot-chat__icon-btn bot-chat__icon-btn--danger"
-            onClick={() => setItems([])} title="Neteja">
-            <i className="fa-solid fa-trash-can" />
-          </button>
-        </>}
-
-        {selectedBotId && (
-          <button className="bot-chat__icon-btn"
-            onClick={() => setSelectedBotId(null)}>
-            <i className="fa-solid fa-xmark" /> Tancar
-          </button>
-        )}
+        <label className="bot-chat__toggle">
+          <input type="checkbox" checked={showDebug}
+            onChange={e => setShowDebug(e.target.checked)} />
+          Mostrar tot
+        </label>
+        <label className="bot-chat__toggle">
+          <input type="checkbox" checked={live}
+            onChange={e => setLive(e.target.checked)} />
+          Live
+        </label>
+        <button className="bot-chat__icon-btn"
+          onClick={() => { loadBots(); loadLogs(); }} title="Refresca">
+          <i className="fa-solid fa-rotate-right" />
+        </button>
+        <button className="bot-chat__icon-btn bot-chat__icon-btn--danger"
+          onClick={() => setItems([])} title="Neteja">
+          <i className="fa-solid fa-trash-can" />
+        </button>
       </div>
 
-      {/* ── Bot table ── */}
+      {/* ── Bot table amb panel inline ── */}
       {bots.length > 0
-        ? <BotTable bots={allBots} selectedId={selectedBotId}
-            onSelect={b => setSelectedBotId(prev => prev === b.id ? null : b.id)} />
+        ? <BotTable
+            bots={allBots}
+            selectedId={selectedBotId}
+            selectedBot={selectedBot}
+            onSelect={b => setSelectedBotId(prev => prev === b.id ? null : b.id)}
+            onUpdated={updated => setBots(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))}
+          />
         : (
           <div className="bc-no-bots">
             <i className="fa-solid fa-robot" />
@@ -1266,15 +1299,8 @@ export default function BotTab({ mode }: { mode?: "paper" | "real" }) {
         )
       }
 
-      {/* ── Detail panel OR chat ── */}
-      {selectedBot ? (
-        <BotDetailPanel
-          bot={selectedBot}
-          onBack={() => setSelectedBotId(null)}
-          onUpdated={updated => setBots(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b))}
-        />
-      ) : (
-        visible.length === 0 ? (
+      {/* ── Chat log (sempre visible) ── */}
+      {visible.length === 0 ? (
           <div className="bot-chat__empty">
             <i className="fa-solid fa-satellite-dish" />
             <span>Sense activitat recent.</span>
@@ -1310,8 +1336,7 @@ export default function BotTab({ mode }: { mode?: "paper" | "real" }) {
             })}
             <div ref={anchorRef} className="bot-chat__anchor" />
           </div>
-        )
-      )}
+        )}
     </div>
   );
 }

@@ -8,23 +8,21 @@
 - Environments: .env.local
 
 ✓ Starting...
-✓ Ready in 6.1s
- GET /login 200 in 2.2s (compile: 1649ms, proxy.ts: 21ms, render: 490ms)
+✓ Ready in 2.8s
 ⚠ Cross origin request detected from 127.0.0.1 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
 Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
- POST /api/auth/login 200 in 267ms (compile: 189ms, proxy.ts: 14ms, render: 64ms)
- GET / 200 in 5.7s (compile: 14ms, proxy.ts: 28ms, render: 5.7s)
- GET / 200 in 7.0s (compile: 79ms, proxy.ts: 19ms, render: 6.9s)
- GET /api/pnl 200 in 426ms (compile: 236ms, proxy.ts: 83ms, render: 107ms)
- GET /api/errors?since=1777154888367 200 in 723ms (compile: 343ms, proxy.ts: 362ms, render: 18ms)
-[21:48:00.946] [32mINFO[39m: [36morder-monitor › monitor iniciat (paper + real)[39m
+ GET /api/stream 200 in 2.6s (compile: 673ms, proxy.ts: 25ms, render: 1869ms)
+ GET / 200 in 3.5s (compile: 1414ms, proxy.ts: 315ms, render: 1745ms)
+ GET /api/errors?since=1778622363002 200 in 205ms (compile: 121ms, proxy.ts: 70ms, render: 14ms)
+ GET /api/orders/meta 200 in 316ms (compile: 244ms, proxy.ts: 57ms, render: 16ms)
+ GET /api/pnl 200 in 522ms (compile: 424ms, proxy.ts: 76ms, render: 22ms)
+[21:01:15.494] [32mINFO[39m: [36morder-monitor › monitor iniciat (paper + real)[39m
     [35mmodule[39m: "order-monitor"
- GET /api/orders/meta 200 in 1065ms (compile: 851ms, proxy.ts: 178ms, render: 37ms)
-[21:48:01.006] [32mINFO[39m: [36mtelegram › scheduler iniciat[39m
+[21:01:15.504] [32mINFO[39m: [36mtelegram › scheduler iniciat[39m
     [35mmodule[39m: "telegram"
-    [35mnextHourIn[39m: 12
-    [35mnextDailyIn[39m: 582
-[21:48:01.016] [32mINFO[39m: [36morders › Crash monitor iniciat[39m
+    [35mnextHourIn[39m: 59
+    [35mnextDailyIn[39m: 629
+[21:01:15.506] [32mINFO[39m: [36morders › Crash monitor iniciat[39m
     [35mmodule[39m: "orders"
     [35msymbol[39m: "BTCUSDC"
     [35mthresholds[39m: [
@@ -42,1118 +40,154 @@ Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allow
       }
     ]
     [35mpollMs[39m: 60000
-[21:48:01.022] [32mINFO[39m: [36mauto-trader › auto-trader multi-bot iniciat (poll 60s)[39m
+[21:01:15.514] [32mINFO[39m: [36mauto-trader › auto-trader multi-bot iniciat (poll 60s)[39m
     [35mmodule[39m: "auto-trader"
- GET /api/strategies 200 in 272ms (compile: 182ms, proxy.ts: 59ms, render: 31ms)
- GET /api/trading-mode 200 in 570ms (compile: 508ms, proxy.ts: 45ms, render: 17ms)
-[21:48:01.840] [31mERROR[39m: [36morder-monitor › error inicialitzant[39m
+ GET /api/orders/meta 200 in 60ms (compile: 11ms, proxy.ts: 33ms, render: 16ms)
+ GET /api/strategies 200 in 133ms (compile: 83ms, proxy.ts: 38ms, render: 12ms)
+ GET /api/trading-mode 200 in 183ms (compile: 139ms, proxy.ts: 34ms, render: 10ms)
+[21:01:15.993] [32mINFO[39m: [36morder-monitor › inicialitzat[39m
     [35mmodule[39m: "order-monitor"
     [35mmode[39m: "real"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/pnl 200 in 118ms (compile: 53ms, proxy.ts: 48ms, render: 18ms)
- GET /api/errors?since=1777154888367 200 in 39ms (compile: 10ms, proxy.ts: 17ms, render: 13ms)
- GET /api/orders/meta 200 in 153ms (compile: 30ms, proxy.ts: 40ms, render: 84ms)
- GET /api/strategies 200 in 395ms (compile: 100ms, proxy.ts: 241ms, render: 54ms)
-[21:48:02.993] [32mINFO[39m: [36morder-monitor › inicialitzat[39m
-    [35mmodule[39m: "order-monitor"
-    [35mmode[39m: "paper"
-    [35mcount[39m: 1
- GET /api/trading-mode 200 in 81ms (compile: 32ms, proxy.ts: 38ms, render: 11ms)
- GET /api/orders/meta 200 in 45ms (compile: 6ms, proxy.ts: 21ms, render: 18ms)
- GET /api/orders/meta 200 in 44ms (compile: 9ms, proxy.ts: 17ms, render: 18ms)
-[21:48:03.246] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1358ms (compile: 16ms, proxy.ts: 54ms, render: 1288ms)
-[21:48:03.524] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 3.7s (compile: 592ms, proxy.ts: 353ms, render: 2.8s)
- GET /api/orders?mode=paper 200 in 3.8s (compile: 694ms, proxy.ts: 390ms, render: 2.7s)
- GET /api/cost-basis?mode=paper 200 in 4.3s (compile: 453ms, proxy.ts: 357ms, render: 3.5s)
- GET /api/orders?mode=paper 200 in 453ms (compile: 9ms, proxy.ts: 181ms, render: 263ms)
- POST /api/portfolio-snapshot 200 in 125ms (compile: 91ms, proxy.ts: 15ms, render: 19ms)
- GET /api/cost-basis?mode=paper 200 in 587ms (compile: 7ms, proxy.ts: 31ms, render: 548ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 32ms (compile: 8ms, proxy.ts: 13ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 50ms (compile: 12ms, proxy.ts: 24ms, render: 14ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 46ms (compile: 7ms, proxy.ts: 21ms, render: 18ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 34ms (compile: 6ms, proxy.ts: 16ms, render: 13ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 402ms (compile: 96ms, proxy.ts: 26ms, render: 280ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 57ms (compile: 30ms, proxy.ts: 16ms, render: 12ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 34ms (compile: 7ms, proxy.ts: 15ms, render: 13ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 63ms (compile: 33ms, proxy.ts: 13ms, render: 17ms)
- GET /api/orders/meta 200 in 56ms (compile: 23ms, proxy.ts: 20ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 1018ms (compile: 10ms, proxy.ts: 21ms, render: 987ms)
- GET /api/orders/meta 200 in 96ms (compile: 10ms, proxy.ts: 55ms, render: 31ms)
- GET /api/market 200 in 619ms (compile: 128ms, proxy.ts: 57ms, render: 433ms)
- GET /api/orders?mode=paper 200 in 1012ms (compile: 11ms, proxy.ts: 53ms, render: 947ms)
- GET /api/orders/meta 200 in 44ms (compile: 6ms, proxy.ts: 25ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 703ms (compile: 7ms, proxy.ts: 14ms, render: 683ms)
- GET /api/orders/meta 200 in 126ms (compile: 48ms, proxy.ts: 51ms, render: 27ms)
- GET /api/market 200 in 437ms (compile: 84ms, proxy.ts: 50ms, render: 303ms)
- GET /api/orders?mode=paper 200 in 838ms (compile: 21ms, proxy.ts: 51ms, render: 766ms)
- GET /api/orders/meta 200 in 68ms (compile: 24ms, proxy.ts: 28ms, render: 16ms)
- GET /api/orders?mode=paper 200 in 740ms (compile: 13ms, proxy.ts: 27ms, render: 700ms)
- GET /api/orders/meta 200 in 110ms (compile: 57ms, proxy.ts: 36ms, render: 17ms)
- GET /api/market 200 in 420ms (compile: 27ms, proxy.ts: 37ms, render: 356ms)
- GET /api/orders?mode=paper 200 in 789ms (compile: 15ms, proxy.ts: 37ms, render: 737ms)
- GET /api/market 200 in 290ms (compile: 6ms, proxy.ts: 11ms, render: 273ms)
- GET /api/market 200 in 351ms (compile: 5ms, proxy.ts: 10ms, render: 336ms)
- GET /api/orders/meta 200 in 41ms (compile: 8ms, proxy.ts: 16ms, render: 18ms)
- GET /api/orders?mode=paper 200 in 1478ms (compile: 5ms, proxy.ts: 13ms, render: 1460ms)
- GET /api/market 200 in 343ms (compile: 7ms, proxy.ts: 11ms, render: 326ms)
- GET /api/orders/meta 200 in 73ms (compile: 10ms, proxy.ts: 47ms, render: 17ms)
- GET /api/market 200 in 467ms (compile: 65ms, proxy.ts: 26ms, render: 376ms)
- GET /api/orders?mode=paper 200 in 853ms (compile: 15ms, proxy.ts: 20ms, render: 818ms)
- GET /api/orders/meta 200 in 95ms (compile: 32ms, proxy.ts: 42ms, render: 20ms)
- GET /api/market 200 in 445ms (compile: 58ms, proxy.ts: 40ms, render: 347ms)
- GET /api/orders?mode=paper 200 in 896ms (compile: 14ms, proxy.ts: 46ms, render: 835ms)
- GET /api/orders/meta 200 in 64ms (compile: 10ms, proxy.ts: 33ms, render: 21ms)
- GET /api/market 200 in 437ms (compile: 38ms, proxy.ts: 30ms, render: 368ms)
- GET /api/orders?mode=paper 200 in 2.5s (compile: 1054ms, proxy.ts: 23ms, render: 1424ms)
- GET /api/orders/meta 200 in 101ms (compile: 33ms, proxy.ts: 43ms, render: 25ms)
- GET /api/market 200 in 529ms (compile: 39ms, proxy.ts: 57ms, render: 432ms)
- GET /api/orders?mode=paper 200 in 861ms (compile: 16ms, proxy.ts: 47ms, render: 798ms)
- GET /api/orders/meta 200 in 110ms (compile: 37ms, proxy.ts: 54ms, render: 19ms)
- GET /api/market 200 in 454ms (compile: 60ms, proxy.ts: 51ms, render: 344ms)
- GET /api/orders?mode=paper 200 in 759ms (compile: 17ms, proxy.ts: 58ms, render: 684ms)
- GET /api/orders/meta 200 in 83ms (compile: 30ms, proxy.ts: 37ms, render: 17ms)
- GET /api/market 200 in 446ms (compile: 49ms, proxy.ts: 36ms, render: 361ms)
- GET /api/orders?mode=paper 200 in 1453ms (compile: 16ms, proxy.ts: 38ms, render: 1399ms)
- GET /api/orders/meta 200 in 87ms (compile: 28ms, proxy.ts: 37ms, render: 22ms)
- GET /api/market 200 in 464ms (compile: 62ms, proxy.ts: 37ms, render: 365ms)
- GET /api/orders?mode=paper 200 in 810ms (compile: 13ms, proxy.ts: 40ms, render: 757ms)
- GET /api/orders/meta 200 in 122ms (compile: 63ms, proxy.ts: 33ms, render: 25ms)
- GET /api/market 200 in 499ms (compile: 93ms, proxy.ts: 32ms, render: 374ms)
- GET /api/orders?mode=paper 200 in 832ms (compile: 12ms, proxy.ts: 41ms, render: 779ms)
- GET /api/orders/meta 200 in 85ms (compile: 28ms, proxy.ts: 41ms, render: 16ms)
- GET /api/market 200 in 442ms (compile: 47ms, proxy.ts: 40ms, render: 355ms)
- GET /api/orders?mode=paper 200 in 1573ms (compile: 12ms, proxy.ts: 44ms, render: 1517ms)
- GET /api/orders/meta 200 in 82ms (compile: 28ms, proxy.ts: 39ms, render: 15ms)
- GET /api/market 200 in 423ms (compile: 45ms, proxy.ts: 38ms, render: 341ms)
- GET /api/orders?mode=paper 200 in 780ms (compile: 13ms, proxy.ts: 40ms, render: 726ms)
- GET /api/orders/meta 200 in 81ms (compile: 27ms, proxy.ts: 37ms, render: 17ms)
- GET /api/market 200 in 426ms (compile: 47ms, proxy.ts: 36ms, render: 343ms)
- GET /api/orders?mode=paper 200 in 783ms (compile: 14ms, proxy.ts: 37ms, render: 732ms)
-✓ Compiled in 363ms
- GET / 200 in 863ms (compile: 335ms, proxy.ts: 15ms, render: 512ms)
- GET /api/orders/meta 200 in 451ms (compile: 396ms, proxy.ts: 29ms, render: 26ms)
- GET /api/market 200 in 807ms (compile: 520ms, proxy.ts: 28ms, render: 258ms)
- GET /api/orders?mode=paper 200 in 2.2s (compile: 277ms, proxy.ts: 30ms, render: 1924ms)
-✓ Compiled in 233ms
- GET / 200 in 749ms (compile: 211ms, proxy.ts: 32ms, render: 506ms)
-[22:03:02.363] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1871ms (compile: 314ms, proxy.ts: 27ms, render: 1529ms)
- GET /api/orders/meta 200 in 248ms (compile: 178ms, proxy.ts: 37ms, render: 33ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 133ms (compile: 99ms, proxy.ts: 18ms, render: 16ms)
- GET /api/market 200 in 859ms (compile: 544ms, proxy.ts: 32ms, render: 283ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 28ms (compile: 6ms, proxy.ts: 10ms, render: 13ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 27ms (compile: 6ms, proxy.ts: 12ms, render: 10ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 29ms (compile: 6ms, proxy.ts: 13ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 1084ms (compile: 410ms, proxy.ts: 38ms, render: 637ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 492ms (compile: 213ms, proxy.ts: 16ms, render: 263ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 18ms (compile: 4ms, proxy.ts: 9ms, render: 6ms)
- GET /api/orders/meta 200 in 82ms (compile: 10ms, proxy.ts: 38ms, render: 34ms)
- GET /api/market 200 in 647ms (compile: 49ms, proxy.ts: 33ms, render: 565ms)
- POST /api/portfolio-snapshot 200 in 34ms (compile: 6ms, proxy.ts: 15ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 1704ms (compile: 302ms, proxy.ts: 42ms, render: 1360ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 20ms (compile: 5ms, proxy.ts: 8ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 22ms (compile: 6ms, proxy.ts: 8ms, render: 8ms)
- GET /api/orders/meta 200 in 62ms (compile: 21ms, proxy.ts: 33ms, render: 9ms)
- GET /api/market 200 in 422ms (compile: 32ms, proxy.ts: 32ms, render: 358ms)
- GET /api/orders?mode=paper 200 in 766ms (compile: 11ms, proxy.ts: 34ms, render: 721ms)
- GET /api/orders/meta 200 in 75ms (compile: 24ms, proxy.ts: 37ms, render: 15ms)
- GET /api/market 200 in 631ms (compile: 43ms, proxy.ts: 34ms, render: 554ms)
- GET /api/orders?mode=paper 200 in 1473ms (compile: 13ms, proxy.ts: 37ms, render: 1423ms)
- GET /api/orders/meta 200 in 90ms (compile: 30ms, proxy.ts: 42ms, render: 18ms)
- GET /api/market 200 in 489ms (compile: 50ms, proxy.ts: 40ms, render: 399ms)
- GET /api/orders?mode=paper 200 in 1648ms (compile: 15ms, proxy.ts: 42ms, render: 1592ms)
- GET /api/orders/meta 200 in 126ms (compile: 68ms, proxy.ts: 38ms, render: 20ms)
- GET /api/market 200 in 454ms (compile: 28ms, proxy.ts: 36ms, render: 390ms)
- GET /api/orders?mode=paper 200 in 957ms (compile: 13ms, proxy.ts: 39ms, render: 904ms)
- GET /api/orders/meta 200 in 83ms (compile: 27ms, proxy.ts: 39ms, render: 17ms)
- GET /api/market 200 in 526ms (compile: 46ms, proxy.ts: 37ms, render: 442ms)
- GET /api/orders?mode=paper 200 in 873ms (compile: 13ms, proxy.ts: 40ms, render: 820ms)
- GET /api/orders/meta 200 in 79ms (compile: 27ms, proxy.ts: 39ms, render: 14ms)
- GET /api/market 200 in 538ms (compile: 43ms, proxy.ts: 31ms, render: 464ms)
- GET /api/orders?mode=paper 200 in 1915ms (compile: 12ms, proxy.ts: 40ms, render: 1863ms)
- GET /api/orders/meta 200 in 78ms (compile: 25ms, proxy.ts: 35ms, render: 17ms)
- GET /api/market 200 in 488ms (compile: 45ms, proxy.ts: 33ms, render: 411ms)
- GET /api/orders?mode=paper 200 in 792ms (compile: 13ms, proxy.ts: 35ms, render: 744ms)
- GET /api/orders/meta 200 in 84ms (compile: 28ms, proxy.ts: 38ms, render: 18ms)
- GET /api/market 200 in 445ms (compile: 47ms, proxy.ts: 36ms, render: 361ms)
- GET /api/orders?mode=paper 200 in 1066ms (compile: 16ms, proxy.ts: 41ms, render: 1009ms)
- GET /api/orders/meta 200 in 81ms (compile: 25ms, proxy.ts: 36ms, render: 20ms)
- GET /api/market 200 in 418ms (compile: 48ms, proxy.ts: 35ms, render: 335ms)
- GET /api/orders?mode=paper 200 in 1711ms (compile: 13ms, proxy.ts: 39ms, render: 1659ms)
- GET /api/orders/meta 200 in 74ms (compile: 26ms, proxy.ts: 36ms, render: 12ms)
- GET /api/market 200 in 423ms (compile: 41ms, proxy.ts: 35ms, render: 347ms)
- GET /api/orders?mode=paper 200 in 784ms (compile: 11ms, proxy.ts: 37ms, render: 736ms)
- GET /api/orders/meta 200 in 85ms (compile: 27ms, proxy.ts: 41ms, render: 16ms)
- GET /api/market 200 in 439ms (compile: 44ms, proxy.ts: 35ms, render: 359ms)
- GET /api/orders?mode=paper 200 in 793ms (compile: 16ms, proxy.ts: 43ms, render: 734ms)
- GET /api/orders/meta 200 in 72ms (compile: 21ms, proxy.ts: 34ms, render: 17ms)
- GET /api/market 200 in 434ms (compile: 40ms, proxy.ts: 33ms, render: 360ms)
- GET /api/orders?mode=paper 200 in 1444ms (compile: 13ms, proxy.ts: 35ms, render: 1395ms)
-✓ Compiled in 942ms
- GET /api/orders/meta 200 in 65ms (compile: 22ms, proxy.ts: 27ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 753ms (compile: 11ms, proxy.ts: 29ms, render: 713ms)
- GET /api/market 200 in 406ms (compile: 5ms, proxy.ts: 11ms, render: 390ms)
- GET /api/orders/meta 200 in 53ms (compile: 16ms, proxy.ts: 27ms, render: 11ms)
- GET /api/orders?mode=paper 200 in 762ms (compile: 8ms, proxy.ts: 42ms, render: 713ms)
-✓ Compiled in 1123ms
- GET /api/orders/meta 200 in 58ms (compile: 21ms, proxy.ts: 23ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 845ms (compile: 8ms, proxy.ts: 25ms, render: 812ms)
- GET /api/orders/meta 200 in 48ms (compile: 15ms, proxy.ts: 20ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 743ms (compile: 6ms, proxy.ts: 25ms, render: 712ms)
-✓ Compiled in 508ms
- GET /api/orders/meta 200 in 128ms (compile: 31ms, proxy.ts: 72ms, render: 25ms)
- GET /api/orders?mode=paper 200 in 832ms (compile: 11ms, proxy.ts: 112ms, render: 709ms)
- GET /api/market 200 in 397ms (compile: 5ms, proxy.ts: 12ms, render: 379ms)
- GET /api/orders/meta 200 in 50ms (compile: 15ms, proxy.ts: 20ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 1383ms (compile: 8ms, proxy.ts: 21ms, render: 1355ms)
-✓ Compiled in 347ms
- GET /api/orders/meta 200 in 41ms (compile: 7ms, proxy.ts: 20ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 287ms (compile: 26ms, proxy.ts: 21ms, render: 240ms)
-[22:18:02.087] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1809ms (compile: 5ms, proxy.ts: 10ms, render: 1795ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 56ms (compile: 11ms, proxy.ts: 25ms, render: 20ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 51ms (compile: 5ms, proxy.ts: 32ms, render: 14ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 27ms (compile: 5ms, proxy.ts: 12ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 24ms (compile: 4ms, proxy.ts: 11ms, render: 9ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 332ms (compile: 12ms, proxy.ts: 45ms, render: 276ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 23ms (compile: 4ms, proxy.ts: 11ms, render: 9ms)
- GET /api/orders/meta 200 in 52ms (compile: 16ms, proxy.ts: 21ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 264ms (compile: 9ms, proxy.ts: 21ms, render: 235ms)
- GET /api/orders/meta 200 in 52ms (compile: 14ms, proxy.ts: 23ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 750ms (compile: 5ms, proxy.ts: 26ms, render: 719ms)
- GET /api/orders/meta 200 in 60ms (compile: 20ms, proxy.ts: 25ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 998ms (compile: 12ms, proxy.ts: 29ms, render: 957ms)
- GET /api/market 200 in 409ms (compile: 6ms, proxy.ts: 12ms, render: 391ms)
- GET /api/orders/meta 200 in 56ms (compile: 22ms, proxy.ts: 17ms, render: 17ms)
- GET /api/orders?mode=paper 200 in 791ms (compile: 8ms, proxy.ts: 23ms, render: 760ms)
-✓ Compiled in 360ms
- GET /api/orders/meta 200 in 31ms (compile: 6ms, proxy.ts: 11ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 283ms (compile: 6ms, proxy.ts: 13ms, render: 263ms)
-✓ Compiled in 492ms
- GET /api/orders/meta 200 in 64ms (compile: 7ms, proxy.ts: 12ms, render: 45ms)
- GET /api/orders?mode=paper 200 in 788ms (compile: 6ms, proxy.ts: 13ms, render: 769ms)
-✓ Compiled in 697ms
- GET /api/orders/meta 200 in 38ms (compile: 6ms, proxy.ts: 15ms, render: 18ms)
- GET /api/orders?mode=paper 200 in 776ms (compile: 5ms, proxy.ts: 15ms, render: 756ms)
- GET /api/orders/meta 200 in 59ms (compile: 16ms, proxy.ts: 27ms, render: 16ms)
- GET /api/orders?mode=paper 200 in 990ms (compile: 8ms, proxy.ts: 35ms, render: 947ms)
- GET /api/market 200 in 378ms (compile: 6ms, proxy.ts: 14ms, render: 358ms)
- POST /api/portfolio-snapshot 200 in 27ms (compile: 5ms, proxy.ts: 12ms, render: 11ms)
- GET /api/orders/meta 200 in 46ms (compile: 18ms, proxy.ts: 15ms, render: 14ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 32ms (compile: 8ms, proxy.ts: 10ms, render: 14ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 5ms, proxy.ts: 9ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 715ms (compile: 7ms, proxy.ts: 17ms, render: 691ms)
- GET /api/orders/meta 200 in 41ms (compile: 14ms, proxy.ts: 15ms, render: 11ms)
- GET /api/orders?mode=paper 200 in 1497ms (compile: 5ms, proxy.ts: 16ms, render: 1476ms)
- GET /api/orders/meta 200 in 60ms (compile: 21ms, proxy.ts: 26ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 739ms (compile: 9ms, proxy.ts: 35ms, render: 695ms)
- GET /api/orders/meta 200 in 56ms (compile: 19ms, proxy.ts: 28ms, render: 9ms)
- GET /api/orders?mode=paper 200 in 851ms (compile: 8ms, proxy.ts: 33ms, render: 810ms)
- GET /api/market 200 in 359ms (compile: 6ms, proxy.ts: 16ms, render: 338ms)
- GET /api/orders/meta 200 in 74ms (compile: 24ms, proxy.ts: 34ms, render: 17ms)
- GET /api/market 200 in 480ms (compile: 43ms, proxy.ts: 33ms, render: 404ms)
- GET /api/orders?mode=paper 200 in 926ms (compile: 10ms, proxy.ts: 36ms, render: 879ms)
- GET /api/orders/meta 200 in 86ms (compile: 28ms, proxy.ts: 38ms, render: 19ms)
- GET /api/market 200 in 468ms (compile: 50ms, proxy.ts: 37ms, render: 382ms)
- GET /api/orders?mode=paper 200 in 1546ms (compile: 14ms, proxy.ts: 39ms, render: 1493ms)
- GET /api/orders/meta 200 in 80ms (compile: 27ms, proxy.ts: 37ms, render: 16ms)
- GET /api/market 200 in 412ms (compile: 45ms, proxy.ts: 34ms, render: 333ms)
- GET /api/orders?mode=paper 200 in 803ms (compile: 11ms, proxy.ts: 41ms, render: 750ms)
- GET /api/orders/meta 200 in 72ms (compile: 22ms, proxy.ts: 33ms, render: 17ms)
- GET /api/market 200 in 448ms (compile: 42ms, proxy.ts: 32ms, render: 373ms)
- GET /api/orders?mode=paper 200 in 848ms (compile: 9ms, proxy.ts: 35ms, render: 803ms)
- GET /api/orders/meta 200 in 96ms (compile: 42ms, proxy.ts: 35ms, render: 18ms)
- GET /api/market 200 in 453ms (compile: 63ms, proxy.ts: 34ms, render: 356ms)
- GET /api/orders?mode=paper 200 in 1796ms (compile: 11ms, proxy.ts: 46ms, render: 1740ms)
- GET /api/orders/meta 200 in 76ms (compile: 24ms, proxy.ts: 35ms, render: 16ms)
- GET /api/market 200 in 441ms (compile: 42ms, proxy.ts: 34ms, render: 364ms)
- GET /api/orders?mode=paper 200 in 852ms (compile: 13ms, proxy.ts: 36ms, render: 803ms)
- GET /api/orders/meta 200 in 81ms (compile: 26ms, proxy.ts: 39ms, render: 16ms)
- GET /api/market 200 in 408ms (compile: 44ms, proxy.ts: 33ms, render: 330ms)
- GET /api/orders?mode=paper 200 in 1035ms (compile: 13ms, proxy.ts: 45ms, render: 977ms)
- GET /api/orders/meta 200 in 77ms (compile: 25ms, proxy.ts: 35ms, render: 17ms)
- GET /api/market 200 in 415ms (compile: 44ms, proxy.ts: 34ms, render: 336ms)
- GET /api/orders?mode=paper 200 in 1439ms (compile: 11ms, proxy.ts: 36ms, render: 1392ms)
- GET /api/orders/meta 200 in 70ms (compile: 14ms, proxy.ts: 40ms, render: 16ms)
- GET /api/market 200 in 440ms (compile: 43ms, proxy.ts: 38ms, render: 359ms)
- GET /api/orders?mode=paper 200 in 789ms (compile: 33ms, proxy.ts: 39ms, render: 717ms)
- GET /api/orders/meta 200 in 65ms (compile: 13ms, proxy.ts: 37ms, render: 14ms)
- GET /api/market 200 in 424ms (compile: 37ms, proxy.ts: 35ms, render: 353ms)
- GET /api/orders?mode=paper 200 in 848ms (compile: 29ms, proxy.ts: 36ms, render: 783ms)
- GET /api/orders/meta 200 in 68ms (compile: 23ms, proxy.ts: 33ms, render: 12ms)
- GET /api/market 200 in 422ms (compile: 37ms, proxy.ts: 31ms, render: 353ms)
- GET /api/orders?mode=paper 200 in 1462ms (compile: 9ms, proxy.ts: 35ms, render: 1418ms)
- GET /api/orders/meta 200 in 84ms (compile: 26ms, proxy.ts: 36ms, render: 22ms)
- GET /api/market 200 in 432ms (compile: 51ms, proxy.ts: 35ms, render: 346ms)
- GET /api/orders?mode=paper 200 in 779ms (compile: 13ms, proxy.ts: 37ms, render: 729ms)
-[22:33:01.751] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1448ms (compile: 7ms, proxy.ts: 12ms, render: 1429ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 48ms (compile: 7ms, proxy.ts: 19ms, render: 21ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 22ms (compile: 5ms, proxy.ts: 9ms, render: 8ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 5ms, proxy.ts: 10ms, render: 10ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 21ms (compile: 5ms, proxy.ts: 7ms, render: 8ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 305ms (compile: 31ms, proxy.ts: 19ms, render: 255ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 20ms (compile: 4ms, proxy.ts: 10ms, render: 7ms)
- GET /api/orders/meta 200 in 73ms (compile: 25ms, proxy.ts: 37ms, render: 10ms)
- GET /api/market 200 in 401ms (compile: 37ms, proxy.ts: 33ms, render: 331ms)
- GET /api/orders?mode=paper 200 in 771ms (compile: 12ms, proxy.ts: 40ms, render: 720ms)
- GET /api/orders/meta 200 in 80ms (compile: 25ms, proxy.ts: 40ms, render: 15ms)
- GET /api/market 200 in 408ms (compile: 43ms, proxy.ts: 34ms, render: 331ms)
- POST /api/portfolio-snapshot 200 in 28ms (compile: 4ms, proxy.ts: 10ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 1498ms (compile: 11ms, proxy.ts: 43ms, render: 1445ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 4ms, proxy.ts: 11ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 24ms (compile: 5ms, proxy.ts: 9ms, render: 10ms)
- GET /api/orders/meta 200 in 76ms (compile: 24ms, proxy.ts: 36ms, render: 16ms)
- GET /api/market 200 in 406ms (compile: 42ms, proxy.ts: 34ms, render: 330ms)
- GET /api/orders?mode=paper 200 in 768ms (compile: 12ms, proxy.ts: 37ms, render: 719ms)
- GET /api/orders/meta 200 in 75ms (compile: 23ms, proxy.ts: 35ms, render: 17ms)
- GET /api/market 200 in 415ms (compile: 42ms, proxy.ts: 34ms, render: 339ms)
- GET /api/orders?mode=paper 200 in 1036ms (compile: 12ms, proxy.ts: 39ms, render: 985ms)
- GET /api/orders/meta 200 in 83ms (compile: 30ms, proxy.ts: 37ms, render: 16ms)
- GET /api/market 200 in 435ms (compile: 47ms, proxy.ts: 35ms, render: 352ms)
- GET /api/orders?mode=paper 200 in 1436ms (compile: 14ms, proxy.ts: 37ms, render: 1385ms)
- GET /api/orders/meta 200 in 80ms (compile: 26ms, proxy.ts: 38ms, render: 16ms)
- GET /api/market 200 in 408ms (compile: 43ms, proxy.ts: 37ms, render: 328ms)
- GET /api/orders?mode=paper 200 in 1116ms (compile: 11ms, proxy.ts: 41ms, render: 1064ms)
- GET /api/orders/meta 200 in 84ms (compile: 29ms, proxy.ts: 39ms, render: 16ms)
- GET /api/market 200 in 434ms (compile: 48ms, proxy.ts: 34ms, render: 352ms)
- GET /api/orders?mode=paper 200 in 783ms (compile: 12ms, proxy.ts: 42ms, render: 729ms)
- GET /api/orders/meta 200 in 75ms (compile: 24ms, proxy.ts: 34ms, render: 17ms)
- GET /api/market 200 in 482ms (compile: 43ms, proxy.ts: 33ms, render: 405ms)
- GET /api/orders?mode=paper 200 in 1491ms (compile: 10ms, proxy.ts: 35ms, render: 1446ms)
- GET /api/orders/meta 200 in 73ms (compile: 23ms, proxy.ts: 33ms, render: 16ms)
- GET /api/market 200 in 397ms (compile: 42ms, proxy.ts: 31ms, render: 324ms)
- GET /api/orders?mode=paper 200 in 1039ms (compile: 12ms, proxy.ts: 34ms, render: 993ms)
- GET /api/orders/meta 200 in 73ms (compile: 24ms, proxy.ts: 34ms, render: 16ms)
- GET /api/market 200 in 406ms (compile: 42ms, proxy.ts: 29ms, render: 336ms)
- GET /api/orders?mode=paper 200 in 855ms (compile: 10ms, proxy.ts: 36ms, render: 809ms)
- GET /api/orders/meta 200 in 77ms (compile: 25ms, proxy.ts: 35ms, render: 16ms)
- GET /api/market 200 in 438ms (compile: 44ms, proxy.ts: 34ms, render: 360ms)
- GET /api/orders?mode=paper 200 in 1795ms (compile: 12ms, proxy.ts: 37ms, render: 1746ms)
- GET /api/orders/meta 200 in 78ms (compile: 25ms, proxy.ts: 37ms, render: 15ms)
- GET /api/market 200 in 472ms (compile: 45ms, proxy.ts: 35ms, render: 392ms)
- GET /api/orders?mode=paper 200 in 819ms (compile: 12ms, proxy.ts: 38ms, render: 769ms)
- GET /api/orders/meta 200 in 72ms (compile: 25ms, proxy.ts: 36ms, render: 11ms)
- GET /api/market 200 in 413ms (compile: 38ms, proxy.ts: 35ms, render: 340ms)
- GET /api/orders?mode=paper 200 in 787ms (compile: 11ms, proxy.ts: 39ms, render: 738ms)
- GET /api/orders/meta 200 in 52ms (compile: 9ms, proxy.ts: 26ms, render: 17ms)
- GET /api/market 200 in 434ms (compile: 29ms, proxy.ts: 25ms, render: 381ms)
- GET /api/orders?mode=paper 200 in 1458ms (compile: 7ms, proxy.ts: 16ms, render: 1435ms)
- GET /api/orders/meta 200 in 82ms (compile: 28ms, proxy.ts: 38ms, render: 16ms)
- GET /api/market 200 in 419ms (compile: 46ms, proxy.ts: 35ms, render: 338ms)
- GET /api/orders?mode=paper 200 in 788ms (compile: 13ms, proxy.ts: 39ms, render: 736ms)
-[22:48:01.711] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1413ms (compile: 6ms, proxy.ts: 34ms, render: 1373ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 44ms (compile: 6ms, proxy.ts: 26ms, render: 12ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 30ms (compile: 5ms, proxy.ts: 15ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 38ms (compile: 8ms, proxy.ts: 15ms, render: 15ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 5ms, proxy.ts: 12ms, render: 10ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 296ms (compile: 21ms, proxy.ts: 24ms, render: 251ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 30ms (compile: 6ms, proxy.ts: 12ms, render: 11ms)
- GET /api/orders/meta 200 in 81ms (compile: 24ms, proxy.ts: 40ms, render: 17ms)
- GET /api/market 200 in 771ms (compile: 44ms, proxy.ts: 32ms, render: 696ms)
- GET /api/orders?mode=paper 200 in 1130ms (compile: 12ms, proxy.ts: 41ms, render: 1077ms)
- GET /api/orders/meta 200 in 78ms (compile: 22ms, proxy.ts: 39ms, render: 17ms)
- GET /api/market 200 in 431ms (compile: 41ms, proxy.ts: 39ms, render: 352ms)
- POST /api/portfolio-snapshot 200 in 29ms (compile: 5ms, proxy.ts: 12ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 1440ms (compile: 13ms, proxy.ts: 40ms, render: 1387ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 22ms (compile: 5ms, proxy.ts: 9ms, render: 8ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 18ms (compile: 4ms, proxy.ts: 7ms, render: 7ms)
- GET /api/orders/meta 200 in 73ms (compile: 26ms, proxy.ts: 34ms, render: 13ms)
- GET /api/market 200 in 409ms (compile: 41ms, proxy.ts: 33ms, render: 335ms)
- GET /api/orders?mode=paper 200 in 776ms (compile: 10ms, proxy.ts: 42ms, render: 723ms)
- GET /api/orders/meta 200 in 116ms (compile: 59ms, proxy.ts: 38ms, render: 18ms)
- GET /api/market 200 in 423ms (compile: 28ms, proxy.ts: 40ms, render: 355ms)
- GET /api/orders?mode=paper 200 in 1041ms (compile: 13ms, proxy.ts: 42ms, render: 986ms)
- GET /api/orders/meta 200 in 76ms (compile: 24ms, proxy.ts: 38ms, render: 14ms)
- GET /api/market 200 in 463ms (compile: 41ms, proxy.ts: 34ms, render: 388ms)
- GET /api/orders?mode=paper 200 in 1536ms (compile: 10ms, proxy.ts: 40ms, render: 1486ms)
- GET /api/orders/meta 200 in 79ms (compile: 23ms, proxy.ts: 38ms, render: 17ms)
- GET /api/market 200 in 425ms (compile: 43ms, proxy.ts: 35ms, render: 347ms)
- GET /api/orders?mode=paper 200 in 773ms (compile: 11ms, proxy.ts: 41ms, render: 721ms)
- GET /api/orders/meta 200 in 67ms (compile: 22ms, proxy.ts: 35ms, render: 10ms)
- GET /api/market 200 in 475ms (compile: 35ms, proxy.ts: 34ms, render: 406ms)
- GET /api/orders?mode=paper 200 in 879ms (compile: 11ms, proxy.ts: 36ms, render: 833ms)
- GET /api/orders/meta 200 in 77ms (compile: 8ms, proxy.ts: 49ms, render: 20ms)
- GET /api/market 200 in 432ms (compile: 31ms, proxy.ts: 43ms, render: 358ms)
- GET /api/orders?mode=paper 200 in 1739ms (compile: 20ms, proxy.ts: 31ms, render: 1687ms)
- GET /api/orders/meta 200 in 75ms (compile: 25ms, proxy.ts: 36ms, render: 14ms)
- GET /api/market 200 in 450ms (compile: 41ms, proxy.ts: 35ms, render: 375ms)
- GET /api/orders?mode=paper 200 in 1112ms (compile: 11ms, proxy.ts: 37ms, render: 1065ms)
- GET /api/orders/meta 200 in 114ms (compile: 60ms, proxy.ts: 35ms, render: 19ms)
- GET /api/market 200 in 449ms (compile: 25ms, proxy.ts: 36ms, render: 387ms)
- GET /api/orders?mode=paper 200 in 803ms (compile: 11ms, proxy.ts: 37ms, render: 754ms)
- GET /api/orders/meta 200 in 71ms (compile: 23ms, proxy.ts: 38ms, render: 11ms)
- GET /api/market 200 in 401ms (compile: 36ms, proxy.ts: 37ms, render: 328ms)
- GET /api/orders?mode=paper 200 in 1806ms (compile: 11ms, proxy.ts: 40ms, render: 1754ms)
- GET /api/orders/meta 200 in 78ms (compile: 26ms, proxy.ts: 34ms, render: 18ms)
- GET /api/market 200 in 448ms (compile: 47ms, proxy.ts: 33ms, render: 367ms)
- GET /api/orders?mode=paper 200 in 898ms (compile: 10ms, proxy.ts: 35ms, render: 852ms)
- GET /api/orders/meta 200 in 79ms (compile: 24ms, proxy.ts: 37ms, render: 18ms)
- GET /api/market 200 in 389ms (compile: 45ms, proxy.ts: 34ms, render: 310ms)
- GET /api/orders?mode=paper 200 in 853ms (compile: 13ms, proxy.ts: 42ms, render: 798ms)
- GET /api/orders/meta 200 in 74ms (compile: 24ms, proxy.ts: 37ms, render: 12ms)
- GET /api/market 200 in 429ms (compile: 40ms, proxy.ts: 31ms, render: 358ms)
- GET /api/orders?mode=paper 200 in 1508ms (compile: 12ms, proxy.ts: 38ms, render: 1458ms)
- GET /api/orders/meta 200 in 118ms (compile: 63ms, proxy.ts: 38ms, render: 17ms)
- GET /api/market 200 in 466ms (compile: 28ms, proxy.ts: 39ms, render: 399ms)
- GET /api/orders?mode=paper 200 in 808ms (compile: 13ms, proxy.ts: 40ms, render: 756ms)
-[23:03:01.957] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1669ms (compile: 7ms, proxy.ts: 16ms, render: 1646ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 32ms (compile: 5ms, proxy.ts: 15ms, render: 12ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 3ms, proxy.ts: 11ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 35ms (compile: 5ms, proxy.ts: 12ms, render: 18ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 41ms (compile: 6ms, proxy.ts: 14ms, render: 21ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 285ms (compile: 19ms, proxy.ts: 15ms, render: 251ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 19ms (compile: 4ms, proxy.ts: 7ms, render: 8ms)
- GET /api/orders/meta 200 in 77ms (compile: 25ms, proxy.ts: 33ms, render: 19ms)
- GET /api/market 200 in 460ms (compile: 46ms, proxy.ts: 30ms, render: 383ms)
- GET /api/orders?mode=paper 200 in 778ms (compile: 11ms, proxy.ts: 34ms, render: 733ms)
- GET /api/orders/meta 200 in 66ms (compile: 21ms, proxy.ts: 34ms, render: 11ms)
- GET /api/market 200 in 404ms (compile: 33ms, proxy.ts: 33ms, render: 338ms)
- POST /api/portfolio-snapshot 200 in 26ms (compile: 5ms, proxy.ts: 10ms, render: 11ms)
- GET /api/orders?mode=paper 200 in 1422ms (compile: 11ms, proxy.ts: 35ms, render: 1376ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 24ms (compile: 3ms, proxy.ts: 9ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 22ms (compile: 3ms, proxy.ts: 10ms, render: 9ms)
- GET /api/orders/meta 200 in 73ms (compile: 24ms, proxy.ts: 35ms, render: 14ms)
- GET /api/market 200 in 440ms (compile: 40ms, proxy.ts: 34ms, render: 366ms)
- GET /api/orders?mode=paper 200 in 798ms (compile: 10ms, proxy.ts: 43ms, render: 745ms)
- GET /api/orders/meta 200 in 75ms (compile: 26ms, proxy.ts: 33ms, render: 16ms)
- GET /api/market 200 in 474ms (compile: 45ms, proxy.ts: 33ms, render: 396ms)
- GET /api/orders?mode=paper 200 in 920ms (compile: 11ms, proxy.ts: 34ms, render: 875ms)
- GET /api/orders/meta 200 in 84ms (compile: 27ms, proxy.ts: 39ms, render: 18ms)
- GET /api/market 200 in 454ms (compile: 47ms, proxy.ts: 38ms, render: 369ms)
- GET /api/orders?mode=paper 200 in 1447ms (compile: 12ms, proxy.ts: 40ms, render: 1395ms)
- GET /api/orders/meta 200 in 80ms (compile: 27ms, proxy.ts: 37ms, render: 16ms)
- GET /api/market 200 in 512ms (compile: 45ms, proxy.ts: 35ms, render: 432ms)
- GET /api/orders?mode=paper 200 in 896ms (compile: 13ms, proxy.ts: 38ms, render: 845ms)
- GET /api/orders/meta 200 in 85ms (compile: 28ms, proxy.ts: 36ms, render: 21ms)
- GET /api/market 200 in 461ms (compile: 51ms, proxy.ts: 35ms, render: 374ms)
- GET /api/orders?mode=paper 200 in 791ms (compile: 14ms, proxy.ts: 38ms, render: 739ms)
- GET /api/orders/meta 200 in 82ms (compile: 24ms, proxy.ts: 42ms, render: 16ms)
- GET /api/market 200 in 440ms (compile: 41ms, proxy.ts: 36ms, render: 362ms)
- GET /api/orders?mode=paper 200 in 1720ms (compile: 12ms, proxy.ts: 43ms, render: 1664ms)
- GET /api/orders/meta 200 in 77ms (compile: 22ms, proxy.ts: 38ms, render: 16ms)
- GET /api/market 200 in 458ms (compile: 45ms, proxy.ts: 35ms, render: 378ms)
- GET /api/orders?mode=paper 200 in 1154ms (compile: 10ms, proxy.ts: 39ms, render: 1105ms)
- GET /api/orders/meta 200 in 75ms (compile: 24ms, proxy.ts: 35ms, render: 16ms)
- GET /api/market 200 in 448ms (compile: 44ms, proxy.ts: 32ms, render: 371ms)
- GET /api/orders?mode=paper 200 in 791ms (compile: 10ms, proxy.ts: 41ms, render: 740ms)
- GET /api/orders/meta 200 in 73ms (compile: 25ms, proxy.ts: 34ms, render: 14ms)
- GET /api/market 200 in 435ms (compile: 40ms, proxy.ts: 32ms, render: 363ms)
- GET /api/orders?mode=paper 200 in 1526ms (compile: 12ms, proxy.ts: 39ms, render: 1475ms)
- GET /api/orders/meta 200 in 84ms (compile: 29ms, proxy.ts: 39ms, render: 16ms)
- GET /api/market 200 in 440ms (compile: 47ms, proxy.ts: 37ms, render: 356ms)
- GET /api/orders?mode=paper 200 in 906ms (compile: 14ms, proxy.ts: 40ms, render: 852ms)
- GET /api/orders/meta 200 in 76ms (compile: 24ms, proxy.ts: 36ms, render: 15ms)
- GET /api/market 200 in 428ms (compile: 42ms, proxy.ts: 36ms, render: 351ms)
- GET /api/orders?mode=paper 200 in 871ms (compile: 13ms, proxy.ts: 37ms, render: 820ms)
- GET /api/orders/meta 200 in 72ms (compile: 26ms, proxy.ts: 32ms, render: 14ms)
- GET /api/market 200 in 449ms (compile: 41ms, proxy.ts: 32ms, render: 375ms)
- GET /api/orders?mode=paper 200 in 1443ms (compile: 12ms, proxy.ts: 38ms, render: 1392ms)
- GET /api/orders/meta 200 in 80ms (compile: 25ms, proxy.ts: 38ms, render: 17ms)
- GET /api/market 200 in 507ms (compile: 44ms, proxy.ts: 36ms, render: 428ms)
- GET /api/orders?mode=paper 200 in 801ms (compile: 12ms, proxy.ts: 40ms, render: 749ms)
-[23:18:01.970] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1702ms (compile: 5ms, proxy.ts: 32ms, render: 1665ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 49ms (compile: 16ms, proxy.ts: 19ms, render: 14ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 63ms (compile: 4ms, proxy.ts: 51ms, render: 8ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 20ms (compile: 5ms, proxy.ts: 7ms, render: 8ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 19ms (compile: 4ms, proxy.ts: 8ms, render: 7ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 292ms (compile: 5ms, proxy.ts: 20ms, render: 267ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 24ms (compile: 4ms, proxy.ts: 12ms, render: 8ms)
- GET /api/orders/meta 200 in 81ms (compile: 27ms, proxy.ts: 35ms, render: 19ms)
- GET /api/market 200 in 458ms (compile: 47ms, proxy.ts: 34ms, render: 377ms)
- GET /api/orders?mode=paper 200 in 1048ms (compile: 13ms, proxy.ts: 37ms, render: 999ms)
- GET /api/orders/meta 200 in 78ms (compile: 23ms, proxy.ts: 38ms, render: 16ms)
- GET /api/market 200 in 460ms (compile: 45ms, proxy.ts: 35ms, render: 380ms)
- POST /api/portfolio-snapshot 200 in 28ms (compile: 7ms, proxy.ts: 11ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 1484ms (compile: 11ms, proxy.ts: 40ms, render: 1433ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 4ms, proxy.ts: 11ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 18ms (compile: 4ms, proxy.ts: 8ms, render: 6ms)
- GET /api/orders/meta 200 in 73ms (compile: 24ms, proxy.ts: 37ms, render: 13ms)
- GET /api/market 200 in 430ms (compile: 38ms, proxy.ts: 35ms, render: 357ms)
- GET /api/orders?mode=paper 200 in 780ms (compile: 10ms, proxy.ts: 38ms, render: 732ms)
- GET /api/orders/meta 200 in 84ms (compile: 26ms, proxy.ts: 39ms, render: 18ms)
- GET /api/market 200 in 506ms (compile: 50ms, proxy.ts: 36ms, render: 420ms)
- GET /api/orders?mode=paper 200 in 818ms (compile: 11ms, proxy.ts: 45ms, render: 762ms)
- GET /api/orders/meta 200 in 65ms (compile: 21ms, proxy.ts: 32ms, render: 12ms)
- GET /api/market 200 in 477ms (compile: 36ms, proxy.ts: 29ms, render: 412ms)
- GET /api/orders?mode=paper 200 in 1501ms (compile: 11ms, proxy.ts: 34ms, render: 1457ms)
- GET /api/orders/meta 200 in 84ms (compile: 30ms, proxy.ts: 37ms, render: 17ms)
- GET /api/market 200 in 450ms (compile: 49ms, proxy.ts: 35ms, render: 365ms)
- GET /api/orders?mode=paper 200 in 793ms (compile: 13ms, proxy.ts: 40ms, render: 740ms)
- GET /api/orders/meta 200 in 117ms (compile: 66ms, proxy.ts: 35ms, render: 16ms)
- GET /api/market 200 in 448ms (compile: 30ms, proxy.ts: 36ms, render: 382ms)
- GET /api/orders?mode=paper 200 in 886ms (compile: 12ms, proxy.ts: 43ms, render: 831ms)
- GET /api/orders/meta 200 in 64ms (compile: 10ms, proxy.ts: 37ms, render: 16ms)
- GET /api/market 200 in 437ms (compile: 43ms, proxy.ts: 35ms, render: 358ms)
- GET /api/orders?mode=paper 200 in 1561ms (compile: 29ms, proxy.ts: 36ms, render: 1495ms)
- GET /api/orders/meta 200 in 107ms (compile: 59ms, proxy.ts: 34ms, render: 13ms)
- GET /api/market 200 in 457ms (compile: 27ms, proxy.ts: 35ms, render: 395ms)
- GET /api/orders?mode=paper 200 in 777ms (compile: 12ms, proxy.ts: 36ms, render: 728ms)
- GET /api/orders/meta 200 in 88ms (compile: 30ms, proxy.ts: 38ms, render: 19ms)
- GET /api/market 200 in 431ms (compile: 53ms, proxy.ts: 37ms, render: 342ms)
- GET /api/orders?mode=paper 200 in 793ms (compile: 13ms, proxy.ts: 39ms, render: 742ms)
- GET /api/orders/meta 200 in 79ms (compile: 25ms, proxy.ts: 36ms, render: 17ms)
- GET /api/market 200 in 411ms (compile: 44ms, proxy.ts: 35ms, render: 332ms)
- GET /api/orders?mode=paper 200 in 1486ms (compile: 13ms, proxy.ts: 38ms, render: 1436ms)
- GET /api/orders/meta 200 in 72ms (compile: 23ms, proxy.ts: 36ms, render: 13ms)
- GET /api/market 200 in 399ms (compile: 38ms, proxy.ts: 33ms, render: 328ms)
- GET /api/orders?mode=paper 200 in 1146ms (compile: 13ms, proxy.ts: 36ms, render: 1098ms)
- GET /api/orders/meta 200 in 82ms (compile: 32ms, proxy.ts: 36ms, render: 15ms)
- GET /api/market 200 in 453ms (compile: 48ms, proxy.ts: 30ms, render: 374ms)
- GET /api/orders?mode=paper 200 in 791ms (compile: 12ms, proxy.ts: 37ms, render: 742ms)
- GET /api/orders/meta 200 in 87ms (compile: 29ms, proxy.ts: 37ms, render: 21ms)
- GET /api/market 200 in 476ms (compile: 52ms, proxy.ts: 36ms, render: 387ms)
- GET /api/orders?mode=paper 200 in 1861ms (compile: 12ms, proxy.ts: 42ms, render: 1806ms)
- GET /api/orders/meta 200 in 107ms (compile: 26ms, proxy.ts: 36ms, render: 45ms)
- GET /api/market 200 in 484ms (compile: 73ms, proxy.ts: 35ms, render: 376ms)
- GET /api/orders?mode=paper 200 in 1075ms (compile: 10ms, proxy.ts: 40ms, render: 1025ms)
- GET /api/orders/meta 200 in 67ms (compile: 17ms, proxy.ts: 42ms, render: 8ms)
- GET /api/market 200 in 492ms (compile: 36ms, proxy.ts: 39ms, render: 417ms)
- GET /api/orders?mode=paper 200 in 908ms (compile: 11ms, proxy.ts: 41ms, render: 856ms)
-[23:33:45.504] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1177ms (compile: 28ms, proxy.ts: 40ms, render: 1109ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 29ms (compile: 6ms, proxy.ts: 14ms, render: 9ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 24ms (compile: 5ms, proxy.ts: 10ms, render: 10ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 25ms (compile: 4ms, proxy.ts: 13ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 24ms (compile: 5ms, proxy.ts: 10ms, render: 10ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 303ms (compile: 17ms, proxy.ts: 14ms, render: 273ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 20ms (compile: 4ms, proxy.ts: 9ms, render: 7ms)
- GET /api/orders/meta 200 in 82ms (compile: 29ms, proxy.ts: 38ms, render: 16ms)
- GET /api/market 200 in 442ms (compile: 48ms, proxy.ts: 37ms, render: 357ms)
- GET /api/orders?mode=paper 200 in 1744ms (compile: 12ms, proxy.ts: 38ms, render: 1695ms)
- GET /api/orders/meta 200 in 72ms (compile: 27ms, proxy.ts: 30ms, render: 16ms)
- GET /api/market 200 in 370ms (compile: 46ms, proxy.ts: 22ms, render: 302ms)
- GET /api/orders?mode=paper 200 in 754ms (compile: 13ms, proxy.ts: 32ms, render: 708ms)
- POST /api/portfolio-snapshot 200 in 36ms (compile: 6ms, proxy.ts: 17ms, render: 13ms)
- GET /api/orders/meta 200 in 55ms (compile: 14ms, proxy.ts: 32ms, render: 10ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 21ms (compile: 5ms, proxy.ts: 9ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 24ms (compile: 5ms, proxy.ts: 9ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 270ms (compile: 10ms, proxy.ts: 29ms, render: 231ms)
-[23:35:16.658] [32mINFO[39m: [36mtrailing-engine › motor iniciat[39m
-    [35mmodule[39m: "trailing-engine"
- GET /api/orders/trailing 200 in 245ms (compile: 209ms, proxy.ts: 16ms, render: 21ms)
- GET /api/orders/trailing 200 in 125ms (compile: 47ms, proxy.ts: 68ms, render: 10ms)
- GET /api/orders/trailing 200 in 25ms (compile: 6ms, proxy.ts: 10ms, render: 8ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778363861207&window=1w 200 in 423ms (compile: 148ms, proxy.ts: 17ms, render: 258ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778363861207&window=1w 200 in 45ms (compile: 12ms, proxy.ts: 23ms, render: 9ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778056622297&window=1w 200 in 295ms (compile: 6ms, proxy.ts: 34ms, render: 254ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778056622297&window=1w 200 in 25ms (compile: 6ms, proxy.ts: 11ms, render: 8ms)
- GET /api/market 200 in 433ms (compile: 5ms, proxy.ts: 13ms, render: 415ms)
- GET /api/orders/meta 200 in 49ms (compile: 16ms, proxy.ts: 18ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 722ms (compile: 8ms, proxy.ts: 19ms, render: 695ms)
- GET /api/orders/trailing 200 in 24ms (compile: 4ms, proxy.ts: 11ms, render: 9ms)
- GET /api/orders/meta 200 in 95ms (compile: 44ms, proxy.ts: 39ms, render: 12ms)
-[23:35:37.274] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 376ms (compile: 36ms, proxy.ts: 39ms, render: 301ms)
-[23:35:37.291] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "cost-basis"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/cost-basis?mode=real 401 in 392ms (compile: 26ms, proxy.ts: 40ms, render: 326ms)
- GET /api/balance?mode=real 401 in 410ms (compile: 16ms, proxy.ts: 41ms, render: 353ms)
-[23:35:37.305] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "balance"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
-[23:35:37.332] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "balance"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/balance?mode=real 401 in 386ms (compile: 3ms, proxy.ts: 64ms, render: 319ms)
-[23:35:37.606] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "cost-basis"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/cost-basis?mode=real 401 in 286ms (compile: 4ms, proxy.ts: 24ms, render: 258ms)
- GET /api/stream 200 in 107.7min (compile: 447ms, proxy.ts: 19ms, render: 107.7min)
- GET / 200 in 1737ms (compile: 178ms, proxy.ts: 10ms, render: 1549ms)
- GET /api/errors?since=1777154888367 200 in 260ms (compile: 116ms, proxy.ts: 123ms, render: 21ms)
- GET /api/orders/meta 200 in 359ms (compile: 184ms, proxy.ts: 149ms, render: 26ms)
- GET /api/pnl 200 in 673ms (compile: 484ms, proxy.ts: 125ms, render: 63ms)
- GET /api/trading-mode 200 in 161ms (compile: 21ms, proxy.ts: 100ms, render: 40ms)
- GET /api/orders/meta 200 in 171ms (compile: 64ms, proxy.ts: 92ms, render: 15ms)
- GET /api/strategies 200 in 389ms (compile: 238ms, proxy.ts: 127ms, render: 24ms)
- GET /api/orders?mode=paper 200 in 1891ms (compile: 165ms, proxy.ts: 150ms, render: 1576ms)
-[23:35:46.710] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1907ms (compile: 142ms, proxy.ts: 122ms, render: 1643ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 54ms (compile: 9ms, proxy.ts: 36ms, render: 9ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 62ms (compile: 20ms, proxy.ts: 34ms, render: 9ms)
- POST /api/portfolio-snapshot 200 in 72ms (compile: 32ms, proxy.ts: 32ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 39ms (compile: 9ms, proxy.ts: 21ms, render: 9ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 48ms (compile: 21ms, proxy.ts: 19ms, render: 8ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 38ms (compile: 9ms, proxy.ts: 16ms, render: 14ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 90ms (compile: 3ms, proxy.ts: 75ms, render: 12ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 23ms (compile: 4ms, proxy.ts: 12ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 23ms (compile: 6ms, proxy.ts: 8ms, render: 9ms)
- GET /api/cost-basis?mode=paper 200 in 3.2s (compile: 180ms, proxy.ts: 121ms, render: 2.9s)
- GET /api/orders/meta 200 in 62ms (compile: 22ms, proxy.ts: 25ms, render: 15ms)
- GET /api/orders/meta 200 in 130ms (compile: 41ms, proxy.ts: 35ms, render: 55ms)
-[23:36:00.547] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "balance"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/balance?mode=real 401 in 481ms (compile: 10ms, proxy.ts: 44ms, render: 427ms)
-[23:36:00.564] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "cost-basis"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/cost-basis?mode=real 401 in 493ms (compile: 20ms, proxy.ts: 44ms, render: 429ms)
- GET /api/orders?mode=real 401 in 502ms (compile: 28ms, proxy.ts: 42ms, render: 432ms)
-[23:36:00.578] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
-[23:36:00.677] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "balance"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/balance?mode=real 401 in 370ms (compile: 25ms, proxy.ts: 36ms, render: 308ms)
- GET /api/orders?mode=paper 200 in 1027ms (compile: 8ms, proxy.ts: 27ms, render: 991ms)
-[23:36:00.889] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "cost-basis"
-    [35mcode[39m: "AUTH"
-    err: "Binance /account 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/cost-basis?mode=real 401 in 295ms (compile: 7ms, proxy.ts: 14ms, render: 274ms)
- GET /api/orders/meta 200 in 57ms (compile: 18ms, proxy.ts: 25ms, render: 14ms)
- GET /api/market 200 in 482ms (compile: 5ms, proxy.ts: 11ms, render: 467ms)
-[23:36:15.406] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 331ms (compile: 7ms, proxy.ts: 26ms, render: 298ms)
- GET /api/orders/meta 200 in 57ms (compile: 22ms, proxy.ts: 24ms, render: 10ms)
-[23:36:30.508] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 425ms (compile: 11ms, proxy.ts: 28ms, render: 386ms)
- GET /api/orders/meta 200 in 100ms (compile: 6ms, proxy.ts: 83ms, render: 12ms)
- GET /api/market 200 in 448ms (compile: 17ms, proxy.ts: 39ms, render: 392ms)
-[23:36:45.922] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 635ms (compile: 49ms, proxy.ts: 36ms, render: 550ms)
- GET /api/orders/meta 200 in 75ms (compile: 25ms, proxy.ts: 30ms, render: 20ms)
-[23:37:00.989] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 413ms (compile: 10ms, proxy.ts: 37ms, render: 367ms)
- GET /api/orders/meta 200 in 109ms (compile: 53ms, proxy.ts: 39ms, render: 17ms)
- GET /api/market 200 in 391ms (compile: 15ms, proxy.ts: 46ms, render: 330ms)
-[23:37:15.690] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 406ms (compile: 35ms, proxy.ts: 40ms, render: 330ms)
- GET /api/orders/meta 200 in 63ms (compile: 23ms, proxy.ts: 23ms, render: 17ms)
-[23:37:30.629] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 323ms (compile: 10ms, proxy.ts: 23ms, render: 290ms)
- GET /api/market 200 in 341ms (compile: 4ms, proxy.ts: 7ms, render: 330ms)
- GET /api/market 200 in 290ms (compile: 5ms, proxy.ts: 7ms, render: 278ms)
- GET /api/orders/meta 200 in 59ms (compile: 21ms, proxy.ts: 24ms, render: 14ms)
-[23:38:44.624] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 341ms (compile: 8ms, proxy.ts: 25ms, render: 308ms)
- GET /api/market 200 in 354ms (compile: 4ms, proxy.ts: 15ms, render: 335ms)
- GET /api/orders/meta 200 in 59ms (compile: 18ms, proxy.ts: 31ms, render: 9ms)
- GET /api/market 200 in 473ms (compile: 29ms, proxy.ts: 29ms, render: 414ms)
-[23:39:44.998] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 692ms (compile: 11ms, proxy.ts: 37ms, render: 644ms)
- GET /api/orders/meta 200 in 111ms (compile: 37ms, proxy.ts: 46ms, render: 28ms)
-[23:40:44.769] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 441ms (compile: 17ms, proxy.ts: 47ms, render: 378ms)
- GET /api/market 200 in 473ms (compile: 68ms, proxy.ts: 45ms, render: 359ms)
- GET /api/orders/meta 200 in 71ms (compile: 24ms, proxy.ts: 34ms, render: 14ms)
-[23:41:44.707] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 377ms (compile: 12ms, proxy.ts: 40ms, render: 324ms)
- GET /api/market 200 in 401ms (compile: 40ms, proxy.ts: 33ms, render: 328ms)
- GET /api/orders/meta 200 in 59ms (compile: 16ms, proxy.ts: 34ms, render: 9ms)
- GET /api/market 200 in 410ms (compile: 26ms, proxy.ts: 30ms, render: 354ms)
-[23:42:44.965] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 635ms (compile: 9ms, proxy.ts: 36ms, render: 589ms)
- GET /api/orders/meta 200 in 72ms (compile: 36ms, proxy.ts: 22ms, render: 15ms)
-[23:42:45.864] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 788ms (compile: 56ms, proxy.ts: 24ms, render: 708ms)
- GET /api/orders/meta 200 in 40ms (compile: 15ms, proxy.ts: 17ms, render: 8ms)
-[23:43:00.587] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 293ms (compile: 5ms, proxy.ts: 18ms, render: 270ms)
- GET /api/orders/meta 200 in 67ms (compile: 34ms, proxy.ts: 22ms, render: 11ms)
-[23:43:15.654] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 362ms (compile: 28ms, proxy.ts: 22ms, render: 311ms)
- GET /api/market 200 in 412ms (compile: 10ms, proxy.ts: 23ms, render: 380ms)
- GET /api/orders/meta 200 in 42ms (compile: 8ms, proxy.ts: 21ms, render: 13ms)
-[23:43:30.643] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 343ms (compile: 6ms, proxy.ts: 15ms, render: 322ms)
- GET /api/orders/meta 200 in 61ms (compile: 25ms, proxy.ts: 26ms, render: 10ms)
-[23:43:45.660] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 348ms (compile: 18ms, proxy.ts: 28ms, render: 303ms)
- GET /api/market 200 in 365ms (compile: 7ms, proxy.ts: 31ms, render: 326ms)
- GET /api/orders/meta 200 in 35ms (compile: 13ms, proxy.ts: 13ms, render: 9ms)
-[23:44:00.682] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 413ms (compile: 5ms, proxy.ts: 14ms, render: 395ms)
- GET /api/orders/meta 200 in 68ms (compile: 36ms, proxy.ts: 21ms, render: 11ms)
-[23:44:15.656] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 383ms (compile: 27ms, proxy.ts: 22ms, render: 334ms)
- GET /api/market 200 in 841ms (compile: 8ms, proxy.ts: 22ms, render: 810ms)
- GET /api/orders/meta 200 in 46ms (compile: 17ms, proxy.ts: 19ms, render: 10ms)
-[23:44:30.617] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 324ms (compile: 6ms, proxy.ts: 21ms, render: 297ms)
- GET /api/orders/meta 200 in 82ms (compile: 39ms, proxy.ts: 21ms, render: 21ms)
- GET /api/market 200 in 343ms (compile: 11ms, proxy.ts: 22ms, render: 310ms)
-[23:44:45.880] [31mERROR[39m: [36mapi › error de ruta[39m
-    [35mmodule[39m: "api"
-    [35msource[39m: "orders"
-    [35mcode[39m: "AUTH"
-    err: "Binance /openOrders 401: {\"code\":-2015,\"msg\":\"Invalid API-key, IP, or permissions for action.\"}"
- GET /api/orders?mode=real 401 in 596ms (compile: 26ms, proxy.ts: 21ms, render: 549ms)
- GET /api/orders/meta 200 in 47ms (compile: 14ms, proxy.ts: 21ms, render: 12ms)
- GET /api/orders?mode=real 200 in 307ms (compile: 8ms, proxy.ts: 19ms, render: 280ms)
- GET /api/orders/meta 200 in 107ms (compile: 48ms, proxy.ts: 47ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 791ms (compile: 36ms, proxy.ts: 47ms, render: 709ms)
-[23:45:11.226] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 1213ms (compile: 16ms, proxy.ts: 49ms, render: 1147ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 52ms (compile: 7ms, proxy.ts: 35ms, render: 10ms)
- POST /api/portfolio-snapshot 200 in 77ms (compile: 35ms, proxy.ts: 31ms, render: 12ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 211ms (compile: 74ms, proxy.ts: 122ms, render: 15ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 30ms (compile: 5ms, proxy.ts: 12ms, render: 13ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 27ms (compile: 5ms, proxy.ts: 11ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 25ms (compile: 4ms, proxy.ts: 12ms, render: 9ms)
- GET /api/portfolio-snapshot?mode=paper 200 in 20ms (compile: 6ms, proxy.ts: 8ms, render: 6ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 448ms (compile: 19ms, proxy.ts: 33ms, render: 396ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 19ms (compile: 4ms, proxy.ts: 8ms, render: 6ms)
-[23:45:12.183] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 23
-    [35mmode[39m: "paper"
- GET /api/balance?mode=paper 200 in 2.1s (compile: 4ms, proxy.ts: 79ms, render: 2.0s)
- GET /api/cost-basis?mode=paper 200 in 2.2s (compile: 29ms, proxy.ts: 47ms, render: 2.1s)
- GET /api/cost-basis?mode=paper 200 in 548ms (compile: 6ms, proxy.ts: 9ms, render: 533ms)
- GET /api/market 200 in 394ms (compile: 6ms, proxy.ts: 14ms, render: 375ms)
- GET /api/orders/meta 200 in 88ms (compile: 41ms, proxy.ts: 36ms, render: 11ms)
- GET /api/orders?mode=real 200 in 311ms (compile: 23ms, proxy.ts: 34ms, render: 254ms)
-[23:45:17.241] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 4
-    [35mmode[39m: "real"
- GET /api/balance?mode=real 200 in 324ms (compile: 16ms, proxy.ts: 36ms, render: 272ms)
-[23:45:17.286] [32mINFO[39m: [36mbinance › balance[39m
-    [35mmodule[39m: "binance"
-    [35massets[39m: 4
-    [35mmode[39m: "real"
- GET /api/balance?mode=real 200 in 328ms (compile: 3ms, proxy.ts: 55ms, render: 269ms)
- GET /api/portfolio-snapshot?mode=real 200 in 46ms (compile: 11ms, proxy.ts: 24ms, render: 11ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 59ms (compile: 24ms, proxy.ts: 25ms, render: 10ms)
- POST /api/portfolio-snapshot 200 in 75ms (compile: 39ms, proxy.ts: 25ms, render: 11ms)
- GET /api/cost-basis?mode=real 200 in 631ms (compile: 35ms, proxy.ts: 38ms, render: 558ms)
- GET /api/portfolio-snapshot?mode=real 200 in 64ms (compile: 11ms, proxy.ts: 45ms, render: 8ms)
- GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 75ms (compile: 21ms, proxy.ts: 44ms, render: 10ms)
- GET /api/portfolio-snapshot?mode=real 200 in 40ms (compile: 6ms, proxy.ts: 24ms, render: 11ms)
- GET /api/portfolio-snapshot?mode=real 200 in 27ms (compile: 9ms, proxy.ts: 10ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=real 200 in 30ms (compile: 5ms, proxy.ts: 18ms, render: 7ms)
- GET /api/portfolio-snapshot?mode=real 200 in 25ms (compile: 4ms, proxy.ts: 9ms, render: 11ms)
- GET /api/cost-basis?mode=real 200 in 574ms (compile: 12ms, proxy.ts: 48ms, render: 515ms)
- GET /api/orders/meta 200 in 49ms (compile: 20ms, proxy.ts: 20ms, render: 10ms)
- GET /api/orders?mode=real 200 in 333ms (compile: 8ms, proxy.ts: 20ms, render: 305ms)
- GET /api/orders/trailing 200 in 23ms (compile: 4ms, proxy.ts: 10ms, render: 9ms)
- GET /api/orders/trailing 200 in 21ms (compile: 3ms, proxy.ts: 9ms, render: 9ms)
- GET /api/journal?mode=real&limit=50 200 in 142ms (compile: 104ms, proxy.ts: 13ms, render: 25ms)
- GET /api/market 200 in 302ms (compile: 4ms, proxy.ts: 7ms, render: 291ms)
- GET /api/journal?mode=real&limit=50 200 in 26ms (compile: 5ms, proxy.ts: 12ms, render: 9ms)
- GET /api/orders/meta 200 in 45ms (compile: 10ms, proxy.ts: 21ms, render: 14ms)
- GET /api/orders?mode=real 200 in 303ms (compile: 30ms, proxy.ts: 22ms, render: 251ms)
- GET /api/orders/trailing 200 in 17ms (compile: 3ms, proxy.ts: 8ms, render: 6ms)
- GET /api/orders/trailing 200 in 45ms (compile: 9ms, proxy.ts: 26ms, render: 11ms)
- GET /api/orders/trailing 200 in 41ms (compile: 7ms, proxy.ts: 18ms, render: 15ms)
- GET /api/orders/trailing 200 in 22ms (compile: 6ms, proxy.ts: 9ms, render: 7ms)
- GET /api/orders/trailing 200 in 18ms (compile: 3ms, proxy.ts: 8ms, render: 7ms)
-[23:45:55.460] [32mINFO[39m: [36mbinance › order history[39m
-    [35mmodule[39m: "binance"
     [35mcount[39m: 0
-    [35mmode[39m: "real"
- GET /api/orders/history?mode=real 200 in 868ms (compile: 213ms, proxy.ts: 26ms, render: 629ms)
-[23:45:56.208] [32mINFO[39m: [36mbinance › trades[39m
+ GET /api/orders?mode=paper 200 in 1503ms (compile: 513ms, proxy.ts: 57ms, render: 933ms)
+[21:01:16.664] [32mINFO[39m: [36morder-monitor › inicialitzat[39m
+    [35mmodule[39m: "order-monitor"
+    [35mmode[39m: "paper"
+    [35mcount[39m: 0
+[21:01:16.793] [32mINFO[39m: [36mbinance › balance[39m
     [35mmodule[39m: "binance"
-    [35mcount[39m: 87
- GET /api/trades 200 in 1619ms (compile: 126ms, proxy.ts: 27ms, render: 1467ms)
- GET /api/trades 200 in 298ms (compile: 6ms, proxy.ts: 8ms, render: 284ms)
-[23:45:56.508] [32mINFO[39m: [36mbinance › trades[39m
+    [35massets[39m: 23
+    [35mmode[39m: "paper"
+ GET /api/balance?mode=paper 200 in 1896ms (compile: 191ms, proxy.ts: 66ms, render: 1639ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 214ms (compile: 66ms, proxy.ts: 139ms, render: 9ms)
+ POST /api/portfolio-snapshot 200 in 206ms (compile: 73ms, proxy.ts: 124ms, render: 9ms)
+ GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 265ms (compile: 123ms, proxy.ts: 132ms, render: 10ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 37ms (compile: 6ms, proxy.ts: 23ms, render: 8ms)
+ GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 47ms (compile: 17ms, proxy.ts: 21ms, render: 9ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 42ms (compile: 6ms, proxy.ts: 21ms, render: 14ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 35ms (compile: 7ms, proxy.ts: 16ms, render: 12ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 23ms (compile: 5ms, proxy.ts: 10ms, render: 8ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 26ms (compile: 5ms, proxy.ts: 11ms, render: 11ms)
+ GET /api/cost-basis?mode=paper 200 in 3.1s (compile: 325ms, proxy.ts: 59ms, render: 2.7s)
+ GET / 200 in 844ms (compile: 28ms, proxy.ts: 15ms, render: 800ms)
+ GET /api/orders/meta 200 in 109ms (compile: 34ms, proxy.ts: 61ms, render: 14ms)
+ GET /api/strategies 200 in 124ms (compile: 50ms, proxy.ts: 60ms, render: 13ms)
+ GET /api/pnl 200 in 134ms (compile: 67ms, proxy.ts: 59ms, render: 9ms)
+ GET /api/errors?since=1775490428156 200 in 147ms (compile: 80ms, proxy.ts: 57ms, render: 10ms)
+ GET /api/trading-mode 200 in 82ms (compile: 34ms, proxy.ts: 42ms, render: 6ms)
+ GET /api/orders/meta 200 in 98ms (compile: 45ms, proxy.ts: 39ms, render: 15ms)
+ GET /api/orders/meta 200 in 54ms (compile: 18ms, proxy.ts: 24ms, render: 12ms)
+[21:01:30.704] [32mINFO[39m: [36mbinance › balance[39m
     [35mmodule[39m: "binance"
-    [35mcount[39m: 87
- GET /api/orders/meta 200 in 49ms (compile: 13ms, proxy.ts: 25ms, render: 11ms)
- GET /api/orders?mode=real 200 in 341ms (compile: 6ms, proxy.ts: 31ms, render: 304ms)
- GET /api/orders/trailing 200 in 18ms (compile: 3ms, proxy.ts: 8ms, render: 7ms)
- GET /api/errors 200 in 46ms (compile: 8ms, proxy.ts: 28ms, render: 10ms)
- GET /api/orders/meta 200 in 61ms (compile: 27ms, proxy.ts: 26ms, render: 8ms)
- GET /api/errors 200 in 19ms (compile: 4ms, proxy.ts: 9ms, render: 6ms)
- GET /api/orders?mode=paper 200 in 1002ms (compile: 20ms, proxy.ts: 27ms, render: 955ms)
- GET /api/market 200 in 421ms (compile: 6ms, proxy.ts: 22ms, render: 393ms)
- GET /api/orders/meta 200 in 47ms (compile: 15ms, proxy.ts: 17ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 741ms (compile: 5ms, proxy.ts: 18ms, render: 718ms)
- GET /api/deploy 200 in 2.6s (compile: 81ms, proxy.ts: 12ms, render: 2.5s)
- GET /api/deploy 200 in 1788ms (compile: 3ms, proxy.ts: 11ms, render: 1774ms)
- GET /api/orders/meta 200 in 66ms (compile: 24ms, proxy.ts: 25ms, render: 17ms)
- GET /api/orders?mode=paper 200 in 822ms (compile: 7ms, proxy.ts: 25ms, render: 790ms)
- GET /api/market 200 in 386ms (compile: 5ms, proxy.ts: 13ms, render: 369ms)
- GET /api/orders/meta 200 in 52ms (compile: 20ms, proxy.ts: 21ms, render: 11ms)
- GET /api/orders?mode=paper 200 in 1403ms (compile: 7ms, proxy.ts: 26ms, render: 1370ms)
- GET /api/orders/meta 200 in 65ms (compile: 4ms, proxy.ts: 35ms, render: 25ms)
- GET /api/orders?mode=paper 200 in 735ms (compile: 10ms, proxy.ts: 20ms, render: 705ms)
- GET /api/market 200 in 340ms (compile: 4ms, proxy.ts: 8ms, render: 328ms)
- GET /api/orders/meta 200 in 43ms (compile: 16ms, proxy.ts: 14ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 750ms (compile: 5ms, proxy.ts: 19ms, render: 726ms)
- GET /api/orders/meta 200 in 45ms (compile: 16ms, proxy.ts: 21ms, render: 9ms)
- GET /api/orders?mode=paper 200 in 726ms (compile: 8ms, proxy.ts: 23ms, render: 695ms)
- GET /api/orders/meta 200 in 175ms (compile: 87ms, proxy.ts: 70ms, render: 18ms)
- GET /api/market 200 in 494ms (compile: 34ms, proxy.ts: 65ms, render: 395ms)
- GET /api/orders?mode=paper 200 in 921ms (compile: 76ms, proxy.ts: 69ms, render: 776ms)
- GET /api/orders/meta 200 in 39ms (compile: 14ms, proxy.ts: 16ms, render: 9ms)
- GET /api/orders?mode=paper 200 in 780ms (compile: 6ms, proxy.ts: 16ms, render: 758ms)
- POST /api/deploy 200 in 28ms (compile: 4ms, proxy.ts: 12ms, render: 12ms)
- GET /api/market 200 in 307ms (compile: 6ms, proxy.ts: 11ms, render: 290ms)
- GET /api/orders/meta 200 in 44ms (compile: 15ms, proxy.ts: 17ms, render: 11ms)
- GET /api/orders?mode=paper 200 in 829ms (compile: 5ms, proxy.ts: 21ms, render: 803ms)
- GET /api/orders/meta 200 in 39ms (compile: 14ms, proxy.ts: 15ms, render: 9ms)
- GET /api/orders?mode=paper 200 in 1466ms (compile: 5ms, proxy.ts: 18ms, render: 1443ms)
- GET /api/market 200 in 525ms (compile: 6ms, proxy.ts: 21ms, render: 499ms)
- GET /api/orders/meta 200 in 45ms (compile: 15ms, proxy.ts: 23ms, render: 7ms)
- GET /api/orders?mode=paper 200 in 718ms (compile: 5ms, proxy.ts: 25ms, render: 688ms)
- GET /api/orders/meta 200 in 53ms (compile: 16ms, proxy.ts: 27ms, render: 11ms)
- GET /api/orders?mode=paper 200 in 769ms (compile: 7ms, proxy.ts: 29ms, render: 733ms)
- GET /api/market 200 in 318ms (compile: 4ms, proxy.ts: 6ms, render: 308ms)
- GET /api/orders/meta 200 in 49ms (compile: 20ms, proxy.ts: 17ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 721ms (compile: 8ms, proxy.ts: 17ms, render: 697ms)
+    [35massets[39m: 23
+    [35mmode[39m: "paper"
+ GET /api/balance?mode=paper 200 in 1022ms (compile: 22ms, proxy.ts: 63ms, render: 937ms)
+ GET /api/orders?mode=paper 200 in 852ms (compile: 12ms, proxy.ts: 43ms, render: 796ms)
+ GET /api/orders?mode=paper 200 in 728ms (compile: 8ms, proxy.ts: 26ms, render: 695ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 91ms (compile: 32ms, proxy.ts: 45ms, render: 14ms)
+ POST /api/portfolio-snapshot 200 in 103ms (compile: 49ms, proxy.ts: 46ms, render: 8ms)
+ GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 114ms (compile: 66ms, proxy.ts: 38ms, render: 9ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 176ms (compile: 77ms, proxy.ts: 84ms, render: 15ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 199ms (compile: 102ms, proxy.ts: 83ms, render: 14ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 213ms (compile: 107ms, proxy.ts: 94ms, render: 13ms)
+ GET /api/klines?pair=BTCUSDT&interval=1h&limit=168 200 in 220ms (compile: 54ms, proxy.ts: 156ms, render: 10ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 89ms (compile: 17ms, proxy.ts: 61ms, render: 11ms)
+ GET /api/portfolio-snapshot?mode=paper 200 in 110ms (compile: 38ms, proxy.ts: 58ms, render: 13ms)
+ GET /api/cost-basis?mode=paper 200 in 2.1s (compile: 93ms, proxy.ts: 57ms, render: 1960ms)
+ GET /api/bots 200 in 152ms (compile: 102ms, proxy.ts: 24ms, render: 26ms)
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 236ms (compile: 198ms, proxy.ts: 22ms, render: 15ms)
+ GET /api/bots 200 in 101ms (compile: 12ms, proxy.ts: 45ms, render: 44ms)
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 105ms (compile: 57ms, proxy.ts: 32ms, render: 15ms)
+ GET /api/orders?mode=paper 200 in 736ms (compile: 11ms, proxy.ts: 25ms, render: 701ms)
+ GET /api/journal?limit=500 200 in 836ms (compile: 96ms, proxy.ts: 23ms, render: 717ms)
+ GET /api/orders?mode=paper 200 in 260ms (compile: 8ms, proxy.ts: 21ms, render: 232ms)
+ GET /api/journal?limit=500 200 in 252ms (compile: 5ms, proxy.ts: 12ms, render: 235ms)
+ GET /api/orders/meta 200 in 48ms (compile: 20ms, proxy.ts: 19ms, render: 9ms)
+ GET /api/orders/meta 200 in 73ms (compile: 26ms, proxy.ts: 34ms, render: 12ms)
+ GET /api/orders?mode=paper 200 in 784ms (compile: 9ms, proxy.ts: 19ms, render: 756ms)
+ GET /api/market 200 in 627ms (compile: 102ms, proxy.ts: 33ms, render: 492ms)
+ GET /api/orders?mode=paper 200 in 743ms (compile: 13ms, proxy.ts: 36ms, render: 695ms)
+ PATCH /api/bots 200 in 38ms (compile: 7ms, proxy.ts: 17ms, render: 14ms)
+ GET /api/orders/meta 200 in 95ms (compile: 36ms, proxy.ts: 32ms, render: 26ms)
+ GET /api/orders/meta 200 in 55ms (compile: 19ms, proxy.ts: 23ms, render: 12ms)
+ GET /api/market 200 in 379ms (compile: 10ms, proxy.ts: 72ms, render: 297ms)
+ GET /api/orders?mode=paper 200 in 858ms (compile: 19ms, proxy.ts: 32ms, render: 807ms)
+ GET /api/orders?mode=paper 200 in 730ms (compile: 8ms, proxy.ts: 27ms, render: 695ms)
+ GET /api/bots 200 in 22ms (compile: 4ms, proxy.ts: 8ms, render: 10ms)
+ GET /api/orders?mode=paper 200 in 716ms (compile: 23ms, proxy.ts: 19ms, render: 674ms)
+ GET /api/journal?limit=500 200 in 797ms (compile: 7ms, proxy.ts: 19ms, render: 771ms)
+ GET /api/orders?mode=paper 200 in 245ms (compile: 4ms, proxy.ts: 8ms, render: 232ms)
+ GET /api/journal?limit=500 200 in 287ms (compile: 4ms, proxy.ts: 14ms, render: 270ms)
+ GET /api/orders?mode=paper 200 in 269ms (compile: 19ms, proxy.ts: 17ms, render: 232ms)
+ GET /api/journal?limit=500 200 in 302ms (compile: 9ms, proxy.ts: 23ms, render: 270ms)
+ GET /api/orders?mode=paper 200 in 326ms (compile: 61ms, proxy.ts: 35ms, render: 231ms)
+ GET /api/journal?limit=500 200 in 314ms (compile: 6ms, proxy.ts: 21ms, render: 287ms)
+ GET /api/orders/meta 200 in 37ms (compile: 15ms, proxy.ts: 14ms, render: 8ms)
+ GET /api/orders/meta 200 in 57ms (compile: 23ms, proxy.ts: 24ms, render: 11ms)
+ GET /api/market 200 in 396ms (compile: 36ms, proxy.ts: 23ms, render: 337ms)
+ GET /api/orders?mode=paper 200 in 784ms (compile: 7ms, proxy.ts: 15ms, render: 762ms)
+ GET /api/orders?mode=paper 200 in 745ms (compile: 11ms, proxy.ts: 24ms, render: 710ms)
+ GET /api/orders/meta 200 in 66ms (compile: 25ms, proxy.ts: 26ms, render: 15ms)
+ GET /api/orders/meta 200 in 60ms (compile: 23ms, proxy.ts: 26ms, render: 11ms)
+ GET /api/market 200 in 451ms (compile: 48ms, proxy.ts: 24ms, render: 379ms)
+ GET /api/orders?mode=paper 200 in 794ms (compile: 10ms, proxy.ts: 29ms, render: 755ms)
+ GET /api/orders?mode=paper 200 in 799ms (compile: 11ms, proxy.ts: 30ms, render: 758ms)
+ GET /api/bots 200 in 48ms (compile: 15ms, proxy.ts: 17ms, render: 16ms)
+ GET /api/orders/meta 200 in 60ms (compile: 23ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/orders/meta 200 in 63ms (compile: 20ms, proxy.ts: 29ms, render: 14ms)
+ GET /api/market 200 in 352ms (compile: 36ms, proxy.ts: 28ms, render: 288ms)
+ GET /api/orders?mode=paper 200 in 746ms (compile: 8ms, proxy.ts: 26ms, render: 712ms)
+ GET /api/orders?mode=paper 200 in 748ms (compile: 10ms, proxy.ts: 31ms, render: 707ms)
+ GET /api/orders/meta 200 in 67ms (compile: 17ms, proxy.ts: 41ms, render: 10ms)
+ GET /api/market 200 in 308ms (compile: 5ms, proxy.ts: 41ms, render: 261ms)
+ GET /api/orders?mode=paper 200 in 790ms (compile: 10ms, proxy.ts: 42ms, render: 738ms)
+ GET /api/bots 200 in 34ms (compile: 5ms, proxy.ts: 13ms, render: 16ms)
+ GET /api/orders/meta 200 in 43ms (compile: 15ms, proxy.ts: 19ms, render: 8ms)
+ GET /api/market 200 in 378ms (compile: 8ms, proxy.ts: 18ms, render: 351ms)
+ GET /api/orders?mode=paper 200 in 788ms (compile: 6ms, proxy.ts: 20ms, render: 762ms)
+ GET /api/orders/meta 200 in 45ms (compile: 17ms, proxy.ts: 17ms, render: 11ms)
+ GET /api/market 200 in 326ms (compile: 3ms, proxy.ts: 9ms, render: 314ms)
+ GET /api/orders?mode=paper 200 in 1432ms (compile: 7ms, proxy.ts: 19ms, render: 1406ms)
+ GET /api/bots 200 in 25ms (compile: 5ms, proxy.ts: 8ms, render: 13ms)
+ GET /api/orders/meta 200 in 196ms (compile: 137ms, proxy.ts: 26ms, render: 33ms)
+ GET /api/orders?mode=paper 200 in 880ms (compile: 120ms, proxy.ts: 27ms, render: 733ms)
+ GET /api/market 200 in 410ms (compile: 5ms, proxy.ts: 16ms, render: 389ms)
+✓ Compiled in 3.4s
+ GET /api/orders?mode=paper 500 in 1117ms (compile: 736ms, proxy.ts: 24ms, render: 357ms)
+ GET /api/orders/meta 500 in 1116ms (compile: 747ms, proxy.ts: 23ms, render: 346ms)
+✓ Compiled in 849ms
+ GET / 200 in 1148ms (compile: 451ms, proxy.ts: 16ms, render: 681ms)
+ GET / 200 in 426ms (compile: 9ms, proxy.ts: 23ms, render: 394ms)
  GET /api/orders/meta 200 in 51ms (compile: 18ms, proxy.ts: 23ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 734ms (compile: 7ms, proxy.ts: 26ms, render: 700ms)
- GET /api/market 200 in 490ms (compile: 7ms, proxy.ts: 56ms, render: 427ms)
- GET /api/orders/meta 200 in 57ms (compile: 20ms, proxy.ts: 21ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 745ms (compile: 8ms, proxy.ts: 28ms, render: 709ms)
- GET /api/orders/meta 200 in 49ms (compile: 16ms, proxy.ts: 23ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 768ms (compile: 9ms, proxy.ts: 25ms, render: 734ms)
- GET /api/market 200 in 382ms (compile: 9ms, proxy.ts: 37ms, render: 336ms)
- GET /api/orders/meta 200 in 64ms (compile: 20ms, proxy.ts: 34ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 758ms (compile: 7ms, proxy.ts: 40ms, render: 711ms)
- GET /api/orders/meta 200 in 171ms (compile: 109ms, proxy.ts: 40ms, render: 22ms)
- GET /api/market 200 in 605ms (compile: 75ms, proxy.ts: 92ms, render: 438ms)
- GET /api/orders?mode=paper 200 in 1653ms (compile: 77ms, proxy.ts: 44ms, render: 1533ms)
- GET /api/orders/meta 200 in 74ms (compile: 26ms, proxy.ts: 33ms, render: 15ms)
- GET /api/market 200 in 438ms (compile: 43ms, proxy.ts: 32ms, render: 363ms)
- GET /api/orders?mode=paper 200 in 787ms (compile: 14ms, proxy.ts: 34ms, render: 739ms)
- GET /api/orders/meta 200 in 65ms (compile: 13ms, proxy.ts: 38ms, render: 14ms)
- GET /api/market 200 in 406ms (compile: 41ms, proxy.ts: 37ms, render: 329ms)
- GET /api/orders?mode=paper 200 in 858ms (compile: 29ms, proxy.ts: 38ms, render: 791ms)
- GET /api/orders/meta 200 in 68ms (compile: 19ms, proxy.ts: 34ms, render: 15ms)
- GET /api/market 200 in 432ms (compile: 37ms, proxy.ts: 31ms, render: 364ms)
- GET /api/orders?mode=paper 200 in 1448ms (compile: 11ms, proxy.ts: 39ms, render: 1399ms)
- GET /api/deploy/stream?jobId=3d07648ed263 200 in 6.3min (compile: 87ms, proxy.ts: 17ms, render: 6.3min)
- GET /api/deploy 200 in 4.6s (compile: 5ms, proxy.ts: 29ms, render: 4.5s)
- GET /api/orders/meta 200 in 93ms (compile: 45ms, proxy.ts: 33ms, render: 14ms)
- GET /api/market 200 in 538ms (compile: 25ms, proxy.ts: 34ms, render: 478ms)
- GET /api/orders?mode=paper 200 in 779ms (compile: 9ms, proxy.ts: 43ms, render: 727ms)
- GET /api/orders/meta 200 in 80ms (compile: 27ms, proxy.ts: 36ms, render: 17ms)
- GET /api/market 200 in 478ms (compile: 30ms, proxy.ts: 50ms, render: 399ms)
- GET /api/orders?mode=paper 200 in 811ms (compile: 13ms, proxy.ts: 40ms, render: 758ms)
- GET /api/orders/meta 200 in 62ms (compile: 18ms, proxy.ts: 34ms, render: 10ms)
- GET /api/market 200 in 407ms (compile: 31ms, proxy.ts: 34ms, render: 342ms)
- GET /api/orders?mode=paper 200 in 1462ms (compile: 9ms, proxy.ts: 36ms, render: 1417ms)
- GET /api/orders/meta 200 in 67ms (compile: 22ms, proxy.ts: 35ms, render: 10ms)
- GET /api/market 200 in 430ms (compile: 33ms, proxy.ts: 34ms, render: 362ms)
- GET /api/orders?mode=paper 200 in 845ms (compile: 13ms, proxy.ts: 36ms, render: 796ms)
- GET /api/orders/meta 200 in 46ms (compile: 15ms, proxy.ts: 21ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 324ms (compile: 6ms, proxy.ts: 23ms, render: 295ms)
- GET /api/orders/meta 200 in 53ms (compile: 21ms, proxy.ts: 15ms, render: 17ms)
- GET /api/orders?mode=paper 200 in 838ms (compile: 8ms, proxy.ts: 15ms, render: 814ms)
- GET /api/market 200 in 402ms (compile: 7ms, proxy.ts: 14ms, render: 381ms)
- GET /api/orders/meta 200 in 37ms (compile: 13ms, proxy.ts: 14ms, render: 9ms)
- GET /api/orders?mode=paper 200 in 715ms (compile: 6ms, proxy.ts: 15ms, render: 694ms)
- GET /api/orders/meta 200 in 55ms (compile: 17ms, proxy.ts: 28ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 816ms (compile: 9ms, proxy.ts: 34ms, render: 773ms)
- GET /api/market 200 in 313ms (compile: 4ms, proxy.ts: 15ms, render: 293ms)
- GET /api/orders/meta 200 in 46ms (compile: 16ms, proxy.ts: 17ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 1553ms (compile: 7ms, proxy.ts: 20ms, render: 1526ms)
- GET /api/orders/meta 200 in 86ms (compile: 24ms, proxy.ts: 39ms, render: 23ms)
- GET /api/market 200 in 441ms (compile: 52ms, proxy.ts: 39ms, render: 351ms)
- GET /api/orders?mode=paper 200 in 778ms (compile: 10ms, proxy.ts: 40ms, render: 727ms)
- GET /api/orders/meta 200 in 87ms (compile: 24ms, proxy.ts: 37ms, render: 26ms)
- GET /api/orders?mode=paper 200 in 828ms (compile: 10ms, proxy.ts: 38ms, render: 779ms)
- GET /api/orders/meta 200 in 51ms (compile: 15ms, proxy.ts: 27ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 741ms (compile: 7ms, proxy.ts: 28ms, render: 706ms)
- GET /api/market 200 in 397ms (compile: 6ms, proxy.ts: 13ms, render: 378ms)
- GET /api/orders/meta 200 in 53ms (compile: 19ms, proxy.ts: 20ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 713ms (compile: 7ms, proxy.ts: 28ms, render: 678ms)
- GET /api/orders/meta 200 in 53ms (compile: 18ms, proxy.ts: 22ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 728ms (compile: 6ms, proxy.ts: 24ms, render: 698ms)
- GET /api/market 200 in 345ms (compile: 4ms, proxy.ts: 11ms, render: 331ms)
- GET /api/orders/meta 200 in 55ms (compile: 21ms, proxy.ts: 20ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 834ms (compile: 7ms, proxy.ts: 21ms, render: 805ms)
- GET /api/orders/meta 200 in 50ms (compile: 19ms, proxy.ts: 19ms, render: 13ms)
- GET /api/orders?mode=paper 200 in 1447ms (compile: 8ms, proxy.ts: 19ms, render: 1420ms)
- GET /api/stream 200 in 26.5min (compile: 144ms, proxy.ts: 23ms, render: 26.5min)
- GET /api/orders/meta 200 in 192ms (compile: 20ms, proxy.ts: 111ms, render: 62ms)
- GET /api/market 200 in 1452ms (compile: 175ms, proxy.ts: 107ms, render: 1170ms)
- GET /api/orders?mode=paper 200 in 2.4s (compile: 88ms, proxy.ts: 112ms, render: 2.2s)
- GET /api/orders/meta 200 in 135ms (compile: 80ms, proxy.ts: 36ms, render: 20ms)
- GET /api/market 200 in 551ms (compile: 44ms, proxy.ts: 90ms, render: 416ms)
- GET /api/orders?mode=paper 200 in 810ms (compile: 48ms, proxy.ts: 42ms, render: 720ms)
- GET /api/orders/meta 200 in 104ms (compile: 42ms, proxy.ts: 44ms, render: 19ms)
- GET /api/market 200 in 460ms (compile: 64ms, proxy.ts: 42ms, render: 353ms)
- GET /api/orders?mode=paper 200 in 850ms (compile: 12ms, proxy.ts: 52ms, render: 786ms)
- GET /api/orders/meta 200 in 64ms (compile: 9ms, proxy.ts: 41ms, render: 15ms)
- GET /api/market 200 in 439ms (compile: 26ms, proxy.ts: 39ms, render: 374ms)
- GET /api/orders?mode=paper 200 in 1454ms (compile: 18ms, proxy.ts: 23ms, render: 1414ms)
- GET /api/orders/meta 200 in 66ms (compile: 20ms, proxy.ts: 33ms, render: 13ms)
- GET /api/market 200 in 425ms (compile: 35ms, proxy.ts: 33ms, render: 357ms)
- GET /api/orders?mode=paper 200 in 765ms (compile: 12ms, proxy.ts: 33ms, render: 719ms)
- GET /api/orders/meta 200 in 125ms (compile: 48ms, proxy.ts: 37ms, render: 39ms)
- GET /api/market 200 in 516ms (compile: 100ms, proxy.ts: 74ms, render: 342ms)
- GET /api/orders?mode=paper 200 in 1014ms (compile: 120ms, proxy.ts: 74ms, render: 820ms)
- GET /api/orders/meta 200 in 81ms (compile: 24ms, proxy.ts: 38ms, render: 20ms)
- GET /api/market 200 in 424ms (compile: 47ms, proxy.ts: 35ms, render: 341ms)
- GET /api/orders?mode=paper 200 in 1569ms (compile: 12ms, proxy.ts: 38ms, render: 1519ms)
- GET /api/orders/meta 200 in 75ms (compile: 23ms, proxy.ts: 38ms, render: 13ms)
- GET /api/market 200 in 600ms (compile: 39ms, proxy.ts: 36ms, render: 525ms)
- GET /api/orders?mode=paper 200 in 867ms (compile: 12ms, proxy.ts: 41ms, render: 814ms)
-✓ Compiled in 809ms
- GET /api/orders/meta 200 in 35ms (compile: 6ms, proxy.ts: 12ms, render: 17ms)
- GET /api/orders?mode=paper 200 in 1058ms (compile: 7ms, proxy.ts: 12ms, render: 1038ms)
-✓ Compiled in 428ms
- GET /api/orders/meta 200 in 51ms (compile: 21ms, proxy.ts: 16ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 765ms (compile: 10ms, proxy.ts: 24ms, render: 731ms)
-✓ Compiled in 484ms
- GET /api/orders/meta 200 in 56ms (compile: 9ms, proxy.ts: 28ms, render: 19ms)
- GET /api/orders?mode=paper 200 in 788ms (compile: 38ms, proxy.ts: 30ms, render: 720ms)
- GET /api/orders/meta 200 in 61ms (compile: 19ms, proxy.ts: 23ms, render: 19ms)
- GET /api/orders?mode=paper 200 in 726ms (compile: 9ms, proxy.ts: 24ms, render: 693ms)
- GET /api/market 200 in 385ms (compile: 5ms, proxy.ts: 9ms, render: 371ms)
- GET /api/orders/meta 200 in 45ms (compile: 17ms, proxy.ts: 14ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 1767ms (compile: 5ms, proxy.ts: 15ms, render: 1747ms)
-✓ Compiled in 5s
- GET /api/orders/meta 200 in 55ms (compile: 21ms, proxy.ts: 19ms, render: 16ms)
- GET /api/orders?mode=paper 200 in 796ms (compile: 9ms, proxy.ts: 20ms, render: 767ms)
- GET /api/orders/meta 200 in 82ms (compile: 24ms, proxy.ts: 25ms, render: 33ms)
- GET /api/orders?mode=paper 200 in 766ms (compile: 8ms, proxy.ts: 25ms, render: 733ms)
- GET /api/orders/meta 200 in 45ms (compile: 16ms, proxy.ts: 20ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 718ms (compile: 10ms, proxy.ts: 20ms, render: 688ms)
- GET /api/orders/meta 200 in 33ms (compile: 7ms, proxy.ts: 12ms, render: 14ms)
- GET /api/orders?mode=paper 200 in 702ms (compile: 6ms, proxy.ts: 13ms, render: 683ms)
- GET /api/market 200 in 416ms (compile: 5ms, proxy.ts: 14ms, render: 398ms)
- GET /api/orders/meta 200 in 66ms (compile: 20ms, proxy.ts: 28ms, render: 18ms)
- GET /api/orders?mode=paper 200 in 747ms (compile: 11ms, proxy.ts: 26ms, render: 710ms)
- GET /api/orders/meta 200 in 28ms (compile: 7ms, proxy.ts: 10ms, render: 12ms)
- GET /api/orders?mode=paper 200 in 706ms (compile: 8ms, proxy.ts: 13ms, render: 685ms)
- GET /api/orders/meta 200 in 50ms (compile: 20ms, proxy.ts: 19ms, render: 10ms)
- GET /api/orders?mode=paper 200 in 710ms (compile: 7ms, proxy.ts: 18ms, render: 684ms)
- GET /api/orders/meta 200 in 112ms (compile: 61ms, proxy.ts: 34ms, render: 17ms)
- GET /api/market 200 in 446ms (compile: 12ms, proxy.ts: 38ms, render: 396ms)
- GET /api/orders?mode=paper 200 in 900ms (compile: 46ms, proxy.ts: 35ms, render: 819ms)
- GET /api/orders/meta 200 in 119ms (compile: 39ms, proxy.ts: 60ms, render: 21ms)
- GET /api/market 200 in 463ms (compile: 62ms, proxy.ts: 58ms, render: 344ms)
- GET /api/orders/meta 200 in 44ms (compile: 8ms, proxy.ts: 20ms, render: 15ms)
- GET /api/orders?mode=paper 200 in 1587ms (compile: 21ms, proxy.ts: 61ms, render: 1505ms)
- GET /api/orders/trailing 200 in 72ms (compile: 12ms, proxy.ts: 43ms, render: 17ms)
- GET /api/orders/meta 200 in 84ms (compile: 33ms, proxy.ts: 42ms, render: 9ms)
- GET /api/orders?mode=paper 200 in 468ms (compile: 4ms, proxy.ts: 13ms, render: 451ms)
- GET /api/orders/trailing 200 in 55ms (compile: 9ms, proxy.ts: 34ms, render: 12ms)
- GET /api/orders/trailing 200 in 29ms (compile: 6ms, proxy.ts: 13ms, render: 10ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778363861207&window=1w 200 in 495ms (compile: 183ms, proxy.ts: 44ms, render: 268ms)
- GET /api/orders?mode=real 200 in 491ms (compile: 201ms, proxy.ts: 35ms, render: 255ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778363861207&window=1w 200 in 22ms (compile: 4ms, proxy.ts: 9ms, render: 8ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778056622297&window=1M 200 in 304ms (compile: 24ms, proxy.ts: 25ms, render: 255ms)
- GET /api/klines-range?symbol=SOLUSDC&startTime=1778056622297&window=1M 200 in 30ms (compile: 5ms, proxy.ts: 18ms, render: 7ms)
- GET /api/orders/trailing 200 in 21ms (compile: 5ms, proxy.ts: 9ms, render: 7ms)
- GET /api/market 200 in 262ms (compile: 4ms, proxy.ts: 10ms, render: 248ms)
- GET /api/journal?mode=real&limit=100 200 in 25ms (compile: 6ms, proxy.ts: 8ms, render: 10ms)
- GET /api/orders/meta 200 in 40ms (compile: 14ms, proxy.ts: 12ms, render: 14ms)
- GET /api/orders?mode=real 200 in 325ms (compile: 6ms, proxy.ts: 16ms, render: 303ms)
- GET /api/orders/trailing 200 in 21ms (compile: 4ms, proxy.ts: 8ms, render: 10ms)
- GET /api/orders/meta 200 in 42ms (compile: 18ms, proxy.ts: 17ms, render: 7ms)
- GET /api/orders?mode=real 200 in 309ms (compile: 6ms, proxy.ts: 20ms, render: 282ms)
- GET /api/orders/trailing 200 in 19ms (compile: 4ms, proxy.ts: 8ms, render: 7ms)
- GET /api/market 200 in 375ms (compile: 15ms, proxy.ts: 24ms, render: 335ms)
- GET /api/orders/meta 200 in 36ms (compile: 8ms, proxy.ts: 16ms, render: 12ms)
-[20:25:31.295] [33mWARN[39m: [36morders › clock drift (-1021): resyncing i reintentant[39m
-    [35mmodule[39m: "orders"
-    [35mpath[39m: "/openOrders"
-    [35mattempt[39m: 0
- GET /api/orders?mode=real 200 in 812ms (compile: 22ms, proxy.ts: 16ms, render: 774ms)
- GET /api/orders/trailing 200 in 25ms (compile: 5ms, proxy.ts: 12ms, render: 8ms)
- GET /api/orders/meta 200 in 61ms (compile: 23ms, proxy.ts: 22ms, render: 16ms)
- GET /api/orders?mode=real 200 in 326ms (compile: 8ms, proxy.ts: 26ms, render: 292ms)
- GET /api/orders/trailing 200 in 34ms (compile: 5ms, proxy.ts: 17ms, render: 12ms)
- GET /api/market 200 in 372ms (compile: 5ms, proxy.ts: 21ms, render: 345ms)
- GET /api/orders/meta 200 in 56ms (compile: 18ms, proxy.ts: 18ms, render: 19ms)
- GET /api/orders?mode=real 200 in 347ms (compile: 7ms, proxy.ts: 21ms, render: 319ms)
- GET /api/orders/trailing 200 in 25ms (compile: 6ms, proxy.ts: 11ms, render: 9ms)
- GET /api/orders/meta 200 in 55ms (compile: 18ms, proxy.ts: 21ms, render: 16ms)
- GET /api/orders?mode=real 200 in 348ms (compile: 5ms, proxy.ts: 28ms, render: 314ms)
- GET /api/orders/trailing 200 in 26ms (compile: 5ms, proxy.ts: 12ms, render: 9ms)
- GET /api/orders/meta 200 in 82ms (compile: 37ms, proxy.ts: 33ms, render: 11ms)
- GET /api/orders?mode=real 200 in 365ms (compile: 29ms, proxy.ts: 34ms, render: 302ms)
- GET /api/orders/trailing 200 in 16ms (compile: 3ms, proxy.ts: 8ms, render: 5ms)
- GET /api/market 200 in 430ms (compile: 10ms, proxy.ts: 34ms, render: 386ms)
- GET /api/orders/meta 200 in 79ms (compile: 25ms, proxy.ts: 36ms, render: 18ms)
- GET /api/market 200 in 408ms (compile: 46ms, proxy.ts: 34ms, render: 328ms)
- GET /api/orders?mode=real 200 in 604ms (compile: 12ms, proxy.ts: 38ms, render: 554ms)
- GET /api/orders/trailing 200 in 21ms (compile: 4ms, proxy.ts: 12ms, render: 6ms)
- GET /api/orders/meta 200 in 74ms (compile: 29ms, proxy.ts: 33ms, render: 12ms)
- GET /api/orders?mode=real 200 in 369ms (compile: 11ms, proxy.ts: 36ms, render: 322ms)
- GET /api/orders/trailing 200 in 21ms (compile: 4ms, proxy.ts: 10ms, render: 6ms)
- GET /api/market 200 in 407ms (compile: 45ms, proxy.ts: 32ms, render: 329ms)
- GET /api/orders/meta 200 in 69ms (compile: 20ms, proxy.ts: 35ms, render: 13ms)
- GET /api/orders?mode=real 200 in 452ms (compile: 11ms, proxy.ts: 34ms, render: 406ms)
- GET /api/orders/trailing 200 in 23ms (compile: 4ms, proxy.ts: 11ms, render: 8ms)
- GET /api/market 200 in 502ms (compile: 36ms, proxy.ts: 32ms, render: 435ms)
- GET /api/orders/meta 200 in 69ms (compile: 24ms, proxy.ts: 27ms, render: 18ms)
- GET /api/orders?mode=real 200 in 614ms (compile: 11ms, proxy.ts: 30ms, render: 574ms)
- GET /api/orders/trailing 200 in 23ms (compile: 6ms, proxy.ts: 8ms, render: 10ms)
- GET /api/orders/meta 200 in 50ms (compile: 20ms, proxy.ts: 19ms, render: 11ms)
- GET /api/orders?mode=real 200 in 304ms (compile: 7ms, proxy.ts: 27ms, render: 270ms)
- GET /api/orders/trailing 200 in 21ms (compile: 4ms, proxy.ts: 8ms, render: 9ms)
- GET /api/market 200 in 342ms (compile: 4ms, proxy.ts: 12ms, render: 325ms)
- GET /api/orders/meta 200 in 33ms (compile: 11ms, proxy.ts: 12ms, render: 9ms)
- GET /api/orders?mode=real 200 in 277ms (compile: 5ms, proxy.ts: 14ms, render: 257ms)
- GET /api/orders/trailing 200 in 34ms (compile: 5ms, proxy.ts: 18ms, render: 12ms)
- GET /api/orders/meta 200 in 53ms (compile: 18ms, proxy.ts: 26ms, render: 9ms)
- GET /api/orders?mode=real 200 in 320ms (compile: 8ms, proxy.ts: 29ms, render: 283ms)
- GET /api/orders/trailing 200 in 24ms (compile: 5ms, proxy.ts: 10ms, render: 10ms)
- GET /api/market 200 in 259ms (compile: 4ms, proxy.ts: 7ms, render: 248ms)
- GET /api/orders/meta 200 in 53ms (compile: 15ms, proxy.ts: 21ms, render: 17ms)
- GET /api/orders?mode=real 200 in 310ms (compile: 5ms, proxy.ts: 13ms, render: 292ms)
- GET /api/orders/trailing 200 in 18ms (compile: 4ms, proxy.ts: 8ms, render: 6ms)
- GET /api/market 200 in 430ms (compile: 5ms, proxy.ts: 43ms, render: 382ms)
- GET /api/orders/meta 200 in 67ms (compile: 23ms, proxy.ts: 34ms, render: 11ms)
- GET /api/market 200 in 414ms (compile: 35ms, proxy.ts: 30ms, render: 350ms)
- GET /api/orders?mode=real 200 in 647ms (compile: 11ms, proxy.ts: 38ms, render: 598ms)
- GET /api/orders/trailing 200 in 19ms (compile: 4ms, proxy.ts: 8ms, render: 7ms)
- GET /api/orders/meta 200 in 58ms (compile: 17ms, proxy.ts: 31ms, render: 9ms)
- GET /api/orders?mode=real 200 in 341ms (compile: 6ms, proxy.ts: 34ms, render: 301ms)
- GET /api/orders/trailing 200 in 31ms (compile: 4ms, proxy.ts: 16ms, render: 11ms)
- GET /api/orders/meta 200 in 52ms (compile: 11ms, proxy.ts: 32ms, render: 9ms)
- GET /api/orders?mode=real 200 in 293ms (compile: 7ms, proxy.ts: 34ms, render: 252ms)
- GET /api/orders/trailing 200 in 22ms (compile: 4ms, proxy.ts: 11ms, render: 8ms)
- GET /api/market 200 in 507ms (compile: 83ms, proxy.ts: 53ms, render: 370ms)
- GET /api/orders/meta 200 in 101ms (compile: 55ms, proxy.ts: 24ms, render: 22ms)
- GET /api/orders?mode=paper 200 in 770ms (compile: 42ms, proxy.ts: 24ms, render: 705ms)
- GET /api/deploy 200 in 2.5s (compile: 11ms, proxy.ts: 24ms, render: 2.4s)
- GET /api/deploy 200 in 1989ms (compile: 6ms, proxy.ts: 8ms, render: 1975ms)
- GET /api/bots 200 in 157ms (compile: 106ms, proxy.ts: 18ms, render: 33ms)
- GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 222ms (compile: 191ms, proxy.ts: 17ms, render: 14ms)
- GET /api/bots 200 in 55ms (compile: 8ms, proxy.ts: 34ms, render: 14ms)
- GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 68ms (compile: 23ms, proxy.ts: 34ms, render: 10ms)
- GET /api/orders/meta 200 in 47ms (compile: 17ms, proxy.ts: 22ms, render: 7ms)
- GET /api/orders?mode=paper 200 in 817ms (compile: 7ms, proxy.ts: 25ms, render: 785ms)
- GET /api/market 200 in 388ms (compile: 7ms, proxy.ts: 25ms, render: 356ms)
- GET /api/orders/meta 200 in 43ms (compile: 15ms, proxy.ts: 20ms, render: 8ms)
- GET /api/orders?mode=paper 200 in 735ms (compile: 9ms, proxy.ts: 23ms, render: 703ms)
+ GET /api/market 200 in 321ms (compile: 31ms, proxy.ts: 17ms, render: 272ms)
+ GET /api/orders?mode=paper 200 in 768ms (compile: 8ms, proxy.ts: 27ms, render: 732ms)
+ GET /api/bots 200 in 40ms (compile: 8ms, proxy.ts: 15ms, render: 17ms)
+✓ Compiled in 347ms
+ GET /api/bots 200 in 39ms (compile: 8ms, proxy.ts: 23ms, render: 9ms)
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 50ms (compile: 19ms, proxy.ts: 22ms, render: 9ms)
+✓ Compiled in 239ms
+ GET /api/bots 200 in 36ms (compile: 8ms, proxy.ts: 16ms, render: 11ms)
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 45ms (compile: 23ms, proxy.ts: 14ms, render: 8ms)
+ GET /api/orders/meta 200 in 57ms (compile: 25ms, proxy.ts: 19ms, render: 13ms)
+ GET /api/market 200 in 284ms (compile: 5ms, proxy.ts: 11ms, render: 267ms)
+ GET /api/orders?mode=paper 200 in 724ms (compile: 13ms, proxy.ts: 20ms, render: 691ms)
+✓ Compiled in 452ms
+ GET /api/logs?module=auto-trader&level=debug&limit=300 200 in 177ms (compile: 93ms, proxy.ts: 63ms, render: 22ms)
+ GET /api/bots 200 in 209ms (compile: 118ms, proxy.ts: 62ms, render: 29ms)
+ GET /api/orders?mode=paper 200 in 888ms (compile: 30ms, proxy.ts: 63ms, render: 795ms)
+ GET /api/orders?mode=paper 200 in 247ms (compile: 6ms, proxy.ts: 10ms, render: 231ms)
+ GET /api/journal?limit=500 200 in 1173ms (compile: 81ms, proxy.ts: 64ms, render: 1028ms)
+ GET /api/journal?limit=500 200 in 252ms (compile: 5ms, proxy.ts: 8ms, render: 239ms)
+ GET /api/orders/meta 200 in 78ms (compile: 41ms, proxy.ts: 24ms, render: 13ms)
+ GET /api/orders?mode=paper 200 in 292ms (compile: 35ms, proxy.ts: 26ms, render: 231ms)
+ GET /api/market 200 in 403ms (compile: 7ms, proxy.ts: 27ms, render: 369ms)
+✓ Compiled in 222ms
+ GET /api/orders?mode=paper 500 in 130ms (compile: 75ms, proxy.ts: 20ms, render: 35ms)
+ GET /api/orders/meta 500 in 128ms (compile: 94ms, proxy.ts: 18ms, render: 15ms)
+ GET /api/orders/meta 500 in 406ms (compile: 253ms, proxy.ts: 37ms, render: 116ms)
+ GET /api/market 500 in 403ms (compile: 277ms, proxy.ts: 35ms, render: 92ms)
+ GET /api/orders?mode=paper 500 in 414ms (compile: 311ms, proxy.ts: 40ms, render: 63ms)
+ GET / 200 in 808ms (compile: 288ms, proxy.ts: 14ms, render: 505ms)
+ GET / 200 in 356ms (compile: 7ms, proxy.ts: 13ms, render: 336ms)
+ GET /api/bots 200 in 51ms (compile: 6ms, proxy.ts: 14ms, render: 30ms)
+✓ Compiled in 2.3s

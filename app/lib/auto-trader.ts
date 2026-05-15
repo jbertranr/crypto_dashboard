@@ -985,15 +985,19 @@ async function globalPoll(): Promise<void> {
       botsWithConfig.map(b => b.interval).filter(iv => candleJustClosed(iv))
     );
 
-    for (const { bot, simConfig, interval } of botsWithConfig) {
-      if (!closedIntervals.has(interval)) continue;
+    // Ordena per prioritat (número més baix = primer) i executa seqüencialment
+    // perquè el bot prioritari pugui comprar abans que els altres.
+    const toRun = botsWithConfig
+      .filter(b => closedIntervals.has(b.interval))
+      .sort((a, b) => (a.bot.priority ?? 50) - (b.bot.priority ?? 50));
 
-      log.auto.info({ bot: bot.name, interval }, "globalPoll: candle tancada, llançant runBotScan");
-
-      // Run in background (non-blocking for other bots)
-      runBotScan(bot, simConfig).catch(err =>
-        log.auto.error({ bot: bot.name, err: (err as Error).message }, "error en globalPoll runBotScan"),
-      );
+    for (const { bot, simConfig, interval } of toRun) {
+      log.auto.info({ bot: bot.name, interval, priority: bot.priority }, "globalPoll: candle tancada, llançant runBotScan");
+      try {
+        await runBotScan(bot, simConfig);
+      } catch (err) {
+        log.auto.error({ bot: bot.name, err: (err as Error).message }, "error en globalPoll runBotScan");
+      }
     }
   } finally {
     _polling = false;

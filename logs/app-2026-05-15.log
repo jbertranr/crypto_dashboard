@@ -1,0 +1,9 @@
+{"level":30,"time":1778871675494,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","msg":"monitor iniciat (paper + real)"}
+{"level":30,"time":1778871675504,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"telegram","nextHourIn":59,"nextDailyIn":629,"msg":"scheduler iniciat"}
+{"level":30,"time":1778871675506,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"orders","symbol":"BTCUSDC","thresholds":[{"windowMin":5,"pct":5},{"windowMin":15,"pct":8},{"windowMin":60,"pct":12}],"pollMs":60000,"msg":"Crash monitor iniciat"}
+{"level":30,"time":1778871675514,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"auto-trader","msg":"auto-trader multi-bot iniciat (poll 60s)"}
+{"level":30,"time":1778871675993,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","mode":"real","count":0,"msg":"inicialitzat"}
+{"level":30,"time":1778871676664,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"order-monitor","mode":"paper","count":0,"msg":"inicialitzat"}
+{"level":30,"time":1778871676793,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778871690704,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778871937302,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}

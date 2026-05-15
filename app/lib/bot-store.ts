@@ -35,6 +35,7 @@ function initBotDb(d: ReturnType<typeof getDb>) {
   if (!cols.includes("exit_desc"))       d.exec("ALTER TABLE bots ADD COLUMN exit_desc        TEXT    NOT NULL DEFAULT ''");
   if (!cols.includes("min_probability")) d.exec("ALTER TABLE bots ADD COLUMN min_probability  INTEGER          DEFAULT NULL");
   if (!cols.includes("max_open"))        d.exec("ALTER TABLE bots ADD COLUMN max_open          INTEGER          DEFAULT NULL");
+  if (!cols.includes("priority"))        d.exec("ALTER TABLE bots ADD COLUMN priority           INTEGER NOT NULL DEFAULT 50");
   // Note: no mode column — mode is implicit from which DB the bot lives in
 
   // Migrate existing data from cache.db (one-time, safe to retry)
@@ -84,6 +85,7 @@ export interface Bot {
   exitDesc:       string;
   minProbability: number | null;
   maxOpen:        number | null;
+  priority:       number;
   mode:           "paper" | "real";
   createdAt:      number;
 }
@@ -103,6 +105,7 @@ interface BotRow {
   exit_desc:        string;
   min_probability:  number | null;
   max_open:         number | null;
+  priority:         number | null;
   created_at:       number;
 }
 
@@ -122,6 +125,7 @@ function rowToBot(row: BotRow, mode: "paper" | "real"): Bot {
     exitDesc:       row.exit_desc  || "",
     minProbability: row.min_probability ?? null,
     maxOpen:        row.max_open        ?? null,
+    priority:       row.priority        ?? 50,
     mode,
     createdAt:      row.created_at,
   };
@@ -229,6 +233,7 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "
   if (patch.exitDesc       !== undefined) { fields.push("exit_desc = ?");          values.push(patch.exitDesc); }
   if ("minProbability" in patch)          { fields.push("min_probability = ?");    values.push(patch.minProbability ?? null); }
   if ("maxOpen"        in patch)          { fields.push("max_open = ?");           values.push(patch.maxOpen        ?? null); }
+  if (patch.priority   !== undefined)     { fields.push("priority = ?");           values.push(patch.priority); }
   // Note: mode cannot be changed via update (would require moving between DBs)
 
   if (fields.length === 0) return existing;

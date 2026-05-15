@@ -10592,6 +10592,21 @@
   border-color: var(--accent-border);
 }
 .bc-param-chip--accent i { color: var(--accent); }
+.bc-param-chip--priority {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+.bc-param-chip--priority i { color: #0369a1; }
+
+/* Inline detail panel (expands below the selected card) */
+.bc-inline-detail {
+  border: 1px solid var(--accent-border, var(--border));
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 4px 0 0;
+  margin-bottom: 4px;
+}
 
 /* Next scan section */
 .bc-bot-card__scan {

@@ -160,6 +160,7 @@ export async function PATCH(req: NextRequest) {
     exitDesc:       typeof patch.exitDesc       === "string"  ? patch.exitDesc       : undefined,
     ...("minProbability" in patch ? { minProbability: typeof patch.minProbability === "number" ? patch.minProbability : null } : {}),
     ...("maxOpen"        in patch ? { maxOpen:        typeof patch.maxOpen        === "number" ? patch.maxOpen        : null } : {}),
+    ...(typeof patch.priority === "number" ? { priority: patch.priority } : {}),
     ...(patch.mode === "paper" || patch.mode === "real" ? { mode: patch.mode as "paper" | "real" } : {}),
   });
 
