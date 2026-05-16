@@ -75,6 +75,7 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
 
   const [errorCount, setErrorCount] = useState(0);
   const [collapsed,  setCollapsed]  = useState(false);
+  const [darkMode,   setDarkMode]   = useState(false);
   const [lastSeen]                  = useState(() => {
     if (typeof localStorage === "undefined") return 0;
     return parseInt(localStorage.getItem("errLastSeen") ?? "0", 10);
@@ -87,6 +88,26 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
     else if (Object.values(MODE_PAIRS).some(p => p.paper === tab)) setNavMode("paper"); // eslint-disable-line react-hooks/set-state-in-effect
     // else: tab comuna — manté el navMode actual
   }, [tab]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark") {
+      setDarkMode(true);
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    if (next) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      localStorage.setItem("theme", "light");
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -236,6 +257,15 @@ export default function Nav({ tab, onTab, openOrdersCount, username }: {
         className={`nav__item${tab === "settings" ? " nav__item--active" : ""}`}>
         <i className="fa-solid fa-gear nav__item-icon" />
         {!c && "Configuració"}
+      </button>
+
+      <button
+        className="nav__item nav__theme-toggle"
+        onClick={toggleDarkMode}
+        title={c ? (darkMode ? "Mode clar" : "Mode fosc") : undefined}
+      >
+        <i className={`fa-solid ${darkMode ? "fa-sun" : "fa-moon"} nav__item-icon`} />
+        {!c && (darkMode ? "Mode clar" : "Mode fosc")}
       </button>
 
       <button className="nav__logout" title={c ? "Tancar sessió" : undefined}

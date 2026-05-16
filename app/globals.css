@@ -66,6 +66,57 @@
   --radius-sm: 8px;
 }
 
+/* ── Dark Mode ───────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-page:    #0f172a;
+  --bg-nav:     #1e293b;
+  --bg-card:    #1e293b;
+  --bg-card-2:  #0f172a;
+  --bg-hover:   #334155;
+  --bg-input:   #1e293b;
+
+  --border:     #334155;
+  --border-mid: #475569;
+
+  --text-1:     #f1f5f9;
+  --text-2:     #94a3b8;
+  --text-3:     #64748b;
+
+  --accent:      #6366f1;
+  --accent-dark: #4f46e5;
+  --accent-dim:  rgba(99,102,241,0.15);
+  --accent-border: rgba(99,102,241,0.3);
+
+  --green-dim:  rgba(5,150,105,0.15);
+  --red-dim:    rgba(220,38,38,0.12);
+  --blue-dim:   rgba(37,99,235,0.15);
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-lg:   0 20px 60px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3);
+}
+
+/* Override Tailwind hardcoded colors in dark mode */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-slate-50 { background-color: var(--bg-card) !important; }
+[data-theme="dark"] .bg-slate-100 { background-color: var(--bg-hover) !important; }
+[data-theme="dark"] .hover\:bg-slate-50:hover { background-color: var(--bg-hover) !important; }
+[data-theme="dark"] .hover\:bg-slate-100:hover { background-color: var(--border) !important; }
+[data-theme="dark"] .text-slate-900 { color: var(--text-1) !important; }
+[data-theme="dark"] .text-slate-700 { color: var(--text-2) !important; }
+[data-theme="dark"] .text-slate-600 { color: var(--text-2) !important; }
+[data-theme="dark"] .text-slate-500 { color: var(--text-3) !important; }
+[data-theme="dark"] .text-slate-400 { color: var(--text-3) !important; }
+[data-theme="dark"] .border-slate-100 { border-color: var(--border) !important; }
+[data-theme="dark"] .border-slate-200 { border-color: var(--border-mid) !important; }
+[data-theme="dark"] .bg-emerald-50 { background-color: var(--green-dim) !important; }
+[data-theme="dark"] .bg-red-50 { background-color: var(--red-dim) !important; }
+[data-theme="dark"] .bg-blue-50 { background-color: var(--blue-dim) !important; }
+[data-theme="dark"] .bg-indigo-50 { background-color: var(--accent-dim) !important; }
+
+/* Scrollbar dark */
+[data-theme="dark"] * { scrollbar-color: #475569 transparent; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #475569; }
+
 /* ── "War Mode" — REAL trading environment ───────────────────────────────── */
 .app__real-wrapper {
   display: flex;
