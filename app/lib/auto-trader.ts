@@ -333,7 +333,7 @@ async function executeBuy(opts: BuyOpts): Promise<void> {
   const tpTarget = fillPrice + tpAtr * atr;
   const slTarget = fillPrice - slAtr * atr;
 
-  const currentPrice = await getTickerPrice(symbol);
+  const currentPrice = await getTickerPrice(symbol, mode);
   const tickNum      = parseFloat(tickSize);
   const tpPrice      = roundPriceUp(Math.max(tpTarget, currentPrice + 2 * tickNum), tickSize);
   const slStopPrice  = roundPriceDown(Math.min(slTarget, currentPrice - 2 * tickNum), tickSize);
@@ -464,16 +464,16 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   if (config.capitalMode === "FIXED") {
     usdtPer = config.capitalFixed ?? 100;
   } else if (config.capitalMode === "PCT") {
-    usdtPer = bot.budgetUsdt * (config.capitalPct ?? 10) / 100;
+    usdtPer = bot.budgetUsdc * (config.capitalPct ?? 10) / 100;
   } else if (config.capitalMode === "ANTI_MARTINGALE") {
-    usdtPer = bot.budgetUsdt * (config.amBasePct ?? 60) / 100;
+    usdtPer = bot.budgetUsdc * (config.amBasePct ?? 60) / 100;
   } else if (config.capitalMode === "PYRAMID") {
     const wins   = journalGetBotConsecWins(bot.name, bot.mode as "paper" | "real");
     const level  = Math.min(wins, config.pyramidMaxLevel ?? 3);
     const factor = Math.pow(config.pyramidFactor ?? 1.25, level);
     usdtPer = Math.min(
-      bot.budgetUsdt * ((config.pyramidBasePct ?? 10) / 100) * factor,
-      bot.budgetUsdt * 0.5,
+      bot.budgetUsdc * ((config.pyramidBasePct ?? 10) / 100) * factor,
+      bot.budgetUsdc * 0.5,
     );
     log.auto.debug({ bot: bot.name, wins, level, factor, usdtPer }, "pyramid: capital per operació");
   } else {
@@ -505,9 +505,9 @@ async function runBotScan(bot: Bot, simConfig: SavedConfig): Promise<void> {
   }
 
   const committed = totalOpen * usdtPer;
-  if (committed + usdtPer > bot.budgetUsdt) {
-    log.auto.debug({ bot: bot.name, committed, openOcoCount, trailingCount, budget: bot.budgetUsdt }, "bot: pressupost exhaurit");
-    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `pressupost exhaurit — ${openOcoCount} OCO + ${trailingCount} trailing (${committed.toFixed(0)}$ compromès / ${bot.budgetUsdt}$ pressupost, ${usdtPer.toFixed(0)}$/op)`, results: [], mode: bot.mode }).catch(() => {});
+  if (committed + usdtPer > bot.budgetUsdc) {
+    log.auto.debug({ bot: bot.name, committed, openOcoCount, trailingCount, budget: bot.budgetUsdc }, "bot: pressupost exhaurit");
+    if (tgScan) notifyMarketScan({ botName: bot.name, interval, minScore, skipReason: `pressupost exhaurit — ${openOcoCount} OCO + ${trailingCount} trailing (${committed.toFixed(0)}$ compromès / ${bot.budgetUsdc}$ pressupost, ${usdtPer.toFixed(0)}$/op)`, results: [], mode: bot.mode }).catch(() => {});
     return;
   }
 
@@ -753,17 +753,17 @@ async function checkOrphanPositions(mode: TradingMode): Promise<void> {
 
     // Totalment protegit (marge 2% per comissions/arrodoniments)
     if (uncoveredUsd < ORPHAN_MIN_USD || uncovered < total * 0.02) {
-      orphanWatchDelete(symbol);
+      orphanWatchDelete(symbol, mode);
       continue;
     }
 
     if (pendingSymbols.has(symbol)) continue;  // ja s'està gestionant via pending_oco
 
-    const watch = orphanWatchGet(symbol);
+    const watch = orphanWatchGet(symbol, mode);
 
     if (!watch) {
       // Primera detecció: registrar però NO notificar encara (pot ser latència de l'API)
-      orphanWatchUpsert(symbol);
+      orphanWatchUpsert(symbol, mode);
       log.auto.warn({ mode, symbol, uncoveredUsd, uncovered }, "posició parcialment sense SL — esperant 2 min per confirmar");
       continue;
     }
@@ -783,7 +783,7 @@ async function checkOrphanPositions(mode: TradingMode): Promise<void> {
         tradeCode:   meta?.tradeCode   ?? null,
         mode,
       }).catch(err => log.auto.warn({ err: (err as Error).message }, "notifyOrphanDetected fallida"));
-      orphanWatchMarkNotified(symbol);
+      orphanWatchMarkNotified(symbol, mode);
     }
 
     // Esperar 5 minuts per corregir

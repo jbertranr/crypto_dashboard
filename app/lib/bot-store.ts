@@ -18,7 +18,7 @@ const BOT_SCHEMA = `
     name             TEXT    NOT NULL,
     sim_id           TEXT    NOT NULL,
     enabled          INTEGER NOT NULL DEFAULT 0,
-    budget_usdt      REAL    NOT NULL DEFAULT 500,
+    budget_usdc      REAL    NOT NULL DEFAULT 500,
     max_daily        INTEGER NOT NULL DEFAULT 3,
     hours_from       INTEGER NOT NULL DEFAULT 8,
     hours_to         INTEGER NOT NULL DEFAULT 22,
@@ -36,6 +36,8 @@ function initBotDb(d: ReturnType<typeof getDb>) {
   if (!cols.includes("min_probability")) d.exec("ALTER TABLE bots ADD COLUMN min_probability  INTEGER          DEFAULT NULL");
   if (!cols.includes("max_open"))        d.exec("ALTER TABLE bots ADD COLUMN max_open          INTEGER          DEFAULT NULL");
   if (!cols.includes("priority"))        d.exec("ALTER TABLE bots ADD COLUMN priority           INTEGER NOT NULL DEFAULT 50");
+  if (cols.includes("budget_usdt") && !cols.includes("budget_usdc"))
+    d.exec("ALTER TABLE bots RENAME COLUMN budget_usdt TO budget_usdc");
   // Note: no mode column — mode is implicit from which DB the bot lives in
 
   // Migrate existing data from cache.db (one-time, safe to retry)
@@ -54,9 +56,9 @@ function migrateBotFromCacheDb(target: ReturnType<typeof getDb>) {
     const srcMode = target === paperDb ? "paper" : "real";
     target.exec(`ATTACH DATABASE '${cacheDbPath}' AS src`);
     target.exec(`
-      INSERT OR IGNORE INTO bots (id, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, created_at,
+      INSERT OR IGNORE INTO bots (id, name, sim_id, enabled, budget_usdc, max_daily, hours_from, hours_to, require_multi_tf, created_at,
         code, entry_desc, exit_desc, min_probability, max_open)
-      SELECT id, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, created_at,
+      SELECT id, name, sim_id, enabled, budget_usdc, max_daily, hours_from, hours_to, require_multi_tf, created_at,
         COALESCE(code, ''), COALESCE(entry_desc, ''), COALESCE(exit_desc, ''), min_probability, max_open
       FROM src.bots
       WHERE COALESCE(mode, 'paper') = '${srcMode}'
@@ -76,7 +78,7 @@ export interface Bot {
   name:           string;
   simId:          string;
   enabled:        boolean;
-  budgetUsdt:     number;
+  budgetUsdc:     number;
   maxDaily:       number;
   hoursFrom:      number;
   hoursTo:        number;
@@ -96,7 +98,7 @@ interface BotRow {
   name:             string;
   sim_id:           string;
   enabled:          number;
-  budget_usdt:      number;
+  budget_usdc:      number;
   max_daily:        number;
   hours_from:       number;
   hours_to:         number;
@@ -116,7 +118,7 @@ function rowToBot(row: BotRow, mode: "paper" | "real"): Bot {
     name:           row.name,
     simId:          row.sim_id,
     enabled:        row.enabled === 1,
-    budgetUsdt:     row.budget_usdt,
+    budgetUsdc:     row.budget_usdc,
     maxDaily:       row.max_daily,
     hoursFrom:      row.hours_from,
     hoursTo:        row.hours_to,
@@ -167,7 +169,7 @@ export function botGet(id: string): Bot | null {
 export function botCreate(data: {
   name:            string;
   simId:           string;
-  budgetUsdt?:     number;
+  budgetUsdc?:     number;
   maxDaily?:       number;
   hoursFrom?:      number;
   hoursTo?:        number;
@@ -178,8 +180,8 @@ export function botCreate(data: {
   maxOpen?:        number | null;
   mode?:           "paper" | "real";
 }): Bot {
-  if (data.budgetUsdt !== undefined && data.budgetUsdt <= 0)
-    throw new Error("budgetUsdt ha de ser > 0");
+  if (data.budgetUsdc !== undefined && data.budgetUsdc <= 0)
+    throw new Error("budgetUsdc ha de ser > 0");
   if (data.maxDaily !== undefined && data.maxDaily < 1)
     throw new Error("maxDaily ha de ser ≥ 1");
   if (data.hoursFrom !== undefined && (data.hoursFrom < 0 || data.hoursFrom > 23))
@@ -194,12 +196,12 @@ export function botCreate(data: {
   const now  = Date.now();
   d.prepare(`
     INSERT INTO bots
-      (id, code, name, sim_id, enabled, budget_usdt, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, created_at)
+      (id, code, name, sim_id, enabled, budget_usdc, max_daily, hours_from, hours_to, require_multi_tf, entry_desc, exit_desc, min_probability, max_open, created_at)
     VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id, code,
     data.name, data.simId,
-    data.budgetUsdt  ?? 500,
+    data.budgetUsdc  ?? 500,
     data.maxDaily    ?? 3,
     data.hoursFrom   ?? 8,
     data.hoursTo     ?? 22,
@@ -224,7 +226,7 @@ export function botUpdate(id: string, patch: Partial<Omit<Bot, "id" | "code" | "
   if (patch.name           !== undefined) { fields.push("name = ?");             values.push(patch.name); }
   if (patch.simId          !== undefined) { fields.push("sim_id = ?");            values.push(patch.simId); }
   if (patch.enabled        !== undefined) { fields.push("enabled = ?");           values.push(patch.enabled ? 1 : 0); }
-  if (patch.budgetUsdt     !== undefined) { fields.push("budget_usdt = ?");       values.push(patch.budgetUsdt); }
+  if (patch.budgetUsdc     !== undefined) { fields.push("budget_usdc = ?");       values.push(patch.budgetUsdc); }
   if (patch.maxDaily       !== undefined) { fields.push("max_daily = ?");          values.push(patch.maxDaily); }
   if (patch.hoursFrom      !== undefined) { fields.push("hours_from = ?");         values.push(patch.hoursFrom); }
   if (patch.hoursTo        !== undefined) { fields.push("hours_to = ?");           values.push(patch.hoursTo); }

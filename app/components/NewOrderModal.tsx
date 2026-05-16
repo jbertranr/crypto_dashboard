@@ -16,7 +16,7 @@ type AnalysisSnap = { price: number; atr: number; strategies: StratProposal[] };
 
 type BotPreset = {
   id: string; code: string; name: string; enabled: boolean;
-  budgetUsdt?: number;
+  budgetUsdc?: number;
   simConfig: { config: {
     interval?: string; tpAtr?: number; slAtr?: number;
     trailActivateAtr?: number; trailDistanceAtr?: number;
@@ -167,9 +167,9 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
   const isMaxOpenReached = botMaxOpen !== null && botPositionCount >= botMaxOpen;
 
   // Pressupost: l'import únic supera el budget del bot
-  const isBudgetExceeded  = !!(selectedBot?.budgetUsdt != null && newAmount > selectedBot.budgetUsdt);
+  const isBudgetExceeded  = !!(selectedBot?.budgetUsdc != null && newAmount > selectedBot.budgetUsdc);
   // Pressupost total: (compromisos actuals + nou import) supera el budget
-  const isTotalExceeded   = !!(selectedBot?.budgetUsdt != null && (botCommitted + newAmount) > selectedBot.budgetUsdt);
+  const isTotalExceeded   = !!(selectedBot?.budgetUsdc != null && (botCommitted + newAmount) > selectedBot.budgetUsdc);
   // Símbol fora del bot: el parells de la compra no és cap dels símbols del bot
   const QSTRIP = /USDT$|USDC$|BUSD$|FDUSD$|TUSD$/;
   const botSymbols = selectedBot?.simConfig?.config?.symbols ?? [];
@@ -935,10 +935,10 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
                 min="0" step="any" value={beUsdAmount}
                 onChange={e => setBeUsdAmount(e.target.value)} placeholder="0.00" />
             </div>
-            {selectedBot?.budgetUsdt != null && parseFloat(beUsdAmount) > selectedBot.budgetUsdt && (
+            {selectedBot?.budgetUsdc != null && parseFloat(beUsdAmount) > selectedBot.budgetUsdc && (
               <div className="order-edit__locked-warn">
                 <i className="fa-solid fa-triangle-exclamation" />
-                {parseFloat(beUsdAmount).toFixed(2)} USDC supera el pressupost del bot <b>{selectedBot.name}</b> ({selectedBot.budgetUsdt} USDC). El bot no podrà gestionar aquesta posició.
+                {parseFloat(beUsdAmount).toFixed(2)} USDC supera el pressupost del bot <b>{selectedBot.name}</b> ({selectedBot.budgetUsdc} USDC). El bot no podrà gestionar aquesta posició.
               </div>
             )}
           </div>
@@ -1057,7 +1057,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           {mode === "buy-exit" && selectedBot && newAmount > 0 && isTotalExceeded && !isBudgetExceeded && (
             <div className="order-edit__locked-warn">
               <i className="fa-solid fa-triangle-exclamation" />
-              {" "}El bot <b>{selectedBot.name}</b> té un pressupost de <b>{selectedBot.budgetUsdt} USDC</b>.
+              {" "}El bot <b>{selectedBot.name}</b> té un pressupost de <b>{selectedBot.budgetUsdc} USDC</b>.
               <div className="new-order__budget-breakdown">
                 {botOpenOrders.map(o => (
                   <div key={o.symbol} className="new-order__budget-line">
@@ -1112,7 +1112,7 @@ export default function NewOrderModal({ coin, coins, onClose, onSuccess, presetP
           ) : (
             <button className="order-edit__btn-save" onClick={submitBuyExit}
               disabled={saving || isRealLocked || isMaxOpenReached || isBudgetExceeded || (newAmount > 0 && isTotalExceeded && !confirmedTotalBudget) || (newAmount > 0 && isSymbolMismatch && !confirmedSymbol)}
-              title={isRealLocked ? "Mode real bloquejat" : isBudgetExceeded ? `Import supera el pressupost del bot (${selectedBot?.budgetUsdt} USDC)` : (isTotalExceeded && !confirmedTotalBudget) ? "Confirma el superament del pressupost total" : (isSymbolMismatch && !confirmedSymbol) ? "Confirma el símbol fora del bot" : undefined}>
+              title={isRealLocked ? "Mode real bloquejat" : isBudgetExceeded ? `Import supera el pressupost del bot (${selectedBot?.budgetUsdc} USDC)` : (isTotalExceeded && !confirmedTotalBudget) ? "Confirma el superament del pressupost total" : (isSymbolMismatch && !confirmedSymbol) ? "Confirma el símbol fora del bot" : undefined}>
               {saving ? "Placing…" : "Compra + Sortida"}
             </button>
           )}

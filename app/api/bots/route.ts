@@ -83,10 +83,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { name, simId, budgetUsdt, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc, minProbability, maxOpen, mode } = body as {
+  const { name, simId, budgetUsdc, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc, minProbability, maxOpen, mode } = body as {
     name?: string;
     simId?: string;
-    budgetUsdt?: number;
+    budgetUsdc?: number;
     maxDaily?: number;
     hoursFrom?: number;
     hoursTo?: number;
@@ -107,8 +107,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "hoursFrom ha d'estar entre 0 i 23" }, { status: 400 });
   if (hoursTo !== undefined && (hoursTo < 1 || hoursTo > 24))
     return NextResponse.json({ error: "hoursTo ha d'estar entre 1 i 24 (24 = tot el dia)" }, { status: 400 });
-  if (budgetUsdt !== undefined && budgetUsdt <= 0)
-    return NextResponse.json({ error: "budgetUsdt ha de ser > 0" }, { status: 400 });
+  if (budgetUsdc !== undefined && budgetUsdc <= 0)
+    return NextResponse.json({ error: "budgetUsdc ha de ser > 0" }, { status: 400 });
   if (maxDaily !== undefined && maxDaily < 1)
     return NextResponse.json({ error: "maxDaily ha de ser ≥ 1" }, { status: 400 });
 
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Simulation config not found" }, { status: 404 });
   }
 
-  const bot = botCreate({ name, simId, budgetUsdt, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc, minProbability, maxOpen, mode });
+  const bot = botCreate({ name, simId, budgetUsdc, maxDaily, hoursFrom, hoursTo, requireMultiTf, entryDesc, exitDesc, minProbability, maxOpen, mode });
   return NextResponse.json({ bot, simConfig });
 }
 
@@ -151,7 +151,7 @@ export async function PATCH(req: NextRequest) {
     name:           typeof patch.name           === "string"  ? patch.name           : undefined,
     simId:          typeof patch.simId          === "string"  ? patch.simId          : undefined,
     enabled:        typeof patch.enabled        === "boolean" ? patch.enabled        : undefined,
-    budgetUsdt:     typeof patch.budgetUsdt     === "number"  ? patch.budgetUsdt     : undefined,
+    budgetUsdc:     typeof patch.budgetUsdc     === "number"  ? patch.budgetUsdc     : undefined,
     maxDaily:       typeof patch.maxDaily       === "number"  ? patch.maxDaily       : undefined,
     hoursFrom:      typeof patch.hoursFrom      === "number"  ? patch.hoursFrom      : undefined,
     hoursTo:        typeof patch.hoursTo        === "number"  ? patch.hoursTo        : undefined,

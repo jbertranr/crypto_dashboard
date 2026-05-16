@@ -356,7 +356,7 @@ export default function AutoLabTab() {
           await fetch("/api/bots", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: cfgName, simId: cfgData.id, budgetUsdt: budgetU }),
+            body: JSON.stringify({ name: cfgName, simId: cfgData.id, budgetUsdc: budgetU }),
           });
           promotedName = cfgName;
           promotedCount++;

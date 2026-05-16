@@ -76,6 +76,9 @@ La columna **Proxy** indica si l'endpoint és accessible des del port 3001 (app 
 | `GET` | `/api/simulation/configs` | Configuracions de simulació desades | ❌ |
 | `POST` | `/api/simulation/run` | Executa backtest. Body: `{ config }` | ❌ |
 | `GET` | `/api/simulation/export` | Exporta resultats de simulació (CSV/JSON) | ❌ |
+| `POST` | `/api/simulation/warmup` | Pre-càlcul de dades per a simulació ràpida | ❌ |
+| `GET` | `/api/bots/scan` | Escaneig de mercat del bot (anàlisi sense executar) | ❌ |
+| `GET` | `/api/trailing-history` | Historial de trailing stops executats | ❌ |
 
 ---
 

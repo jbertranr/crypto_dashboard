@@ -28,7 +28,7 @@ interface BotInfo {
   name:           string;
   simId:          string;
   enabled:        boolean;
-  budgetUsdt:     number;
+  budgetUsdc:     number;
   maxDaily:       number;
   hoursFrom:      number;
   hoursTo:        number;
@@ -125,7 +125,7 @@ interface ScanResponse {
   slAtr:        number;
   capitalPerOp: number | null;
   capitalMode:  string;
-  budgetUsdt:   number;
+  budgetUsdc:   number;
   committed:    number;
   results:      ScanResult[];
   scannedAt:    number;
@@ -314,12 +314,12 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
     // Avís de pressupost si la compra ultrapassaria el límit del bot
     if (scanData) {
       const afterBuy = scanData.committed + capitalPerOp;
-      if (afterBuy > scanData.budgetUsdt) {
+      if (afterBuy > scanData.budgetUsdc) {
         const ok = window.confirm(
           `⚠️ Pressupost del bot insuficient!\n\n` +
           `Compromès: ${scanData.committed.toFixed(0)} USDC\n` +
           `Aquesta compra: +${capitalPerOp} USDC\n` +
-          `Total: ${afterBuy.toFixed(0)} USDC > Límit: ${scanData.budgetUsdt} USDC\n\n` +
+          `Total: ${afterBuy.toFixed(0)} USDC > Límit: ${scanData.budgetUsdc} USDC\n\n` +
           `Vols comprar igualment?`
         );
         if (!ok) return;
@@ -588,11 +588,11 @@ function BotDetailPanel({ bot, onBack, onUpdated }: { bot: BotInfo; onBack: () =
                 : " · mode % (no suportat en manual)"}
             </div>
             {scanData.capitalPerOp !== null && (
-              <div className={`bc-scan__budget ${scanData.committed + scanData.capitalPerOp > scanData.budgetUsdt ? "bc-scan__budget--over" : ""}`}>
+              <div className={`bc-scan__budget ${scanData.committed + scanData.capitalPerOp > scanData.budgetUsdc ? "bc-scan__budget--over" : ""}`}>
                 <i className="fa-solid fa-wallet" />
-                {" "}Pressupost: <strong>{(scanData.budgetUsdt - scanData.committed).toFixed(0)} USDC disponibles</strong>
-                {" "}({scanData.committed.toFixed(0)} / {scanData.budgetUsdt} USDC compromesos)
-                {scanData.committed + scanData.capitalPerOp > scanData.budgetUsdt && (
+                {" "}Pressupost: <strong>{(scanData.budgetUsdc - scanData.committed).toFixed(0)} USDC disponibles</strong>
+                {" "}({scanData.committed.toFixed(0)} / {scanData.budgetUsdc} USDC compromesos)
+                {scanData.committed + scanData.capitalPerOp > scanData.budgetUsdc && (
                   <span className="bc-scan__budget-warn"> ⚠️ La propera compra ultrapassaria el límit</span>
                 )}
               </div>
@@ -963,7 +963,7 @@ function BotTable({
                 </span>
               )}
               <span className="bc-param-chip">
-                <i className="fa-solid fa-wallet" />{bot.budgetUsdt} USDC
+                <i className="fa-solid fa-wallet" />{bot.budgetUsdc} USDC
               </span>
               <span className="bc-param-chip">
                 <i className="fa-solid fa-repeat" />màx {bot.maxDaily}/dia

@@ -171,7 +171,7 @@ export async function GET(req: NextRequest) {
     tpAtr, slAtr, trailAct, trailDst, minScore,
     capitalPerOp,
     capitalMode,
-    budgetUsdt: bot.budgetUsdt,
+    budgetUsdc: bot.budgetUsdc,
     committed,
     results,
     scannedAt: Date.now(),

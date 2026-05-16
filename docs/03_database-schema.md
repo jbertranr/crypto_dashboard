@@ -174,7 +174,7 @@ Configuració dels bots en mode paper.
 | `name` | TEXT | Nom del bot |
 | `sim_id` | TEXT | Referència a configuració de simulació |
 | `enabled` | INTEGER | `0` o `1` |
-| `budget_usdt` | REAL | Capital per trade en USDC (nom de columna històric) |
+| `budget_usdc` | REAL | Capital màxim simultani del bot en USDC |
 | `max_daily` | INTEGER | Màxim de trades per dia |
 | `hours_from` | INTEGER | Hora d'inici de la finestra (0-23) |
 | `hours_to` | INTEGER | Hora de fi de la finestra (0-23) |

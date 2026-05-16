@@ -506,38 +506,43 @@ export function pendingOcoIncAttempts(id: number): void {
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS orphan_watch (
-    symbol      TEXT    PRIMARY KEY,
+    symbol      TEXT    NOT NULL,
+    mode        TEXT    NOT NULL DEFAULT 'paper',
     detected_at INTEGER NOT NULL,
-    notified    INTEGER NOT NULL DEFAULT 0
+    notified    INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (symbol, mode)
   );
 `);
+// Migra la PK simple → composta (SQLite no suporta ALTER CONSTRAINT; recrea si cal)
+try {
+  db.exec("ALTER TABLE orphan_watch ADD COLUMN mode TEXT NOT NULL DEFAULT 'paper'");
+} catch { /* columna ja existeix */ }
 
-export function orphanWatchUpsert(symbol: string): boolean {
-  // Returns true if it was a new insertion (first detection)
-  const existing = db.prepare("SELECT symbol FROM orphan_watch WHERE symbol = ?").get(symbol);
+export function orphanWatchUpsert(symbol: string, mode: "paper" | "real" = "paper"): boolean {
+  const existing = db.prepare("SELECT symbol FROM orphan_watch WHERE symbol = ? AND mode = ?").get(symbol, mode);
   if (existing) return false;
-  db.prepare("INSERT INTO orphan_watch (symbol, detected_at, notified) VALUES (?, ?, 0)").run(symbol, Date.now());
+  db.prepare("INSERT OR IGNORE INTO orphan_watch (symbol, mode, detected_at, notified) VALUES (?, ?, ?, 0)").run(symbol, mode, Date.now());
   return true;
 }
 
-export function orphanWatchGet(symbol: string): { detectedAt: number; notified: number } | null {
-  const r = db.prepare("SELECT detected_at, notified FROM orphan_watch WHERE symbol = ?").get(symbol) as
+export function orphanWatchGet(symbol: string, mode: "paper" | "real" = "paper"): { detectedAt: number; notified: number } | null {
+  const r = db.prepare("SELECT detected_at, notified FROM orphan_watch WHERE symbol = ? AND mode = ?").get(symbol, mode) as
     { detected_at: number; notified: number } | undefined;
   return r ? { detectedAt: r.detected_at, notified: r.notified } : null;
 }
 
-export function orphanWatchDelete(symbol: string): void {
-  db.prepare("DELETE FROM orphan_watch WHERE symbol = ?").run(symbol);
+export function orphanWatchDelete(symbol: string, mode: "paper" | "real" = "paper"): void {
+  db.prepare("DELETE FROM orphan_watch WHERE symbol = ? AND mode = ?").run(symbol, mode);
 }
 
-export function orphanWatchMarkNotified(symbol: string): void {
-  db.prepare("UPDATE orphan_watch SET notified = 1 WHERE symbol = ?").run(symbol);
+export function orphanWatchMarkNotified(symbol: string, mode: "paper" | "real" = "paper"): void {
+  db.prepare("UPDATE orphan_watch SET notified = 1 WHERE symbol = ? AND mode = ?").run(symbol, mode);
 }
 
-export function orphanWatchGetAll(): Array<{ symbol: string; detectedAt: number; notified: number }> {
-  return (db.prepare("SELECT symbol, detected_at, notified FROM orphan_watch").all() as Array<{
-    symbol: string; detected_at: number; notified: number;
-  }>).map(r => ({ symbol: r.symbol, detectedAt: r.detected_at, notified: r.notified }));
+export function orphanWatchGetAll(): Array<{ symbol: string; mode: string; detectedAt: number; notified: number }> {
+  return (db.prepare("SELECT symbol, mode, detected_at, notified FROM orphan_watch").all() as Array<{
+    symbol: string; mode: string; detected_at: number; notified: number;
+  }>).map(r => ({ symbol: r.symbol, mode: r.mode, detectedAt: r.detected_at, notified: r.notified }));
 }
 
 export function hasActiveTrailing(symbol: string): boolean {

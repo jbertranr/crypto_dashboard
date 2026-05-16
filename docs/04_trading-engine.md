@@ -114,14 +114,38 @@ Executa ordres automàtiques basades en anàlisi tècnica quan es tanca una vela
 | `name` | Nom identificador | — |
 | `sim_id` | Referència a configuració de simulació | — |
 | `enabled` | Actiu o no | `false` |
-| `budget_usdt` | Capital per trade en USDC | — |
+| `budget_usdc` | Capital màxim simultani en USDC per a aquest bot (⚠ nom històric: sempre és USDC a Europa) | — |
 | `max_daily` | Màxim trades per dia | `3` |
-| `hours_from` | Inici de la finestra horària | `8` |
-| `hours_to` | Fi de la finestra horària | `22` |
+| `hours_from` | Inici de la finestra horària (UTC) | `8` |
+| `hours_to` | Fi de la finestra horària (UTC) | `22` |
 | `require_multi_tf` | Requereix confirmació multi-timeframe | `false` |
 | `min_probability` | Probabilitat mínima d'entrada (0–100) | `60` |
-| `max_open` | Màxim ordres obertes simultànies | `5` |
+| `max_open` | Màxim posicions obertes simultànies | `null` |
+| `priority` | Ordre d'execució quan múltiples bots disparen alhora (1=primer, 99=últim) | `50` |
 | `mode` | `paper` o `real` | `paper` |
+
+### Ordre d'execució i prioritat
+
+Quan múltiples bots han de disparar en el mateix poll (mateixa vela tancada), s'executen **seqüencialment** per ordre de prioritat ascendent (`priority` menor = s'executa primer). Això garanteix que el bot prioritari pugui comprar (i ocupar pressupost) abans que els bots de prioritat inferior.
+
+```
+Bot A (priority=10) → runBotScan() await → Bot B (priority=50) → runBotScan() await → ...
+```
+
+> **Per què seqüencial i no paral·lel?** Si dos bots poden comprar el mateix símbol o comparteixen pressupost limitat, l'execució en paral·lel faria que els dos intentessin comprar alhora. L'execució seqüencial garanteix que el bot prioritari té preferència real.
+
+La prioritat es configura des del panel de detall del bot (camp "Prioritat d'execució", rang 1–99). El valor per defecte 50 no mostra cap chip a la targeta per no sorollar la UI.
+
+### Pressupost per bot (`budget_usdc`)
+
+El `budget_usdc` és un límit **per bot**, no global. Cada bot compta les seves pròpies posicions obertes independentment dels altres:
+
+```
+committed = (OCOs oberts d'AQUEST bot) + (trailing actius d'AQUEST bot)
+committed × usdtPer > budget_usdc → pressupost exhaurit
+```
+
+La comprovació creua les ordres obertes de Binance amb `order_meta.bot_name` per identificar quines pertanyen a cada bot. Dos bots amb `budget_usdc = 500` USDC cadascun poden tenir fins a 500 USDC compromesos simultàniament sense interferir-se.
 
 ### Detecció de tancament de vela
 
@@ -192,10 +216,10 @@ El capital per operació es calcula a partir del mode configurat a la simulació
 | Mode | Fórmula | Paràmetres |
 |------|---------|-----------|
 | `FIXED` | `capitalFixed` USDC per trade | `capitalFixed` |
-| `PCT` | `budgetUsdt × capitalPct%` | `capitalPct` |
-| `ANTI_MARTINGALE` | `budgetUsdt × amBasePct%` × factor de pèrdua | `amBasePct` |
-| `RISK_PCT` | `(budgetUsdt × riskPct%) / distànciaSL%` (cap 50%) | `riskPct` |
-| `PYRAMID` | `budgetUsdt × pyramidBasePct%` × `pyramidFactor ^ wins_consecutives` (cap 50%) | `pyramidBasePct`, `pyramidFactor`, `pyramidMaxLevel` |
+| `PCT` | `budgetUsdc × capitalPct%` | `capitalPct` |
+| `ANTI_MARTINGALE` | `budgetUsdc × amBasePct%` × factor de pèrdua | `amBasePct` |
+| `RISK_PCT` | `(budgetUsdc × riskPct%) / distànciaSL%` (cap 50%) | `riskPct` |
+| `PYRAMID` | `budgetUsdc × pyramidBasePct%` × `pyramidFactor ^ wins_consecutives` (cap 50%) | `pyramidBasePct`, `pyramidFactor`, `pyramidMaxLevel` |
 
 **ANTI_MARTINGALE** — redueix la mida quan hi ha pèrdues consecutives:
 - 0–1 pèrdues: ×1.0 (mida base)
@@ -208,7 +232,7 @@ El capital per operació es calcula a partir del mode configurat a la simulació
 - 1 win: `basePct% × factor`
 - N wins: `basePct% × factor^N` (màxim `pyramidMaxLevel` nivells)
 - Qualsevol pèrdua reseteja el comptador a 0
-- Cap màxim: mai supera el 50% del `budgetUsdt`
+- Cap màxim: mai supera el 50% del `budgetUsdc`
 
 ### Criteris d'entrada (indicadors)
 
@@ -323,7 +347,7 @@ Quan el servidor Next.js arrenca, els motors s'inicien al primer request HTTP i 
 | Font de dades | On viu | Exemple |
 |--------------|--------|---------|
 | Configuració dels motors (activat/desactivat) | `cache.db` → taula `settings` | `scheduler_enabled`, `auto_trade_enabled` |
-| Bots actius i paràmetres | `paper.db` / `real.db` → taula `bots` | `enabled`, `budget_usdt`, `sim_id` |
+| Bots actius i paràmetres | `paper.db` / `real.db` → taula `bots` | `enabled`, `budget_usdc`, `sim_id` |
 | Trailing stops pendents i actius | `cache.db` → `order_trailing`, `trailing_active` | `symbol`, `activateAt`, `mode` |
 | Claus API Binance | `.env.local` | `BINANCE_API_KEY_REAL` |
 | Token Telegram | `.env.local` | `TELEGRAM_BOT_TOKEN` |
@@ -366,6 +390,16 @@ Des del dashboard (Configuració → Status) o via settings:
 | `scheduler_enabled` | Activa/desactiva les tasques del Scheduler |
 
 ## Controls de bots per mode
+
+### Tab de Bots — interfície
+
+El tab **Bot** del dashboard mostra:
+
+- **Targetes de bots** ordenades per prioritat ascendent (priority 1 apareix primer). Les targetes d'actius i inactius es barregen, ordenant-se totes per prioritat.
+- **Panel de detall inline**: clicar una targeta expandeix el detall just a sota, sense desplaçar-se al final de la pàgina. Tornar a clicar el tanca.
+- **Posicions obertes per bot**: el panel de detall mostra les posicions actuals del bot (OCO + trailing) obtingudes de Binance en temps real, filtrades per `botName`. Per cada posició: símbol, preu d'entrada, TP, SL i badge de trailing si és actiu.
+- **Escaneig manual**: executa el scan del bot sobre la marxa i permet comprar senyals directament des del panel.
+- **Historial de trades**: corba d'equitat, estadístiques i taula de trades tancats del bot.
 
 A **Configuració → Bots** hi ha tres nivells de control:
 

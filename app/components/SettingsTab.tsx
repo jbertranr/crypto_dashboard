@@ -60,7 +60,7 @@ interface Bot {
   name:           string;
   simId:          string;
   enabled:        boolean;
-  budgetUsdt:     number;
+  budgetUsdc:     number;
   maxDaily:       number;
   hoursFrom:      number;
   hoursTo:        number;
@@ -350,7 +350,7 @@ export default function SettingsTab() {
         body: JSON.stringify({
           name:           newBotName.trim(),
           simId:          newBotSimId,
-          budgetUsdt:     parseFloat(newBotBudget) || 500,
+          budgetUsdc:     parseFloat(newBotBudget) || 500,
           maxDaily:       parseInt(newBotMaxDaily)  || 3,
           hoursFrom:      parseInt(newBotHoursFrom) || 8,
           hoursTo:        parseInt(newBotHoursTo)   || 22,
@@ -1459,8 +1459,8 @@ export default function SettingsTab() {
                       <div className="cfg-toggle-row__desc">Capital màxim compromès simultàniament.</div>
                     </div>
                     <input type="number" step="50" min="10" max="100000" className="cfg-num-input" style={{ width: "80px" }}
-                      defaultValue={bot.budgetUsdt}
-                      onBlur={e => patchBot(bot.id, { budgetUsdt: parseFloat(e.target.value) || bot.budgetUsdt })}
+                      defaultValue={bot.budgetUsdc}
+                      onBlur={e => patchBot(bot.id, { budgetUsdc: parseFloat(e.target.value) || bot.budgetUsdc })}
                       disabled={savingBot === bot.id}
                     />
                   </div>

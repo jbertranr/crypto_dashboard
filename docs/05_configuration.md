@@ -69,57 +69,107 @@ El `server-public.mjs` accepta dues variables opcionals:
 
 Els settings es guarden a la taula `settings` de `data/cache.db`. Es gestionen des de la pestanya **Configuració** del dashboard o via `GET/POST /api/settings`.
 
-### Motors i automatismes
+### Motors i automatismes (per mode)
+
+Cada motor té una variant `_real` per al mode real. La clau sense sufix és per a paper.
 
 | Clau | Default | Descripció |
 |------|---------|-----------|
-| `trailing_engine_enabled` | `true` | Activa el motor de trailing stops |
-| `order_monitor_enabled` | `true` | Activa la detecció de fills d'ordres |
-| `auto_trade_enabled` | `false` | Activa l'auto-trader (tots els bots) |
-| `scheduler_enabled` | `true` | Activa les tasques periòdiques |
+| `trailing_engine_enabled` | `1` | Motor de trailing stops (paper) |
+| `trailing_engine_enabled_real` | `1` | Motor de trailing stops (real) |
+| `order_monitor_enabled` | `1` | Detecció de fills d'ordres (paper) |
+| `order_monitor_enabled_real` | `1` | Detecció de fills d'ordres (real) |
+| `auto_trade_enabled` | `0` | Auto-trader — master switch (paper) |
+| `auto_trade_enabled_real` | `0` | Auto-trader — master switch (real) |
+| `scheduler_enabled` | `1` | Tasques periòdiques (paper) |
+| `scheduler_enabled_real` | `1` | Tasques periòdiques (real) |
+| `crash_monitor_enabled` | `1` | Monitor de crashes (paper) |
+| `crash_monitor_enabled_real` | `1` | Monitor de crashes (real) |
+| `activity_logger_enabled` | `1` | Logger d'activitat (paper) |
+| `activity_logger_enabled_real` | `1` | Logger d'activitat (real) |
+| `cancel_auto_sell` | `0` | Vendre automàticament en cancel·lar ordre (paper) |
+| `cancel_auto_sell_real` | `0` | Vendre automàticament en cancel·lar ordre (real) |
+| `sl_sell_remaining` | `0` | Vendre el romanent quan s'activa el SL (paper) |
+| `sl_sell_remaining_real` | `0` | Vendre el romanent quan s'activa el SL (real) |
 
 ### Notificacions Telegram
 
+Les claus sense sufix s'apliquen al mode paper; les `_real` al mode real.
+
 | Clau | Default | Descripció |
 |------|---------|-----------|
-| `telegram_on_fill` | `true` | Notificar fills d'ordres |
-| `telegram_on_trailing_activate` | `true` | Notificar activació de trailing |
-| `telegram_on_trailing_move` | `false` | Notificar cada moviment del SL |
-| `telegram_on_bot_entry` | `true` | Notificar entrades dels bots |
-| `telegram_on_hourly_report` | `true` | Enviar informe horari |
-| `telegram_on_daily_report` | `true` | Enviar informe diari |
-| `telegram_on_error` | `true` | Notificar errors crítics |
-| `telegram_on_consistency_alert` | `true` | Notificar divergències d'ordres |
+| `tg_on_new_order` | `1` | Notificar nova ordre col·locada (paper) |
+| `tg_on_new_order_real` | `1` | Notificar nova ordre col·locada (real) |
+| `tg_on_order_close` | `1` | Notificar ordre executada/tancada (paper) |
+| `tg_on_order_close_real` | `1` | Notificar ordre executada/tancada (real) |
+| `tg_on_sl_modify` | `1` | Notificar modificació de Stop Loss (paper) |
+| `tg_on_sl_modify_real` | `1` | Notificar modificació de Stop Loss (real) |
+| `tg_on_trailing_activate` | `1` | Notificar activació de trailing stop (paper) |
+| `tg_on_trailing_activate_real` | `1` | Notificar activació de trailing stop (real) |
+| `tg_on_market_scan` | `0` | Notificar cada escaneig de mercat del bot (paper) |
+| `tg_on_market_scan_real` | `0` | Notificar cada escaneig de mercat del bot (real) |
+| `tg_on_motor_anomaly` | `1` | Alerta si un motor deixa de funcionar (global) |
+
+> Els informes horaris i diaris s'envien sempre si el scheduler està actiu — no tenen setting de toggle propi.
 
 ### Quote asset i parells
 
 | Clau | Default | Descripció |
 |------|---------|-----------|
-| `quote_asset` | `USDC` | Moneda quote de tots els parells (`USDC`, `USDT`, `BUSD`, `FDUSD`) |
-| `priority_pairs` | `BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC` | Parells actius al dashboard i als bots (ha de coincidir amb `quote_asset`) |
+| `quote_asset` | `USDC` | Moneda quote dels parells (`USDC`, `USDT`, `BUSD`, `FDUSD`) |
+| `priority_pairs` | `BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC` | Parells actius (paper) — ha de coincidir amb `quote_asset` |
+| `priority_pairs_real` | `BTCUSDC,ETHUSDC,BNBUSDC,SOLUSDC,XRPUSDC` | Parells actius (real) |
 
-> **Europa / Binance:** Binance Europa no permet USDT. Tots els parells han de ser en USDC. El setting `quote_asset` controla quin quote usa l'auto-trader per reescriure els símbols de les simulacions.
->
-> **Nota tècnica:** El camp `symbol` dels `CoinRow` del mercat s'obté eliminant el quote asset del parell (`BTCUSDC` → `BTC`) via `.replace(/USDT|USDC/, "")`. Això permet que el PortfolioTab trobi el preu de mercat per a cada asset del balanç independentment de si el quote és USDT o USDC.
+> **Binance Europa:** Tots els parells han d'usar USDC. El setting `quote_asset` controla quin quote usa l'auto-trader. Valors vàlids: `USDC`, `USDT`, `BUSD`, `FDUSD`, `TUSD`.
 
-### Paràmetres de trading
-
-| Clau | Default | Descripció |
-|------|---------|-----------|
-| `default_tp_pct` | `3.0` | Take Profit per defecte en % |
-| `default_sl_pct` | `1.5` | Stop Loss per defecte en % |
-| `default_trail_dist_pct` | `1.0` | Distància trailing per defecte en % |
-| `atr_multiplier_tp` | `2.0` | Multiplicador ATR per al TP automàtic |
-| `atr_multiplier_sl` | `1.0` | Multiplicador ATR per al SL automàtic |
-
-### Sistema
+### Entrada al mercat
 
 | Clau | Default | Descripció |
 |------|---------|-----------|
-| `snapshot_interval_min` | `15` | Interval dels snapshots de portfolio en minuts |
-| `cache_ttl_seconds` | `300` | TTL de la cache de klines i anàlisi (5 min) |
-| `max_errors_kept` | `200` | Nombre màxim d'errors guardats a la DB |
-| `log_level` | `info` | Nivell de log: `debug`, `info`, `warn`, `error` |
+| `entry_type` | `LIMIT` | Tipus d'ordre d'entrada: `LIMIT` o `MARKET` (paper) |
+| `entry_type_real` | `LIMIT` | Tipus d'ordre d'entrada (real) |
+| `entry_limit_offset_pct` | `0.1` | % per sota del preu per a ordre limit d'entrada |
+
+### Paràmetres OCO (Take Profit / Stop Loss)
+
+| Clau | Default | Descripció |
+|------|---------|-----------|
+| `oco_tp_atr` | `2.0` | Take Profit = preu entrada + N×ATR |
+| `oco_sl_atr` | `1.0` | Stop Loss = preu entrada − N×ATR |
+| `oco_sl_limit_offset_pct` | `0.2` | SL limit = SL stop − X% (evita fills parcials) |
+
+### Trailing stop
+
+| Clau | Default | Descripció |
+|------|---------|-----------|
+| `trailing_activate_atr` | `1.5` | S'activa quan preu ≥ entrada + N×ATR |
+| `trailing_distance_atr` | `1.0` | Distància del trailing = N×ATR (mode ATR) |
+| `trailing_sl_mode` | `ATR` | Mode del SL: `ATR` o `PIVOT_LOW` (paper) |
+| `trailing_sl_mode_real` | `ATR` | Mode del SL (real) |
+| `trailing_pivot_tf` | `1h` | Timeframe per detectar pivot lows (mode PIVOT_LOW) |
+| `trailing_pivot_tf_real` | `1h` | Timeframe per detectar pivot lows (real) |
+| `trailing_pivot_offset_pct` | `0.1` | % buffer per sota del pivot low (evita stops al preu exacte) |
+| `trailing_pivot_offset_pct_real` | `0.1` | % buffer (real) |
+
+### Gestió de capital
+
+| Clau | Default | Descripció |
+|------|---------|-----------|
+| `capital_mode` | `FIXED` | Mode: `FIXED` (import fix) o `PCT_PORTFOLIO` (% del portfolio) |
+| `capital_mode_real` | `FIXED` | Mode (real) |
+| `capital_fixed_usdt` | `100` | Import per trade en USDC (mode FIXED) (paper) |
+| `capital_fixed_usdt_real` | `100` | Import per trade en USDC (mode FIXED) (real) |
+| `capital_pct_portfolio` | `5` | % del portfolio per trade (mode PCT_PORTFOLIO) (paper) |
+| `capital_pct_portfolio_real` | `5` | % del portfolio per trade (real) |
+| `capital_max_open` | `3` | Màxim de posicions obertes simultànies (paper) |
+| `capital_max_open_real` | `3` | Màxim de posicions obertes simultànies (real) |
+
+### Motor watchdog
+
+| Clau | Default | Descripció |
+|------|---------|-----------|
+| `tg_on_motor_anomaly` | `1` | Envia alerta Telegram si un motor no respon |
+| `motor_anomaly_multiplier` | `3` | Envia alerta si el motor porta N×interval sense executar-se |
 
 ---
 
