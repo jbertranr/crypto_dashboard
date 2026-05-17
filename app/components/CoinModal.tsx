@@ -47,7 +47,9 @@ export default function CoinModal({ coin, onClose }: { coin: CoinRow; onClose: (
       setLoading(true);
       try {
         const r = await fetch(`/api/klines?pair=${coin.pair}&interval=${interval}&limit=${limit}`);
-        setChart(await r.json());
+        if (!r.ok) return;
+        const data = await r.json();
+        if (Array.isArray(data)) setChart(data);
       } finally {
         setLoading(false);
       }

@@ -34,3 +34,9 @@
 {"level":50,"time":1778903716525,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"convert/GET","code":"AUTH","err":"Binance /convert/tradeFlow 400: {\"code\":-2008,\"msg\":\"Invalid Api-Key ID.\"}","msg":"error de ruta"}
 {"level":30,"time":1778903716691,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
 {"level":50,"time":1778903716833,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"api","source":"convert/GET","code":"AUTH","err":"Binance /convert/tradeFlow 400: {\"code\":-2008,\"msg\":\"Invalid Api-Key ID.\"}","msg":"error de ruta"}
+{"level":30,"time":1778906694359,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778906706647,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778906711257,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","assets":23,"mode":"paper","msg":"balance"}
+{"level":30,"time":1778906774526,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":50,"mode":"paper","msg":"order history"}
+{"level":30,"time":1778906774633,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":87,"msg":"trades"}
+{"level":30,"time":1778906774985,"pid":6476,"hostname":"DESKTOP-KPAMGTB","module":"binance","count":87,"msg":"trades"}
